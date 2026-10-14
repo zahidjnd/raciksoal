@@ -4,7 +4,8 @@ export async function register() {
   try {
     const { migrate } = await import("drizzle-orm/node-postgres/migrator");
     const { db } = await import("@/db");
-    await migrate(db, { migrationsFolder: "drizzle" });
+    // Catatan migrasi di schema public: user database cPanel belum tentu boleh membuat schema baru.
+    await migrate(db, { migrationsFolder: "drizzle", migrationsSchema: "public" });
     console.log("Migrasi database selesai");
   } catch (e) {
     console.error("Migrasi database gagal:", (e as Error).message);

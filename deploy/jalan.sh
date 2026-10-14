@@ -4,6 +4,7 @@
 #   2) pastikan aplikasi menyala.
 # File .env hosting ada di ~/raciksoal-app/.env (diisi pemilik, bukan di Git).
 cd "$(dirname "$0")"
+exec 9>jalan.lock; flock -n 9 || exit 0   # cron sebelumnya masih jalan
 NODE=$HOME/.local/share/mise/installs/node/24.21.0/bin/node
 KUNCI=$PWD/kunci/deploy
 export GIT_SSH_COMMAND="ssh -i $KUNCI -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
@@ -21,8 +22,12 @@ elif git -C app fetch -q --depth 1 origin deploy 2>>git.log &&
      [ "$(git -C app rev-parse HEAD)" != "$(git -C app rev-parse origin/deploy)" ]; then
   git -C app reset -q --hard origin/deploy && BARU=1
 fi
+# .env diubah pemilik -> nyalakan ulang supaya isinya terbaca (isi .env tidak dibaca skrip ini).
+if [ -f .env ] && [ .env -nt .env.dipakai ]; then
+  touch .env.dipakai && BARU=1
+fi
 if [ -n "$BARU" ]; then
-  echo "== $(date '+%F %T') build baru $(git -C app log -1 --format=%s)"
+  echo "== $(date '+%F %T') nyalakan ulang: $(git -C app log -1 --format=%s)"
   pkill -u "$USER" -f "hello.js|server.js"
   sleep 2
 fi
