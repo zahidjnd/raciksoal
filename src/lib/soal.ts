@@ -78,11 +78,44 @@ export function terapkanBobot(soal: Soal[], bobot: Record<Bentuk, number>): void
   }
 }
 
+/**
+ * Buang kode dalil yang bocor ke teks, misalnya "(dalil: isra-32)" atau "[dalil_id: nur-2]".
+ * Hanya kode yang memang ada di data bab yang dibuang. Mengembalikan teks bersih + kode yang ditemukan.
+ */
+export function bersihkanKodeDalil(teks: string, idDalil: Set<string>) {
+  let ditemukan: string | null = null;
+  const bersih = String(teks ?? "")
+    .replace(/[([]?\s*dalil(?:_id)?\s*[:=]\s*([a-z0-9-]+)\s*[)\]]?/gi, (asli, id: string) => {
+      if (!idDalil.has(id.toLowerCase())) return asli;
+      ditemukan ??= id.toLowerCase();
+      return "";
+    });
+  if (!ditemukan) return { bersih: String(teks ?? ""), ditemukan }; // tidak ada kode dalil: teks tidak disentuh
+  return {
+    bersih: bersih.replace(/[ \t]{2,}/g, " ").replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim(),
+    ditemukan,
+  };
+}
+
 /** Beri peringatan pada soal yang bermasalah. Aturan 5: teks Arab hanya boleh dari data terverifikasi. */
 export function periksaSoal(soal: Soal[], bab: Bab): Soal[] {
   const korpus = korpusArab(bab);
   const dalilAda = new Set(bab.dalil.map((d) => d.id));
-  return soal.map((s) => {
+  return soal.map((asli) => {
+    // Bersihkan kode dalil yang bocor; kalau AI lupa mengisi dalil_id, pakai kode yang ditemukan di teks.
+    let ditemukan: string | null = null;
+    const bersih = (t: string) => {
+      const r = bersihkanKodeDalil(t, dalilAda);
+      ditemukan ??= r.ditemukan;
+      return r.bersih;
+    };
+    const s: Soal = {
+      ...asli,
+      pertanyaan: bersih(asli.pertanyaan),
+      pembahasan: bersih(asli.pembahasan),
+      ...(asli.pilihan ? { pilihan: asli.pilihan.map(bersih) } : {}),
+    };
+    if (!s.dalil_id && ditemukan) s.dalil_id = ditemukan;
     const peringatan: string[] = [];
     const semuaTeks = [s.pertanyaan, ...(s.pilihan ?? []), ...[s.kunci].flat(), s.pembahasan, ...(s.rubrik ?? []).map((r) => r.kriteria)];
     const arabAsing = semuaTeks.flatMap((t) => arabTakTerverifikasi(String(t ?? ""), korpus));

@@ -64,6 +64,24 @@ test("terapkanBobot mengisi skor per bentuk dan menskalakan rubrik uraian tepat 
   assert.deepEqual(soal[2].rubrik!.map((r) => r.skor), [4, 3, 1]); // 4, 2.67→3, 1.33→1
 });
 
+test("periksaSoal membuang kode dalil yang bocor ke teks soal", () => {
+  const dasar = { bentuk: "PG", kunci: "A", pembahasan: "Lihat [dalil_id: nur-2] ya.", level: "C2", tp: "TP 3.2", skor: 1 } as const;
+  const pilihan = ["a", "b", "c", "d", "e"];
+  const [s1, s2, s3] = periksaSoal(
+    [
+      { ...dasar, pilihan, dalil_id: "isra-32", pertanyaan: "Perhatikan firman Allah Swt. berikut!\n\n(dalil: isra-32)\n\nMakna lafaz itu adalah ...." },
+      { ...dasar, pilihan, dalil_id: null, pertanyaan: "Perhatikan hadis berikut! (dalil: hadis-iman) Pesannya adalah ...." },
+      { ...dasar, pilihan, dalil_id: null, pertanyaan: "Dalil: tidak ada yang cocok (dalil: ngarang-9)." },
+    ],
+    bab,
+  );
+  assert.equal(s1.pertanyaan, "Perhatikan firman Allah Swt. berikut!\n\nMakna lafaz itu adalah ....");
+  assert.equal(s1.pembahasan, "Lihat ya.");
+  assert.equal(s2.dalil_id, "hadis-iman"); // AI lupa mengisi dalil_id → diambil dari teks
+  assert.ok(!s2.pertanyaan.includes("dalil"));
+  assert.equal(s3.pertanyaan, "Dalil: tidak ada yang cocok (dalil: ngarang-9)."); // kode tak dikenal tidak disentuh
+});
+
 test("periksaSoal memberi peringatan dalil tak dikenal", () => {
   const s: Soal = { bentuk: "BS", dalil_id: "ngarang-1", pertanyaan: "x", kunci: "Benar", pembahasan: "", level: "C1", tp: "TP 3.1", skor: 1 };
   assert.equal(periksaSoal([s], bab)[0].peringatan!.length, 1);
