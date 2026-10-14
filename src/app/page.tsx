@@ -2,26 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { cekHasil, mulaiBuatSoal } from "./actions";
+import { KartuSoal } from "./kartu-soal";
 import { ATURAN_TUJUAN, KESULITAN, MAKS_SOAL, NAMA_BENTUK, TUJUAN, type Pengaturan } from "@/lib/prompt";
-import { POLA_ARAB, type Bab, type Bentuk, type Soal } from "@/lib/soal";
+import type { Bab, Bentuk } from "@/lib/soal";
 import bab3 from "@/data/qurdis11-bab3.json";
 
 const DAFTAR_BAB: Bab[] = [bab3];
 const BENTUK = Object.keys(NAMA_BENTUK) as Bentuk[];
-const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
 
 type Hasil = NonNullable<Awaited<ReturnType<typeof cekHasil>>>;
-
-/** Teks campuran Latin + Arab: bagian Arab ditulis kanan-ke-kiri dengan font Arab. */
-function Teks({ teks }: { teks: string }) {
-  return (
-    <>
-      {String(teks ?? "")
-        .split(PECAH_ARAB)
-        .map((b, i) => (i % 2 ? <bdi key={i} dir="rtl" lang="ar" className="font-arab text-xl">{b}</bdi> : b))}
-    </>
-  );
-}
 
 function Angka({ label, nilai, ubah }: { label: string; nilai: number; ubah: (n: number) => void }) {
   return (
@@ -166,7 +155,19 @@ export default function Home() {
           {BENTUK.filter((b) => soal.some((s) => s.bentuk === b)).map((b) => (
             <div key={b} className="space-y-4">
               <h2 className="text-lg font-bold">{NAMA_BENTUK[b]}</h2>
-              {soal.map((s, i) => s.bentuk === b && <KartuSoal key={i} no={i + 1} s={s} bab={bab} />)}
+              {soal.map(
+                (s, i) =>
+                  s.bentuk === b && (
+                    <KartuSoal
+                      key={i}
+                      hasilId={id!}
+                      no={i + 1}
+                      s={s}
+                      bab={bab}
+                      onUbah={(baru) => setHasil({ ...hasil, soal: soal.map((x, j) => (j === i ? baru : x)) })}
+                    />
+                  ),
+              )}
             </div>
           ))}
         </section>
@@ -175,37 +176,3 @@ export default function Home() {
   );
 }
 
-function KartuSoal({ no, s, bab }: { no: number; s: Soal; bab: Bab }) {
-  const dalil = bab.dalil.find((d) => d.id === s.dalil_id);
-  return (
-    <article className={`space-y-2 rounded-lg border p-4 ${s.peringatan?.length ? "border-red-400 bg-red-50" : ""}`}>
-      {s.peringatan?.map((w, i) => (
-        <p key={i} className="text-sm font-semibold text-red-700">⚠️ {w}</p>
-      ))}
-      <p>
-        <span className="font-semibold">{no}.</span> <Teks teks={s.pertanyaan} />
-      </p>
-      {dalil && (
-        <figure className="rounded bg-gray-50 p-3">
-          <p dir="rtl" lang="ar" className="font-arab text-2xl">{dalil.arab}</p>
-          <figcaption className="mt-1 text-xs text-gray-500">{dalil.sumber} · teks terverifikasi</figcaption>
-        </figure>
-      )}
-      {s.pilihan && (
-        <ol className="list-[upper-alpha] space-y-1 pl-6">
-          {s.pilihan.map((o, i) => <li key={i}><Teks teks={o} /></li>)}
-        </ol>
-      )}
-      <div className="space-y-1 rounded bg-emerald-50 p-3 text-sm">
-        <p><span className="font-semibold">Kunci:</span> <Teks teks={[s.kunci].flat().join(", ")} /></p>
-        {s.rubrik && (
-          <ul className="list-disc pl-5">
-            {s.rubrik.map((r, i) => <li key={i}><Teks teks={r.kriteria} /> ({r.skor})</li>)}
-          </ul>
-        )}
-        <p><span className="font-semibold">Pembahasan:</span> <Teks teks={s.pembahasan} /></p>
-        <p className="text-gray-500">{s.level} · {s.tp} · skor {s.skor}</p>
-      </div>
-    </article>
-  );
-}

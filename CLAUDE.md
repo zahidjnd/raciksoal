@@ -94,4 +94,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
 
 ## Status
 - Langkah 1 SELESAI (2026-10-14).
-- Langkah 2 (2026-10-14): form + buat soal + tampil hasil jalan untuk Bab 3. Belum: edit per butir, ganti satu soal, bab lain.
+- Langkah 2 (2026-10-14): form + buat soal + tampil hasil jalan untuk Bab 3. Belum: bab lain.
+- Langkah 2b (2026-10-14): edit per butir (`simpanSoal`, editan tetap dicek penjaga Arab) dan ganti satu soal
+  (`gantiSatuSoal`, bentuk/level/TP sama, maks 30x per set). `soal` = versi terbaru; `jawaban_ai` = semua jawaban mentah AI.
+  Catatan: skenario masih bisa berulang di set besar → solusi tuntas: kisi-kisi dulu baru soal (langkah 6).

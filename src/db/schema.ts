@@ -1,4 +1,4 @@
-import { jsonb, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { integer, jsonb, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
 
 // Tabel sementara dari tes langkah 1. Dibiarkan supaya datanya tidak terhapus.
 export const tesData = pgTable("tes_data", {
@@ -17,6 +17,7 @@ export const hasilSoal = pgTable("hasil_soal", {
   model: text("model"),
   prompt: text("prompt"),
   jawabanAi: text("jawaban_ai"), // JSON array jawaban mentah AI per tahap, untuk perbandingan model (langkah 4)
-  soal: jsonb("soal"),
+  soal: jsonb("soal"), // versi terbaru (sudah diedit/diganti guru)
   pesan: text("pesan"),
+  jumlahGanti: integer("jumlah_ganti").default(0).notNull(), // berapa kali "ganti satu soal" dipakai pada set ini
 });

@@ -37,6 +37,27 @@ export function arabTakTerverifikasi(teks: string, korpus: string): string[] {
   return (teks.match(new RegExp(POLA_ARAB, "g")) ?? []).filter((p) => !korpus.includes(rapikan(p)));
 }
 
+export const LEVEL = ["C1", "C2", "C3", "C4", "C5", "C6"];
+
+/** Rapikan soal hasil edit guru (data dari browser tidak dipercaya begitu saja). Bentuk soal tidak bisa diubah. */
+export function rapikanSoal(s: Partial<Soal>, bentuk: Bentuk): Soal {
+  const teks = (x: unknown) => String(x ?? "").trim();
+  const kunci = [s.kunci].flat().map(teks).filter(Boolean);
+  const rubrik = (s.rubrik ?? []).map((r) => ({ kriteria: teks(r?.kriteria), skor: Math.max(0, Number(r?.skor) || 0) })).filter((r) => r.kriteria);
+  return {
+    bentuk,
+    dalil_id: s.dalil_id ? teks(s.dalil_id) : null,
+    pertanyaan: teks(s.pertanyaan),
+    ...(bentuk === "PG" || bentuk === "PGK" ? { pilihan: [0, 1, 2, 3, 4].map((i) => teks(s.pilihan?.[i])) } : {}),
+    kunci: bentuk === "PGK" ? kunci : (kunci[0] ?? ""),
+    ...(bentuk === "URAIAN" ? { rubrik } : {}),
+    pembahasan: teks(s.pembahasan),
+    level: teks(s.level),
+    tp: teks(s.tp),
+    skor: bentuk === "URAIAN" ? rubrik.reduce((n, r) => n + r.skor, 0) : Math.max(0, Number(s.skor) || 0),
+  };
+}
+
 /** Beri peringatan pada soal yang bermasalah. Aturan 5: teks Arab hanya boleh dari data terverifikasi. */
 export function periksaSoal(soal: Soal[], bab: Bab): Soal[] {
   const korpus = korpusArab(bab);

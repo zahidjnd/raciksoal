@@ -15,6 +15,13 @@
       "when": 1791970412917,
       "tag": "0001_hasil_soal",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791984525500,
+      "tag": "0002_jumlah_ganti",
+      "breakpoints": true
     }
   ]
 }

@@ -1,4 +1,4 @@
-import type { Bab, Bentuk } from "./soal";
+import type { Bab, Bentuk, Soal } from "./soal";
 
 export const TUJUAN = ["Ulangan Harian", "PTS", "PAS", "Latihan"] as const;
 export const KESULITAN = ["Mudah", "Sedang", "Sulit"] as const;
@@ -133,7 +133,7 @@ ${bab.materi.join("\n")}`;
 }
 
 /** Permintaan untuk satu tahap. `sudah` = pertanyaan dari tahap sebelumnya, supaya AI tidak membuat soal yang mirip. */
-export function buatPengguna(p: Pengaturan, jumlah: Record<Bentuk, number>, sudah: string[]) {
+export function buatPengguna(p: Pengaturan, jumlah: Record<Bentuk, number>, sudah: string[], tambahan = "") {
   const urutan = (Object.keys(NAMA_BENTUK) as Bentuk[]).filter((b) => jumlah[b] > 0);
   const tujuan = p.tujuan as (typeof TUJUAN)[number];
   const kesulitan = p.kesulitan as (typeof KESULITAN)[number];
@@ -144,5 +144,13 @@ export function buatPengguna(p: Pengaturan, jumlah: Record<Bentuk, number>, suda
 Tingkat kesulitan: ${kesulitan}. Artinya: ${ATURAN_KESULITAN[kesulitan]}
 Jumlah: ${urutan.map((b) => `${b} ${jumlah[b]}`).join(", ")}. Urutkan per bentuk: ${urutan.join(", ")}.
 Komposisi level: LOTS ${p.level.LOTS}%, MOTS ${p.level.MOTS}%, HOTS ${p.level.HOTS}%.
-${daftarSudah}Balas hanya dengan JSON sesuai format.`;
+${daftarSudah}${tambahan}Balas hanya dengan JSON sesuai format.`;
+}
+
+/** Permintaan "ganti satu soal": 1 soal baru dengan bentuk, level, dan TP yang sama, tapi berbeda dari semua soal di set. */
+export function buatPenggantiPengguna(p: Pengaturan, lama: Soal, semua: Soal[]) {
+  const jumlah = { PG: 0, PGK: 0, BS: 0, URAIAN: 0, [lama.bentuk]: 1 };
+  const tambahan = `\nIni permintaan MENGGANTI soal berikut (guru tidak memakainya): "${lama.pertanyaan.slice(0, 300)}"
+Buat tepat 1 soal ${lama.bentuk} pengganti dengan level ${lama.level} dan ${lama.tp} (abaikan komposisi level di atas). Gunakan skenario, sudut pandang, dan redaksi yang berbeda dari soal yang diganti maupun soal lain di daftar.\n`;
+  return buatPengguna(p, jumlah, semua.map((s) => s.pertanyaan), tambahan);
 }

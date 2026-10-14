@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { arabTakTerverifikasi, korpusArab, periksaSoal, ratakanKunci, type Bab, type Soal } from "./soal.ts";
+import { arabTakTerverifikasi, korpusArab, periksaSoal, rapikanSoal, ratakanKunci, type Bab, type Soal } from "./soal.ts";
 import { bagiTahap } from "./prompt.ts";
 
 test("bagiTahap membagi soal maks 10 per tahap dengan urutan bentuk tetap", () => {
@@ -32,6 +32,23 @@ test("teks Arab dengan harakat berbeda atau karangan AI ditandai", () => {
   const tanpaHarakat = bab.dalil[0].mufradat[0].arab.replace(/[ً-ْ]/g, "");
   assert.equal(arabTakTerverifikasi(`Lafaz ${tanpaHarakat}`, korpus).length, 1);
   assert.equal(arabTakTerverifikasi("قَالَ رَسُولُ اللَّهِ", korpus).length, 1);
+});
+
+test("rapikanSoal merapikan isian guru dan menghitung skor uraian dari rubrik", () => {
+  const isian = {
+    bentuk: "PG", pertanyaan: "  Apa?  ", kunci: ["B"], pilihan: ["a", "b"], skor: "2",
+    rubrik: [{ kriteria: "x", skor: 3 }], peringatan: ["lama"],
+  } as unknown as Soal;
+  const pg = rapikanSoal(isian, "PG");
+  assert.equal(pg.pertanyaan, "Apa?");
+  assert.equal(pg.kunci, "B");
+  assert.deepEqual(pg.pilihan, ["a", "b", "", "", ""]);
+  assert.equal(pg.skor, 2);
+  assert.equal(pg.rubrik, undefined);
+
+  const uraian = rapikanSoal({ pertanyaan: "Jelaskan!", kunci: "jawab", rubrik: [{ kriteria: "a", skor: 3 }, { kriteria: "", skor: 9 }, { kriteria: "b", skor: 2 }] }, "URAIAN");
+  assert.equal(uraian.skor, 5); // kriteria kosong dibuang
+  assert.equal(uraian.pilihan, undefined);
 });
 
 test("periksaSoal memberi peringatan dalil tak dikenal", () => {

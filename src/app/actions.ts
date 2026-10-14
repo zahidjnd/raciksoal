@@ -4,13 +4,14 @@ import { eq, gte, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { hasilSoal } from "@/db/schema";
 import { tanyaAI } from "@/lib/ai";
-import { bagiTahap, bersihkanPengaturan, buatPengguna, buatSistem, type Pengaturan } from "@/lib/prompt";
-import { periksaSoal, ratakanKunci, type Bab, type Soal } from "@/lib/soal";
+import { bagiTahap, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatSistem, type Pengaturan } from "@/lib/prompt";
+import { periksaSoal, rapikanSoal, ratakanKunci, type Bab, type Soal } from "@/lib/soal";
 import bab3 from "@/data/qurdis11-bab3.json";
 
 const DAFTAR_BAB: Record<string, Bab> = { [bab3.id]: bab3 };
 // ponytail: batas harian untuk seluruh web (belum ada login). Jadi per guru di langkah 5.
 const BATAS_PER_HARI = 30;
+const BATAS_GANTI_PER_SET = 30;
 
 const pesanError = (e: unknown) => {
   const err = e as Error;
@@ -76,6 +77,66 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
     const err = e as Error;
     const pesan = err.name === "TimeoutError" ? "AI terlalu lama menjawab (timeout)." : pesanError(e);
     await simpan({ status: "gagal", pesan }).catch(() => {});
+  }
+}
+
+/** Ambil set soal yang sudah selesai + soal nomor `no` (mulai 0). Mengembalikan pesan kalau tidak valid. */
+async function ambilSet(id: number, no: number) {
+  const [h] = await db.select().from(hasilSoal).where(eq(hasilSoal.id, Number(id)));
+  if (!h || h.status !== "selesai") return "Set soal tidak ditemukan atau belum selesai.";
+  const soal = h.soal as Soal[];
+  const bab = DAFTAR_BAB[h.babId];
+  if (!Number.isInteger(no) || no < 0 || no >= soal.length || !bab) return "Nomor soal tidak valid.";
+  return { h, soal, bab };
+}
+
+// ponytail: siapa pun yang tahu id bisa mengedit. Batasi per guru setelah ada login (langkah 5).
+/** Simpan hasil edit guru untuk satu soal. Penjaga teks Arab tetap berlaku untuk editan. */
+export async function simpanSoal(id: number, no: number, isian: Soal) {
+  try {
+    const set = await ambilSet(id, no);
+    if (typeof set === "string") return { ok: false as const, pesan: set };
+    const [soal] = periksaSoal([rapikanSoal(isian, set.soal[no].bentuk)], set.bab);
+    set.soal[no] = soal;
+    await db.update(hasilSoal).set({ soal: set.soal }).where(eq(hasilSoal.id, set.h.id));
+    return { ok: true as const, soal };
+  } catch (e) {
+    return { ok: false as const, pesan: `Gagal menyimpan: ${pesanError(e)}` };
+  }
+}
+
+/** Minta AI membuat 1 soal pengganti (bentuk, level, TP sama; skenario berbeda dari semua soal di set). */
+export async function gantiSatuSoal(id: number, no: number) {
+  try {
+    const set = await ambilSet(id, no);
+    if (typeof set === "string") return { ok: false as const, pesan: set };
+    const { h, bab } = set;
+    if (h.jumlahGanti >= BATAS_GANTI_PER_SET) return { ok: false as const, pesan: `Batas ${BATAS_GANTI_PER_SET} kali ganti soal untuk set ini sudah habis.` };
+
+    const lama = set.soal[no];
+    const sistem = buatSistem(bab);
+    const pengguna = buatPenggantiPengguna(h.pengaturan as Pengaturan, lama, set.soal);
+    const { jawaban, terpotong } = await tanyaAI(sistem, pengguna);
+    // Prompt & jawaban mentah penggantian ikut disimpan (untuk perbandingan model, langkah 4).
+    const catat = {
+      jumlahGanti: h.jumlahGanti + 1,
+      prompt: `${h.prompt}\n\n---\n\n[GANTI SOAL NOMOR ${no + 1}]\n${pengguna}`,
+      // set lama (sebelum pembuatan bertahap) menyimpan satu jawaban mentah, bukan array
+      jawabanAi: JSON.stringify([...(h.jawabanAi?.startsWith("[") ? JSON.parse(h.jawabanAi) : [h.jawabanAi].filter(Boolean)), jawaban]),
+    };
+    const baru = !terpotong && (JSON.parse(jawaban)?.soal?.[0] as Soal | undefined);
+    if (!baru) {
+      await db.update(hasilSoal).set(catat).where(eq(hasilSoal.id, h.id));
+      return { ok: false as const, pesan: "Jawaban AI tidak sesuai format. Coba lagi." };
+    }
+    const [soal] = periksaSoal([{ ...baru, bentuk: lama.bentuk }], bab);
+    ratakanKunci([soal]); // posisi kunci PG/PGK diacak
+    set.soal[no] = soal;
+    await db.update(hasilSoal).set({ ...catat, soal: set.soal }).where(eq(hasilSoal.id, h.id));
+    return { ok: true as const, soal };
+  } catch (e) {
+    const err = e as Error;
+    return { ok: false as const, pesan: err.name === "TimeoutError" ? "AI terlalu lama menjawab (timeout)." : `Gagal mengganti: ${pesanError(e)}` };
   }
 }
 
