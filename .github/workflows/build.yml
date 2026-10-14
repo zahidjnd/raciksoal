@@ -1,0 +1,34 @@
+# Build di GitHub (bukan di hosting, RAM hosting kurang), lalu hasilnya
+# disimpan di branch `deploy`. Hosting mengambil branch itu lewat cron.
+name: build
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Rakit hasil build
+        run: |
+          mkdir out
+          cp -r .next/standalone/. out/
+          cp -r .next/static out/.next/static
+          cp -r public out/public
+          cp -r drizzle out/drizzle
+          rm -f out/.env*
+      - name: Kirim ke branch deploy
+        run: |
+          cd out
+          git init -q -b deploy
+          git add -A
+          git -c user.name=github-actions -c user.email=actions@github.com commit -qm "build ${GITHUB_SHA::7}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" deploy
