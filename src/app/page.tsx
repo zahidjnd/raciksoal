@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { cekHasil, mulaiBuatSoal } from "./actions";
-import { KESULITAN, MAKS_SOAL, NAMA_BENTUK, TUJUAN, type Pengaturan } from "@/lib/prompt";
+import { ATURAN_TUJUAN, KESULITAN, MAKS_SOAL, NAMA_BENTUK, TUJUAN, type Pengaturan } from "@/lib/prompt";
 import { POLA_ARAB, type Bab, type Bentuk, type Soal } from "@/lib/soal";
 import bab3 from "@/data/qurdis11-bab3.json";
 
@@ -37,7 +37,7 @@ export default function Home() {
     babId: DAFTAR_BAB[0].id,
     tujuan: TUJUAN[0],
     jumlah: { PG: 10, PGK: 5, BS: 5, URAIAN: 5 },
-    level: { LOTS: 30, MOTS: 50, HOTS: 20 },
+    level: ATURAN_TUJUAN[TUJUAN[0]].level,
     kesulitan: "Sedang",
   });
   const [id, setId] = useState<number | null>(null);
@@ -107,7 +107,14 @@ export default function Home() {
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block text-sm">
             Tujuan soal
-            <select className="mt-1 w-full rounded border p-2" value={p.tujuan} onChange={(e) => setP({ ...p, tujuan: e.target.value })}>
+            <select
+              className="mt-1 w-full rounded border p-2"
+              value={p.tujuan}
+              onChange={(e) => {
+                const tujuan = e.target.value as (typeof TUJUAN)[number];
+                setP({ ...p, tujuan, level: ATURAN_TUJUAN[tujuan].level }); // komposisi level ikut tujuan
+              }}
+            >
               {TUJUAN.map((t) => <option key={t}>{t}</option>)}
             </select>
           </label>
@@ -128,6 +135,7 @@ export default function Home() {
           </fieldset>
           <fieldset className="space-y-2">
             <legend className="mb-1 text-sm font-semibold">Komposisi level (total {totalLevel}%)</legend>
+            <p className="text-xs text-gray-500">Terisi otomatis sesuai tujuan soal, boleh diubah.</p>
             <Angka label="LOTS (C1–C2) %" nilai={p.level.LOTS} ubah={(n) => setP({ ...p, level: { ...p.level, LOTS: n } })} />
             <Angka label="MOTS (C3) %" nilai={p.level.MOTS} ubah={(n) => setP({ ...p, level: { ...p.level, MOTS: n } })} />
             <Angka label="HOTS (C4–C6) %" nilai={p.level.HOTS} ubah={(n) => setP({ ...p, level: { ...p.level, HOTS: n } })} />

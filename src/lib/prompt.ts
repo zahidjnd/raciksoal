@@ -2,6 +2,28 @@ import type { Bab, Bentuk } from "./soal";
 
 export const TUJUAN = ["Ulangan Harian", "PTS", "PAS", "Latihan"] as const;
 export const KESULITAN = ["Mudah", "Sedang", "Sulit"] as const;
+
+const ATURAN_UJIAN = "Gaya soal ujian resmi madrasah (seperti asesmen tengah/akhir semester). Sebar soal merata ke semua TP dan semua dalil. Bahasa baku. Pembahasan ringkas (1–2 kalimat).";
+
+/** Aturan tiap tujuan soal + komposisi level bawaan (terisi otomatis di form, tetap bisa diubah). */
+export const ATURAN_TUJUAN: Record<(typeof TUJUAN)[number], { aturan: string; level: { LOTS: number; MOTS: number; HOTS: number } }> = {
+  Latihan: {
+    aturan: "Pembahasan mendidik (3–4 kalimat): jelaskan mengapa jawaban benar tepat DAN mengapa pengecoh salah dengan menyebut isinya (bukan hurufnya), agar siswa bisa belajar mandiri.",
+    level: { LOTS: 40, MOTS: 40, HOTS: 20 },
+  },
+  "Ulangan Harian": {
+    aturan: "Pastikan setiap TP bab mendapat soal untuk mengecek ketercapaiannya. Bahasa baku. Pembahasan ringkas (1–2 kalimat).",
+    level: { LOTS: 40, MOTS: 40, HOTS: 20 },
+  },
+  PTS: { aturan: ATURAN_UJIAN, level: { LOTS: 30, MOTS: 40, HOTS: 30 } },
+  PAS: { aturan: ATURAN_UJIAN, level: { LOTS: 30, MOTS: 40, HOTS: 30 } },
+};
+
+export const ATURAN_KESULITAN: Record<(typeof KESULITAN)[number], string> = {
+  Mudah: "Pokok soal langsung dan pendek, cukup satu langkah berpikir, tanpa stimulus panjang. Pengecoh jelas berbeda dari jawaban benar.",
+  Sedang: "Pokok soal menuntut pemahaman konsep, boleh memakai stimulus pendek. Pengecoh masuk akal dan mirip dengan jawaban benar.",
+  Sulit: "Gunakan stimulus kasus atau perbandingan dua dalil/konsep yang menuntut beberapa langkah berpikir. Pengecoh sangat homogen dan hanya berbeda tipis, tetapi tetap jelas salah bagi siswa yang memahami materi.",
+};
 export const NAMA_BENTUK: Record<Bentuk, string> = {
   PG: "Pilihan Ganda",
   PGK: "Pilihan Ganda Kompleks",
@@ -78,10 +100,12 @@ Materi:
 ${bab.materi.join("\n")}`;
 
   const urutan = (Object.keys(NAMA_BENTUK) as Bentuk[]).filter((b) => p.jumlah[b] > 0);
-  const pengguna = `Buat soal untuk ${p.tujuan}.
+  const tujuan = p.tujuan as (typeof TUJUAN)[number];
+  const kesulitan = p.kesulitan as (typeof KESULITAN)[number];
+  const pengguna = `Buat soal untuk ${tujuan}. Aturan ${tujuan}: ${ATURAN_TUJUAN[tujuan].aturan}
+Tingkat kesulitan: ${kesulitan}. Artinya: ${ATURAN_KESULITAN[kesulitan]}
 Jumlah: ${urutan.map((b) => `${b} ${p.jumlah[b]}`).join(", ")}. Urutkan per bentuk: ${urutan.join(", ")}.
 Komposisi level: LOTS ${p.level.LOTS}%, MOTS ${p.level.MOTS}%, HOTS ${p.level.HOTS}%.
-Tingkat kesulitan: ${p.kesulitan}.
 Balas hanya dengan JSON sesuai format.`;
 
   return { sistem, pengguna };
