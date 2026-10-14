@@ -103,6 +103,12 @@ ATURAN KUALITAS SOAL:
 - Tulis pilihan TANPA huruf A–E di depannya. Pembahasan TIDAK menyebut huruf pilihan (urutan pilihan PG dan PGK akan diacak ulang oleh aplikasi).
 - Level kognitif Bloom C1–C6: LOTS = C1–C2, MOTS = C3, HOTS = C4–C6. Soal HOTS memakai stimulus kasus/fenomena remaja yang relevan.
 
+VARIASI STIMULUS (berlaku untuk seluruh set soal, lintas bentuk soal):
+- Ragamkan bentuk stimulus: cuplikan berita atau data, unggahan media sosial, pernyataan seorang tokoh, cerita pendek tentang satu orang, potongan percakapan, situasi di madrasah/rumah/masyarakat, atau tanpa stimulus sama sekali.
+- Pola "dua orang/kelompok berdebat atau berbeda pendapat" paling banyak 2 kali dalam satu set.
+- Satu skenario atau kasus (misalnya: mendengar lirik lagu, berduaan di ruang kelas, perbedaan hukuman pezina) hanya boleh dipakai SEKALI dalam satu set.
+- Tidak semua soal perlu stimulus: soal LOTS cukup berupa pokok soal langsung.
+
 BENTUK SOAL:
 - PG: 5 pilihan, tepat 1 benar. "kunci": "A".."E".
 - PGK (pilihan ganda kompleks): 5 pilihan, tepat 2 benar. "kunci": array berisi 2 huruf jawaban benar. Akhiri pertanyaan dengan "(Pilih 2 jawaban)".
@@ -132,7 +138,7 @@ export function buatPengguna(p: Pengaturan, jumlah: Record<Bentuk, number>, suda
   const tujuan = p.tujuan as (typeof TUJUAN)[number];
   const kesulitan = p.kesulitan as (typeof KESULITAN)[number];
   const daftarSudah = sudah.length
-    ? `\nSoal berikut SUDAH dibuat. Jangan membuat soal yang sama atau mirip (pokok bahasan maupun redaksinya); ambil sisi materi, dalil, atau TP yang lain:\n${sudah.map((s) => `- ${s.slice(0, 160)}`).join("\n")}\n`
+    ? `\nSoal berikut SUDAH dibuat dalam set ini. Jangan membuat soal yang sama atau mirip (pokok bahasan maupun redaksinya), jangan memakai lagi skenario/kasus yang sama, dan hitung pola "berdebat/berbeda pendapat" yang sudah ada di daftar ini terhadap batas 2 kali. Ambil sisi materi, dalil, atau TP yang lain:\n${sudah.map((s) => `- ${s.slice(0, 160)}`).join("\n")}\n`
     : "";
   return `Buat soal untuk ${tujuan}. Aturan ${tujuan}: ${ATURAN_TUJUAN[tujuan].aturan}
 Tingkat kesulitan: ${kesulitan}. Artinya: ${ATURAN_KESULITAN[kesulitan]}
