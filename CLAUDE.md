@@ -98,8 +98,10 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
 - Langkah 2b (2026-10-14): edit per butir (`simpanSoal`, editan tetap dicek penjaga Arab) dan ganti satu soal
   (`gantiSatuSoal`, bentuk/level/TP sama, maks 30x per set). `soal` = versi terbaru; `jawaban_ai` = semua jawaban mentah AI.
   Catatan: skenario masih bisa berulang di set besar → solusi tuntas: kisi-kisi dulu baru soal (langkah 6).
-- Langkah 3 (2026-10-14): ekspor Word (`src/lib/word.ts`, rute `/api/word?id=..&jenis=soal|kunci`), meniru
-  FORMAT_AFTS milik madrasah: kop (logo Kemenag + ornamen, dari file format), identitas, petunjuk, soal 2 kolom.
+- Langkah 3 (2026-10-14): ekspor Word (`src/lib/word.ts`, rute `/api/word?id=..&jenis=soal|kunci`).
+  Lembar soal = cetakan `public/word/template-soal.docx` yang dibuat dari FORMAT_AFTS milik madrasah oleh
+  `scripts/buat-template-word.py` (kop PERSIS asli; hanya {{judul}}, {{tp}}, {{isi}} yang diisi). Kop berubah → jalankan ulang skrip.
   Dua file: lembar soal siswa (tanpa peringatan AI, keputusan pemilik) dan kunci+pembahasan+rubrik guru (dengan peringatan).
-  Font Amiri (OFL, `public/word/`) DITANAM di file Word. Nama madrasah masih konstanta di word.ts.
   Belum: bobot skor per bentuk (skor masih dari AI, total bisa ≠ 100).
+- 2026-10-14: Atas permintaan pemilik, teks Arab di WORD memakai Traditional Arabic 16 pt (bawaan Windows, sama
+  dengan format AFTS), pengecualian dari aturan 7. Tampilan WEB tetap Amiri.

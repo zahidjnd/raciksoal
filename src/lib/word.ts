@@ -1,17 +1,16 @@
-// Ekspor ke Word (library docx), meniru format AFTS madrasah: kop + soal 2 kolom, dan kunci terpisah untuk guru.
+// Ekspor ke Word (library docx). Lembar soal memakai cetakan dari format AFTS madrasah
+// (public/word/template-soal.docx, dibuat oleh scripts/buat-template-word.py), jadi kopnya persis aslinya.
+// Kunci jawaban untuk guru dibuat sebagai dokumen terpisah.
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import {
   AlignmentType,
-  BorderStyle,
-  CharacterSet,
   Document,
-  ImageRun,
   Packer,
   Paragraph,
-  SectionType,
+  patchDocument,
+  PatchType,
   Table,
-  TableBorders,
   TableCell,
   TableRow,
   TabStopType,
@@ -23,18 +22,15 @@ import {
 import { NAMA_BENTUK, type Pengaturan } from "./prompt";
 import { POLA_ARAB, type Bab, type Bentuk, type Soal } from "./soal";
 
-// ponytail: identitas madrasah masih tetap; jadi pengaturan per guru/madrasah saat dipakai banyak madrasah.
-const MADRASAH = "MADRASAH ALIYAH AL-FATAH";
 const MAPEL = "Al-Qur'an Hadis";
-const KELAS = "XI (Sebelas)";
-const BASMALAH = "بسم الله الرحمن الرحيم"; // sama dengan kop format AFTS milik madrasah
 const PERINGATAN = "Soal dibuat AI, wajib diperiksa guru sebelum dipakai.";
 
 const FONT = "Times New Roman";
-const FONT_ARAB = "Amiri"; // ditanam di file Word, jadi tampil benar walau komputer tidak punya Amiri
+// Permintaan pemilik: di Word pakai Traditional Arabic 16 pt (bawaan Windows, sama dengan format AFTS).
+// Tampilan web tetap Amiri.
+const FONT_ARAB = "Traditional Arabic";
 const UKURAN = 22; // setengah poin: 22 = 11 pt
-const UKURAN_ARAB = 28; // 14 pt untuk lafaz di tengah kalimat
-const UKURAN_AYAT = 32; // 16 pt untuk ayat/hadis utuh
+const UKURAN_ARAB = 32; // 16 pt
 const HURUF = ["A", "B", "C", "D", "E"];
 const ROMAWI = ["I", "II", "III", "IV"];
 const LEBAR = 10206; // lebar isi A4 (twip) dengan margin kiri-kanan 850
@@ -44,6 +40,12 @@ const JUDUL: Record<string, string> = {
   PTS: "ASESMEN FORMATIF TENGAH SEMESTER",
   PAS: "ASESMEN SUMATIF AKHIR SEMESTER",
   Latihan: "LATIHAN SOAL",
+};
+const NAMA_BAGIAN: Record<Bentuk, string> = {
+  PG: "PILIHAN GANDA (PG)",
+  PGK: "PILIHAN GANDA KOMPLEKS (PGK)",
+  BS: "BENAR / SALAH (B / S)",
+  URAIAN: "URAIAN / ESAI",
 };
 const PETUNJUK: Record<Bentuk, string> = {
   PG: "Pilihlah salah satu jawaban yang paling tepat (A, B, C, D, atau E)!",
@@ -55,99 +57,38 @@ const PETUNJUK: Record<Bentuk, string> = {
 const aset = (nama: string) => readFileSync(path.join(process.cwd(), "public", "word", nama));
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
 
+type Gaya = { bold?: boolean; italics?: boolean; color?: string; size?: number };
+
+/** Teks Latin dengan huruf tetap Times New Roman (cetakan bawaan memakai Calibri). */
+const r = (text: string, gaya: Gaya = {}) => new TextRun({ font: FONT, size: UKURAN, ...gaya, text });
+
 /** Teks campuran Latin + Arab: bagian Arab memakai font Arab dan arah kanan-ke-kiri. */
-function teks(isi: string, gaya: { bold?: boolean; italics?: boolean; color?: string; size?: number } = {}, ukuranArab = UKURAN_ARAB): TextRun[] {
+function teks(isi: string, gaya: Gaya = {}): TextRun[] {
   return String(isi ?? "")
     .split(PECAH_ARAB)
     .flatMap((b, i) =>
-      !b
-        ? []
-        : i % 2
-          ? new TextRun({ ...gaya, text: b, font: FONT_ARAB, size: ukuranArab, rightToLeft: true, language: { bidirectional: "ar-SA" } })
-          : new TextRun({ ...gaya, text: b, font: FONT, size: gaya.size ?? UKURAN }),
+      !b ? [] : i % 2 ? new TextRun({ ...gaya, text: b, font: FONT_ARAB, size: UKURAN_ARAB, rightToLeft: true, language: { bidirectional: "ar-SA" } }) : r(b, gaya),
     );
 }
 
 const par = (anak: ParagraphChild[], opsi: Partial<ConstructorParameters<typeof Paragraph>[0] & object> = {}) =>
   new Paragraph({ spacing: { after: 60 }, ...opsi, children: anak });
 
-/** Paragraf bernomor dengan indentasi gantung: "12.  isi..." */
+/** Paragraf bernomor tebal dengan indentasi gantung, rata kiri-kanan: "12.  isi..." */
 const bernomor = (label: string, isi: ParagraphChild[], kiri = 400, opsi = {}) =>
-  par([new TextRun({ text: `${label}\t`, font: FONT, size: UKURAN }), ...isi], {
+  par([r(`${label}\t`, { bold: true }), ...isi], {
+    alignment: AlignmentType.JUSTIFIED,
     indent: { left: kiri, hanging: 400 },
     tabStops: [{ type: TabStopType.LEFT, position: kiri }],
     ...opsi,
   });
 
-function semesterDanTahun(tanggal: Date) {
+function judulAsesmen(p: Pengaturan, tanggal: Date) {
   const bulan = tanggal.getMonth() + 1;
   const tahun = tanggal.getFullYear();
-  return bulan >= 7 ? { semester: "GANJIL", tp: `${tahun}/${tahun + 1}` } : { semester: "GENAP", tp: `${tahun - 1}/${tahun}` };
-}
-
-function judulAsesmen(p: Pengaturan, tanggal: Date) {
-  const { semester, tp } = semesterDanTahun(tanggal);
+  const { semester, tp } = bulan >= 7 ? { semester: "GANJIL", tp: `${tahun}/${tahun + 1}` } : { semester: "GENAP", tp: `${tahun - 1}/${tahun}` };
   const judul = JUDUL[p.tujuan] ?? "SOAL";
   return { judul: p.tujuan === "PTS" || p.tujuan === "PAS" ? `${judul} ${semester}` : judul, tp };
-}
-
-const sel = (anak: Paragraph[], lebar: number) =>
-  new TableCell({ children: anak, width: { size: lebar, type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER });
-
-function kop(p: Pengaturan, tanggal: Date) {
-  const { judul, tp } = judulAsesmen(p, tanggal);
-  const tengah = (isi: string, size = 26) => par([new TextRun({ text: isi, bold: true, font: FONT, size })], { alignment: AlignmentType.CENTER, spacing: { after: 0 } });
-  const kopTabel = new Table({
-    width: { size: LEBAR, type: WidthType.DXA },
-    borders: TableBorders.NONE,
-    rows: [
-      new TableRow({
-        children: [
-          sel([par([new ImageRun({ type: "png", data: aset("logo-kemenag.png"), transformation: { width: 75, height: 75 } })])], 1400),
-          sel(
-            [
-              par([new TextRun({ text: BASMALAH, font: FONT_ARAB, size: 30, rightToLeft: true, language: { bidirectional: "ar-SA" } })], { alignment: AlignmentType.CENTER, spacing: { after: 0 } }),
-              tengah(judul),
-              tengah(MADRASAH),
-              tengah(`TAHUN PELAJARAN ${tp}`, 24),
-            ],
-            7406,
-          ),
-          sel([par([new ImageRun({ type: "jpg", data: aset("ornamen-masjid.jpg"), transformation: { width: 75, height: 48 } })], { alignment: AlignmentType.RIGHT })], 1400),
-        ],
-      }),
-    ],
-  });
-
-  const baris = (a: string, b: string, c: string, d: string) =>
-    new TableRow({
-      children: [
-        sel([par([new TextRun(a)])], 1900),
-        sel([par([new TextRun(":")])], 250),
-        sel([par([new TextRun(b)])], 2950),
-        sel([par([new TextRun(c)])], 1900),
-        sel([par([new TextRun(":")])], 250),
-        sel([par([new TextRun(d)])], 2956),
-      ],
-    });
-  const identitas = new Table({
-    width: { size: LEBAR, type: WidthType.DXA },
-    borders: TableBorders.NONE,
-    rows: [baris("Mata Pelajaran", MAPEL, "Hari, Tanggal", ""), baris("Kelas", KELAS, "Waktu", "........ menit")],
-  });
-
-  return [
-    kopTabel,
-    par([], { border: { bottom: { style: BorderStyle.DOUBLE, size: 6, color: "000000", space: 1 } }, spacing: { after: 120 } }),
-    identitas,
-    par([new TextRun({ text: "PETUNJUK UMUM:", bold: true })], { spacing: { before: 120, after: 0 } }),
-    ...[
-      "Awali dengan mengucap Basmalah dan berdoa, akhiri dengan mengucap Hamdalah.",
-      "Jawaban dikerjakan pada Lembar Jawab.",
-      "Dahulukan menjawab soal yang mudah.",
-    ].map((t, i) => bernomor(`${i + 1}.`, [new TextRun(t)], 400, { spacing: { after: 0 } })),
-    par([], { border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: "000000", space: 1 } }, spacing: { after: 120 } }),
-  ];
 }
 
 /** Urutan bentuk yang ada di set, dengan nomor soal global (1, 2, 3, ...). */
@@ -157,43 +98,40 @@ function kelompok(soal: Soal[]) {
     .filter((k) => k.butir.length);
 }
 
-function dokumen(sections: ConstructorParameters<typeof Document>[0]["sections"]) {
-  return new Document({
-    creator: "Racik Soal",
-    styles: { default: { document: { run: { font: FONT, size: UKURAN } } } },
-    fonts: [{ name: FONT_ARAB, data: aset("Amiri-Regular.ttf"), bold: aset("Amiri-Bold.ttf"), characterSet: CharacterSet.ARABIC }],
-    sections,
-  });
-}
-
-const HALAMAN = { size: { width: 11906, height: 16838 }, margin: { top: 720, right: 850, bottom: 900, left: 850 } };
-
-/** Lembar soal untuk siswa: kop + soal dalam 2 kolom (tanpa kunci). */
-export function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Date) {
+/** Lembar soal untuk siswa: kop asli format AFTS + soal 2 kolom (tanpa kunci). */
+export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Date) {
   const isi: Paragraph[] = [];
   kelompok(soal).forEach(({ bentuk, butir }, k) => {
-    isi.push(par([new TextRun({ text: `${ROMAWI[k]}. ${NAMA_BENTUK[bentuk].toUpperCase()}`, bold: true })], { spacing: { before: k ? 200 : 0, after: 40 } }));
-    isi.push(par([new TextRun({ text: PETUNJUK[bentuk], italics: true })], { spacing: { after: 120 } }));
+    isi.push(par([r(`${ROMAWI[k]}. ${NAMA_BAGIAN[bentuk]}`, { bold: true })], { spacing: { before: k ? 200 : 0, after: 40 } }));
+    isi.push(par([r(PETUNJUK[bentuk], { italics: true })], { spacing: { after: 120 } }));
     for (const { s, no } of butir) {
       isi.push(bernomor(`${no}.`, teks(s.pertanyaan), 400, { keepNext: true }));
       const dalil = bab.dalil.find((d) => d.id === s.dalil_id);
       if (dalil) {
-        isi.push(par(teks(dalil.arab, {}, UKURAN_AYAT), { bidirectional: true, alignment: AlignmentType.START, indent: { right: 400 }, keepNext: true, spacing: { after: 0, line: 360 } }));
-        isi.push(par([new TextRun({ text: `(${dalil.sumber})`, italics: true, size: 18 })], { alignment: AlignmentType.RIGHT, keepNext: true }));
+        isi.push(par(teks(dalil.arab), { bidirectional: true, alignment: AlignmentType.START, indent: { right: 400 }, keepNext: true, spacing: { after: 0 } }));
+        isi.push(par([r(`(${dalil.sumber})`, { italics: true, size: 18 })], { alignment: AlignmentType.RIGHT, keepNext: true }));
       }
       if (s.pilihan) s.pilihan.forEach((o, i) => isi.push(bernomor(`${HURUF[i]}.`, teks(o), 800, { spacing: { after: 0 }, keepNext: i < 4 })));
-      if (bentuk === "BS") isi.push(par([new TextRun("A. Benar\t\tB. Salah")], { indent: { left: 400 } }));
+      if (bentuk === "BS") isi.push(par([r("A.", { bold: true }), r(" Benar\t\t"), r("B.", { bold: true }), r(" Salah")], { indent: { left: 400 } }));
       isi.push(par([], { spacing: { after: 80 } }));
     }
   });
 
-  return Packer.toBuffer(
-    dokumen([
-      { properties: { page: HALAMAN }, children: kop(p, tanggal) },
-      { properties: { page: HALAMAN, type: SectionType.CONTINUOUS, column: { count: 2, space: 500 } }, children: isi },
-    ]),
-  );
+  const { judul, tp } = judulAsesmen(p, tanggal);
+  return patchDocument({
+    outputType: "nodebuffer",
+    data: aset("template-soal.docx"),
+    keepOriginalStyles: true, // judul & tahun mengikuti huruf asli di kop
+    patches: {
+      judul: { type: PatchType.PARAGRAPH, children: [new TextRun(judul)] },
+      tp: { type: PatchType.PARAGRAPH, children: [new TextRun(tp)] },
+      isi: { type: PatchType.DOCUMENT, children: isi },
+    },
+  });
 }
+
+const sel = (anak: Paragraph[], lebar: number) =>
+  new TableCell({ children: anak, width: { size: lebar, type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER });
 
 /** Kunci jawaban, pembahasan, dan pedoman penskoran untuk guru. */
 export function buatWordKunci(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Date) {
@@ -232,7 +170,7 @@ export function buatWordKunci(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Da
               indent: { size: 400, type: WidthType.DXA },
               rows: [
                 new TableRow({ children: [sel([par([new TextRun({ text: "Kriteria penilaian", bold: true })])], LEBAR - 1600), sel([par([new TextRun({ text: "Skor", bold: true })], { alignment: AlignmentType.CENTER })], 1200)] }),
-                ...s.rubrik.map((r) => new TableRow({ children: [sel([par(teks(r.kriteria))], LEBAR - 1600), sel([par([new TextRun(String(r.skor))], { alignment: AlignmentType.CENTER })], 1200)] })),
+                ...s.rubrik.map((x) => new TableRow({ children: [sel([par(teks(x.kriteria))], LEBAR - 1600), sel([par([r(String(x.skor))], { alignment: AlignmentType.CENTER })], 1200)] })),
               ],
             }),
           );
@@ -244,5 +182,11 @@ export function buatWordKunci(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Da
   });
   isi.push(par([new TextRun({ text: `REKAPITULASI SKOR: ${rekap.join(" + ")} = ${total}`, bold: true })], { spacing: { before: 200 } }));
 
-  return Packer.toBuffer(dokumen([{ properties: { page: HALAMAN }, children: isi }]));
+  return Packer.toBuffer(
+    new Document({
+      creator: "Racik Soal",
+      styles: { default: { document: { run: { font: FONT, size: UKURAN } } } },
+      sections: [{ properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 720, right: 850, bottom: 900, left: 850 } } }, children: isi }],
+    }),
+  );
 }
