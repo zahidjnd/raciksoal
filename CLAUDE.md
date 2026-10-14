@@ -79,5 +79,9 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
 - 2026-10-14: Migrasi DB otomatis saat server menyala (`src/instrumentation.ts`). `.env` hosting: `~/raciksoal-app/.env`,
   diubah → aplikasi restart sendiri dalam 1 menit.
 
+- 2026-10-14: User DB hosting = `alfatah2_app` (cPanel tolak user bernama sama dengan database).
+- 2026-10-14: Kolom waktu WAJIB `timestamp(..., { withTimezone: true })`. Tanpa itu jam tampil +7 jam
+  (terlihat di `tes_data`, tabel tes sementara, dibiarkan).
+
 ## Status
-- Langkah 1: lokal selesai, aplikasi sudah jalan di raciksoal.alfatahmas.com. Belum: user PostgreSQL + `.env` hosting.
+- Langkah 1 SELESAI (2026-10-14): DB + AI jalan di raciksoal.alfatahmas.com. Berikutnya: langkah 2.
