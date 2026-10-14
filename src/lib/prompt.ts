@@ -52,12 +52,12 @@ ATURAN KUALITAS SOAL:
 - Pengecoh masuk akal, homogen, dan panjang pilihan relatif seimbang.
 - Hindari pilihan "semua benar" / "semua salah".
 - Soal tidak saling mirip; sebar ke seluruh dalil, materi, dan TP.
-- Tulis pilihan TANPA huruf A–E di depannya. Pembahasan TIDAK menyebut huruf pilihan (urutan pilihan akan diacak aplikasi).
+- Tulis pilihan TANPA huruf A–E di depannya. Pembahasan TIDAK menyebut huruf pilihan (urutan pilihan PG dan PGK akan diacak ulang oleh aplikasi).
 - Level kognitif Bloom C1–C6: LOTS = C1–C2, MOTS = C3, HOTS = C4–C6. Soal HOTS memakai stimulus kasus/fenomena remaja yang relevan.
 
 BENTUK SOAL:
 - PG: 5 pilihan, tepat 1 benar. "kunci": "A".."E".
-- PGK (pilihan ganda kompleks): 5 pilihan, tepat 2 benar. "kunci": ["A","C"]. Akhiri pertanyaan dengan "(Pilih 2 jawaban)".
+- PGK (pilihan ganda kompleks): 5 pilihan, tepat 2 benar. "kunci": array berisi 2 huruf jawaban benar. Akhiri pertanyaan dengan "(Pilih 2 jawaban)".
 - BS: satu pernyataan. "kunci": "Benar" atau "Salah". Tanpa "pilihan".
 - URAIAN: "kunci" berisi jawaban ideal; "rubrik" berisi kriteria penilaian dan skornya; "skor" = jumlah skor rubrik.
 

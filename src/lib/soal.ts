@@ -53,20 +53,53 @@ export function periksaSoal(soal: Soal[], bab: Bab): Soal[] {
   });
 }
 
-/** Sebar kunci PG merata ke A–E (urutan acak) dengan menukar posisi pilihan. */
-export function ratakanKunci(soal: Soal[], acak = Math.random): void {
-  const HURUF = "ABCDE";
-  const pg = soal.filter((s) => s.bentuk === "PG" && s.pilihan?.length === 5 && typeof s.kunci === "string" && HURUF.includes(s.kunci) && s.kunci.length === 1);
-  const target = pg.map((_, i) => i % 5);
-  for (let i = target.length - 1; i > 0; i--) {
+const HURUF = "ABCDE";
+// 10 kemungkinan pasangan kunci PG kompleks: [0,1]=AB, [0,2]=AC, ... [3,4]=DE
+const PASANGAN = [0, 1, 2, 3].flatMap((a) => [1, 2, 3, 4].filter((b) => b > a).map((b) => [a, b]));
+
+function kocok<T>(arr: T[], acak: () => number): T[] {
+  for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(acak() * (i + 1));
-    [target[i], target[j]] = [target[j], target[i]];
+    [arr[i], arr[j]] = [arr[j], arr[i]];
   }
-  pg.forEach((s, i) => {
-    const p = s.pilihan!;
-    const lama = HURUF.indexOf(s.kunci as string);
-    const baru = target[i];
-    [p[lama], p[baru]] = [p[baru], p[lama]];
-    s.kunci = HURUF[baru];
-  });
+  return arr;
+}
+
+/** n target diambil bergiliran dari putaran-putaran acak, sehingga setiap target muncul merata. */
+function targetMerata<T>(semua: T[], n: number, acak: () => number): T[] {
+  const hasil: T[] = [];
+  while (hasil.length < n) hasil.push(...kocok([...semua], acak));
+  return hasil.slice(0, n);
+}
+
+/** Indeks kunci (0–4) kalau kunci soal valid untuk bentuknya, selain itu null (soal tidak diacak). */
+function indeksKunci(s: Soal): number[] | null {
+  if (s.pilihan?.length !== 5) return null;
+  const kunci = [s.kunci].flat();
+  const jumlahBenar = s.bentuk === "PG" ? 1 : s.bentuk === "PGK" ? 2 : 0;
+  const idx = [...new Set(kunci.map((h) => HURUF.indexOf(String(h).trim().toUpperCase())))];
+  return jumlahBenar && idx.length === jumlahBenar && kunci.length === jumlahBenar && !idx.includes(-1) ? idx : null;
+}
+
+/** Pindahkan jawaban benar ke posisi target, pengecoh mengisi sisanya secara acak. */
+function susunUlang(s: Soal, benar: number[], posisi: number[], acak: () => number) {
+  const p = s.pilihan!;
+  const isiBenar = benar.map((i) => p[i]);
+  const pengecoh = kocok(p.filter((_, i) => !benar.includes(i)), acak);
+  s.pilihan = p.map((_, i) => (posisi.includes(i) ? isiBenar[posisi.indexOf(i)] : pengecoh.shift()!));
+  const kunci = posisi.map((i) => HURUF[i]);
+  s.kunci = s.bentuk === "PG" ? kunci[0] : kunci;
+}
+
+/**
+ * Sebar kunci merata karena AI cenderung menaruh jawaban benar di A/B.
+ * PG: setiap huruf A–E jadi kunci bergiliran. PGK: 10 pasangan (AB..DE) bergiliran, jadi tiap huruf seimbang.
+ */
+export function ratakanKunci(soal: Soal[], acak = Math.random): void {
+  for (const bentuk of ["PG", "PGK"] as const) {
+    const daftar = soal.filter((s) => s.bentuk === bentuk && indeksKunci(s));
+    const semuaTarget = bentuk === "PG" ? [0, 1, 2, 3, 4].map((i) => [i]) : PASANGAN;
+    const target = targetMerata(semuaTarget, daftar.length, acak);
+    daftar.forEach((s, i) => susunUlang(s, indeksKunci(s)!, target[i], acak));
+  }
 }

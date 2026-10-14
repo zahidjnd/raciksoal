@@ -23,6 +23,30 @@ test("periksaSoal memberi peringatan dalil tak dikenal", () => {
   assert.equal(periksaSoal([s], bab)[0].peringatan!.length, 1);
 });
 
+test("ratakanKunci menyebar pasangan kunci PG kompleks merata tanpa mengubah jawaban benar", () => {
+  // AI cenderung selalu memberi kunci A dan B
+  const soal: Soal[] = Array.from({ length: 10 }, (_, i) => ({
+    bentuk: "PGK", dalil_id: null, pertanyaan: `soal ${i}`, kunci: ["A", "B"],
+    pilihan: [`benar1 ${i}`, `benar2 ${i}`, "x", "y", "z"], pembahasan: "", level: "C2", tp: "TP 3.1", skor: 1,
+  }));
+  ratakanKunci(soal);
+  const pasangan = soal.map((s) => (s.kunci as string[]).join(""));
+  assert.equal(new Set(pasangan).size, 10); // AB, AC, ..., DE masing-masing sekali
+  for (const h of "ABCDE") assert.equal(pasangan.filter((p) => p.includes(h)).length, 4);
+  soal.forEach((s, i) => {
+    const isiKunci = (s.kunci as string[]).map((h) => s.pilihan!["ABCDE".indexOf(h)]);
+    assert.deepEqual(isiKunci, [`benar1 ${i}`, `benar2 ${i}`]);
+    assert.equal(s.pilihan!.length, 5);
+  });
+});
+
+test("ratakanKunci tidak mengubah soal yang kuncinya tidak valid", () => {
+  const s: Soal = { bentuk: "PGK", dalil_id: null, pertanyaan: "x", kunci: ["A"], pilihan: ["a", "b", "c", "d", "e"], pembahasan: "", level: "C1", tp: "TP 3.1", skor: 1 };
+  ratakanKunci([s]);
+  assert.deepEqual(s.kunci, ["A"]);
+  assert.deepEqual(s.pilihan, ["a", "b", "c", "d", "e"]);
+});
+
 test("ratakanKunci menyebar kunci A–E merata tanpa mengubah jawaban benar", () => {
   const soal: Soal[] = Array.from({ length: 10 }, (_, i) => ({
     bentuk: "PG", dalil_id: null, pertanyaan: `soal ${i}`, kunci: "A",
