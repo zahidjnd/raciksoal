@@ -67,7 +67,10 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
 - 2026-10-14: Build `output: "standalone"` di laptop. Subdomain tujuan: raciksoal.alfatahmas.com.
 - 2026-10-14: DB lokal via Docker (`raciksoal-db`). Perubahan tabel lewat file SQL di `drizzle/`.
 
-- 2026-10-14: Deploy = push ke `main` → GitHub Actions build → branch `deploy` → cron hosting tiap menit
+- 2026-10-14: Hosting membatasi cron jadi `*/7` (bukan tiap menit) → update/restart butuh s.d. 7 menit.
+  Restart manual: buat file kosong `~/raciksoal-app/restart`. Status proses tanpa SSH: `~/raciksoal-app/status.txt`.
+  Next.js mengganti nama proses jadi `next-server`, jadi proses dimatikan lewat `app.pid`.
+- 2026-10-14: Deploy = push ke `main` → GitHub Actions build → branch `deploy` → cron hosting
   menjalankan `~/raciksoal-app/jalan.sh` (salinan: `deploy/jalan.sh`): tarik build, nyalakan ulang, jaga agar tetap hidup.
   Tidak pakai PM2 (hemat proses/RAM). Node 24 via Runtime Manager. Passenger nonaktif di paket ini.
 - 2026-10-14: Subdomain diteruskan ke Node (127.0.0.1:3101) lewat `.htaccess` [P]. Hosting punya cache depan,
