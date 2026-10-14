@@ -87,7 +87,9 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   Penjaga ayat (`src/lib/soal.ts`): setiap teks Arab dari AI harus substring persis data bab, kalau tidak → soal ditandai merah.
   AI menampilkan ayat lewat `dalil_id`, bukan mengetik ulang. Kunci PG diratakan aplikasi. Tes: `npm test` (juga jalan di CI).
 - 2026-10-14: Pembuatan soal jalan di belakang (`hasil_soal.status`), browser cek tiap 3 detik → aman dari timeout proxy hosting.
-  Batas 30x/hari untuk seluruh web (belum ada login). Maks 25 soal per permintaan (batas output ±8.000 token).
+  Batas 30x/hari untuk seluruh web (belum ada login).
+- 2026-10-14: Soal dibuat BERTAHAP, maks 10 soal per panggilan AI (`bagiTahap`), karena output AI maks ±8.000 token
+  (25 soal Latihan dulu terpotong). Tiap tahap diberi daftar soal sebelumnya agar tidak mirip. Maks 40 soal per permintaan.
 - 2026-10-14: PDF materi: teks Arabnya rusak saat diekstrak → jangan pernah ambil ayat dari PDF.
 
 ## Status

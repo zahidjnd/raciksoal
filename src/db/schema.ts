@@ -16,7 +16,7 @@ export const hasilSoal = pgTable("hasil_soal", {
   pengaturan: jsonb("pengaturan").notNull(),
   model: text("model"),
   prompt: text("prompt"),
-  jawabanAi: text("jawaban_ai"), // jawaban mentah AI, untuk perbandingan model (langkah 4)
+  jawabanAi: text("jawaban_ai"), // JSON array jawaban mentah AI per tahap, untuk perbandingan model (langkah 4)
   soal: jsonb("soal"),
   pesan: text("pesan"),
 });

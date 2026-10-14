@@ -147,7 +147,7 @@ export default function Home() {
           disabled={proses || total < 1 || total > MAKS_SOAL || totalLevel !== 100}
           onClick={buat}
         >
-          {proses ? `Sedang membuat soal... (${detik} detik, bisa 1–3 menit)` : "Buat Soal"}
+          {proses ? `Sedang membuat soal... ${hasil?.pesan ? `${hasil.pesan}, ` : ""}${detik} detik (bisa 1–3 menit)` : "Buat Soal"}
         </button>
         {error && <p className="text-red-600">{error}</p>}
       </section>

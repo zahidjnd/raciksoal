@@ -2,6 +2,22 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { arabTakTerverifikasi, korpusArab, periksaSoal, ratakanKunci, type Bab, type Soal } from "./soal.ts";
+import { bagiTahap } from "./prompt.ts";
+
+test("bagiTahap membagi soal maks 10 per tahap dengan urutan bentuk tetap", () => {
+  const nol = { PG: 0, PGK: 0, BS: 0, URAIAN: 0 };
+  assert.deepEqual(bagiTahap({ PG: 10, PGK: 5, BS: 5, URAIAN: 5 }), [
+    { ...nol, PG: 10 },
+    { ...nol, PGK: 5, BS: 5 },
+    { ...nol, URAIAN: 5 },
+  ]);
+  assert.deepEqual(bagiTahap({ PG: 25, PGK: 0, BS: 0, URAIAN: 3 }), [
+    { ...nol, PG: 10 },
+    { ...nol, PG: 10 },
+    { ...nol, PG: 5, URAIAN: 3 },
+  ]);
+  assert.deepEqual(bagiTahap({ PG: 4, PGK: 0, BS: 0, URAIAN: 0 }), [{ ...nol, PG: 4 }]);
+});
 
 const bab: Bab = JSON.parse(readFileSync(new URL("../data/qurdis11-bab3.json", import.meta.url), "utf8"));
 const korpus = korpusArab(bab);

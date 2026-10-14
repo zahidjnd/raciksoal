@@ -30,7 +30,9 @@ export const NAMA_BENTUK: Record<Bentuk, string> = {
   BS: "Benar / Salah",
   URAIAN: "Uraian",
 };
-export const MAKS_SOAL = 25; // batas output model (±8.000 token)
+export const MAKS_SOAL = 40;
+// Satu jawaban AI maks ±8.000 token. 10 soal Latihan+Sulit ≈ 14.000 huruf, aman di bawah batas.
+export const MAKS_PER_TAHAP = 10;
 
 export type Pengaturan = {
   babId: string;
@@ -53,7 +55,31 @@ export function bersihkanPengaturan(p: Pengaturan): Pengaturan | string {
   return { babId: String(p.babId), tujuan: p.tujuan, jumlah, level, kesulitan: p.kesulitan };
 }
 
-export function buatPrompt(bab: Bab, p: Pengaturan) {
+/**
+ * Bagi jumlah soal menjadi beberapa tahap (maks MAKS_PER_TAHAP soal per panggilan AI),
+ * urut PG → PGK → BS → URAIAN, supaya jawaban AI tidak terpotong.
+ */
+export function bagiTahap(jumlah: Record<Bentuk, number>, maks = MAKS_PER_TAHAP) {
+  const tahap: Record<Bentuk, number>[] = [];
+  let isi = 0;
+  for (const b of Object.keys(NAMA_BENTUK) as Bentuk[]) {
+    let sisa = jumlah[b];
+    while (sisa > 0) {
+      if (!tahap.length || isi === maks) {
+        tahap.push({ PG: 0, PGK: 0, BS: 0, URAIAN: 0 });
+        isi = 0;
+      }
+      const ambil = Math.min(sisa, maks - isi);
+      tahap[tahap.length - 1][b] += ambil;
+      isi += ambil;
+      sisa -= ambil;
+    }
+  }
+  return tahap;
+}
+
+/** Instruksi utama: aturan + data bab. Sama untuk semua tahap (DeepSeek memberi harga murah untuk bagian yang berulang). */
+export function buatSistem(bab: Bab) {
   const dalil = bab.dalil
     .map((d) => {
       const mufradat = d.mufradat.map((m) => `${m.arab} = ${m.arti}`).join("; ");
@@ -61,7 +87,7 @@ export function buatPrompt(bab: Bab, p: Pengaturan) {
     })
     .join("\n\n");
 
-  const sistem = `Anda guru ahli penyusun soal Al-Qur'an Hadis untuk madrasah aliyah (kurikulum Kemenag).
+  return `Anda guru ahli penyusun soal Al-Qur'an Hadis untuk madrasah aliyah (kurikulum Kemenag).
 Tugas: menyusun soal HANYA dari DATA BAB di bawah. Jangan menambah fakta, tafsir, atau dalil dari luar data.
 
 ATURAN TEKS ARAB (WAJIB):
@@ -98,15 +124,19 @@ ${dalil}
 
 Materi:
 ${bab.materi.join("\n")}`;
+}
 
-  const urutan = (Object.keys(NAMA_BENTUK) as Bentuk[]).filter((b) => p.jumlah[b] > 0);
+/** Permintaan untuk satu tahap. `sudah` = pertanyaan dari tahap sebelumnya, supaya AI tidak membuat soal yang mirip. */
+export function buatPengguna(p: Pengaturan, jumlah: Record<Bentuk, number>, sudah: string[]) {
+  const urutan = (Object.keys(NAMA_BENTUK) as Bentuk[]).filter((b) => jumlah[b] > 0);
   const tujuan = p.tujuan as (typeof TUJUAN)[number];
   const kesulitan = p.kesulitan as (typeof KESULITAN)[number];
-  const pengguna = `Buat soal untuk ${tujuan}. Aturan ${tujuan}: ${ATURAN_TUJUAN[tujuan].aturan}
+  const daftarSudah = sudah.length
+    ? `\nSoal berikut SUDAH dibuat. Jangan membuat soal yang sama atau mirip (pokok bahasan maupun redaksinya); ambil sisi materi, dalil, atau TP yang lain:\n${sudah.map((s) => `- ${s.slice(0, 160)}`).join("\n")}\n`
+    : "";
+  return `Buat soal untuk ${tujuan}. Aturan ${tujuan}: ${ATURAN_TUJUAN[tujuan].aturan}
 Tingkat kesulitan: ${kesulitan}. Artinya: ${ATURAN_KESULITAN[kesulitan]}
-Jumlah: ${urutan.map((b) => `${b} ${p.jumlah[b]}`).join(", ")}. Urutkan per bentuk: ${urutan.join(", ")}.
+Jumlah: ${urutan.map((b) => `${b} ${jumlah[b]}`).join(", ")}. Urutkan per bentuk: ${urutan.join(", ")}.
 Komposisi level: LOTS ${p.level.LOTS}%, MOTS ${p.level.MOTS}%, HOTS ${p.level.HOTS}%.
-Balas hanya dengan JSON sesuai format.`;
-
-  return { sistem, pengguna };
+${daftarSudah}Balas hanya dengan JSON sesuai format.`;
 }
