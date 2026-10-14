@@ -20,4 +20,5 @@ export const hasilSoal = pgTable("hasil_soal", {
   soal: jsonb("soal"), // versi terbaru (sudah diedit/diganti guru)
   pesan: text("pesan"),
   jumlahGanti: integer("jumlah_ganti").default(0).notNull(), // berapa kali "ganti satu soal" dipakai pada set ini
+  info: jsonb("info"), // data perbandingan model: { detik, tokenMasuk, tokenKeluar }
 });

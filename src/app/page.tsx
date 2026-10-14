@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { cekHasil, mulaiBuatSoal } from "./actions";
+import { ambilDaftarModel, cekHasil, mulaiBuatSoal } from "./actions";
 import { KartuSoal } from "./kartu-soal";
 import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_SOAL, NAMA_BENTUK, TUJUAN, type Pengaturan } from "@/lib/prompt";
 import type { Bentuk } from "@/lib/soal";
@@ -29,7 +29,10 @@ export default function Home() {
     level: ATURAN_TUJUAN[TUJUAN[0]].level,
     kesulitan: "Sedang",
     bobot: BOBOT_BAWAAN,
+    modelSlot: 1,
   });
+  const [daftarModel, setDaftarModel] = useState<{ slot: number; nama: string }[]>([]);
+  const [banding, setBanding] = useState<{ nama: string; id?: number; pesan?: string }[]>([]);
   const [id, setId] = useState<number | null>(null);
   const [hasil, setHasil] = useState<Hasil | null>(null);
   const [error, setError] = useState("");
@@ -45,6 +48,7 @@ export default function Home() {
   useEffect(() => {
     const lama = Number(new URLSearchParams(location.search).get("id"));
     if (lama) setId(lama);
+    ambilDaftarModel().then(setDaftarModel).catch(() => {});
   }, []);
 
   // Cek hasil tiap 3 detik selama AI masih bekerja.
@@ -73,6 +77,15 @@ export default function Home() {
   async function buat() {
     setError("");
     setHasil(null);
+    setBanding([]);
+    if (p.modelSlot === 0) {
+      // Bandingkan: pengaturan sama persis, satu set per model. Tiap hasil dibuka di tab sendiri.
+      for (const m of daftarModel) {
+        const r = await mulaiBuatSoal({ ...p, modelSlot: m.slot }).catch(() => ({ ok: false as const, pesan: "Koneksi terputus." }));
+        setBanding((b) => [...b, r.ok ? { nama: m.nama, id: r.id } : { nama: m.nama, pesan: r.pesan }]);
+      }
+      return;
+    }
     const r = await mulaiBuatSoal(p);
     if (!r.ok) return setError(r.pesan);
     history.replaceState(null, "", `?id=${r.id}`);
@@ -93,6 +106,16 @@ export default function Home() {
             {DAFTAR_BAB.map((b) => (
               <option key={b.id} value={b.id}>{b.judul}</option>
             ))}
+          </select>
+        </label>
+
+        <label className="block text-sm">
+          Model AI
+          <select className="mt-1 w-full rounded border p-2" value={p.modelSlot} onChange={(e) => setP({ ...p, modelSlot: Number(e.target.value) })}>
+            {daftarModel.map((m) => (
+              <option key={m.slot} value={m.slot}>{m.nama}</option>
+            ))}
+            {daftarModel.length > 1 && <option value={0}>Bandingkan semua model (pengaturan sama)</option>}
           </select>
         </label>
 
@@ -153,6 +176,20 @@ export default function Home() {
           {proses ? `Sedang membuat soal... ${hasil?.pesan ? `${hasil.pesan}, ` : ""}${detik} detik (bisa 1–3 menit)` : "Buat Soal"}
         </button>
         {error && <p className="text-red-600">{error}</p>}
+        {banding.length > 0 && (
+          <div className="space-y-1 rounded border border-blue-300 bg-blue-50 p-3 text-sm">
+            <p className="font-semibold">Perbandingan dimulai. Buka tiap hasil (tab baru), tunggu sampai selesai:</p>
+            {banding.map((b) =>
+              b.id ? (
+                <a key={b.nama} className="block text-blue-700 underline" href={`?id=${b.id}`} target="_blank" rel="noreferrer">
+                  {b.nama} (set {b.id})
+                </a>
+              ) : (
+                <p key={b.nama} className="text-red-600">{b.nama}: {b.pesan}</p>
+              ),
+            )}
+          </div>
+        )}
       </section>
 
       {hasil?.status === "gagal" && <p className="rounded border border-red-300 bg-red-50 p-3 text-red-700">Gagal membuat soal: {hasil.pesan}</p>}
@@ -163,7 +200,9 @@ export default function Home() {
             ⚠️ Soal dibuat AI, wajib diperiksa guru sebelum dipakai.
           </p>
           <p className="text-sm text-gray-500">
-            {bab.judul} · {soal.length} soal · model: {hasil.model}
+            {bab.judul} · {soal.length} soal · model: <b>{hasil.model}</b>
+            {hasil.info && ` · ${hasil.info.detik} detik · ${(hasil.info.tokenMasuk + hasil.info.tokenKeluar).toLocaleString("id-ID")} token`}
+            {` · ${soal.filter((s) => s.peringatan?.length).length} soal ditandai`}
           </p>
           <div className="flex flex-wrap gap-2">
             <a className="rounded bg-blue-700 px-4 py-2 font-semibold text-white" href={`/api/word?id=${id}&jenis=soal`}>

@@ -1,27 +1,79 @@
 // Hanya dipanggil dari server (actions.ts). Kunci API tidak pernah dikirim ke browser.
-// Adapter: semua penyedia yang memakai format OpenAI (DeepSeek, OpenRouter,
-// OpenAI, Gemini) cukup diganti lewat .env: AI_BASE_URL, AI_API_KEY, AI_MODEL.
-export async function tanyaAI(sistem: string, pengguna: string) {
-  const model = process.env.AI_MODEL!;
-  const res = await fetch(`${process.env.AI_BASE_URL}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.AI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: "system", content: sistem },
-        { role: "user", content: pengguna },
-      ],
-      response_format: { type: "json_object" },
-      max_tokens: Number(process.env.AI_MAX_TOKENS ?? 8000),
-    }),
-    signal: AbortSignal.timeout(Number(process.env.AI_TIMEOUT_MS ?? 180_000)),
+// Adapter: semua penyedia yang memakai format OpenAI (DeepSeek, Gemini, OpenRouter, OpenAI, ...)
+// diatur lewat .env, tanpa mengubah kode:
+//   model 1: AI_BASE_URL, AI_API_KEY, AI_MODEL
+//   model 2: AI2_BASE_URL, AI2_API_KEY, AI2_MODEL   (model 3: AI3_..., dst. sampai 9)
+// Opsional per model:
+//   AIn_MAX_TOKENS  batas panjang jawaban (bawaan 8000)
+//   AIn_EXTRA_BODY  JSON tambahan khusus penyedia, misalnya mematikan "berpikir" DeepSeek:
+//                   AI_EXTRA_BODY='{"thinking":{"type":"disabled"}}'
+// Batas waktu bersama: AI_TIMEOUT_MS.
+
+const awalan = (slot: number) => (slot === 1 ? "AI_" : `AI${slot}_`);
+
+function konfigurasi(slot: number) {
+  const a = awalan(slot);
+  const model = process.env[`${a}MODEL`];
+  if (!model) return null;
+  return {
+    model,
+    baseUrl: process.env[`${a}BASE_URL`],
+    kunci: process.env[`${a}API_KEY`],
+    maksToken: Number(process.env[`${a}MAX_TOKENS`] ?? process.env.AI_MAX_TOKENS ?? 8000),
+    tambahan: process.env[`${a}EXTRA_BODY`] ?? "",
+  };
+}
+
+const COBA_ULANG = [429, 500, 502, 503]; // server AI sibuk/sementara gagal → coba lagi
+const tunggu = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Model yang terpasang di .env (hanya nomor dan nama, tanpa kunci). */
+export function daftarModel() {
+  return [1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((slot) => {
+    const k = konfigurasi(slot);
+    return k ? [{ slot, nama: k.model }] : [];
   });
-  if (!res.ok) throw new Error(`AI menolak permintaan (kode ${res.status}): ${await res.text()}`);
+}
+
+export async function tanyaAI(sistem: string, pengguna: string, slot = 1) {
+  const k = konfigurasi(slot);
+  if (!k) throw new Error(`Model AI nomor ${slot} belum diatur di .env.`);
+  let tambahan = {};
+  try {
+    tambahan = k.tambahan ? JSON.parse(k.tambahan) : {};
+  } catch {
+    throw new Error(`Isi EXTRA_BODY untuk model ${k.model} di .env bukan JSON yang valid.`);
+  }
+  const body = JSON.stringify({
+    ...tambahan,
+    model: k.model,
+    messages: [
+      { role: "system", content: sistem },
+      { role: "user", content: pengguna },
+    ],
+    response_format: { type: "json_object" },
+    max_tokens: k.maksToken,
+  });
+
+  let res: Response;
+  for (let coba = 1; ; coba++) {
+    res = await fetch(`${k.baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${k.kunci}` },
+      body,
+      signal: AbortSignal.timeout(Number(process.env.AI_TIMEOUT_MS ?? 180_000)),
+    });
+    if (res.ok || !COBA_ULANG.includes(res.status) || coba === 3) break;
+    await tunggu(coba * 10_000); // 10 detik, lalu 20 detik
+  }
+  if (!res.ok) throw new Error(`AI (${k.model}) menolak permintaan (kode ${res.status}): ${(await res.text()).slice(0, 500)}`);
   const data = await res.json();
-  const pilihan = data.choices[0];
-  return { jawaban: pilihan.message.content as string, terpotong: pilihan.finish_reason === "length", model };
+  const pilihan = data.choices?.[0];
+  if (!pilihan) throw new Error(`AI (${k.model}) tidak mengirim jawaban.`);
+  return {
+    jawaban: String(pilihan.message?.content ?? ""),
+    terpotong: pilihan.finish_reason === "length",
+    model: k.model,
+    token: { masuk: Number(data.usage?.prompt_tokens) || 0, keluar: Number(data.usage?.completion_tokens) || 0 },
+  };
 }

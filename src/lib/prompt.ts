@@ -44,6 +44,7 @@ export type Pengaturan = {
   level: { LOTS: number; MOTS: number; HOTS: number };
   kesulitan: string;
   bobot?: Record<Bentuk, number>; // tidak ada di set lama (sebelum fitur bobot)
+  modelSlot?: number; // nomor model AI di .env (1 = AI_, 2 = AI2_, ...); set lama = 1
 };
 
 /** Rapikan isian form dari browser (tidak dipercaya begitu saja). Mengembalikan pesan kalau tidak valid. */
@@ -58,7 +59,8 @@ export function bersihkanPengaturan(p: Pengaturan): Pengaturan | string {
   if (!(KESULITAN as readonly string[]).includes(p?.kesulitan)) return "Tingkat kesulitan tidak dikenal.";
   const bobotDari = (b: Bentuk) => angka(p?.bobot?.[b] ?? BOBOT_BAWAAN[b]);
   const bobot = { PG: bobotDari("PG"), PGK: bobotDari("PGK"), BS: bobotDari("BS"), URAIAN: bobotDari("URAIAN") };
-  return { babId: String(p.babId), tujuan: p.tujuan, jumlah, level, kesulitan: p.kesulitan, bobot };
+  const modelSlot = Math.max(1, Math.min(9, Math.round(Number(p?.modelSlot) || 1)));
+  return { babId: String(p.babId), tujuan: p.tujuan, jumlah, level, kesulitan: p.kesulitan, bobot, modelSlot };
 }
 
 /**

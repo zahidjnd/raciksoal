@@ -104,5 +104,9 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   Dua file: lembar soal siswa (tanpa peringatan AI, keputusan pemilik) dan kunci+pembahasan+rubrik guru (dengan peringatan).
 - 2026-10-14: Bobot skor per bentuk di form (bawaan AFTS: PG 2, PGK 5, B/S 3, Uraian 8). Skor diisi APLIKASI
   (`terapkanBobot`), rubrik uraian diskalakan agar jumlahnya = bobot. Set lama (tanpa `pengaturan.bobot`) tidak diubah.
+- Langkah 4 (2026-10-14): banyak model lewat .env (model 1 = `AI_*`, model 2 = `AI2_*`, ... s.d. 9; lihat `.env.example`).
+  Form: pilih model atau "Bandingkan semua model" (pengaturan sama, satu set per model). Tiap set menyimpan
+  `info` {detik, tokenMasuk, tokenKeluar}. `AIn_EXTRA_BODY` = JSON khusus penyedia (mis. matikan "berpikir"
+  `deepseek-flash`, yang kalau tidak dimatikan menghabiskan batas 8000 token untuk berpikir). Error 429/5xx dicoba ulang 2x.
 - 2026-10-14: Atas permintaan pemilik, teks Arab di WORD memakai Traditional Arabic 16 pt (bawaan Windows, sama
   dengan format AFTS), pengecualian dari aturan 7. Tampilan WEB tetap Amiri.
