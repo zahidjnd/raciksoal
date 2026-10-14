@@ -67,5 +67,14 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
 - 2026-10-14: Build `output: "standalone"` di laptop. Subdomain tujuan: raciksoal.alfatahmas.com.
 - 2026-10-14: DB lokal via Docker (`raciksoal-db`). Perubahan tabel lewat file SQL di `drizzle/`.
 
+- 2026-10-14: Deploy = push ke `main` → GitHub Actions build → branch `deploy` → cron hosting tiap menit
+  menjalankan `~/raciksoal-app/jalan.sh` (salinan: `deploy/jalan.sh`): tarik build, nyalakan ulang, jaga agar tetap hidup.
+  Tidak pakai PM2 (hemat proses/RAM). Node 24 via Runtime Manager. Passenger nonaktif di paket ini.
+- 2026-10-14: Subdomain diteruskan ke Node (127.0.0.1:3101) lewat `.htaccess` [P]. Hosting punya cache depan,
+  jadi halaman di-set `force-dynamic`.
+- 2026-10-14: Repo privat `zahidjnd/raciksoal`, hosting pakai deploy key hanya-baca (`~/raciksoal-app/kunci/`).
+- 2026-10-14: Migrasi DB otomatis saat server menyala (`src/instrumentation.ts`). `.env` hosting: `~/raciksoal-app/.env`,
+  diubah → aplikasi restart sendiri dalam 1 menit.
+
 ## Status
-- Langkah 1: bagian lokal selesai (tombol DB & AI jalan). Belum: deploy ke hosting.
+- Langkah 1: lokal selesai, aplikasi sudah jalan di raciksoal.alfatahmas.com. Belum: user PostgreSQL + `.env` hosting.
