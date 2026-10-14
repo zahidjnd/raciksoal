@@ -6,6 +6,10 @@ on:
     branches: [main]
 permissions:
   contents: write
+# Build lama dibatalkan kalau ada push baru, supaya branch deploy tidak ditimpa versi lama.
+concurrency:
+  group: deploy
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: ubuntu-latest
