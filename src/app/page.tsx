@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { cekHasil, mulaiBuatSoal } from "./actions";
 import { KartuSoal } from "./kartu-soal";
-import { ATURAN_TUJUAN, KESULITAN, MAKS_SOAL, NAMA_BENTUK, TUJUAN, type Pengaturan } from "@/lib/prompt";
+import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_SOAL, NAMA_BENTUK, TUJUAN, type Pengaturan } from "@/lib/prompt";
 import type { Bentuk } from "@/lib/soal";
 import { DAFTAR_BAB as SEMUA_BAB } from "@/data";
 
@@ -28,6 +28,7 @@ export default function Home() {
     jumlah: { PG: 10, PGK: 5, BS: 5, URAIAN: 5 },
     level: ATURAN_TUJUAN[TUJUAN[0]].level,
     kesulitan: "Sedang",
+    bobot: BOBOT_BAWAAN,
   });
   const [id, setId] = useState<number | null>(null);
   const [hasil, setHasil] = useState<Hasil | null>(null);
@@ -35,6 +36,8 @@ export default function Home() {
   const [detik, setDetik] = useState(0);
 
   const total = BENTUK.reduce((s, b) => s + p.jumlah[b], 0);
+  const bobot = p.bobot ?? BOBOT_BAWAAN;
+  const totalSkor = BENTUK.reduce((s, b) => s + p.jumlah[b] * bobot[b], 0);
   const totalLevel = p.level.LOTS + p.level.MOTS + p.level.HOTS;
   const proses = id !== null && (!hasil || hasil.status === "proses");
 
@@ -117,10 +120,21 @@ export default function Home() {
 
         <div className="grid gap-6 sm:grid-cols-2">
           <fieldset className="space-y-2">
-            <legend className="mb-1 text-sm font-semibold">Jumlah soal (total {total}, maks {MAKS_SOAL})</legend>
+            <legend className="mb-1 text-sm font-semibold">Jumlah soal × skor per soal</legend>
             {BENTUK.map((b) => (
-              <Angka key={b} label={NAMA_BENTUK[b]} nilai={p.jumlah[b]} ubah={(n) => setP({ ...p, jumlah: { ...p.jumlah, [b]: n } })} />
+              <div key={b} className="flex items-center justify-between gap-2 text-sm">
+                {NAMA_BENTUK[b]}
+                <span className="flex items-center gap-1 whitespace-nowrap">
+                  <input type="number" min={0} max={MAKS_SOAL} aria-label={`Jumlah ${NAMA_BENTUK[b]}`} value={p.jumlah[b]} onChange={(e) => setP({ ...p, jumlah: { ...p.jumlah, [b]: Number(e.target.value) } })} className="w-14 rounded border p-1 text-right" />
+                  ×
+                  <input type="number" min={0} max={100} aria-label={`Skor per soal ${NAMA_BENTUK[b]}`} value={bobot[b]} onChange={(e) => setP({ ...p, bobot: { ...bobot, [b]: Number(e.target.value) } })} className="w-14 rounded border p-1 text-right" />
+                </span>
+              </div>
             ))}
+            <p className={`text-sm ${totalSkor === 100 ? "text-gray-600" : "text-amber-700"}`}>
+              Total: {total} soal (maks {MAKS_SOAL}), skor {totalSkor}
+              {totalSkor !== 100 && " (bukan 100)"}
+            </p>
           </fieldset>
           <fieldset className="space-y-2">
             <legend className="mb-1 text-sm font-semibold">Komposisi level (total {totalLevel}%)</legend>

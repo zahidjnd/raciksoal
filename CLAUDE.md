@@ -102,6 +102,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   Lembar soal = cetakan `public/word/template-soal.docx` yang dibuat dari FORMAT_AFTS milik madrasah oleh
   `scripts/buat-template-word.py` (kop PERSIS asli; hanya {{judul}}, {{tp}}, {{isi}} yang diisi). Kop berubah → jalankan ulang skrip.
   Dua file: lembar soal siswa (tanpa peringatan AI, keputusan pemilik) dan kunci+pembahasan+rubrik guru (dengan peringatan).
-  Belum: bobot skor per bentuk (skor masih dari AI, total bisa ≠ 100).
+- 2026-10-14: Bobot skor per bentuk di form (bawaan AFTS: PG 2, PGK 5, B/S 3, Uraian 8). Skor diisi APLIKASI
+  (`terapkanBobot`), rubrik uraian diskalakan agar jumlahnya = bobot. Set lama (tanpa `pengaturan.bobot`) tidak diubah.
 - 2026-10-14: Atas permintaan pemilik, teks Arab di WORD memakai Traditional Arabic 16 pt (bawaan Windows, sama
   dengan format AFTS), pengecualian dari aturan 7. Tampilan WEB tetap Amiri.

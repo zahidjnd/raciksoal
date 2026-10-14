@@ -5,7 +5,7 @@ import { db } from "@/db";
 import { hasilSoal } from "@/db/schema";
 import { tanyaAI } from "@/lib/ai";
 import { bagiTahap, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatSistem, type Pengaturan } from "@/lib/prompt";
-import { periksaSoal, rapikanSoal, ratakanKunci, type Bab, type Soal } from "@/lib/soal";
+import { periksaSoal, rapikanSoal, ratakanKunci, terapkanBobot, type Bab, type Soal } from "@/lib/soal";
 import { DAFTAR_BAB } from "@/data";
 // ponytail: batas harian untuk seluruh web (belum ada login). Jadi per guru di langkah 5.
 const BATAS_PER_HARI = 30;
@@ -70,6 +70,7 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
     }
     const soal = periksaSoal(semua, bab);
     ratakanKunci(soal);
+    if (p.bobot) terapkanBobot(soal, p.bobot);
     await simpan({ status: "selesai", soal, pesan: null });
   } catch (e) {
     const err = e as Error;
@@ -129,6 +130,8 @@ export async function gantiSatuSoal(id: number, no: number) {
     }
     const [soal] = periksaSoal([{ ...baru, bentuk: lama.bentuk }], bab);
     ratakanKunci([soal]); // posisi kunci PG/PGK diacak
+    const bobot = (h.pengaturan as Pengaturan).bobot;
+    if (bobot) terapkanBobot([soal], bobot);
     set.soal[no] = soal;
     await db.update(hasilSoal).set({ ...catat, soal: set.soal }).where(eq(hasilSoal.id, h.id));
     return { ok: true as const, soal };

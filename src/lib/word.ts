@@ -152,6 +152,10 @@ export function buatWordKunci(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Da
     const skor = butir.reduce((n, x) => n + (Number(x.s.skor) || 0), 0);
     rekap.push(`${NAMA_BENTUK[bentuk]} (${skor})`);
     isi.push(par([new TextRun({ text: `${HURUF[k]}. KUNCI BAGIAN ${ROMAWI[k]}: ${NAMA_BENTUK[bentuk].toUpperCase()} (${butir.length} soal, skor ${skor})`, bold: true })], { spacing: { before: 200, after: 80 } }));
+    if (bentuk === "PGK") {
+      const penuh = Number(butir[0].s.skor) || 0;
+      isi.push(par([r(`Penskoran per soal: benar kedua opsi = ${penuh} poin, benar 1 opsi = ${penuh / 2} poin, salah = 0 poin.`, { italics: true })]));
+    }
 
     for (const { s, no } of butir) {
       for (const w of s.peringatan ?? []) isi.push(par([new TextRun({ text: `⚠️ Soal ${no}: ${w}`, bold: true, color: "C00000" })]));

@@ -58,6 +58,26 @@ export function rapikanSoal(s: Partial<Soal>, bentuk: Bentuk): Soal {
   };
 }
 
+/**
+ * Isi skor tiap soal sesuai bobot bentuknya (bukan dari AI). Rubrik uraian diskalakan
+ * proporsional supaya jumlahnya tepat sama dengan bobot uraian.
+ */
+export function terapkanBobot(soal: Soal[], bobot: Record<Bentuk, number>): void {
+  for (const s of soal) {
+    const target = bobot[s.bentuk];
+    if (!(target >= 0)) continue;
+    s.skor = target;
+    const rubrik = s.rubrik ?? [];
+    const total = rubrik.reduce((n, r) => n + (Number(r.skor) || 0), 0);
+    if (s.bentuk !== "URAIAN" || !rubrik.length || total <= 0) continue;
+    s.rubrik = rubrik.map((r) => ({ ...r, skor: Math.round(((Number(r.skor) || 0) * target) / total) }));
+    // sisa pembulatan diberikan ke kriteria berskor terbesar
+    const selisih = target - s.rubrik.reduce((n, r) => n + r.skor, 0);
+    const terbesar = s.rubrik.reduce((m, r, i, a) => (r.skor > a[m].skor ? i : m), 0);
+    s.rubrik[terbesar].skor += selisih;
+  }
+}
+
 /** Beri peringatan pada soal yang bermasalah. Aturan 5: teks Arab hanya boleh dari data terverifikasi. */
 export function periksaSoal(soal: Soal[], bab: Bab): Soal[] {
   const korpus = korpusArab(bab);

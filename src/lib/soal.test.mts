@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { arabTakTerverifikasi, korpusArab, periksaSoal, rapikanSoal, ratakanKunci, type Bab, type Soal } from "./soal.ts";
+import { arabTakTerverifikasi, korpusArab, periksaSoal, rapikanSoal, ratakanKunci, terapkanBobot, type Bab, type Soal } from "./soal.ts";
 import { bagiTahap } from "./prompt.ts";
 
 test("bagiTahap membagi soal maks 10 per tahap dengan urutan bentuk tetap", () => {
@@ -49,6 +49,19 @@ test("rapikanSoal merapikan isian guru dan menghitung skor uraian dari rubrik", 
   const uraian = rapikanSoal({ pertanyaan: "Jelaskan!", kunci: "jawab", rubrik: [{ kriteria: "a", skor: 3 }, { kriteria: "", skor: 9 }, { kriteria: "b", skor: 2 }] }, "URAIAN");
   assert.equal(uraian.skor, 5); // kriteria kosong dibuang
   assert.equal(uraian.pilihan, undefined);
+});
+
+test("terapkanBobot mengisi skor per bentuk dan menskalakan rubrik uraian tepat ke bobot", () => {
+  const dasar = { dalil_id: null, pertanyaan: "x", pembahasan: "", level: "C1", tp: "TP 3.1" };
+  const soal: Soal[] = [
+    { ...dasar, bentuk: "PG", kunci: "A", pilihan: ["a", "b", "c", "d", "e"], skor: 1 },
+    { ...dasar, bentuk: "BS", kunci: "Benar", skor: 1 },
+    { ...dasar, bentuk: "URAIAN", kunci: "j", skor: 6, rubrik: [{ kriteria: "a", skor: 3 }, { kriteria: "b", skor: 2 }, { kriteria: "c", skor: 1 }] },
+  ];
+  terapkanBobot(soal, { PG: 2, PGK: 5, BS: 3, URAIAN: 8 });
+  assert.deepEqual(soal.map((s) => s.skor), [2, 3, 8]);
+  assert.equal(soal[2].rubrik!.reduce((n, r) => n + r.skor, 0), 8);
+  assert.deepEqual(soal[2].rubrik!.map((r) => r.skor), [4, 3, 1]); // 4, 2.67→3, 1.33→1
 });
 
 test("periksaSoal memberi peringatan dalil tak dikenal", () => {

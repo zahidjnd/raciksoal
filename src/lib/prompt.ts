@@ -34,12 +34,16 @@ export const MAKS_SOAL = 40;
 // Satu jawaban AI maks ±8.000 token. 10 soal Latihan+Sulit ≈ 14.000 huruf, aman di bawah batas.
 export const MAKS_PER_TAHAP = 10;
 
+// Skor per soal seperti format AFTS madrasah (10 PG + 5 PGK + 5 B/S + 5 uraian = 100).
+export const BOBOT_BAWAAN: Record<Bentuk, number> = { PG: 2, PGK: 5, BS: 3, URAIAN: 8 };
+
 export type Pengaturan = {
   babId: string;
   tujuan: string;
   jumlah: Record<Bentuk, number>;
   level: { LOTS: number; MOTS: number; HOTS: number };
   kesulitan: string;
+  bobot?: Record<Bentuk, number>; // tidak ada di set lama (sebelum fitur bobot)
 };
 
 /** Rapikan isian form dari browser (tidak dipercaya begitu saja). Mengembalikan pesan kalau tidak valid. */
@@ -52,7 +56,9 @@ export function bersihkanPengaturan(p: Pengaturan): Pengaturan | string {
   if (level.LOTS + level.MOTS + level.HOTS !== 100) return "Komposisi LOTS + MOTS + HOTS harus 100%.";
   if (!(TUJUAN as readonly string[]).includes(p?.tujuan)) return "Tujuan soal tidak dikenal.";
   if (!(KESULITAN as readonly string[]).includes(p?.kesulitan)) return "Tingkat kesulitan tidak dikenal.";
-  return { babId: String(p.babId), tujuan: p.tujuan, jumlah, level, kesulitan: p.kesulitan };
+  const bobotDari = (b: Bentuk) => angka(p?.bobot?.[b] ?? BOBOT_BAWAAN[b]);
+  const bobot = { PG: bobotDari("PG"), PGK: bobotDari("PGK"), BS: bobotDari("BS"), URAIAN: bobotDari("URAIAN") };
+  return { babId: String(p.babId), tujuan: p.tujuan, jumlah, level, kesulitan: p.kesulitan, bobot };
 }
 
 /**
