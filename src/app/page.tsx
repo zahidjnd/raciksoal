@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { cekHasil, mulaiBuatSoal } from "./actions";
 import { KartuSoal } from "./kartu-soal";
 import { ATURAN_TUJUAN, KESULITAN, MAKS_SOAL, NAMA_BENTUK, TUJUAN, type Pengaturan } from "@/lib/prompt";
-import type { Bab, Bentuk } from "@/lib/soal";
-import bab3 from "@/data/qurdis11-bab3.json";
+import type { Bentuk } from "@/lib/soal";
+import { DAFTAR_BAB as SEMUA_BAB } from "@/data";
 
-const DAFTAR_BAB: Bab[] = [bab3];
+const DAFTAR_BAB = Object.values(SEMUA_BAB);
 const BENTUK = Object.keys(NAMA_BENTUK) as Bentuk[];
 
 type Hasil = NonNullable<Awaited<ReturnType<typeof cekHasil>>>;
@@ -151,6 +151,15 @@ export default function Home() {
           <p className="text-sm text-gray-500">
             {bab.judul} · {soal.length} soal · model: {hasil.model}
           </p>
+          <div className="flex flex-wrap gap-2">
+            <a className="rounded bg-blue-700 px-4 py-2 font-semibold text-white" href={`/api/word?id=${id}&jenis=soal`}>
+              ⬇️ Unduh Soal (Word)
+            </a>
+            <a className="rounded border border-blue-700 px-4 py-2 font-semibold text-blue-700" href={`/api/word?id=${id}&jenis=kunci`}>
+              ⬇️ Unduh Kunci & Pembahasan (Word)
+            </a>
+          </div>
+          <p className="text-xs text-gray-500">File Word mengikuti isi terbaru, termasuk soal yang sudah Anda edit atau ganti.</p>
 
           {BENTUK.filter((b) => soal.some((s) => s.bentuk === b)).map((b) => (
             <div key={b} className="space-y-4">

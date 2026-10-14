@@ -6,9 +6,7 @@ import { hasilSoal } from "@/db/schema";
 import { tanyaAI } from "@/lib/ai";
 import { bagiTahap, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatSistem, type Pengaturan } from "@/lib/prompt";
 import { periksaSoal, rapikanSoal, ratakanKunci, type Bab, type Soal } from "@/lib/soal";
-import bab3 from "@/data/qurdis11-bab3.json";
-
-const DAFTAR_BAB: Record<string, Bab> = { [bab3.id]: bab3 };
+import { DAFTAR_BAB } from "@/data";
 // ponytail: batas harian untuk seluruh web (belum ada login). Jadi per guru di langkah 5.
 const BATAS_PER_HARI = 30;
 const BATAS_GANTI_PER_SET = 30;
