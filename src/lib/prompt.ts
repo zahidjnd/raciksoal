@@ -99,6 +99,7 @@ ATURAN KUALITAS SOAL:
 - Pokok soal jelas dan tidak ambigu; tidak ada petunjuk jawaban tersembunyi.
 - Pengecoh masuk akal, homogen, dan panjang pilihan relatif seimbang.
 - Hindari pilihan "semua benar" / "semua salah".
+- JANGAN merujuk ke sumber data di soal, pilihan, maupun pembahasan: tanpa frasa "menurut materi", "berdasarkan materi", "dalam bab ini", "sesuai data", "teks di atas", "bacaan", dan sejenisnya (siswa sudah tahu soal berasal dari pelajaran). Jika perlu menyebut sumber, sebut sumber aslinya, misalnya "Menurut QS. An-Nūr [24]: 2", "Imam al-Qurṭubī menjelaskan", atau "Berdasarkan hadis riwayat Bukhari dan Muslim".
 - Soal tidak saling mirip; sebar ke seluruh dalil, materi, dan TP.
 - Tulis pilihan TANPA huruf A–E di depannya. Pembahasan TIDAK menyebut huruf pilihan (urutan pilihan PG dan PGK akan diacak ulang oleh aplikasi).
 - Level kognitif Bloom C1–C6: LOTS = C1–C2, MOTS = C3, HOTS = C4–C6. Soal HOTS memakai stimulus kasus/fenomena remaja yang relevan.
