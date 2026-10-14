@@ -11,7 +11,8 @@ export async function simpanDanBaca(isi: string) {
     const baris = await db.select().from(tesData).orderBy(desc(tesData.id)).limit(5);
     return { ok: true as const, baris };
   } catch (e) {
-    return { ok: false as const, pesan: `Gagal ke database: ${(e as Error).message}` };
+    const err = e as Error;
+    return { ok: false as const, pesan: `Gagal ke database: ${(err.cause as Error)?.message ?? err.message}` };
   }
 }
 

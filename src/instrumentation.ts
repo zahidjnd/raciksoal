@@ -8,6 +8,8 @@ export async function register() {
     await migrate(db, { migrationsFolder: "drizzle", migrationsSchema: "public" });
     console.log("Migrasi database selesai");
   } catch (e) {
-    console.error("Migrasi database gagal:", (e as Error).message);
+    // Drizzle membungkus error asli PostgreSQL di `cause`; tampilkan supaya penyebabnya jelas.
+    const err = e as Error;
+    console.error("Migrasi database gagal:", (err.cause as Error)?.message ?? err.message);
   }
 }
