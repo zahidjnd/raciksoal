@@ -83,5 +83,13 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
 - 2026-10-14: Kolom waktu WAJIB `timestamp(..., { withTimezone: true })`. Tanpa itu jam tampil +7 jam
   (terlihat di `tes_data`, tabel tes sementara, dibiarkan).
 
+- 2026-10-14: Data bab = file JSON di `src/data/` (bab 3 dari PPT pemilik; teks Arab dicek cocok persis 26/26).
+  Penjaga ayat (`src/lib/soal.ts`): setiap teks Arab dari AI harus substring persis data bab, kalau tidak → soal ditandai merah.
+  AI menampilkan ayat lewat `dalil_id`, bukan mengetik ulang. Kunci PG diratakan aplikasi. Tes: `npm test` (juga jalan di CI).
+- 2026-10-14: Pembuatan soal jalan di belakang (`hasil_soal.status`), browser cek tiap 3 detik → aman dari timeout proxy hosting.
+  Batas 30x/hari untuk seluruh web (belum ada login). Maks 25 soal per permintaan (batas output ±8.000 token).
+- 2026-10-14: PDF materi: teks Arabnya rusak saat diekstrak → jangan pernah ambil ayat dari PDF.
+
 ## Status
-- Langkah 1 SELESAI (2026-10-14): DB + AI jalan di raciksoal.alfatahmas.com. Berikutnya: langkah 2.
+- Langkah 1 SELESAI (2026-10-14).
+- Langkah 2 (2026-10-14): form + buat soal + tampil hasil jalan untuk Bab 3. Belum: edit per butir, ganti satu soal, bab lain.

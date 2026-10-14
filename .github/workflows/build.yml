@@ -20,6 +20,7 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: npm test # penjaga ayat & kunci; kalau gagal, tidak di-deploy
       - run: npm run build
       - name: Rakit hasil build
         run: |

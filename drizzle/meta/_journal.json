@@ -8,6 +8,13 @@
       "when": 1791961989807,
       "tag": "0000_tes_data",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791970412917,
+      "tag": "0001_hasil_soal",
+      "breakpoints": true
     }
   ]
 }
