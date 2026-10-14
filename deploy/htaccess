@@ -1,0 +1,6 @@
+# Salinan dari ~/raciksoal.alfatahmas.com/.htaccess di hosting.
+# Teruskan semua permintaan ke aplikasi Node (Next.js) di port 3101.
+# DirectoryIndex disabled: tanpa ini, "/" diteruskan sebagai "/index.php" dan Next.js menjawab 404.
+DirectoryIndex disabled
+RewriteEngine On
+RewriteRule ^ http://127.0.0.1:3101%{REQUEST_URI} [P,L]
