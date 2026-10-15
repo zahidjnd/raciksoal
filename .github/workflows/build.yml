@@ -22,6 +22,9 @@ jobs:
       - run: npm ci
       - run: npm test # penjaga ayat & kunci; kalau gagal, tidak di-deploy
       - run: npm run build
+        env:
+          # Pengisi khusus tahap build (Better Auth menolak kunci kosong). Saat berjalan, hosting memakai .env sendiri.
+          BETTER_AUTH_SECRET: pengisi-tahap-build-bukan-rahasia-0000000000
       - name: Rakit hasil build
         run: |
           mkdir out
