@@ -1,3 +1,5 @@
+import { readFile, stat } from "node:fs/promises";
+import path from "node:path";
 import { and, desc, eq, gte, or, sql } from "drizzle-orm";
 import Link from "next/link";
 import { db } from "@/db";
@@ -46,6 +48,31 @@ async function PeringatanAdmin() {
   );
 }
 
+/**
+ * Khusus admin: status backup malam (langkah 7). File ditulis deploy/backup.sh di folder induk aplikasi
+ * (~/raciksoal-app/backup-status.txt). Peringatan bila backup terakhir gagal atau sudah > 36 jam.
+ */
+async function PeringatanBackup() {
+  const file = path.join(process.cwd(), "..", "backup-status.txt");
+  const [isi, info] = await Promise.all([readFile(file, "utf8"), stat(file)]).catch(() => [null, null] as const);
+  let pesan: string | null = null;
+  if (!isi || !info) {
+    // Di laptop memang tidak ada backup; di hosting berarti backup belum pernah jalan.
+    if (process.env.NODE_ENV === "production") pesan = "Backup database belum pernah berhasil berjalan.";
+  } else if (!isi.startsWith("OK")) {
+    pesan = `Backup database terakhir gagal: ${isi.trim()}`;
+  } else {
+    const jam = Math.floor((Date.now() - info.mtimeMs) / 3_600_000);
+    if (jam > 36) pesan = `Backup database terakhir berhasil ${jam} jam lalu (seharusnya tiap malam).`;
+  }
+  if (!pesan) return null;
+  return (
+    <div className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-800">
+      ⚠️ {pesan} Cek <code>backup.log</code> di hosting.
+    </div>
+  );
+}
+
 /** Bagian atas setiap halaman setelah masuk: judul, menu, nama pengguna, tombol Keluar. */
 export function Kepala({ p }: { p: Pengguna }) {
   const admin = p.peran === "admin";
@@ -81,6 +108,7 @@ export function Kepala({ p }: { p: Pengguna }) {
         ))}
       </nav>
       {admin && <PeringatanAdmin />}
+      {admin && <PeringatanBackup />}
     </header>
   );
 }

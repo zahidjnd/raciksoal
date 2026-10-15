@@ -4,8 +4,11 @@
 #   2) pastikan aplikasi menyala.
 # File .env hosting ada di ~/raciksoal-app/.env (diisi pemilik, bukan di Git).
 cd "$(dirname "$0")"
-ps -u "$USER" -o pid,etime,args > status.txt 2>&1   # untuk dicek tanpa SSH
+# Untuk dicek tanpa SSH. Alamat database (berisi kata sandi, mis. saat pg_dump jalan) disamarkan.
+ps -u "$USER" -o pid,etime,args 2>&1 | sed -E 's#postgres(ql)?://[^ ]*#postgres://***#g' > status.txt
 exec 9>jalan.lock; flock -n 9 || exit 0   # cron sebelumnya masih jalan
+# Backup manual: buat file kosong bernama "jalankan-backup" di folder ini (backup terjadwal: cron 02.00).
+[ -f jalankan-backup ] && rm -f jalankan-backup && { bash backup.sh >> backup.log 2>&1 9>&- & }
 NODE=$HOME/.local/share/mise/installs/node/24.21.0/bin/node
 KUNCI=$PWD/kunci/deploy
 export GIT_SSH_COMMAND="ssh -i $KUNCI -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"

@@ -93,7 +93,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
 - 2026-10-14: PDF materi: teks Arabnya rusak saat diekstrak → jangan pernah ambil ayat dari PDF.
 
 ## Status
-- Langkah 1, 2, 2b, 3, 4, 5 SELESAI (per 2026-10-15). Berikutnya: langkah 7 (backup) lalu 6 (kisi-kisi), materi sendiri.
+- Langkah 1, 2, 2b, 3, 4, 5, 7 SELESAI (per 2026-10-15). Berikutnya: langkah 6 (kisi-kisi), lalu materi sendiri.
 - Langkah 1 SELESAI (2026-10-14).
 - Langkah 2 (2026-10-14): form + buat soal + tampil hasil jalan untuk Bab 3. Belum: bab lain.
 - Langkah 2b (2026-10-14): edit per butir (`simpanSoal`, editan tetap dicek penjaga Arab) dan ganti satu soal
@@ -144,5 +144,11 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   model/info/rincian error ke guru (pesan gagal umum). /admin/set = semua set semua guru (200 terbaru).
   Pita peringatan merah di header admin (`PeringatanAdmin` di kepala.tsx): set gagal / cadangan dipakai 24 jam terakhir.
   LANGKAH 5 SELESAI.
+- Langkah 7 (2026-10-15): backup malam `~/raciksoal-app/backup.sh` (salinan `deploy/backup.sh`), cron `0 2 * * *`.
+  pg_dump → gzip → `openssl enc -aes-256-cbc -pbkdf2 -iter 200000` dengan `BACKUP_PASSPHRASE` (.env hosting, diisi
+  pemilik, disimpan juga di luar hosting). Dikirim ke repo privat `zahidjnd/raciksoal-backup` (deploy key TULIS khusus
+  repo itu: `kunci/backup`); 7 salinan di `~/raciksoal-backup/lokal`. Hasil → `backup-status.txt` → pita merah admin
+  (`PeringatanBackup` di kepala.tsx: gagal / > 36 jam). Backup manual: file kosong `~/raciksoal-app/jalankan-backup`.
+  `status.txt` menyamarkan alamat database. Cara pulihkan: `deploy/pulihkan-backup.md`.
 - 2026-10-14: Atas permintaan pemilik, teks Arab di WORD memakai Traditional Arabic 16 pt (bawaan Windows, sama
   dengan format AFTS), pengecualian dari aturan 7. Tampilan WEB tetap Amiri.
