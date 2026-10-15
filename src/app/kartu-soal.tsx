@@ -9,7 +9,7 @@ const HURUF = ["A", "B", "C", "D", "E"];
 const kotak = "w-full rounded border p-2 text-sm";
 
 /** Teks campuran Latin + Arab: bagian Arab ditulis kanan-ke-kiri dengan font Arab. */
-function Teks({ teks }: { teks: string }) {
+export function Teks({ teks }: { teks: string }) {
   return (
     <>
       {String(teks ?? "")

@@ -4,8 +4,8 @@ import { and, eq, gte, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { hasilSoal } from "@/db/schema";
 import { daftarModel, tanyaAI } from "@/lib/ai";
-import { bagiTahap, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatSistem, type Pengaturan } from "@/lib/prompt";
-import { periksaSoal, rapikanSoal, ratakanKunci, terapkanBobot, type Bab, type Soal } from "@/lib/soal";
+import { bagiTahap, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatPermintaanKisi, buatSistem, type Pengaturan } from "@/lib/prompt";
+import { arabTakTerverifikasi, korpusArab, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, terapkanBobot, type Bab, type BarisKisi, type Soal } from "@/lib/soal";
 import { DAFTAR_BAB } from "@/data";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
@@ -47,7 +47,7 @@ const pesanError = (e: unknown) => {
  * timeout, jawaban rusak), pindah ke model berikutnya sesuai urutan nomor di .env.
  * Mode "Bandingkan semua model" tidak memakai cadangan.
  */
-async function tanyaDenganCadangan(sistem: string, pengguna: string, slotUtama: number, pakaiCadangan: boolean) {
+async function tanyaDenganCadangan<T>(sistem: string, pengguna: string, slotUtama: number, pakaiCadangan: boolean, ambil: (data: unknown) => T) {
   const semuaModel = daftarModel();
   const urutan = pakaiCadangan ? [slotUtama, ...semuaModel.map((m) => m.slot).filter((s) => s !== slotUtama)] : [slotUtama];
   const catatan: string[] = [];
@@ -56,14 +56,13 @@ async function tanyaDenganCadangan(sistem: string, pengguna: string, slotUtama: 
     try {
       const r = await tanyaAI(sistem, pengguna, slot);
       if (r.terpotong) throw new Error(`AI (${nama}) gagal: jawaban terpotong karena terlalu panjang.`);
-      let data;
+      let hasil: T;
       try {
-        data = JSON.parse(r.jawaban);
-      } catch {
-        throw new Error(`AI (${nama}) gagal: jawaban bukan JSON yang valid.`);
+        hasil = ambil(JSON.parse(r.jawaban));
+      } catch (e) {
+        throw new Error(`AI (${nama}) gagal: ${e instanceof SyntaxError ? "jawaban bukan JSON yang valid." : (e as Error).message}`);
       }
-      if (!Array.isArray(data?.soal) || !data.soal.length) throw new Error(`AI (${nama}) gagal: daftar soal tidak ditemukan.`);
-      return { ...r, soal: data.soal as Soal[], catatan };
+      return { ...r, hasil, catatan };
     } catch (e) {
       const err = e as Error;
       catatan.push(err.name === "TimeoutError" ? `AI (${nama}) gagal: terlalu lama menjawab (timeout).` : pesanError(e));
@@ -71,6 +70,14 @@ async function tanyaDenganCadangan(sistem: string, pengguna: string, slotUtama: 
     }
   }
   throw new Error(catatan.join(" | "));
+}
+
+/** Ambil daftar soal dari JSON jawaban AI; `perlu` = jumlah minimal (kelebihan dibuang). */
+function ambilSoal(data: unknown, perlu = 1): Soal[] {
+  const soal = (data as { soal?: unknown })?.soal;
+  if (!Array.isArray(soal) || !soal.length) throw new Error("daftar soal tidak ditemukan.");
+  if (soal.length < perlu) throw new Error(`hanya ${soal.length} dari ${perlu} soal.`);
+  return (soal as Soal[]).slice(0, Math.max(perlu, 1));
 }
 
 /** Model AI yang terpasang di .env (nomor + nama saja, tanpa kunci), untuk pilihan di form. */
@@ -116,7 +123,10 @@ export async function mulaiBuatSoal(input: Pengaturan) {
   }
 }
 
-/** Buat soal bertahap (maks 10 soal per panggilan AI) supaya jawaban AI tidak terpotong, lalu gabungkan. */
+/**
+ * Langkah 6: susun kisi-kisi dulu (satu panggilan, AI melihat rencana semua soal sehingga skenario tidak berulang),
+ * lalu buat soal bertahap (maks 10 per panggilan supaya jawaban AI tidak terpotong) mengikuti potongan kisi-kisinya.
+ */
 async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
   const sistem = buatSistem(bab);
   const tahap = bagiTahap(p.jumlah);
@@ -138,18 +148,32 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
       })
       .where(eq(hasilSoal.id, id));
 
+  const tanya = async <T,>(label: string, pengguna: string, ambil: (data: unknown) => T) => {
+    permintaan.push(pengguna);
+    const r = await tanyaDenganCadangan(sistem, pengguna, p.modelSlot ?? 1, !p.bandingkan, ambil);
+    mentah.push(r.jawaban);
+    info.tokenMasuk += r.token.masuk;
+    info.tokenKeluar += r.token.keluar;
+    info.catatan.push(...r.catatan.map((c) => `${label}: ${c}`));
+    dipakai.add(r.model);
+    return r.hasil;
+  };
+
   try {
+    await simpan({ pesan: "Menyusun kisi-kisi" });
+    const kisi = await tanya("Kisi-kisi", buatPermintaanKisi(p), (d) => periksaKisi((d as { kisi?: unknown })?.kisi, p.jumlah, bab));
+    await simpan({ kisi });
+
+    let awal = 0;
     for (const [i, jumlah] of tahap.entries()) {
+      // Tahap diisi berurutan PG → PGK → BS → URAIAN, sama dengan urutan kisi-kisi.
+      const n = jumlah.PG + jumlah.PGK + jumlah.BS + jumlah.URAIAN;
+      const baris = kisi.slice(awal, awal + n);
+      awal += n;
       await simpan({ pesan: `Tahap ${i + 1} dari ${tahap.length}` });
-      const pengguna = buatPengguna(p, jumlah, semua.map((s) => s.pertanyaan));
-      permintaan.push(pengguna);
-      const r = await tanyaDenganCadangan(sistem, pengguna, p.modelSlot ?? 1, !p.bandingkan);
-      mentah.push(r.jawaban);
-      info.tokenMasuk += r.token.masuk;
-      info.tokenKeluar += r.token.keluar;
-      info.catatan.push(...r.catatan.map((c) => `Tahap ${i + 1}: ${c}`));
-      dipakai.add(r.model);
-      semua.push(...r.soal);
+      const pengguna = buatPengguna(p, jumlah, semua.map((s) => s.pertanyaan), "", baris);
+      const soal = await tanya(`Tahap ${i + 1}`, pengguna, (d) => ambilSoal(d, baris.length));
+      semua.push(...soal.map((s, j) => samakanDenganKisi(s, baris[j])));
     }
     const soal = periksaSoal(semua, bab);
     ratakanKunci(soal);
@@ -183,7 +207,10 @@ export async function simpanSoal(id: number, no: number, isian: Soal) {
     if (typeof set === "string") return { ok: false as const, pesan: set };
     const [soal] = periksaSoal([rapikanSoal(isian, set.soal[no].bentuk)], set.bab);
     set.soal[no] = soal;
-    await db.update(hasilSoal).set({ soal: set.soal }).where(eq(hasilSoal.id, set.h.id));
+    // TP/level yang diubah guru ikut ke baris kisi-kisinya, supaya kisi-kisi tetap cocok dengan soal.
+    const kisi = set.h.kisi as BarisKisi[] | null;
+    if (kisi?.[no]) kisi[no] = { ...kisi[no], tp: soal.tp, level: soal.level };
+    await db.update(hasilSoal).set({ soal: set.soal, kisi }).where(eq(hasilSoal.id, set.h.id));
     return { ok: true as const, soal };
   } catch (e) {
     return { ok: false as const, pesan: `Gagal menyimpan: ${pesanError(e)}` };
@@ -199,11 +226,13 @@ export async function gantiSatuSoal(id: number, no: number) {
     if (h.jumlahGanti >= BATAS_GANTI_PER_SET) return { ok: false as const, pesan: `Batas ${BATAS_GANTI_PER_SET} kali ganti soal untuk set ini sudah habis.` };
 
     const lama = set.soal[no];
+    const kisi = h.kisi as BarisKisi[] | null; // set lama: tanpa kisi-kisi
+    const baris = kisi?.[no];
     const sistem = buatSistem(bab);
-    const pengguna = buatPenggantiPengguna(h.pengaturan as Pengaturan, lama, set.soal);
+    const pengguna = buatPenggantiPengguna(h.pengaturan as Pengaturan, lama, set.soal, baris);
     const p = h.pengaturan as Pengaturan;
     // Model utama sama dengan set; cadangan dipakai kalau gagal (kecuali set hasil "Bandingkan semua model").
-    const r = await tanyaDenganCadangan(sistem, pengguna, p.modelSlot ?? 1, !p.bandingkan);
+    const r = await tanyaDenganCadangan(sistem, pengguna, p.modelSlot ?? 1, !p.bandingkan, (d) => ambilSoal(d));
     // Prompt & jawaban mentah penggantian ikut disimpan (untuk perbandingan model, langkah 4).
     const catat = {
       jumlahGanti: h.jumlahGanti + 1,
@@ -211,11 +240,17 @@ export async function gantiSatuSoal(id: number, no: number) {
       // set lama (sebelum pembuatan bertahap) menyimpan satu jawaban mentah, bukan array
       jawabanAi: JSON.stringify([...(h.jawabanAi?.startsWith("[") ? JSON.parse(h.jawabanAi) : [h.jawabanAi].filter(Boolean)), r.jawaban]),
     };
-    const [soal] = periksaSoal([{ ...r.soal[0], bentuk: lama.bentuk }], bab);
+    const { stimulus, ...baru } = r.hasil[0];
+    const [soal] = periksaSoal([baris ? samakanDenganKisi(baru, baris) : { ...baru, bentuk: lama.bentuk }], bab);
     ratakanKunci([soal]); // posisi kunci PG/PGK diacak
     if (p.bobot) terapkanBobot([soal], p.bobot);
     set.soal[no] = soal;
-    await db.update(hasilSoal).set({ ...catat, soal: set.soal }).where(eq(hasilSoal.id, h.id));
+    // Skenario baru dicatat di baris kisi-kisi (indikator tetap).
+    // (aturan 5: skenario berisi teks Arab yang tidak terverifikasi tidak dipakai)
+    const skenario = String(stimulus ?? "").trim();
+    const skenarioAman = skenario && !arabTakTerverifikasi(skenario, korpusArab(bab)).length;
+    if (kisi && baris) kisi[no] = { ...baris, stimulus: skenarioAman ? skenario : baris.stimulus };
+    await db.update(hasilSoal).set({ ...catat, soal: set.soal, kisi }).where(eq(hasilSoal.id, h.id));
     return { ok: true as const, soal };
   } catch (e) {
     const admin = (await penggunaSaatIni().catch(() => null))?.peran === "admin";
@@ -228,17 +263,18 @@ export async function cekHasil(id: number) {
   const saya = await penggunaSaatIni();
   if (!saya) return null;
   const [h] = await db
-    .select({ guruId: hasilSoal.guruId, status: hasilSoal.status, soal: hasilSoal.soal, pesan: hasilSoal.pesan, model: hasilSoal.model, babId: hasilSoal.babId, dibuat: hasilSoal.dibuat, info: hasilSoal.info })
+    .select({ guruId: hasilSoal.guruId, status: hasilSoal.status, soal: hasilSoal.soal, kisi: hasilSoal.kisi, pesan: hasilSoal.pesan, model: hasilSoal.model, babId: hasilSoal.babId, dibuat: hasilSoal.dibuat, info: hasilSoal.info })
     .from(hasilSoal)
     .where(eq(hasilSoal.id, Number(id)));
   if (!h || !bolehAkses(h.guruId, saya)) return null;
   const { guruId, ...isi } = h; // id pemilik tidak perlu dikirim ke browser
   void guruId;
   const soal = h.soal as Soal[] | null;
+  const kisi = h.kisi as BarisKisi[] | null;
   if (saya.peran !== "admin") {
     // Guru tidak menerima info teknis (model, waktu, token, catatan cadangan) maupun rincian error penyedia AI.
     // (halaman sudah menambahkan awalan "Gagal membuat soal:")
-    return { ...isi, soal, model: null, info: null, pesan: h.status === "gagal" ? SARAN_GURU : h.pesan };
+    return { ...isi, soal, kisi, model: null, info: null, pesan: h.status === "gagal" ? SARAN_GURU : h.pesan };
   }
-  return { ...isi, soal, info: h.info as { detik: number; tokenMasuk: number; tokenKeluar: number; catatan?: string[] } | null };
+  return { ...isi, soal, kisi, info: h.info as { detik: number; tokenMasuk: number; tokenKeluar: number; catatan?: string[] } | null };
 }

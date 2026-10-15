@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { ambilDaftarModel, ambilJatah, cekHasil, mulaiBuatSoal } from "./actions";
-import { KartuSoal } from "./kartu-soal";
+import { KartuSoal, Teks } from "./kartu-soal";
 import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_SOAL, NAMA_BENTUK, TUJUAN, type Pengaturan } from "@/lib/prompt";
-import type { Bentuk } from "@/lib/soal";
+import type { BarisKisi, Bentuk } from "@/lib/soal";
 import { DAFTAR_BAB as SEMUA_BAB } from "@/data";
 
 const DAFTAR_BAB = Object.values(SEMUA_BAB);
@@ -18,6 +18,42 @@ function Angka({ label, nilai, ubah }: { label: string; nilai: number; ubah: (n:
       {label}
       <input type="number" min={0} max={MAKS_SOAL} value={nilai} onChange={(e) => ubah(Number(e.target.value))} className="w-20 rounded border p-1 text-right" />
     </label>
+  );
+}
+
+/** Tabel kisi-kisi (langkah 6): satu baris per soal. Set lama tidak punya kisi-kisi. */
+function TabelKisi({ kisi }: { kisi: BarisKisi[] }) {
+  return (
+    <details className="rounded-lg border p-3">
+      <summary className="cursor-pointer font-semibold">📋 Kisi-kisi ({kisi.length} soal)</summary>
+      <div className="mt-3 overflow-x-auto">
+        <table className="w-full min-w-[640px] border-collapse text-sm">
+          <thead>
+            <tr className="bg-gray-100 text-left">
+              {["No. Soal", "TP", "Materi", "Indikator Soal", "Level", "Bentuk"].map((j) => (
+                <th key={j} className="border p-2">{j}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {kisi.map((k) => (
+              <tr key={k.no} className={`align-top ${k.peringatan?.length ? "bg-red-50" : ""}`}>
+                <td className="border p-2 text-center">{k.no}</td>
+                <td className="border p-2 whitespace-nowrap">{k.tp}</td>
+                <td className="border p-2"><Teks teks={k.materi} /></td>
+                <td className="border p-2">
+                  {k.peringatan?.map((w, i) => <span key={i} className="block font-semibold text-red-700">⚠️ {w}</span>)}
+                  <Teks teks={k.indikator} />
+                  <span className="block text-xs text-gray-500">Stimulus: <Teks teks={k.stimulus} /></span>
+                </td>
+                <td className="border p-2 text-center">{k.level}</td>
+                <td className="border p-2 whitespace-nowrap">{NAMA_BENTUK[k.bentuk]}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </details>
   );
 }
 
@@ -253,6 +289,8 @@ export function BuatSoal() {
           </div>
           <p className="text-xs text-gray-500">File Word mengikuti isi terbaru, termasuk soal yang sudah Anda edit atau ganti.</p>
 
+          {!!hasil.kisi?.length && <TabelKisi kisi={hasil.kisi} />}
+
           {BENTUK.filter((b) => soal.some((s) => s.bentuk === b)).map((b) => (
             <div key={b} className="space-y-4">
               <h2 className="text-lg font-bold">{NAMA_BENTUK[b]}</h2>
@@ -265,7 +303,10 @@ export function BuatSoal() {
                       no={i + 1}
                       s={s}
                       bab={bab}
-                      onUbah={(baru) => setHasil({ ...hasil, soal: soal.map((x, j) => (j === i ? baru : x)) })}
+                      onUbah={(baru) => {
+                        setHasil({ ...hasil, soal: soal.map((x, j) => (j === i ? baru : x)) });
+                        cekHasil(id!).then((h) => h && setHasil(h)).catch(() => {}); // kisi-kisi ikut berubah di server
+                      }}
                     />
                   ),
               )}

@@ -14,6 +14,7 @@ export type Soal = {
   tp: string;
   skor: number;
   peringatan?: string[]; // diisi aplikasi, bukan AI
+  stimulus?: string; // hanya pada jawaban "ganti satu soal": ringkasan skenario baru untuk kisi-kisi
 };
 
 export type Bab = {
@@ -24,7 +25,57 @@ export type Bab = {
   materi: string[];
 };
 
-const HURUF_ARAB = "؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿";
+/** Satu baris kisi-kisi = rencana satu soal (langkah 6). Disusun AI dulu, lalu soal ditulis mengikuti barisnya. */
+export type BarisKisi = {
+  no: number;
+  bentuk: Bentuk;
+  tp: string;
+  materi: string;
+  indikator: string;
+  level: string;
+  dalil_id: string | null;
+  stimulus: string; // jenis + skenario singkat, supaya skenario tidak berulang dalam satu set
+  peringatan?: string[]; // diisi aplikasi (aturan 5: teks Arab tak terverifikasi)
+};
+
+const URUTAN_BENTUK: Bentuk[] = ["PG", "PGK", "BS", "URAIAN"];
+
+/**
+ * Rapikan kisi-kisi dari AI: jumlah baris per bentuk harus pas dengan permintaan (kelebihan dibuang),
+ * diurutkan PG → PGK → BS → URAIAN dan diberi nomor. Dalil yang tidak ada di data bab dikosongkan.
+ * Melempar error kalau ada bentuk yang kurang (supaya model cadangan dicoba).
+ */
+export function periksaKisi(data: unknown, jumlah: Record<Bentuk, number>, bab: Bab): BarisKisi[] {
+  const teks = (x: unknown) => String(x ?? "").trim();
+  const mentah = Array.isArray(data) ? (data as Partial<BarisKisi>[]) : [];
+  const dalilAda = new Set(bab.dalil.map((d) => d.id));
+  const korpus = korpusArab(bab);
+  const hasil = URUTAN_BENTUK.flatMap((b) => {
+    const baris = mentah.filter((k) => teks(k?.bentuk).toUpperCase() === b).slice(0, jumlah[b]);
+    if (baris.length < jumlah[b]) throw new Error(`kisi-kisi ${b} hanya ${baris.length} dari ${jumlah[b]} baris.`);
+    return baris.map((k) => {
+      const isi = { materi: teks(k.materi), indikator: teks(k.indikator), stimulus: teks(k.stimulus) };
+      const arabAsing = Object.values(isi).flatMap((t) => arabTakTerverifikasi(t, korpus));
+      return {
+        no: 0,
+        bentuk: b,
+        tp: teks(k.tp),
+        ...isi,
+        level: teks(k.level).toUpperCase(),
+        dalil_id: k.dalil_id && dalilAda.has(teks(k.dalil_id)) ? teks(k.dalil_id) : null,
+        peringatan: arabAsing.length ? [`Teks Arab tidak cocok dengan data terverifikasi: ${arabAsing.join(" | ")}`] : [],
+      };
+    });
+  });
+  return hasil.map((k, i) => ({ ...k, no: i + 1 }));
+}
+
+/** Samakan bentuk, TP, dan level soal dengan baris kisi-kisinya (kisi-kisi = rencana yang dipegang). */
+export function samakanDenganKisi(soal: Soal, k: BarisKisi): Soal {
+  return { ...soal, bentuk: k.bentuk, tp: k.tp || soal.tp, level: LEVEL.includes(k.level) ? k.level : soal.level };
+}
+
+const HURUF_ARAB ="؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿";
 // Satu potongan teks Arab: huruf Arab, boleh berisi spasi di tengah.
 export const POLA_ARAB = `[${HURUF_ARAB}]+(?:[\\s${HURUF_ARAB}]*[${HURUF_ARAB}])?`;
 const rapikan = (s: string) => s.replace(/\s+/g, " ").normalize("NFC");

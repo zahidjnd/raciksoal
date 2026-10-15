@@ -97,6 +97,7 @@ export const hasilSoal = pgTable(
     pesan: text("pesan"),
     jumlahGanti: integer("jumlah_ganti").default(0).notNull(), // berapa kali "ganti satu soal" dipakai pada set ini
     info: jsonb("info"), // data perbandingan model: { detik, tokenMasuk, tokenKeluar, catatan }
+    kisi: jsonb("kisi"), // kisi-kisi (BarisKisi[], langkah 6); kosong untuk set lama
   },
   (t) => [index("hasil_soal_guru_idx").on(t.guruId, t.dibuat)],
 );

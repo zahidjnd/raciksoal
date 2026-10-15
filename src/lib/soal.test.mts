@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { arabTakTerverifikasi, korpusArab, periksaSoal, rapikanSoal, ratakanKunci, terapkanBobot, type Bab, type Soal } from "./soal.ts";
-import { bagiTahap, bersihkanPengaturan, buatPengguna, MAKS_CATATAN, type Pengaturan } from "./prompt.ts";
+import { arabTakTerverifikasi, korpusArab, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, terapkanBobot, type Bab, type Soal } from "./soal.ts";
+import { bagiTahap, bersihkanPengaturan, buatPengguna, hitungLevel, MAKS_CATATAN, rencanaLevel, type Pengaturan } from "./prompt.ts";
 import { bolehAkses, rapikanUsername } from "./akses.ts";
 
 test("aturan 3: guru hanya boleh membuka set miliknya, admin boleh semua", () => {
@@ -55,6 +55,62 @@ test("bagiTahap membagi soal maks 10 per tahap dengan urutan bentuk tetap", () =
 
 const bab: Bab = JSON.parse(readFileSync(new URL("../data/qurdis11-bab3.json", import.meta.url), "utf8"));
 const korpus = korpusArab(bab);
+
+test("hitungLevel mengubah persen jadi jumlah soal yang totalnya tepat", () => {
+  assert.deepEqual(hitungLevel(25, { LOTS: 40, MOTS: 40, HOTS: 20 }), { LOTS: 10, MOTS: 10, HOTS: 5 });
+  assert.deepEqual(hitungLevel(7, { LOTS: 30, MOTS: 40, HOTS: 30 }), { LOTS: 2, MOTS: 3, HOTS: 2 });
+  for (const n of [1, 3, 11, 40]) {
+    const h = hitungLevel(n, { LOTS: 33, MOTS: 33, HOTS: 34 });
+    assert.equal(h.LOTS + h.MOTS + h.HOTS, n);
+  }
+});
+
+test("rencanaLevel: komposisi tepat, tersebar ke semua bentuk, dan urut mudah → sulit di tiap bentuk", () => {
+  const jumlah = { PG: 20, PGK: 10, BS: 5, URAIAN: 5 };
+  const r = rencanaLevel(jumlah, { LOTS: 30, MOTS: 40, HOTS: 30 });
+  const hitung = (a: string[]) => ({ LOTS: a.filter((x) => x === "LOTS").length, MOTS: a.filter((x) => x === "MOTS").length, HOTS: a.filter((x) => x === "HOTS").length });
+  assert.equal(r.length, 40);
+  assert.deepEqual(hitung(r), { LOTS: 12, MOTS: 16, HOTS: 12 });
+  assert.deepEqual(hitung(r.slice(0, 20)), { LOTS: 6, MOTS: 8, HOTS: 6 }); // PG kebagian sesuai porsi
+  const nilai = { LOTS: 0, MOTS: 1, HOTS: 2 };
+  for (const [a, b] of [[0, 20], [20, 30], [30, 35], [35, 40]]) {
+    const bagian = r.slice(a, b).map((x) => nilai[x]);
+    assert.deepEqual(bagian, [...bagian].sort()); // mudah → sulit
+  }
+  assert.deepEqual(rencanaLevel({ PG: 1, PGK: 0, BS: 0, URAIAN: 0 }, { LOTS: 0, MOTS: 0, HOTS: 100 }), ["HOTS"]);
+});
+
+test("periksaKisi mengurutkan per bentuk, memotong kelebihan, menomori, dan membuang dalil tak dikenal", () => {
+  const baris = (bentuk: string, dalil_id: string | null = "nur-2") => ({ bentuk, tp: "TP 3.1", materi: "m", indikator: "i", level: "c2", dalil_id, stimulus: "s" });
+  const kisi = periksaKisi(
+    [baris("URAIAN"), baris("pg"), baris("PG", "ngarang-1"), baris("PG"), baris("BS")],
+    { PG: 2, PGK: 0, BS: 1, URAIAN: 1 },
+    bab,
+  );
+  assert.deepEqual(kisi.map((k) => `${k.no}${k.bentuk}`), ["1PG", "2PG", "3BS", "4URAIAN"]);
+  assert.equal(kisi[1].dalil_id, null); // "ngarang-1" tidak ada di data bab
+  assert.equal(kisi[0].level, "C2");
+  assert.deepEqual(kisi[0].peringatan, []);
+  // aturan 5: teks Arab di kisi-kisi juga dicek ke data terverifikasi
+  const lafazAsli = bab.dalil[0].mufradat[0].arab;
+  const [arab] = periksaKisi([{ ...baris("PG"), indikator: `memaknai ${lafazAsli} dan بِسْمِ اللّٰهِ` }], { PG: 1, PGK: 0, BS: 0, URAIAN: 0 }, bab);
+  assert.equal(arab.peringatan?.length, 1);
+  assert.ok(!arab.peringatan![0].includes(lafazAsli) && arab.peringatan![0].includes("بِسْمِ"));
+  // bentuk yang kurang → error, supaya model cadangan dicoba
+  assert.throws(() => periksaKisi([baris("PG")], { PG: 2, PGK: 0, BS: 0, URAIAN: 0 }, bab), /PG hanya 1 dari 2/);
+  assert.throws(() => periksaKisi(null, { PG: 1, PGK: 0, BS: 0, URAIAN: 0 }, bab));
+});
+
+test("soal mengikuti TP dan level kisi-kisi; permintaan soal memuat indikator dan skenarionya", () => {
+  const [k] = periksaKisi([{ bentuk: "PG", tp: "TP 3.2", materi: "m", indikator: "Peserta didik dapat menjelaskan", level: "C4", dalil_id: null, stimulus: "unggahan media sosial X" }], { PG: 1, PGK: 0, BS: 0, URAIAN: 0 }, bab);
+  const s = samakanDenganKisi({ bentuk: "PG", dalil_id: null, pertanyaan: "?", kunci: "A", pembahasan: "", level: "C1", tp: "TP 3.1", skor: 2 }, k);
+  assert.equal(s.tp, "TP 3.2");
+  assert.equal(s.level, "C4");
+  const p = { babId: "qurdis11-bab3", tujuan: "PAS", kesulitan: "Sedang", jumlah: { PG: 1, PGK: 0, BS: 0, URAIAN: 0 }, level: { LOTS: 30, MOTS: 40, HOTS: 30 } } as Pengaturan;
+  const permintaan = buatPengguna(p, p.jumlah, [], "", [k]);
+  assert.ok(permintaan.includes("unggahan media sosial X") && permintaan.includes("Peserta didik dapat menjelaskan"));
+  assert.ok(!permintaan.includes("Komposisi level")); // level sudah ditentukan kisi-kisi
+});
 
 test("teks Arab yang sama persis dengan data lolos", () => {
   assert.deepEqual(arabTakTerverifikasi(`Makna lafaz ${bab.dalil[0].mufradat[0].arab} adalah ....`, korpus), []);

@@ -1,4 +1,4 @@
-import type { Bab, Bentuk, Soal } from "./soal";
+import type { Bab, BarisKisi, Bentuk, Soal } from "./soal";
 
 export const TUJUAN = ["Ulangan Harian", "PTS", "PAS", "Latihan"] as const;
 export const KESULITAN = ["Mudah", "Sedang", "Sulit"] as const;
@@ -129,7 +129,7 @@ BENTUK SOAL:
 - BS: satu pernyataan. "kunci": "Benar" atau "Salah". Tanpa "pilihan".
 - URAIAN: "kunci" berisi jawaban ideal; "rubrik" berisi kriteria penilaian dan skornya; "skor" = jumlah skor rubrik.
 
-FORMAT JAWABAN: hanya JSON (tanpa teks lain), dengan bentuk:
+FORMAT JAWABAN (kecuali permintaan menyebut format lain): hanya JSON (tanpa teks lain), dengan bentuk:
 {"soal":[{"bentuk":"PG","dalil_id":null,"pertanyaan":"...","pilihan":["...","...","...","...","..."],"kunci":"B","pembahasan":"...","level":"C2","tp":"TP 3.2","skor":1}]}
 Untuk URAIAN tambahkan "rubrik":[{"kriteria":"...","skor":2}]. "tp" diisi kode TP yang paling sesuai.
 
@@ -146,29 +146,119 @@ Materi:
 ${bab.materi.join("\n")}`;
 }
 
-/** Permintaan untuk satu tahap. `sudah` = pertanyaan dari tahap sebelumnya, supaya AI tidak membuat soal yang mirip. */
-export function buatPengguna(p: Pengaturan, jumlah: Record<Bentuk, number>, sudah: string[], tambahan = "") {
-  const urutan = (Object.keys(NAMA_BENTUK) as Bentuk[]).filter((b) => jumlah[b] > 0);
+/** Jumlah soal LOTS/MOTS/HOTS dari persentase (sisa pembulatan ke yang pecahannya terbesar), totalnya tepat `total`. */
+export function hitungLevel(total: number, level: Pengaturan["level"]) {
+  const kunci = ["LOTS", "MOTS", "HOTS"] as const;
+  const mentah = kunci.map((k) => (total * level[k]) / 100);
+  const hasil = mentah.map(Math.floor);
+  const urut = kunci.map((_, i) => i).sort((a, b) => mentah[b] - hasil[b] - (mentah[a] - hasil[a]));
+  for (let i = 0; hasil.reduce((a, b) => a + b, 0) < total; i++) hasil[urut[i % 3]]++;
+  return { LOTS: hasil[0], MOTS: hasil[1], HOTS: hasil[2] };
+}
+
+export type Kategori = "LOTS" | "MOTS" | "HOTS";
+const RENTANG: Record<Kategori, string> = { LOTS: "C1–C2", MOTS: "C3", HOTS: "C4–C6" };
+
+/**
+ * Kategori level untuk setiap nomor, ditentukan APLIKASI (AI tidak pandai menghitung komposisi).
+ * Dibagi merata ke semua bentuk (round-robin berbobot), lalu di dalam tiap bentuk diurutkan mudah → sulit.
+ */
+export function rencanaLevel(jumlah: Record<Bentuk, number>, level: Pengaturan["level"]): Kategori[] {
+  const urutan = urutanBentuk(jumlah);
+  const total = urutan.reduce((n, b) => n + jumlah[b], 0);
+  const target = hitungLevel(total, level);
+  const kategori = ["LOTS", "MOTS", "HOTS"] as const;
+  const dipakai = { LOTS: 0, MOTS: 0, HOTS: 0 };
+  const semua: Kategori[] = [];
+  for (let i = 0; i < total; i++) {
+    // pilih kategori yang paling "tertinggal" dari porsinya
+    const k = kategori.filter((x) => dipakai[x] < target[x]).sort((a, b) => dipakai[a] / target[a] - dipakai[b] / target[b])[0];
+    dipakai[k]++;
+    semua.push(k);
+  }
+  let awal = 0;
+  return urutan.flatMap((b) => {
+    const bagian = semua.slice(awal, awal + jumlah[b]);
+    awal += jumlah[b];
+    return bagian.sort((x, y) => kategori.indexOf(x) - kategori.indexOf(y));
+  });
+}
+
+const urutanBentuk = (jumlah: Record<Bentuk, number>) => (Object.keys(NAMA_BENTUK) as Bentuk[]).filter((b) => jumlah[b] > 0);
+
+/** Tujuan, kesulitan, dan catatan guru: sama untuk permintaan kisi-kisi dan soal. */
+function kepalaPermintaan(p: Pengaturan) {
   const tujuan = p.tujuan as (typeof TUJUAN)[number];
   const kesulitan = p.kesulitan as (typeof KESULITAN)[number];
-  const daftarSudah = sudah.length
-    ? `\nSoal berikut SUDAH dibuat dalam set ini. Jangan membuat soal yang sama atau mirip (pokok bahasan maupun redaksinya), jangan memakai lagi skenario/kasus yang sama, dan hitung pola "berdebat/berbeda pendapat" yang sudah ada di daftar ini terhadap batas 2 kali. Ambil sisi materi, dalil, atau TP yang lain:\n${sudah.map((s) => `- ${s.slice(0, 160)}`).join("\n")}\n`
-    : "";
   // Catatan guru diikuti, tapi tidak boleh mengalahkan aturan (teks Arab, sumber data, format).
   const catatanGuru = p.catatan
     ? `\nCatatan tambahan dari guru (ikuti selama tidak bertentangan dengan aturan di instruksi sistem, terutama aturan teks Arab dan larangan memakai sumber di luar data bab):\n"""${p.catatan}"""\n`
     : "";
-  return `Buat soal untuk ${tujuan}. Aturan ${tujuan}: ${ATURAN_TUJUAN[tujuan].aturan}
+  return `Tujuan: ${tujuan}. Aturan ${tujuan}: ${ATURAN_TUJUAN[tujuan].aturan}
 Tingkat kesulitan: ${kesulitan}. Artinya: ${ATURAN_KESULITAN[kesulitan]}
-Jumlah: ${urutan.map((b) => `${b} ${jumlah[b]}`).join(", ")}. Urutkan per bentuk: ${urutan.join(", ")}.
-Komposisi level: LOTS ${p.level.LOTS}%, MOTS ${p.level.MOTS}%, HOTS ${p.level.HOTS}%.
-${catatanGuru}${daftarSudah}${tambahan}Balas hanya dengan JSON sesuai format.`;
+${catatanGuru}`;
 }
 
-/** Permintaan "ganti satu soal": 1 soal baru dengan bentuk, level, dan TP yang sama, tapi berbeda dari semua soal di set. */
-export function buatPenggantiPengguna(p: Pengaturan, lama: Soal, semua: Soal[]) {
+/** Langkah 6: minta KISI-KISI (rencana semua soal) dulu, dalam satu panggilan, supaya skenario tidak berulang. */
+export function buatPermintaanKisi(p: Pengaturan) {
+  const urutan = urutanBentuk(p.jumlah);
+  const total = urutan.reduce((n, b) => n + p.jumlah[b], 0);
+  // Rencana per nomor, diringkas jadi rentang: "Nomor 1–6: PG, LOTS (C1–C2)".
+  const bentukNo = urutan.flatMap((b) => Array<Bentuk>(p.jumlah[b]).fill(b));
+  const kategori = rencanaLevel(p.jumlah, p.level);
+  const rentang: string[] = [];
+  for (let i = 0; i < total; ) {
+    let j = i;
+    while (j + 1 < total && bentukNo[j + 1] === bentukNo[i] && kategori[j + 1] === kategori[i]) j++;
+    rentang.push(`- Nomor ${i === j ? i + 1 : `${i + 1}–${j + 1}`}: ${bentukNo[i]}, ${kategori[i]} (${RENTANG[kategori[i]]})`);
+    i = j + 1;
+  }
+  return `Susun KISI-KISI untuk satu set ${total} soal. Belum menulis soal; setiap baris kisi-kisi = rencana satu soal.
+${kepalaPermintaan(p)}Bentuk dan kategori level setiap nomor SUDAH DITENTUKAN, wajib diikuti persis (${total} baris, urut nomor):
+${rentang.join("\n")}
+Isi setiap baris:
+- "tp": kode TP. Sebar merata ke semua TP.
+- "materi": pokok materi singkat (maks 8 kata).
+- "indikator": indikator soal gaya Kemenag, diawali "Disajikan ..., peserta didik dapat ..." bila memakai stimulus, atau "Peserta didik dapat ..." bila tanpa stimulus; kata kerja operasional sesuai level.
+- "level": satu level di dalam kategori nomor itu (LOTS = C1 atau C2, MOTS = C3, HOTS = C4, C5, atau C6).
+- "dalil_id": id dalil yang dipakai, atau null. Sebar ke semua dalil.
+- "stimulus": jenis stimulus + skenario singkat (maks 15 kata), atau "tanpa stimulus". Ikuti aturan VARIASI STIMULUS: setiap skenario BERBEDA satu sama lain dalam seluruh kisi-kisi.
+Indikator antarbaris juga tidak boleh sama persis; ambil sisi materi yang berbeda.
+Di kisi-kisi JANGAN menulis huruf Arab sama sekali; sebut lafaz dengan transliterasi Latin (misalnya "lā taqrabū az-zinā").
+FORMAT JAWABAN untuk permintaan ini: hanya JSON {"kisi":[{"bentuk":"PG","tp":"TP 3.1","materi":"...","indikator":"...","level":"C2","dalil_id":null,"stimulus":"tanpa stimulus"}]}`;
+}
+
+/** Baris kisi-kisi dalam bentuk ringkas untuk permintaan soal. */
+const tulisKisi = (k: BarisKisi) =>
+  `- Nomor ${k.no} | ${k.bentuk} | ${k.tp} | ${k.level} | dalil_id: ${k.dalil_id ?? "null"} | Indikator: ${k.indikator} | Stimulus: ${k.stimulus}`;
+
+/**
+ * Permintaan untuk satu tahap. `sudah` = pertanyaan dari tahap sebelumnya, supaya AI tidak membuat soal yang mirip.
+ * `kisi` = baris kisi-kisi untuk tahap ini (set lama tanpa kisi-kisi: kosong, pakai komposisi level).
+ */
+export function buatPengguna(p: Pengaturan, jumlah: Record<Bentuk, number>, sudah: string[], tambahan = "", kisi: BarisKisi[] = []) {
+  const urutan = urutanBentuk(jumlah);
+  const daftarSudah = sudah.length
+    ? `\nSoal berikut SUDAH dibuat dalam set ini. Jangan membuat soal yang sama atau mirip (pokok bahasan maupun redaksinya), jangan memakai lagi skenario/kasus yang sama, dan hitung pola "berdebat/berbeda pendapat" yang sudah ada di daftar ini terhadap batas 2 kali. Ambil sisi materi, dalil, atau TP yang lain:\n${sudah.map((s) => `- ${s.slice(0, 160)}`).join("\n")}\n`
+    : "";
+  const rencana = kisi.length
+    ? `Tulis tepat ${kisi.length} soal sesuai KISI-KISI berikut, satu soal per baris, urut sesuai nomor. Setiap soal WAJIB memakai bentuk, tp, level, dan dalil_id barisnya, mengukur indikatornya, dan memakai stimulus/skenario yang tertulis (jangan diganti skenario lain):\n${kisi.map(tulisKisi).join("\n")}`
+    : `Jumlah: ${urutan.map((b) => `${b} ${jumlah[b]}`).join(", ")}. Urutkan per bentuk: ${urutan.join(", ")}.
+Komposisi level: LOTS ${p.level.LOTS}%, MOTS ${p.level.MOTS}%, HOTS ${p.level.HOTS}%.`;
+  return `Buat soal. ${kepalaPermintaan(p)}${rencana}
+${daftarSudah}${tambahan}Balas hanya dengan JSON sesuai format.`;
+}
+
+/**
+ * Permintaan "ganti satu soal": 1 soal baru dengan bentuk, level, dan TP yang sama (dan indikator kisi-kisi
+ * yang sama bila ada), tapi skenario berbeda dari semua soal di set.
+ */
+export function buatPenggantiPengguna(p: Pengaturan, lama: Soal, semua: Soal[], kisi?: BarisKisi) {
   const jumlah = { PG: 0, PGK: 0, BS: 0, URAIAN: 0, [lama.bentuk]: 1 };
+  const sasaran = kisi
+    ? `dengan bentuk ${kisi.bentuk}, ${kisi.tp}, level ${kisi.level}, tetap mengukur indikator: "${kisi.indikator}". Skenario lama ("${kisi.stimulus}") JANGAN dipakai lagi; pilih skenario baru yang belum ada di set ini. Tambahkan field "stimulus" pada soal berisi jenis + skenario baru (maks 15 kata) atau "tanpa stimulus"`
+    : `${lama.bentuk} pengganti dengan level ${lama.level} dan ${lama.tp} (abaikan komposisi level di atas)`;
   const tambahan = `\nIni permintaan MENGGANTI soal berikut (guru tidak memakainya): "${lama.pertanyaan.slice(0, 300)}"
-Buat tepat 1 soal ${lama.bentuk} pengganti dengan level ${lama.level} dan ${lama.tp} (abaikan komposisi level di atas). Gunakan skenario, sudut pandang, dan redaksi yang berbeda dari soal yang diganti maupun soal lain di daftar.\n`;
+Buat tepat 1 soal ${sasaran}. Gunakan skenario, sudut pandang, dan redaksi yang berbeda dari soal yang diganti maupun soal lain di daftar.\n`;
   return buatPengguna(p, jumlah, semua.map((s) => s.pertanyaan), tambahan);
 }

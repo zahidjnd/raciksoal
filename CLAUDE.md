@@ -93,7 +93,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
 - 2026-10-14: PDF materi: teks Arabnya rusak saat diekstrak → jangan pernah ambil ayat dari PDF.
 
 ## Status
-- Langkah 1, 2, 2b, 3, 4, 5, 7 SELESAI (per 2026-10-15). Berikutnya: langkah 6 (kisi-kisi), lalu materi sendiri.
+- Langkah 1, 2, 2b, 3, 4, 5, 7 SELESAI (per 2026-10-15). Langkah 6a selesai. Berikutnya: 6b (Word kisi-kisi), lalu materi sendiri.
 - Langkah 1 SELESAI (2026-10-14).
 - Langkah 2 (2026-10-14): form + buat soal + tampil hasil jalan untuk Bab 3. Belum: bab lain.
 - Langkah 2b (2026-10-14): edit per butir (`simpanSoal`, editan tetap dicek penjaga Arab) dan ganti satu soal
@@ -144,6 +144,15 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   model/info/rincian error ke guru (pesan gagal umum). /admin/set = semua set semua guru (200 terbaru).
   Pita peringatan merah di header admin (`PeringatanAdmin` di kepala.tsx): set gagal / cadangan dipakai 24 jam terakhir.
   LANGKAH 5 SELESAI.
+- Langkah 6a (2026-10-15): KISI-KISI DULU, BARU SOAL. `kerjakan`: 1 panggilan AI menyusun kisi-kisi semua nomor
+  (`buatPermintaanKisi`; kolom `hasil_soal.kisi` = `BarisKisi[]`: bentuk, tp, materi, indikator gaya Kemenag, level,
+  dalil_id, stimulus/skenario), dicek `periksaKisi` (jumlah per bentuk pas, dalil dikenal, teks Arab dicek penjaga ayat
+  → `peringatan`), lalu tiap tahap soal ditulis mengikuti potongan kisi-kisinya; bentuk/TP/level soal disamakan dengan
+  kisi (`samakanDenganKisi`). Kategori level per nomor DITENTUKAN APLIKASI (`rencanaLevel`: komposisi tepat, rata ke
+  semua bentuk, urut mudah→sulit) karena AI tidak bisa menghitung komposisi (uji: minta 12/16/12, AI sendiri 13/8/19).
+  Ganti soal: indikator tetap, skenario baru dicatat di kisi. Edit TP/level oleh guru ikut ke kisi. Set lama: tanpa kisi.
+  Uji 40 soal PAS Sulit: 76 detik, 0 ditandai, level tepat. Skenario masih ada 2–3 yang mirip per 40 soal (jauh berkurang).
+  Catatan uji: setelah mengedit file, MUAT ULANG halaman dev (HMR bisa membuat aksi server "is not defined").
 - Langkah 7 (2026-10-15): backup malam `~/raciksoal-app/backup.sh` (salinan `deploy/backup.sh`), cron `0 2 * * *`.
   pg_dump → gzip → `openssl enc -aes-256-cbc -pbkdf2 -iter 200000` dengan `BACKUP_PASSPHRASE` (.env hosting, diisi
   pemilik, disimpan juga di luar hosting). Dikirim ke repo privat `zahidjnd/raciksoal-backup` (deploy key TULIS khusus
