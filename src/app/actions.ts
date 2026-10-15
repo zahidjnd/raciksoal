@@ -11,10 +11,43 @@ import { DAFTAR_BAB } from "@/data";
 const BATAS_PER_HARI = 30;
 const BATAS_GANTI_PER_SET = 30;
 
+// Alasan error yang bisa dibaca. Beberapa error (mis. database mati) tidak punya teks pesan, jadi ambil kodenya.
 const pesanError = (e: unknown) => {
-  const err = e as Error;
-  return (err.cause as Error)?.message ?? err.message;
+  const err = e as Error & { code?: string; errors?: Error[] };
+  const alasan = (err.cause as Error)?.message || err.message || err.errors?.[0]?.message || err.code || String(e);
+  return /ECONNREFUSED/.test(alasan) ? `database tidak bisa dihubungi (${alasan})` : alasan;
 };
+
+/**
+ * Cadangan otomatis (fallback): coba model utama dulu; kalau gagal (saldo habis, kunci ditolak, server sibuk,
+ * timeout, jawaban rusak), pindah ke model berikutnya sesuai urutan nomor di .env.
+ * Mode "Bandingkan semua model" tidak memakai cadangan.
+ */
+async function tanyaDenganCadangan(sistem: string, pengguna: string, slotUtama: number, pakaiCadangan: boolean) {
+  const semuaModel = daftarModel();
+  const urutan = pakaiCadangan ? [slotUtama, ...semuaModel.map((m) => m.slot).filter((s) => s !== slotUtama)] : [slotUtama];
+  const catatan: string[] = [];
+  for (const slot of urutan) {
+    const nama = semuaModel.find((m) => m.slot === slot)?.nama ?? `model ${slot}`;
+    try {
+      const r = await tanyaAI(sistem, pengguna, slot);
+      if (r.terpotong) throw new Error(`AI (${nama}) gagal: jawaban terpotong karena terlalu panjang.`);
+      let data;
+      try {
+        data = JSON.parse(r.jawaban);
+      } catch {
+        throw new Error(`AI (${nama}) gagal: jawaban bukan JSON yang valid.`);
+      }
+      if (!Array.isArray(data?.soal) || !data.soal.length) throw new Error(`AI (${nama}) gagal: daftar soal tidak ditemukan.`);
+      return { ...r, soal: data.soal as Soal[], catatan };
+    } catch (e) {
+      const err = e as Error;
+      catatan.push(err.name === "TimeoutError" ? `AI (${nama}) gagal: terlalu lama menjawab (timeout).` : pesanError(e));
+      console.error("[AI gagal]", catatan.at(-1)); // terlihat di app.log hosting
+    }
+  }
+  throw new Error(catatan.join(" | "));
+}
 
 /** Model AI yang terpasang di .env (nomor + nama saja, tanpa kunci), untuk pilihan di form. */
 export async function ambilDaftarModel() {
@@ -57,7 +90,8 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
   const mentah: string[] = [];
   const semua: Soal[] = [];
   const mulai = Date.now();
-  const info = { detik: 0, tokenMasuk: 0, tokenKeluar: 0 };
+  const dipakai = new Set<string>(); // model yang benar-benar menghasilkan soal (bisa lebih dari satu kalau cadangan dipakai)
+  const info = { detik: 0, tokenMasuk: 0, tokenKeluar: 0, catatan: [] as string[] };
   // Prompt, jawaban mentah, waktu, dan token setiap tahap disimpan untuk perbandingan model (langkah 4).
   const simpan = (data: Partial<typeof hasilSoal.$inferInsert>) =>
     db
@@ -75,23 +109,20 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
       await simpan({ pesan: `Tahap ${i + 1} dari ${tahap.length}` });
       const pengguna = buatPengguna(p, jumlah, semua.map((s) => s.pertanyaan));
       permintaan.push(pengguna);
-      const { jawaban, terpotong, token } = await tanyaAI(sistem, pengguna, p.modelSlot);
-      mentah.push(jawaban);
-      info.tokenMasuk += token.masuk;
-      info.tokenKeluar += token.keluar;
-      if (terpotong) throw new Error(`Jawaban AI di tahap ${i + 1} terpotong karena terlalu panjang.`);
-      const data = JSON.parse(jawaban);
-      if (!Array.isArray(data?.soal)) throw new Error(`Format jawaban AI di tahap ${i + 1} tidak sesuai (daftar soal tidak ditemukan).`);
-      semua.push(...(data.soal as Soal[]));
+      const r = await tanyaDenganCadangan(sistem, pengguna, p.modelSlot ?? 1, !p.bandingkan);
+      mentah.push(r.jawaban);
+      info.tokenMasuk += r.token.masuk;
+      info.tokenKeluar += r.token.keluar;
+      info.catatan.push(...r.catatan.map((c) => `Tahap ${i + 1}: ${c}`));
+      dipakai.add(r.model);
+      semua.push(...r.soal);
     }
     const soal = periksaSoal(semua, bab);
     ratakanKunci(soal);
     if (p.bobot) terapkanBobot(soal, p.bobot);
-    await simpan({ status: "selesai", soal, pesan: null });
+    await simpan({ status: "selesai", soal, pesan: null, model: [...dipakai].join(" + ") });
   } catch (e) {
-    const err = e as Error;
-    const pesan = err.name === "TimeoutError" ? "AI terlalu lama menjawab (timeout)." : pesanError(e);
-    await simpan({ status: "gagal", pesan }).catch(() => {});
+    await simpan({ status: "gagal", pesan: pesanError(e) }).catch(() => {});
   }
 }
 
@@ -131,29 +162,24 @@ export async function gantiSatuSoal(id: number, no: number) {
     const lama = set.soal[no];
     const sistem = buatSistem(bab);
     const pengguna = buatPenggantiPengguna(h.pengaturan as Pengaturan, lama, set.soal);
-    const { jawaban, terpotong } = await tanyaAI(sistem, pengguna, (h.pengaturan as Pengaturan).modelSlot ?? 1); // model sama dengan set
+    const p = h.pengaturan as Pengaturan;
+    // Model utama sama dengan set; cadangan dipakai kalau gagal (kecuali set hasil "Bandingkan semua model").
+    const r = await tanyaDenganCadangan(sistem, pengguna, p.modelSlot ?? 1, !p.bandingkan);
     // Prompt & jawaban mentah penggantian ikut disimpan (untuk perbandingan model, langkah 4).
     const catat = {
       jumlahGanti: h.jumlahGanti + 1,
-      prompt: `${h.prompt}\n\n---\n\n[GANTI SOAL NOMOR ${no + 1}]\n${pengguna}`,
+      prompt: `${h.prompt}\n\n---\n\n[GANTI SOAL NOMOR ${no + 1} dengan ${r.model}]\n${pengguna}`,
       // set lama (sebelum pembuatan bertahap) menyimpan satu jawaban mentah, bukan array
-      jawabanAi: JSON.stringify([...(h.jawabanAi?.startsWith("[") ? JSON.parse(h.jawabanAi) : [h.jawabanAi].filter(Boolean)), jawaban]),
+      jawabanAi: JSON.stringify([...(h.jawabanAi?.startsWith("[") ? JSON.parse(h.jawabanAi) : [h.jawabanAi].filter(Boolean)), r.jawaban]),
     };
-    const baru = !terpotong && (JSON.parse(jawaban)?.soal?.[0] as Soal | undefined);
-    if (!baru) {
-      await db.update(hasilSoal).set(catat).where(eq(hasilSoal.id, h.id));
-      return { ok: false as const, pesan: "Jawaban AI tidak sesuai format. Coba lagi." };
-    }
-    const [soal] = periksaSoal([{ ...baru, bentuk: lama.bentuk }], bab);
+    const [soal] = periksaSoal([{ ...r.soal[0], bentuk: lama.bentuk }], bab);
     ratakanKunci([soal]); // posisi kunci PG/PGK diacak
-    const bobot = (h.pengaturan as Pengaturan).bobot;
-    if (bobot) terapkanBobot([soal], bobot);
+    if (p.bobot) terapkanBobot([soal], p.bobot);
     set.soal[no] = soal;
     await db.update(hasilSoal).set({ ...catat, soal: set.soal }).where(eq(hasilSoal.id, h.id));
     return { ok: true as const, soal };
   } catch (e) {
-    const err = e as Error;
-    return { ok: false as const, pesan: err.name === "TimeoutError" ? "AI terlalu lama menjawab (timeout)." : `Gagal mengganti: ${pesanError(e)}` };
+    return { ok: false as const, pesan: `Gagal mengganti: ${pesanError(e)}` };
   }
 }
 
@@ -164,5 +190,5 @@ export async function cekHasil(id: number) {
     .from(hasilSoal)
     .where(eq(hasilSoal.id, Number(id)));
   if (!h) return null;
-  return { ...h, soal: h.soal as Soal[] | null, info: h.info as { detik: number; tokenMasuk: number; tokenKeluar: number } | null };
+  return { ...h, soal: h.soal as Soal[] | null, info: h.info as { detik: number; tokenMasuk: number; tokenKeluar: number; catatan?: string[] } | null };
 }

@@ -45,6 +45,7 @@ export type Pengaturan = {
   kesulitan: string;
   bobot?: Record<Bentuk, number>; // tidak ada di set lama (sebelum fitur bobot)
   modelSlot?: number; // nomor model AI di .env (1 = AI_, 2 = AI2_, ...); set lama = 1
+  bandingkan?: boolean; // mode "Bandingkan semua model": jangan pakai model cadangan
 };
 
 /** Rapikan isian form dari browser (tidak dipercaya begitu saja). Mengembalikan pesan kalau tidak valid. */
@@ -60,7 +61,7 @@ export function bersihkanPengaturan(p: Pengaturan): Pengaturan | string {
   const bobotDari = (b: Bentuk) => angka(p?.bobot?.[b] ?? BOBOT_BAWAAN[b]);
   const bobot = { PG: bobotDari("PG"), PGK: bobotDari("PGK"), BS: bobotDari("BS"), URAIAN: bobotDari("URAIAN") };
   const modelSlot = Math.max(1, Math.min(9, Math.round(Number(p?.modelSlot) || 1)));
-  return { babId: String(p.babId), tujuan: p.tujuan, jumlah, level, kesulitan: p.kesulitan, bobot, modelSlot };
+  return { babId: String(p.babId), tujuan: p.tujuan, jumlah, level, kesulitan: p.kesulitan, bobot, modelSlot, bandingkan: p?.bandingkan === true };
 }
 
 /**

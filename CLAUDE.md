@@ -108,5 +108,10 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   Form: pilih model atau "Bandingkan semua model" (pengaturan sama, satu set per model). Tiap set menyimpan
   `info` {detik, tokenMasuk, tokenKeluar}. `AIn_EXTRA_BODY` = JSON khusus penyedia (mis. matikan "berpikir"
   `deepseek-flash`, yang kalau tidak dimatikan menghabiskan batas 8000 token untuk berpikir). Error 429/5xx dicoba ulang 2x.
+- 2026-10-15: Cadangan otomatis (fallback, `tanyaDenganCadangan` di actions.ts): model gagal (saldo habis 402, kunci,
+  model salah, sibuk, timeout, jawaban rusak) → pindah ke model berikutnya sesuai urutan nomor di .env. Catatan
+  kegagalan disimpan di `info.catatan` dan tampil sebagai kotak kuning. Mode "Bandingkan" TIDAK pakai cadangan.
+  Uji: konfigurasi `uji-cadangan` di `.claude/launch.json` (port 3002, model utama sengaja palsu).
+  DeepSeek (Okt 2026) hanya menerima `deepseek-flash` dan `deepseek-v4-pro`; `deepseek-chat` sudah tidak berlaku.
 - 2026-10-14: Atas permintaan pemilik, teks Arab di WORD memakai Traditional Arabic 16 pt (bawaan Windows, sama
   dengan format AFTS), pengecualian dari aturan 7. Tampilan WEB tetap Amiri.

@@ -81,7 +81,7 @@ export default function Home() {
     if (p.modelSlot === 0) {
       // Bandingkan: pengaturan sama persis, satu set per model. Tiap hasil dibuka di tab sendiri.
       for (const m of daftarModel) {
-        const r = await mulaiBuatSoal({ ...p, modelSlot: m.slot }).catch(() => ({ ok: false as const, pesan: "Koneksi terputus." }));
+        const r = await mulaiBuatSoal({ ...p, modelSlot: m.slot, bandingkan: true }).catch(() => ({ ok: false as const, pesan: "Koneksi terputus." }));
         setBanding((b) => [...b, r.ok ? { nama: m.nama, id: r.id } : { nama: m.nama, pesan: r.pesan }]);
       }
       return;
@@ -204,6 +204,14 @@ export default function Home() {
             {hasil.info && ` · ${hasil.info.detik} detik · ${(hasil.info.tokenMasuk + hasil.info.tokenKeluar).toLocaleString("id-ID")} token`}
             {` · ${soal.filter((s) => s.peringatan?.length).length} soal ditandai`}
           </p>
+          {!!hasil.info?.catatan?.length && (
+            <div className="rounded border border-amber-400 bg-amber-50 p-3 text-sm text-amber-900">
+              <p className="font-semibold">⚠️ Model cadangan dipakai, karena model utama gagal:</p>
+              <ul className="list-disc pl-5">
+                {hasil.info.catatan.map((c, i) => <li key={i}>{c}</li>)}
+              </ul>
+            </div>
+          )}
           <div className="flex flex-wrap gap-2">
             <a className="rounded bg-blue-700 px-4 py-2 font-semibold text-white" href={`/api/word?id=${id}&jenis=soal`}>
               ⬇️ Unduh Soal (Word)

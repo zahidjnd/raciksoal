@@ -25,6 +25,16 @@ function konfigurasi(slot: number) {
 }
 
 const COBA_ULANG = [429, 500, 502, 503]; // server AI sibuk/sementara gagal → coba lagi
+
+/** Arti kode error dari penyedia AI, dalam bahasa sederhana. */
+function alasan(status: number) {
+  if (status === 402) return "saldo/kredit habis";
+  if (status === 401 || status === 403) return "kunci API ditolak";
+  if (status === 404) return "nama model tidak ditemukan";
+  if (status === 429) return "batas pemakaian/kuota tercapai";
+  if (status >= 500) return "server AI sedang sibuk atau bermasalah";
+  return "permintaan ditolak";
+}
 const tunggu = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Model yang terpasang di .env (hanya nomor dan nama, tanpa kunci). */
@@ -66,7 +76,7 @@ export async function tanyaAI(sistem: string, pengguna: string, slot = 1) {
     if (res.ok || !COBA_ULANG.includes(res.status) || coba === 3) break;
     await tunggu(coba * 10_000); // 10 detik, lalu 20 detik
   }
-  if (!res.ok) throw new Error(`AI (${k.model}) menolak permintaan (kode ${res.status}): ${(await res.text()).slice(0, 500)}`);
+  if (!res.ok) throw new Error(`AI (${k.model}) gagal: ${alasan(res.status)} (kode ${res.status}). ${(await res.text()).slice(0, 300)}`);
   const data = await res.json();
   const pilihan = data.choices?.[0];
   if (!pilihan) throw new Error(`AI (${k.model}) tidak mengirim jawaban.`);
