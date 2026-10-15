@@ -130,5 +130,10 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   Login lewat server action (`src/app/masuk/actions.ts`) + pembatas 5x salah/15 menit per nama pengguna (di memori).
   Email wajib di Better Auth → diisi otomatis `<username>@raciksoal.local`. Tidak pakai middleware (proxy hosting
   mengubah Host, redirect absolut bisa salah) — pemeriksaan di halaman/aksi. `.claude/launch.json` berisi env uji laptop.
+- Langkah 5b (2026-10-15): /admin/guru (khusus admin: tambah guru, reset kata sandi + keluarkan semua sesinya,
+  nonaktif/aktifkan via ban Better Auth) dan /akun (ganti kata sandi sendiri). Menu bersama di `src/app/kepala.tsx`.
+  JANGAN pakai `changePassword({ revokeOtherSessions: true })`: itu mengganti sesi perangkat ini dan guru terlempar
+  keluar; pakai `revokeOtherSessions()` terpisah. Pesan error Better Auth diterjemahkan di `src/lib/pesan-auth.ts`.
+  Catatan uji: jangan jalankan `npm run build` saat server dev menyala (berbagi folder `.next`, tombol jadi mati).
 - 2026-10-14: Atas permintaan pemilik, teks Arab di WORD memakai Traditional Arabic 16 pt (bawaan Windows, sama
   dengan format AFTS), pengecualian dari aturan 7. Tampilan WEB tetap Amiri.
