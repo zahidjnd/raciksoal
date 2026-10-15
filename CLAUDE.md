@@ -93,6 +93,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
 - 2026-10-14: PDF materi: teks Arabnya rusak saat diekstrak → jangan pernah ambil ayat dari PDF.
 
 ## Status
+- Langkah 1, 2, 2b, 3, 4, 5 SELESAI (per 2026-10-15). Berikutnya: langkah 7 (backup) lalu 6 (kisi-kisi), materi sendiri.
 - Langkah 1 SELESAI (2026-10-14).
 - Langkah 2 (2026-10-14): form + buat soal + tampil hasil jalan untuk Bab 3. Belum: bab lain.
 - Langkah 2b (2026-10-14): edit per butir (`simpanSoal`, editan tetap dicek penjaga Arab) dan ganti satu soal
@@ -138,5 +139,10 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
 - Langkah 5c (2026-10-15): /riwayat (100 set terbaru milik pengguna sendiri, klik → /?id=). Batas harian di
   `mulaiBuatSoal`: 10 set/guru/hari (admin bebas) + 100 set/hari seluruh web; hari = WIB; set "gagal" tidak dihitung.
   Sisa jatah tampil di form (`ambilJatah`), diperbarui saat set selesai/gagal. Batas lama 30/hari dihapus.
+- Langkah 5d (2026-10-15): pembagian peran ditegakkan di SERVER: `ambilDaftarModel` kosong untuk guru;
+  `mulaiBuatSoal` memaksa guru ke model utama (slot pertama) tanpa mode bandingkan; `cekHasil` tidak mengirim
+  model/info/rincian error ke guru (pesan gagal umum). /admin/set = semua set semua guru (200 terbaru).
+  Pita peringatan merah di header admin (`PeringatanAdmin` di kepala.tsx): set gagal / cadangan dipakai 24 jam terakhir.
+  LANGKAH 5 SELESAI.
 - 2026-10-14: Atas permintaan pemilik, teks Arab di WORD memakai Traditional Arabic 16 pt (bawaan Windows, sama
   dengan format AFTS), pengecualian dari aturan 7. Tampilan WEB tetap Amiri.

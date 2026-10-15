@@ -113,15 +113,18 @@ export function BuatSoal() {
           </select>
         </label>
 
-        <label className="block text-sm">
-          Model AI
-          <select className="mt-1 w-full rounded border p-2" value={p.modelSlot} onChange={(e) => setP({ ...p, modelSlot: Number(e.target.value) })}>
-            {daftarModel.map((m) => (
-              <option key={m.slot} value={m.slot}>{m.nama}</option>
-            ))}
-            {daftarModel.length > 1 && <option value={0}>Bandingkan semua model (pengaturan sama)</option>}
-          </select>
-        </label>
+        {/* Daftar model hanya dikirim server untuk admin; guru tidak melihat pilihan ini. */}
+        {daftarModel.length > 0 && (
+          <label className="block text-sm">
+            Model AI <span className="rounded bg-amber-100 px-1 text-xs">admin</span>
+            <select className="mt-1 w-full rounded border p-2" value={p.modelSlot} onChange={(e) => setP({ ...p, modelSlot: Number(e.target.value) })}>
+              {daftarModel.map((m) => (
+                <option key={m.slot} value={m.slot}>{m.nama}</option>
+              ))}
+              {daftarModel.length > 1 && <option value={0}>Bandingkan semua model (pengaturan sama)</option>}
+            </select>
+          </label>
+        )}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block text-sm">
@@ -227,7 +230,8 @@ export function BuatSoal() {
             ⚠️ Soal dibuat AI, wajib diperiksa guru sebelum dipakai.
           </p>
           <p className="text-sm text-gray-500">
-            {bab.judul} · {soal.length} soal · model: <b>{hasil.model}</b>
+            {bab.judul} · {soal.length} soal
+            {hasil.model && <> · model: <b>{hasil.model}</b></>}
             {hasil.info && ` · ${hasil.info.detik} detik · ${(hasil.info.tokenMasuk + hasil.info.tokenKeluar).toLocaleString("id-ID")} token`}
             {` · ${soal.filter((s) => s.peringatan?.length).length} soal ditandai`}
           </p>

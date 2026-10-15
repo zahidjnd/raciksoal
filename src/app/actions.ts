@@ -75,17 +75,23 @@ async function tanyaDenganCadangan(sistem: string, pengguna: string, slotUtama: 
 
 /** Model AI yang terpasang di .env (nomor + nama saja, tanpa kunci), untuk pilihan di form. */
 export async function ambilDaftarModel() {
-  if (!(await penggunaSaatIni())) return [];
+  // Pilihan model hanya untuk admin; guru selalu memakai model utama (+ cadangan otomatis).
+  if ((await penggunaSaatIni())?.peran !== "admin") return [];
   return daftarModel();
 }
+
+const SARAN_GURU = "silakan coba lagi beberapa saat; jika berulang, hubungi admin.";
+const PESAN_GAGAL_GURU = `Gagal membuat soal, ${SARAN_GURU}`;
 
 /** Mulai membuat soal di belakang layar, langsung kembalikan id-nya. Hasil dicek lewat cekHasil(). */
 export async function mulaiBuatSoal(input: Pengaturan) {
   try {
     const saya = await penggunaSaatIni();
     if (!saya) return { ok: false as const, pesan: SESI_HABIS };
-    const p = bersihkanPengaturan(input);
-    if (typeof p === "string") return { ok: false as const, pesan: p };
+    const isian = bersihkanPengaturan(input);
+    if (typeof isian === "string") return { ok: false as const, pesan: isian };
+    // Guru tidak boleh memilih model atau mode bandingkan, walau dikirim dari browser: paksa model utama.
+    const p = saya.peran === "admin" ? isian : { ...isian, modelSlot: daftarModel()[0]?.slot ?? 1, bandingkan: false };
     const bab = DAFTAR_BAB[p.babId];
     if (!bab) return { ok: false as const, pesan: "Bab tidak dikenal." };
     const model = daftarModel().find((m) => m.slot === p.modelSlot);
@@ -212,7 +218,8 @@ export async function gantiSatuSoal(id: number, no: number) {
     await db.update(hasilSoal).set({ ...catat, soal: set.soal }).where(eq(hasilSoal.id, h.id));
     return { ok: true as const, soal };
   } catch (e) {
-    return { ok: false as const, pesan: `Gagal mengganti: ${pesanError(e)}` };
+    const admin = (await penggunaSaatIni().catch(() => null))?.peran === "admin";
+    return { ok: false as const, pesan: admin ? `Gagal mengganti: ${pesanError(e)}` : PESAN_GAGAL_GURU };
   }
 }
 
@@ -227,5 +234,11 @@ export async function cekHasil(id: number) {
   if (!h || !bolehAkses(h.guruId, saya)) return null;
   const { guruId, ...isi } = h; // id pemilik tidak perlu dikirim ke browser
   void guruId;
-  return { ...isi, soal: h.soal as Soal[] | null, info: h.info as { detik: number; tokenMasuk: number; tokenKeluar: number; catatan?: string[] } | null };
+  const soal = h.soal as Soal[] | null;
+  if (saya.peran !== "admin") {
+    // Guru tidak menerima info teknis (model, waktu, token, catatan cadangan) maupun rincian error penyedia AI.
+    // (halaman sudah menambahkan awalan "Gagal membuat soal:")
+    return { ...isi, soal, model: null, info: null, pesan: h.status === "gagal" ? SARAN_GURU : h.pesan };
+  }
+  return { ...isi, soal, info: h.info as { detik: number; tokenMasuk: number; tokenKeluar: number; catatan?: string[] } | null };
 }
