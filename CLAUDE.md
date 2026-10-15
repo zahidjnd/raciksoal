@@ -107,6 +107,9 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   versi mushaf, `mushaf: true`; centang hanya wajib bila ada dalil yang tidak cocok (hadis). Terjemah tetap diisi guru.
   Tulisan sumber Tanzil + tautan wajib (lisensi): footer layout.tsx dan kotak ayat. Akun uji laptop:
   `.claude/akun-uji.local.txt` (tidak di-commit).
+  BUG DEPLOY DIPERBAIKI: build.yml dulu `cp -r public out/public`, padahal standalone sudah membuat out/public
+  (template Word ikut terlacak) → file baru di public masuk ke out/public/public dan tidak ada di hosting.
+  Kini `cp -r public/. out/public/`. Setelah menambah file di public/, cek di hosting (cPanel) bahwa file benar ada.
   HASIL CEK LISENSI (2026-10-15):
   - PMA 44/2016: "mushaf" = ayat lengkap ATAU sebagian, cetak maupun DIGITAL (Psl 1); yang diterbitkan/diedarkan
     wajib Tanda Tashih/Izin Edar LPMQ (Psl 2) dan mengacu Mushaf Standar Indonesia (Psl 4). Teks Al-Qur'an tidak
