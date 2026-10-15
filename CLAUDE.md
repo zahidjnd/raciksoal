@@ -93,7 +93,17 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
 - 2026-10-14: PDF materi: teks Arabnya rusak saat diekstrak → jangan pernah ambil ayat dari PDF.
 
 ## Status
-- Langkah 1–8 SELESAI (per 2026-10-15). Berikutnya: bab bawaan lain (butuh teks Arab bersih dari pemilik), uji guru lain.
+- Langkah 1–8 SELESAI (per 2026-10-15).
+- BERIKUTNYA, LANGKAH 9 (disetujui pemilik 2026-10-15, belum dikerjakan): AYAT OTOMATIS DARI DATA MUSHAF.
+  Pemilik ingin verifikasi dilonggarkan. Keputusan: JANGAN pakai AI sebagai pemeriksa ayat/hadis (AI sumber salahnya).
+  Rencana: simpan teks Al-Qur'an lengkap (±1,5 MB) di aplikasi. Guru cukup ketik "QS An-Nur: 2" → teks Arab terisi
+  otomatis tanpa centang. Unggah PPT/Word: teks Arab dicocokkan ke mushaf (normalisasi: abaikan harakat/tanda waqaf),
+  kalau ketemu → sumber terisi & teks DIGANTI teks mushaf resmi; basmalah/doa/nama surat diabaikan. HADIS tetap
+  kotak + centang guru (belum ada data hadis berharakat yang bisa jadi patokan pasti).
+  Langkah pertama: cek sumber & LISENSI teks mushaf dan terjemah Kemenag (web akan dijual), pilih yang aman.
+  Setelah itu perbarui aturan 5 jadi "ayat dari data mushaf, hadis dari guru".
+- Lain-lain tertunda: uji pemisahan data dengan login akun guru kedua (belum dibuktikan lewat login); tambah bab
+  bawaan lain; data uji di DB laptop (materi "Uji: Menjaga Pandangan", set 22–35) boleh dibersihkan bila pemilik setuju.
 - Langkah 1 SELESAI (2026-10-14).
 - Langkah 2 (2026-10-14): form + buat soal + tampil hasil jalan untuk Bab 3. Belum: bab lain.
 - Langkah 2b (2026-10-14): edit per butir (`simpanSoal`, editan tetap dicek penjaga Arab) dan ganti satu soal
