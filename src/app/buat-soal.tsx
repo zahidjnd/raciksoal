@@ -286,6 +286,11 @@ export function BuatSoal() {
             <a className="rounded border border-blue-700 px-4 py-2 font-semibold text-blue-700" href={`/api/word?id=${id}&jenis=kunci`}>
               ⬇️ Unduh Kunci & Pembahasan (Word)
             </a>
+            {!!hasil.kisi?.length && (
+              <a className="rounded border border-blue-700 px-4 py-2 font-semibold text-blue-700" href={`/api/word?id=${id}&jenis=kisi`}>
+                ⬇️ Unduh Kisi-kisi (Word)
+              </a>
+            )}
           </div>
           <p className="text-xs text-gray-500">File Word mengikuti isi terbaru, termasuk soal yang sudah Anda edit atau ganti.</p>
 

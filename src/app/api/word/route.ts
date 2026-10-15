@@ -5,17 +5,20 @@ import { DAFTAR_BAB } from "@/data";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
 import type { Pengaturan } from "@/lib/prompt";
-import type { Soal } from "@/lib/soal";
-import { buatWordKunci, buatWordSoal } from "@/lib/word";
+import type { BarisKisi, Soal } from "@/lib/soal";
+import { buatWordKisi, buatWordKunci, buatWordSoal } from "@/lib/word";
 
-// Unduh Word: /api/word?id=6&jenis=soal (lembar siswa) atau jenis=kunci (pegangan guru).
+const NAMA_FILE = { soal: "Soal", kunci: "Kunci", kisi: "Kisi-kisi" } as const;
+
+// Unduh Word: /api/word?id=6&jenis=soal (lembar siswa), jenis=kunci atau jenis=kisi (pegangan guru).
 // Hanya pemilik set atau admin (aturan 3).
 export async function GET(req: Request) {
   const saya = await penggunaSaatIni();
   if (!saya) return new Response("Silakan masuk terlebih dahulu.", { status: 401 });
   const url = new URL(req.url);
   const id = Number(url.searchParams.get("id"));
-  const jenis = url.searchParams.get("jenis") === "kunci" ? "kunci" : "soal";
+  const diminta = url.searchParams.get("jenis");
+  const jenis = diminta === "kunci" || diminta === "kisi" ? diminta : "soal";
 
   const [h] = Number.isInteger(id) ? await db.select().from(hasilSoal).where(eq(hasilSoal.id, id)) : [];
   const bab = h && DAFTAR_BAB[h.babId];
@@ -24,9 +27,11 @@ export async function GET(req: Request) {
   }
 
   const p = h.pengaturan as Pengaturan;
-  const buat = jenis === "kunci" ? buatWordKunci : buatWordSoal;
-  const isi = await buat(h.soal as Soal[], bab, p, h.dibuat);
-  const nama = `${jenis === "kunci" ? "Kunci" : "Soal"} ${p.tujuan} ${bab.judul.split(":")[0]} (set ${id}).docx`;
+  const kisi = h.kisi as BarisKisi[] | null;
+  if (jenis === "kisi" && !kisi?.length) return new Response("Set soal ini dibuat sebelum ada fitur kisi-kisi.", { status: 404 });
+  const isi =
+    jenis === "kisi" ? await buatWordKisi(kisi!, bab, p, h.dibuat) : await (jenis === "kunci" ? buatWordKunci : buatWordSoal)(h.soal as Soal[], bab, p, h.dibuat);
+  const nama = `${NAMA_FILE[jenis]} ${p.tujuan} ${bab.judul.split(":")[0]} (set ${id}).docx`;
 
   return new Response(new Uint8Array(isi), {
     headers: {

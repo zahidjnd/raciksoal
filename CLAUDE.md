@@ -93,7 +93,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
 - 2026-10-14: PDF materi: teks Arabnya rusak saat diekstrak → jangan pernah ambil ayat dari PDF.
 
 ## Status
-- Langkah 1, 2, 2b, 3, 4, 5, 7 SELESAI (per 2026-10-15). Langkah 6a selesai. Berikutnya: 6b (Word kisi-kisi), lalu materi sendiri.
+- Langkah 1–7 SELESAI (per 2026-10-15). Berikutnya: materi sendiri (rencana di bawah), bab lain.
 - Langkah 1 SELESAI (2026-10-14).
 - Langkah 2 (2026-10-14): form + buat soal + tampil hasil jalan untuk Bab 3. Belum: bab lain.
 - Langkah 2b (2026-10-14): edit per butir (`simpanSoal`, editan tetap dicek penjaga Arab) dan ganti satu soal
@@ -153,6 +153,11 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   Ganti soal: indikator tetap, skenario baru dicatat di kisi. Edit TP/level oleh guru ikut ke kisi. Set lama: tanpa kisi.
   Uji 40 soal PAS Sulit: 76 detik, 0 ditandai, level tepat. Skenario masih ada 2–3 yang mirip per 40 soal (jauh berkurang).
   Catatan uji: setelah mengedit file, MUAT ULANG halaman dev (HMR bisa membuat aksi server "is not defined").
+- Langkah 6b (2026-10-15): Word kisi-kisi (`buatWordKisi` di word.ts, `/api/word?id=..&jenis=kisi`): A4 mendatar,
+  tanpa kop (madrasah tidak punya format resmi), identitas + daftar TP + rekap LOTS/MOTS/HOTS + peringatan AI,
+  tabel No. Soal | TP | Materi | Indikator | Level | Bentuk (judul kolom diulang tiap halaman). Set lama → 404.
+  Cek tampilan Word di laptop: `npx tsx` skrip → docx, Word COM → PDF, PyMuPDF → PNG.
+  LANGKAH 6 SELESAI.
 - Langkah 7 (2026-10-15): backup malam `~/raciksoal-app/backup.sh` (salinan `deploy/backup.sh`), cron `0 2 * * *`.
   pg_dump → gzip → `openssl enc -aes-256-cbc -pbkdf2 -iter 200000` dengan `BACKUP_PASSPHRASE` (.env hosting, diisi
   pemilik, disimpan juga di luar hosting). Dikirim ke repo privat `zahidjnd/raciksoal-backup` (deploy key TULIS khusus

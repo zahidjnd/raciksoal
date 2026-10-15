@@ -1,12 +1,13 @@
 // Ekspor ke Word (library docx). Lembar soal memakai cetakan dari format AFTS madrasah
 // (public/word/template-soal.docx, dibuat oleh scripts/buat-template-word.py), jadi kopnya persis aslinya.
-// Kunci jawaban untuk guru dibuat sebagai dokumen terpisah.
+// Kunci jawaban dan kisi-kisi untuk guru dibuat sebagai dokumen terpisah.
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import {
   AlignmentType,
   Document,
   Packer,
+  PageOrientation,
   Paragraph,
   patchDocument,
   PatchType,
@@ -20,7 +21,7 @@ import {
   type ParagraphChild,
 } from "docx";
 import { NAMA_BENTUK, type Pengaturan } from "./prompt";
-import { POLA_ARAB, type Bab, type Bentuk, type Soal } from "./soal";
+import { POLA_ARAB, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
 
 const MAPEL = "Al-Qur'an Hadis";
 const PERINGATAN = "Soal dibuat AI, wajib diperiksa guru sebelum dipakai.";
@@ -193,4 +194,81 @@ export function buatWordKunci(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Da
       sections: [{ properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 720, right: 850, bottom: 900, left: 850 } } }, children: isi }],
     }),
   );
+}
+
+// Kolom kisi-kisi (lebar total = lebar isi A4 mendatar dengan margin 850: 16838 - 1700).
+const KOLOM_KISI: [string, number][] = [
+  ["No. Soal", 900],
+  ["TP", 1000],
+  ["Materi", 2800],
+  ["Indikator Soal", 7438],
+  ["Level Kognitif", 1400],
+  ["Bentuk Soal", 1600],
+];
+const KATEGORI = (level: string) => (["C1", "C2"].includes(level) ? "LOTS" : level === "C3" ? "MOTS" : "HOTS");
+
+/** Kisi-kisi untuk guru (langkah 6): A4 mendatar, satu baris per soal, baris judul diulang di tiap halaman. */
+export function buatWordKisi(kisi: BarisKisi[], bab: Bab, p: Pengaturan, tanggal: Date) {
+  const { judul, tp } = judulAsesmen(p, tanggal);
+  const tengah = (t: string, size = UKURAN, bold = true) => par([r(t, { bold, size })], { alignment: AlignmentType.CENTER, spacing: { after: 0 } });
+  const isiSel = (anak: ParagraphChild[], rata: (typeof AlignmentType)[keyof typeof AlignmentType] = AlignmentType.LEFT) =>
+    [par(anak, { alignment: rata, spacing: { after: 0 } })];
+  const baris = (isi: Paragraph[][], judulKolom = false) =>
+    new TableRow({
+      tableHeader: judulKolom,
+      cantSplit: true,
+      children: isi.map((anak, i) => new TableCell({ children: anak, width: { size: KOLOM_KISI[i][1], type: WidthType.DXA }, shading: judulKolom ? { fill: "E7E6E6" } : undefined, margins: { left: 80, right: 80, top: 40, bottom: 40 } })),
+    });
+
+  const hitung = { LOTS: 0, MOTS: 0, HOTS: 0 };
+  for (const k of kisi) hitung[KATEGORI(k.level)]++;
+  const persen = (n: number) => `${Math.round((n * 100) / kisi.length)}%`;
+
+  const tabel = new Table({
+    width: { size: KOLOM_KISI.reduce((n, [, l]) => n + l, 0), type: WidthType.DXA },
+    rows: [
+      baris(KOLOM_KISI.map(([j]) => isiSel([r(j, { bold: true })], AlignmentType.CENTER)), true),
+      ...kisi.map((k) =>
+        baris([
+          isiSel([r(String(k.no))], AlignmentType.CENTER),
+          isiSel([r(k.tp)], AlignmentType.CENTER),
+          isiSel(teks(k.materi)),
+          [
+            ...(k.peringatan ?? []).map((w) => par([r(`⚠️ ${w}`, { bold: true, color: "C00000" })], { spacing: { after: 0 } })),
+            par(teks(k.indikator), { alignment: AlignmentType.JUSTIFIED, spacing: { after: 0 } }),
+          ],
+          isiSel([r(`${k.level} (${KATEGORI(k.level)})`)], AlignmentType.CENTER),
+          isiSel([r(NAMA_BENTUK[k.bentuk])], AlignmentType.CENTER),
+        ]),
+      ),
+    ],
+  });
+
+  const isi: (Paragraph | Table)[] = [
+    tengah("KISI-KISI PENULISAN SOAL", 26),
+    tengah(`${judul} TAHUN PELAJARAN ${tp}`),
+    par([], { spacing: { after: 120 } }),
+    par([r("Mata Pelajaran\t: ", { bold: true }), r(`${MAPEL} — Kelas XI`)], { tabStops: [{ type: TabStopType.LEFT, position: 2000 }], spacing: { after: 0 } }),
+    par([r("Materi\t: ", { bold: true }), r(bab.judul)], { tabStops: [{ type: TabStopType.LEFT, position: 2000 }], spacing: { after: 0 } }),
+    par([r("Jumlah Soal\t: ", { bold: true }), r(kelompokKisi(kisi))], { tabStops: [{ type: TabStopType.LEFT, position: 2000 }], spacing: { after: 0 } }),
+    par([r("Level Kognitif\t: ", { bold: true }), r(`LOTS ${hitung.LOTS} (${persen(hitung.LOTS)}), MOTS ${hitung.MOTS} (${persen(hitung.MOTS)}), HOTS ${hitung.HOTS} (${persen(hitung.HOTS)})`)], { tabStops: [{ type: TabStopType.LEFT, position: 2000 }], spacing: { after: 120 } }),
+    par([r("Tujuan Pembelajaran:", { bold: true })], { spacing: { after: 0 } }),
+    ...bab.tp.map((t) => bernomor(t.kode, teks(t.teks), 1000, { spacing: { after: 0 } })),
+    par([r(`⚠️ ${PERINGATAN}`, { bold: true, color: "C00000" })], { spacing: { before: 120, after: 120 } }),
+    tabel,
+  ];
+
+  return Packer.toBuffer(
+    new Document({
+      creator: "Racik Soal",
+      styles: { default: { document: { run: { font: FONT, size: UKURAN } } } },
+      sections: [{ properties: { page: { size: { width: 11906, height: 16838, orientation: PageOrientation.LANDSCAPE }, margin: { top: 720, right: 850, bottom: 720, left: 850 } } }, children: isi }],
+    }),
+  );
+}
+
+/** "40 soal (PG 20, PGK 10, B/S 5, Uraian 5)" */
+function kelompokKisi(kisi: BarisKisi[]) {
+  const per = (Object.keys(NAMA_BENTUK) as Bentuk[]).map((b) => [b, kisi.filter((k) => k.bentuk === b).length] as const).filter(([, n]) => n);
+  return `${kisi.length} soal (${per.map(([b, n]) => `${NAMA_BENTUK[b]} ${n}`).join(", ")})`;
 }
