@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { hasilSoal } from "@/db/schema";
-import { DAFTAR_BAB } from "@/data";
+import { babDariSet } from "@/lib/bab";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
 import type { Pengaturan } from "@/lib/prompt";
@@ -21,7 +21,7 @@ export async function GET(req: Request) {
   const jenis = diminta === "kunci" || diminta === "kisi" ? diminta : "soal";
 
   const [h] = Number.isInteger(id) ? await db.select().from(hasilSoal).where(eq(hasilSoal.id, id)) : [];
-  const bab = h && DAFTAR_BAB[h.babId];
+  const bab = h && babDariSet(h);
   if (!h || !bolehAkses(h.guruId, saya) || h.status !== "selesai" || !bab) {
     return new Response("Set soal tidak ditemukan atau belum selesai.", { status: 404 });
   }

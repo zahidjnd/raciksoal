@@ -43,6 +43,13 @@
       "when": 1792060617641,
       "tag": "0005_kisi",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792070383946,
+      "tag": "0006_materi",
+      "breakpoints": true
     }
   ]
 }

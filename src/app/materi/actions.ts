@@ -1,0 +1,50 @@
+"use server";
+
+import { and, count, eq, sql } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { db } from "@/db";
+import { materi } from "@/db/schema";
+import { BATAS_MATERI, keIsian, rapikanMateri, type IsianMateri } from "@/lib/materi";
+import { penggunaSaatIni } from "@/lib/sesi";
+
+const SESI_HABIS = "Sesi masuk sudah berakhir. Muat ulang halaman lalu masuk lagi.";
+
+/**
+ * Simpan materi baru (id = null) atau ubah materi milik sendiri. Aturan 3: hanya materi milik guru yang masuk.
+ * Mengembalikan isian yang sudah dirapikan (teks Arab tak terverifikasi dibuang) supaya form menampilkan isi sebenarnya.
+ */
+export async function simpanMateri(id: number | null, isian: IsianMateri) {
+  const saya = await penggunaSaatIni();
+  if (!saya) return { ok: false as const, pesan: SESI_HABIS };
+  const r = rapikanMateri(isian, "");
+  if (typeof r === "string") return { ok: false as const, pesan: r };
+
+  let idBaru = id;
+  if (id) {
+    const [ubah] = await db
+      .update(materi)
+      .set({ bab: r.bab, diubah: sql`now()` })
+      .where(and(eq(materi.id, Number(id)), eq(materi.guruId, saya.id)))
+      .returning({ id: materi.id });
+    if (!ubah) return { ok: false as const, pesan: "Materi tidak ditemukan." };
+  } else {
+    const [{ n }] = await db.select({ n: count() }).from(materi).where(eq(materi.guruId, saya.id));
+    if (n >= BATAS_MATERI.perGuru) return { ok: false as const, pesan: `Maksimal ${BATAS_MATERI.perGuru} materi per guru. Hapus materi yang tidak dipakai.` };
+    [{ id: idBaru }] = await db.insert(materi).values({ guruId: saya.id, bab: r.bab }).returning({ id: materi.id });
+  }
+  revalidatePath("/materi");
+  return { ok: true as const, id: idBaru!, isian: keIsian(r.bab), dihapus: r.dihapus };
+}
+
+/** Hapus materi milik sendiri. Set soal yang sudah dibuat tetap utuh (menyimpan salinan materinya). */
+export async function hapusMateri(id: number) {
+  const saya = await penggunaSaatIni();
+  if (!saya) return { ok: false as const, pesan: SESI_HABIS };
+  const [hapus] = await db
+    .delete(materi)
+    .where(and(eq(materi.id, Number(id)), eq(materi.guruId, saya.id)))
+    .returning({ id: materi.id });
+  if (!hapus) return { ok: false as const, pesan: "Materi tidak ditemukan." };
+  revalidatePath("/materi");
+  return { ok: true as const };
+}

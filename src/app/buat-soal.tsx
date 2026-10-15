@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ambilDaftarModel, ambilJatah, cekHasil, mulaiBuatSoal } from "./actions";
+import { ambilDaftarBab, ambilDaftarModel, ambilJatah, cekHasil, mulaiBuatSoal } from "./actions";
 import { KartuSoal, Teks } from "./kartu-soal";
 import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_SOAL, NAMA_BENTUK, TUJUAN, type Pengaturan } from "@/lib/prompt";
 import type { BarisKisi, Bentuk } from "@/lib/soal";
 import { DAFTAR_BAB as SEMUA_BAB } from "@/data";
+import Link from "next/link";
 
-const DAFTAR_BAB = Object.values(SEMUA_BAB);
+const BAB_BAWAAN = Object.values(SEMUA_BAB);
 const BENTUK = Object.keys(NAMA_BENTUK) as Bentuk[];
 
 type Hasil = NonNullable<Awaited<ReturnType<typeof cekHasil>>>;
@@ -59,7 +60,7 @@ function TabelKisi({ kisi }: { kisi: BarisKisi[] }) {
 
 export function BuatSoal() {
   const [p, setP] = useState<Pengaturan>({
-    babId: DAFTAR_BAB[0].id,
+    babId: BAB_BAWAAN[0].id,
     tujuan: TUJUAN[0],
     jumlah: { PG: 10, PGK: 5, BS: 5, URAIAN: 5 },
     level: ATURAN_TUJUAN[TUJUAN[0]].level,
@@ -68,6 +69,8 @@ export function BuatSoal() {
     modelSlot: 1,
   });
   const [daftarModel, setDaftarModel] = useState<{ slot: number; nama: string }[]>([]);
+  // Bab bawaan + materi sendiri milik guru (langkah 8); sebelum termuat, tampilkan bab bawaan saja.
+  const [daftarBab, setDaftarBab] = useState(BAB_BAWAAN.map((b) => ({ id: b.id, judul: b.judul, sendiri: false })));
   const [banding, setBanding] = useState<{ nama: string; id?: number; pesan?: string }[]>([]);
   const [id, setId] = useState<number | null>(null);
   const [hasil, setHasil] = useState<Hasil | null>(null);
@@ -88,6 +91,7 @@ export function BuatSoal() {
     const lama = Number(new URLSearchParams(location.search).get("id"));
     if (lama) setId(lama);
     ambilDaftarModel().then(setDaftarModel).catch(() => {});
+    ambilDaftarBab().then((d) => d.length && setDaftarBab(d)).catch(() => {});
     muatJatah();
   }, []);
 
@@ -129,11 +133,13 @@ export function BuatSoal() {
     }
     const r = await mulaiBuatSoal(p);
     if (!r.ok) return setError(r.pesan);
-    history.replaceState(null, "", `?id=${r.id}`);
+    // Teruskan history.state (data internal router Next.js): dengan null, Next memuat ulang halaman dari server,
+    // dan pemuatan ulang itu memutus pengecekan status sehingga tampilan macet di "0 detik".
+    history.replaceState(history.state, "", `?id=${r.id}`);
     setId(r.id);
   }
 
-  const bab = DAFTAR_BAB.find((b) => b.id === (hasil?.babId ?? p.babId)) ?? DAFTAR_BAB[0];
+  const bab = hasil?.bab ?? BAB_BAWAAN[0]; // salinan bab milik set (berisi ayat terverifikasi untuk tampilan & edit)
   const soal = hasil?.soal ?? [];
 
   return (
@@ -143,10 +149,18 @@ export function BuatSoal() {
         <label className="block text-sm">
           Bab
           <select className="mt-1 w-full rounded border p-2" value={p.babId} onChange={(e) => setP({ ...p, babId: e.target.value })}>
-            {DAFTAR_BAB.map((b) => (
-              <option key={b.id} value={b.id}>{b.judul}</option>
-            ))}
+            <optgroup label="Bab bawaan">
+              {daftarBab.filter((b) => !b.sendiri).map((b) => <option key={b.id} value={b.id}>{b.judul}</option>)}
+            </optgroup>
+            {daftarBab.some((b) => b.sendiri) && (
+              <optgroup label="Materi saya">
+                {daftarBab.filter((b) => b.sendiri).map((b) => <option key={b.id} value={b.id}>{b.judul}</option>)}
+              </optgroup>
+            )}
           </select>
+          <span className="text-xs text-gray-500">
+            Ingin membuat soal dari materi Anda sendiri? <Link href="/materi" className="text-emerald-800 underline">Tambahkan di Materi Saya</Link>.
+          </span>
         </label>
 
         {/* Daftar model hanya dikirim server untuk admin; guru tidak melihat pilihan ini. */}

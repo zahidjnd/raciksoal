@@ -93,7 +93,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
 - 2026-10-14: PDF materi: teks Arabnya rusak saat diekstrak → jangan pernah ambil ayat dari PDF.
 
 ## Status
-- Langkah 1–7 SELESAI (per 2026-10-15). Berikutnya: materi sendiri (rencana di bawah), bab lain.
+- Langkah 1–7 dan 8a SELESAI (per 2026-10-15). Berikutnya: 8b (unggah Word/PPT ke materi sendiri), bab lain.
 - Langkah 1 SELESAI (2026-10-14).
 - Langkah 2 (2026-10-14): form + buat soal + tampil hasil jalan untuk Bab 3. Belum: bab lain.
 - Langkah 2b (2026-10-14): edit per butir (`simpanSoal`, editan tetap dicek penjaga Arab) dan ganti satu soal
@@ -158,6 +158,15 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   tabel No. Soal | TP | Materi | Indikator | Level | Bentuk (judul kolom diulang tiap halaman). Set lama → 404.
   Cek tampilan Word di laptop: `npx tsx` skrip → docx, Word COM → PDF, PyMuPDF → PNG.
   LANGKAH 6 SELESAI.
+- Langkah 8a (2026-10-15): MATERI SENDIRI. Tabel `materi` (per guru, `bab` jsonb = Bab tanpa id; id = `materi-<n>`
+  saat dibaca). Halaman /materi (daftar, hapus) dan /materi/[id|baru] (judul, TP per baris "TP x.y: ..." atau nomor
+  otomatis, isi maks 30.000 huruf, kotak Ayat & Hadis Terverifikasi + centang wajib). `rapikanMateri` (src/lib/materi.ts,
+  dites): teks Arab di judul/TP/isi yang tidak ada di kotak ayat DIBUANG dan dilaporkan (aturan 5). `babMilik`
+  (src/lib/bab.ts, sengaja bukan "use server") hanya mengembalikan materi milik guru itu (aturan 3). Set menyimpan salinan
+  `hasil_soal.bab` → set tetap utuh walau materi diubah/dihapus; set lama (bab kosong) → DAFTAR_BAB. Maks 50 materi/guru.
+  tsconfig `allowImportingTsExtensions` supaya file lib bisa saling impor `./x.ts` (perlu untuk `npm test`).
+  BUG DIPERBAIKI: `history.replaceState(null, ...)` membuat Next memuat ulang halaman (GET ?_rsc) yang memutus
+  pengecekan status → tampilan macet "0 detik" walau set selesai. Selalu pakai `history.replaceState(history.state, ...)`.
 - Langkah 7 (2026-10-15): backup malam `~/raciksoal-app/backup.sh` (salinan `deploy/backup.sh`), cron `0 2 * * *`.
   pg_dump → gzip → `openssl enc -aes-256-cbc -pbkdf2 -iter 200000` dengan `BACKUP_PASSPHRASE` (.env hosting, diisi
   pemilik, disimpan juga di luar hosting). Dikirim ke repo privat `zahidjnd/raciksoal-backup` (deploy key TULIS khusus

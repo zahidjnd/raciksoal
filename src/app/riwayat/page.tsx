@@ -2,7 +2,7 @@ import { desc, eq, sql } from "drizzle-orm";
 import Link from "next/link";
 import { db } from "@/db";
 import { hasilSoal } from "@/db/schema";
-import { DAFTAR_BAB } from "@/data";
+import { judulPendek } from "@/lib/bab";
 import type { Pengaturan } from "@/lib/prompt";
 import { wajibMasuk } from "@/lib/sesi";
 import { Kepala } from "../kepala";
@@ -19,6 +19,7 @@ export default async function Riwayat() {
       dibuat: hasilSoal.dibuat,
       status: hasilSoal.status,
       babId: hasilSoal.babId,
+      judulBab: sql<string | null>`${hasilSoal.bab}->>'judul'`,
       pengaturan: hasilSoal.pengaturan,
       jumlahSoal: sql<number>`coalesce(jsonb_array_length(${hasilSoal.soal}), 0)::int`,
     })
@@ -39,7 +40,7 @@ export default async function Riwayat() {
         )}
         {daftar.map((s) => {
           const pg = s.pengaturan as Pengaturan;
-          const bab = DAFTAR_BAB[s.babId]?.judul.split(":")[0] ?? s.babId;
+          const bab = judulPendek(s.judulBab, s.babId);
           return (
             <Link
               key={s.id}

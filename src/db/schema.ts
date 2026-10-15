@@ -98,6 +98,24 @@ export const hasilSoal = pgTable(
     jumlahGanti: integer("jumlah_ganti").default(0).notNull(), // berapa kali "ganti satu soal" dipakai pada set ini
     info: jsonb("info"), // data perbandingan model: { detik, tokenMasuk, tokenKeluar, catatan }
     kisi: jsonb("kisi"), // kisi-kisi (BarisKisi[], langkah 6); kosong untuk set lama
+    // Salinan data bab saat set dibuat (langkah 8), supaya set tetap utuh walau materi guru diubah/dihapus.
+    // Kosong untuk set lama → pakai DAFTAR_BAB[babId].
+    bab: jsonb("bab"),
   },
   (t) => [index("hasil_soal_guru_idx").on(t.guruId, t.dibuat)],
+);
+
+/** Materi sendiri milik guru (langkah 8). `bab` = data bab (judul, tp, dalil terverifikasi guru, materi). Aturan 3: per guru. */
+export const materi = pgTable(
+  "materi",
+  {
+    id: serial("id").primaryKey(),
+    guruId: text("guru_id")
+      .notNull()
+      .references(() => pengguna.id),
+    dibuat: timestamp("dibuat", { withTimezone: true }).defaultNow().notNull(),
+    diubah: timestamp("diubah", { withTimezone: true }).defaultNow().notNull(),
+    bab: jsonb("bab").notNull(),
+  },
+  (t) => [index("materi_guru_idx").on(t.guruId)],
 );

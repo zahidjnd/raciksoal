@@ -6,7 +6,7 @@ import { hasilSoal } from "@/db/schema";
 import { daftarModel, tanyaAI } from "@/lib/ai";
 import { bagiTahap, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatPermintaanKisi, buatSistem, type Pengaturan } from "@/lib/prompt";
 import { arabTakTerverifikasi, korpusArab, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, terapkanBobot, type Bab, type BarisKisi, type Soal } from "@/lib/soal";
-import { DAFTAR_BAB } from "@/data";
+import { babDariSet, babMilik, daftarBabMilik } from "@/lib/bab";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
 
@@ -80,6 +80,12 @@ function ambilSoal(data: unknown, perlu = 1): Soal[] {
   return (soal as Soal[]).slice(0, Math.max(perlu, 1));
 }
 
+/** Pilihan bab di form: bab bawaan + materi milik guru yang sedang masuk. */
+export async function ambilDaftarBab() {
+  const saya = await penggunaSaatIni();
+  return saya ? daftarBabMilik(saya.id) : [];
+}
+
 /** Model AI yang terpasang di .env (nomor + nama saja, tanpa kunci), untuk pilihan di form. */
 export async function ambilDaftarModel() {
   // Pilihan model hanya untuk admin; guru selalu memakai model utama (+ cadangan otomatis).
@@ -99,8 +105,9 @@ export async function mulaiBuatSoal(input: Pengaturan) {
     if (typeof isian === "string") return { ok: false as const, pesan: isian };
     // Guru tidak boleh memilih model atau mode bandingkan, walau dikirim dari browser: paksa model utama.
     const p = saya.peran === "admin" ? isian : { ...isian, modelSlot: daftarModel()[0]?.slot ?? 1, bandingkan: false };
-    const bab = DAFTAR_BAB[p.babId];
-    if (!bab) return { ok: false as const, pesan: "Bab tidak dikenal." };
+    // Materi sendiri hanya milik guru yang sedang masuk (aturan 3).
+    const bab = await babMilik(p.babId, saya.id);
+    if (!bab) return { ok: false as const, pesan: "Bab atau materi tidak ditemukan." };
     const model = daftarModel().find((m) => m.slot === p.modelSlot);
     if (!model) return { ok: false as const, pesan: "Model AI tidak dikenal." };
 
@@ -113,7 +120,7 @@ export async function mulaiBuatSoal(input: Pengaturan) {
 
     const [baris] = await db
       .insert(hasilSoal)
-      .values({ status: "proses", guruId: saya.id, babId: bab.id, pengaturan: p, model: model.nama, pesan: "Menyiapkan..." })
+      .values({ status: "proses", guruId: saya.id, babId: bab.id, bab, pengaturan: p, model: model.nama, pesan: "Menyiapkan..." })
       .returning({ id: hasilSoal.id });
 
     void kerjakan(baris.id, bab, p); // sengaja tidak ditunggu, supaya koneksi browser tidak putus
@@ -195,7 +202,7 @@ async function ambilSet(id: number, no: number) {
   // Set milik guru lain dijawab "tidak ditemukan", supaya keberadaannya pun tidak bocor.
   if (!h || !bolehAkses(h.guruId, saya) || h.status !== "selesai") return "Set soal tidak ditemukan atau belum selesai.";
   const soal = h.soal as Soal[];
-  const bab = DAFTAR_BAB[h.babId];
+  const bab = babDariSet(h);
   if (!Number.isInteger(no) || no < 0 || no >= soal.length || !bab) return "Nomor soal tidak valid.";
   return { h, soal, bab };
 }
@@ -263,7 +270,7 @@ export async function cekHasil(id: number) {
   const saya = await penggunaSaatIni();
   if (!saya) return null;
   const [h] = await db
-    .select({ guruId: hasilSoal.guruId, status: hasilSoal.status, soal: hasilSoal.soal, kisi: hasilSoal.kisi, pesan: hasilSoal.pesan, model: hasilSoal.model, babId: hasilSoal.babId, dibuat: hasilSoal.dibuat, info: hasilSoal.info })
+    .select({ guruId: hasilSoal.guruId, status: hasilSoal.status, soal: hasilSoal.soal, kisi: hasilSoal.kisi, bab: hasilSoal.bab, pesan: hasilSoal.pesan, model: hasilSoal.model, babId: hasilSoal.babId, dibuat: hasilSoal.dibuat, info: hasilSoal.info })
     .from(hasilSoal)
     .where(eq(hasilSoal.id, Number(id)));
   if (!h || !bolehAkses(h.guruId, saya)) return null;
@@ -271,10 +278,12 @@ export async function cekHasil(id: number) {
   void guruId;
   const soal = h.soal as Soal[] | null;
   const kisi = h.kisi as BarisKisi[] | null;
+  // Data bab (untuk menampilkan ayat & form edit) cukup dikirim saat selesai, tidak di setiap pengecekan.
+  const bab = h.status === "selesai" ? (babDariSet(h) ?? null) : null;
   if (saya.peran !== "admin") {
     // Guru tidak menerima info teknis (model, waktu, token, catatan cadangan) maupun rincian error penyedia AI.
     // (halaman sudah menambahkan awalan "Gagal membuat soal:")
-    return { ...isi, soal, kisi, model: null, info: null, pesan: h.status === "gagal" ? SARAN_GURU : h.pesan };
+    return { ...isi, soal, kisi, bab, model: null, info: null, pesan: h.status === "gagal" ? SARAN_GURU : h.pesan };
   }
-  return { ...isi, soal, kisi, info: h.info as { detik: number; tokenMasuk: number; tokenKeluar: number; catatan?: string[] } | null };
+  return { ...isi, soal, kisi, bab, info: h.info as { detik: number; tokenMasuk: number; tokenKeluar: number; catatan?: string[] } | null };
 }

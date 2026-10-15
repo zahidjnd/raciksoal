@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { hasilSoal, pengguna } from "@/db/schema";
-import { DAFTAR_BAB } from "@/data";
+import { judulPendek } from "@/lib/bab";
 import type { Pengaturan } from "@/lib/prompt";
 import { wajibMasuk } from "@/lib/sesi";
 import { Kepala } from "../../kepala";
@@ -21,6 +21,7 @@ export default async function SemuaSet() {
       dibuat: hasilSoal.dibuat,
       status: hasilSoal.status,
       babId: hasilSoal.babId,
+      judulBab: sql<string | null>`${hasilSoal.bab}->>'judul'`,
       pengaturan: hasilSoal.pengaturan,
       model: hasilSoal.model,
       pesan: hasilSoal.pesan,
@@ -40,7 +41,7 @@ export default async function SemuaSet() {
         <h2 className="font-semibold">Semua set soal ({daftar.length}{daftar.length === BATAS_TAMPIL ? " terbaru" : ""})</h2>
         {daftar.map((s) => {
           const pg = s.pengaturan as Pengaturan;
-          const bab = DAFTAR_BAB[s.babId]?.judul.split(":")[0] ?? s.babId;
+          const bab = judulPendek(s.judulBab, s.babId);
           return (
             <Link
               key={s.id}

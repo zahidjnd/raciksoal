@@ -79,6 +79,7 @@ export function Kepala({ p }: { p: Pengguna }) {
   const menu = [
     { href: "/", label: "Buat Soal" },
     { href: "/riwayat", label: "Riwayat" },
+    { href: "/materi", label: "Materi Saya" },
     ...(admin
       ? [
           { href: "/admin/set", label: "Semua Set" },

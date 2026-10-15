@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { arabTakTerverifikasi, korpusArab, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, terapkanBobot, type Bab, type Soal } from "./soal.ts";
 import { bagiTahap, bersihkanPengaturan, buatPengguna, hitungLevel, MAKS_CATATAN, rencanaLevel, type Pengaturan } from "./prompt.ts";
 import { bolehAkses, rapikanUsername } from "./akses.ts";
+import { keIsian, rapikanMateri } from "./materi.ts";
 
 test("aturan 3: guru hanya boleh membuka set miliknya, admin boleh semua", () => {
   const guruA = { id: "a", peran: "guru" as const };
@@ -209,4 +210,35 @@ test("ratakanKunci menyebar kunci A–E merata tanpa mengubah jawaban benar", ()
   ratakanKunci(soal);
   for (const h of "ABCDE") assert.equal(soal.filter((s) => s.kunci === h).length, 2);
   soal.forEach((s, i) => assert.equal(s.pilihan!["ABCDE".indexOf(s.kunci as string)], `benar ${i}`));
+});
+
+test("materi sendiri: TP diberi kode, teks Arab hanya dipercaya dari kotak ayat terverifikasi (aturan 5)", () => {
+  const ayat = bab.dalil[0].arab; // teks Arab asli (anggap ditempel guru)
+  const potongan = ayat.split(" ").slice(0, 2).join(" ");
+  const isian = {
+    judul: "Bab 1: Menjaga Kehormatan",
+    tp: "TP 1.1: Peserta didik mampu menjelaskan isi ayat\nPeserta didik mampu menyebutkan hikmah",
+    isi: `Lafaz ${potongan} artinya janganlah mendekati. Karangan بِسْمِ اللّٰهِ dibuang. ${"Penjelasan materi. ".repeat(10)}`,
+    dalil: [{ sumber: "QS. Al-Isra: 32", arab: ayat, terjemah: "Janganlah kamu mendekati zina" }, { sumber: "", arab: "", terjemah: "" }],
+    diverifikasi: true,
+  };
+  const r = rapikanMateri(isian, "materi-7");
+  assert.ok(typeof r !== "string", String(r));
+  assert.deepEqual(r.bab.tp.map((t) => t.kode), ["TP 1.1", "TP 2"]);
+  assert.equal(r.bab.dalil.length, 1); // baris kosong diabaikan
+  assert.equal(r.bab.dalil[0].id, "dalil-1");
+  assert.ok(r.bab.materi[0].includes(potongan)); // ada di kotak ayat → dipertahankan
+  assert.ok(!r.bab.materi[0].includes("بِسْمِ")); // karangan → dibuang
+  assert.equal(r.dihapus.length, 1);
+  // tanpa centang verifikasi → ditolak
+  assert.match(String(rapikanMateri({ ...isian, diverifikasi: false }, "x")), /Centang/);
+  // kolom Arab tanpa huruf Arab → ditolak
+  assert.match(String(rapikanMateri({ ...isian, dalil: [{ sumber: "QS", arab: "la taqrabu", terjemah: "t" }] }, "x")), /tidak berisi huruf Arab/);
+  assert.match(String(rapikanMateri({ ...isian, tp: " " }, "x")), /TP/);
+  assert.match(String(rapikanMateri({ ...isian, isi: "pendek" }, "x")), /terlalu pendek/);
+  // tanpa ayat sama sekali: boleh, dan semua teks Arab dibuang
+  const tanpa = rapikanMateri({ ...isian, dalil: [], diverifikasi: false }, "x");
+  assert.ok(typeof tanpa !== "string" && !/[؀-ۿ]/.test(JSON.stringify(tanpa.bab)));
+  // bolak-balik ke form edit
+  assert.ok(typeof r !== "string" && keIsian(r.bab).tp.startsWith("TP 1.1: "));
 });
