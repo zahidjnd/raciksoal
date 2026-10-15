@@ -117,5 +117,11 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
 - 2026-10-15: DIRENCANAKAN setelah login (langkah 5): "materi sendiri" per guru: tempel teks atau unggah Word/PowerPoint
   (PDF hanya teks Latin; teks Arab dari file TIDAK dipakai), plus kotak "Ayat & hadis terverifikasi" yang ditempel guru
   + centang konfirmasi → jadi korpus penjaga ayat. Disimpan per guru dan bisa dipakai ulang.
+- 2026-10-15: RENCANA LANGKAH 5 (disetujui pemilik): Better Auth (Drizzle/PostgreSQL), nama pengguna + kata sandi,
+  tanpa pendaftaran bebas (akun guru dibuat admin; reset kata sandi oleh admin). Admin pertama hanya untuk `ADMIN_USERNAME`
+  di .env (+ `BETTER_AUTH_SECRET`). Sesi 30 hari. Batas 10 set/guru/hari (+ batas total web sebagai pengaman saldo).
+  Set soal lama → milik admin. Dikerjakan bertahap: 5a login + pemisahan data (`guru_id`, satu fungsi pemeriksa
+  pemilik untuk lihat/edit/ganti/unduh), 5b kelola akun guru + ganti kata sandi, 5c riwayat + batas per guru,
+  5d halaman admin (semua set, peringatan cadangan 24 jam) + info teknis/pilihan model/bandingkan HANYA untuk admin.
 - 2026-10-14: Atas permintaan pemilik, teks Arab di WORD memakai Traditional Arabic 16 pt (bawaan Windows, sama
   dengan format AFTS), pengecualian dari aturan 7. Tampilan WEB tetap Amiri.
