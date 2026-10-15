@@ -6,6 +6,7 @@ import { keluar } from "./masuk/actions";
 export function Kepala({ p }: { p: Pengguna }) {
   const menu = [
     { href: "/", label: "Buat Soal" },
+    { href: "/riwayat", label: "Riwayat" },
     ...(p.peran === "admin" ? [{ href: "/admin/guru", label: "Kelola Guru" }] : []),
     { href: "/akun", label: "Akun" },
   ];

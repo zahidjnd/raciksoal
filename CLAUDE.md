@@ -135,5 +135,8 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   JANGAN pakai `changePassword({ revokeOtherSessions: true })`: itu mengganti sesi perangkat ini dan guru terlempar
   keluar; pakai `revokeOtherSessions()` terpisah. Pesan error Better Auth diterjemahkan di `src/lib/pesan-auth.ts`.
   Catatan uji: jangan jalankan `npm run build` saat server dev menyala (berbagi folder `.next`, tombol jadi mati).
+- Langkah 5c (2026-10-15): /riwayat (100 set terbaru milik pengguna sendiri, klik → /?id=). Batas harian di
+  `mulaiBuatSoal`: 10 set/guru/hari (admin bebas) + 100 set/hari seluruh web; hari = WIB; set "gagal" tidak dihitung.
+  Sisa jatah tampil di form (`ambilJatah`), diperbarui saat set selesai/gagal. Batas lama 30/hari dihapus.
 - 2026-10-14: Atas permintaan pemilik, teks Arab di WORD memakai Traditional Arabic 16 pt (bawaan Windows, sama
   dengan format AFTS), pengecualian dari aturan 7. Tampilan WEB tetap Amiri.

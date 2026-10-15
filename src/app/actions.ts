@@ -1,6 +1,6 @@
 "use server";
 
-import { eq, gte, sql } from "drizzle-orm";
+import { and, eq, gte, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { hasilSoal } from "@/db/schema";
 import { daftarModel, tanyaAI } from "@/lib/ai";
@@ -11,9 +11,29 @@ import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
 
 const SESI_HABIS = "Sesi masuk sudah berakhir. Muat ulang halaman lalu masuk lagi.";
-// ponytail: batas harian untuk seluruh web (belum ada login). Jadi per guru di langkah 5.
-const BATAS_PER_HARI = 30;
+// Aturan 4: batas pembuatan per guru per hari (admin tidak dibatasi per guru),
+// plus batas total seluruh web sebagai pengaman saldo AI. Set yang GAGAL tidak dihitung.
+const BATAS_PER_GURU = 10;
+const BATAS_TOTAL = 100;
 const BATAS_GANTI_PER_SET = 30;
+
+/** Jumlah set hari ini (WIB, mulai 00.00) yang tidak gagal; untuk satu guru atau seluruh web. */
+async function hitungHariIni(guruId?: string) {
+  const awalHariIni = sql`date_trunc('day', now() at time zone 'Asia/Jakarta') at time zone 'Asia/Jakarta'`;
+  const [{ n }] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(hasilSoal)
+    .where(and(gte(hasilSoal.dibuat, awalHariIni), ne(hasilSoal.status, "gagal"), guruId ? eq(hasilSoal.guruId, guruId) : undefined));
+  return n;
+}
+
+/** Sisa jatah hari ini untuk ditampilkan di form. batas = null berarti admin (tanpa batas per guru). */
+export async function ambilJatah() {
+  const saya = await penggunaSaatIni();
+  if (!saya) return null;
+  if (saya.peran === "admin") return { batas: null, terpakai: await hitungHariIni(saya.id) };
+  return { batas: BATAS_PER_GURU, terpakai: await hitungHariIni(saya.id) };
+}
 
 // Alasan error yang bisa dibaca. Beberapa error (mis. database mati) tidak punya teks pesan, jadi ambil kodenya.
 const pesanError = (e: unknown) => {
@@ -71,11 +91,12 @@ export async function mulaiBuatSoal(input: Pengaturan) {
     const model = daftarModel().find((m) => m.slot === p.modelSlot);
     if (!model) return { ok: false as const, pesan: "Model AI tidak dikenal." };
 
-    const [{ n }] = await db
-      .select({ n: sql<number>`count(*)::int` })
-      .from(hasilSoal)
-      .where(gte(hasilSoal.dibuat, sql`date_trunc('day', now() at time zone 'Asia/Jakarta') at time zone 'Asia/Jakarta'`));
-    if (n >= BATAS_PER_HARI) return { ok: false as const, pesan: `Batas ${BATAS_PER_HARI} kali pembuatan soal hari ini sudah habis.` };
+    if (saya.peran !== "admin" && (await hitungHariIni(saya.id)) >= BATAS_PER_GURU) {
+      return { ok: false as const, pesan: `Jatah ${BATAS_PER_GURU} set soal Anda hari ini sudah habis. Silakan lanjutkan besok.` };
+    }
+    if ((await hitungHariIni()) >= BATAS_TOTAL) {
+      return { ok: false as const, pesan: "Batas pembuatan soal seluruh web hari ini sudah tercapai. Silakan coba lagi besok atau hubungi admin." };
+    }
 
     const [baris] = await db
       .insert(hasilSoal)

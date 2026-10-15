@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ambilDaftarModel, cekHasil, mulaiBuatSoal } from "./actions";
+import { ambilDaftarModel, ambilJatah, cekHasil, mulaiBuatSoal } from "./actions";
 import { KartuSoal } from "./kartu-soal";
 import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_SOAL, NAMA_BENTUK, TUJUAN, type Pengaturan } from "@/lib/prompt";
 import type { Bentuk } from "@/lib/soal";
@@ -37,6 +37,9 @@ export function BuatSoal() {
   const [hasil, setHasil] = useState<Hasil | null>(null);
   const [error, setError] = useState("");
   const [detik, setDetik] = useState(0);
+  const [jatah, setJatah] = useState<Awaited<ReturnType<typeof ambilJatah>>>(null);
+  const muatJatah = () => ambilJatah().then(setJatah).catch(() => {});
+  const jatahHabis = !!jatah?.batas && jatah.terpakai >= jatah.batas;
 
   const total = BENTUK.reduce((s, b) => s + p.jumlah[b], 0);
   const bobot = p.bobot ?? BOBOT_BAWAAN;
@@ -49,6 +52,7 @@ export function BuatSoal() {
     const lama = Number(new URLSearchParams(location.search).get("id"));
     if (lama) setId(lama);
     ambilDaftarModel().then(setDaftarModel).catch(() => {});
+    muatJatah();
   }, []);
 
   // Cek hasil tiap 3 detik selama AI masih bekerja.
@@ -67,6 +71,7 @@ export function BuatSoal() {
       }
       setHasil(h);
       if (h.status === "proses") setTimeout(cek, 3000);
+      else muatJatah(); // selesai/gagal: perbarui sisa jatah (set gagal tidak dihitung)
     };
     cek();
     return () => {
@@ -184,11 +189,19 @@ export function BuatSoal() {
 
         <button
           className="w-full rounded bg-emerald-700 px-4 py-3 font-semibold text-white disabled:opacity-50"
-          disabled={proses || total < 1 || total > MAKS_SOAL || totalLevel !== 100}
+          disabled={proses || jatahHabis || total < 1 || total > MAKS_SOAL || totalLevel !== 100}
           onClick={buat}
         >
           {proses ? `Sedang membuat soal... ${hasil?.pesan ? `${hasil.pesan}, ` : ""}${detik} detik (bisa 1–3 menit)` : "Buat Soal"}
         </button>
+        {jatah && (
+          <p className={`text-sm ${jatahHabis ? "font-semibold text-red-600" : "text-gray-600"}`}>
+            {jatah.batas
+              ? `Sisa jatah hari ini: ${Math.max(0, jatah.batas - jatah.terpakai)} dari ${jatah.batas} set soal.`
+              : `Hari ini Anda membuat ${jatah.terpakai} set soal (admin, tanpa batas per guru).`}
+            {jatahHabis && " Silakan lanjutkan besok."}
+          </p>
+        )}
         {error && <p className="text-red-600">{error}</p>}
         {banding.length > 0 && (
           <div className="space-y-1 rounded border border-blue-300 bg-blue-50 p-3 text-sm">
