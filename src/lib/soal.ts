@@ -21,7 +21,8 @@ export type Bab = {
   id: string;
   judul: string;
   tp: { kode: string; teks: string }[];
-  dalil: { id: string; sumber: string; arab: string; terjemah: string; mufradat: { arab: string; arti: string }[] }[];
+  // mushaf: teks Arab diambil/dicocokkan dari data mushaf (langkah 9), bukan ketikan guru
+  dalil: { id: string; sumber: string; arab: string; terjemah: string; mufradat: { arab: string; arti: string }[]; mushaf?: boolean }[];
   materi: string[];
 };
 

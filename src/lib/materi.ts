@@ -8,18 +8,24 @@ export type IsianMateri = {
   judul: string;
   tp: string; // satu TP per baris, boleh diawali kode, mis. "TP 1.2: ..."
   isi: string;
-  dalil: { sumber: string; arab: string; terjemah: string; usulan?: boolean }[]; // usulan: diambil dari file (tampilan saja)
-  diverifikasi: boolean; // centang: guru sudah memeriksa teks ayat/hadis
+  // usulan: teks Arab dari file yang tidak ditemukan di mushaf; mushaf: teks dari data mushaf (keduanya tampilan saja,
+  // server selalu mencocokkan ulang ke mushaf)
+  dalil: { sumber: string; arab: string; terjemah: string; usulan?: boolean; mushaf?: boolean }[];
+  diverifikasi: boolean; // centang: guru sudah memeriksa teks hadis / teks Arab yang tidak ada di mushaf
 };
+
+/** Pencari ayat di mushaf (mushaf().cari); disuntikkan supaya file ini tetap bisa dites tanpa membaca mushaf. */
+export type CariAyat = (arab: string, petunjuk: string) => { sumber: string; arab: string } | null;
 
 const teks = (x: unknown) => String(x ?? "").normalize("NFC").trim();
 
 /**
- * Rapikan isian materi menjadi data bab. Aturan 5: teks Arab hanya dipercaya dari kotak "Ayat & Hadis Terverifikasi"
- * (yang dicentang guru). Teks Arab di judul/TP/isi yang tidak ada di kotak itu dibuang dan dilaporkan di `dihapus`.
- * Mengembalikan pesan kalau isian tidak valid.
+ * Rapikan isian materi menjadi data bab. Aturan 5: teks Arab hanya dipercaya dari kotak "Ayat & Hadis Terverifikasi".
+ * Teks yang ditemukan di mushaf (`cariAyat`) DIGANTI teks resmi mushaf + sumbernya, tanpa perlu centang; selebihnya
+ * (hadis, dll.) wajib dicentang guru. Teks Arab di judul/TP/isi yang tidak ada di kotak itu dibuang dan dilaporkan di
+ * `dihapus`. Mengembalikan pesan kalau isian tidak valid.
  */
-export function rapikanMateri(x: Partial<IsianMateri>, id: string): { bab: Bab; dihapus: string[] } | string {
+export function rapikanMateri(x: Partial<IsianMateri>, id: string, cariAyat?: CariAyat): { bab: Bab; dihapus: string[] } | string {
   const B = BATAS_MATERI;
   const judul = teks(x?.judul);
   if (!judul) return "Judul materi wajib diisi.";
@@ -27,15 +33,20 @@ export function rapikanMateri(x: Partial<IsianMateri>, id: string): { bab: Bab; 
 
   const dalilMentah = (Array.isArray(x?.dalil) ? x.dalil : [])
     .map((d) => ({ sumber: teks(d?.sumber), arab: teks(d?.arab), terjemah: teks(d?.terjemah) }))
-    .filter((d) => d.sumber || d.arab || d.terjemah);
+    .filter((d) => d.sumber || d.arab || d.terjemah)
+    .map((d) => {
+      const ayat = d.arab ? cariAyat?.(d.arab, d.sumber) : null;
+      return ayat ? { ...d, ...ayat, mushaf: true } : { ...d, mushaf: false };
+    });
   if (dalilMentah.length > B.dalil) return `Ayat/hadis maksimal ${B.dalil}.`;
   for (const [i, d] of dalilMentah.entries()) {
     if (!d.sumber || !d.arab || !d.terjemah) return `Ayat/hadis ke-${i + 1}: sumber, teks Arab, dan terjemah wajib diisi.`;
     if (!new RegExp(POLA_ARAB).test(d.arab)) return `Ayat/hadis ke-${i + 1}: kolom teks Arab tidak berisi huruf Arab.`;
-    if (Object.values(d).some((t) => t.length > B.teksDalil)) return `Ayat/hadis ke-${i + 1}: teks terlalu panjang (maks ${B.teksDalil} huruf).`;
+    if ([d.sumber, d.arab, d.terjemah].some((t) => t.length > B.teksDalil)) return `Ayat/hadis ke-${i + 1}: teks terlalu panjang (maks ${B.teksDalil} huruf).`;
   }
-  if (dalilMentah.length && x?.diverifikasi !== true) return "Centang pernyataan bahwa teks ayat/hadis sudah Anda periksa.";
-  const dalil = dalilMentah.map((d, i) => ({ id: `dalil-${i + 1}`, ...d, mufradat: [] }));
+  if (dalilMentah.some((d) => !d.mushaf) && x?.diverifikasi !== true)
+    return "Ada teks Arab yang tidak ditemukan di mushaf (hadis atau lainnya). Centang pernyataan bahwa teks itu sudah Anda periksa.";
+  const dalil = dalilMentah.map(({ mushaf, ...d }, i) => ({ id: `dalil-${i + 1}`, ...d, mufradat: [], ...(mushaf && { mushaf }) }));
 
   // Buang teks Arab yang tidak berasal dari kotak ayat/hadis terverifikasi.
   const korpus = korpusArab({ id: "", judul: "", tp: [], materi: [], dalil });
@@ -69,7 +80,7 @@ export function keIsian(bab: Bab): IsianMateri {
     judul: bab.judul,
     tp: bab.tp.map((t) => `${t.kode}: ${t.teks}`).join("\n"),
     isi: bab.materi.join("\n"),
-    dalil: bab.dalil.map(({ sumber, arab, terjemah }) => ({ sumber, arab, terjemah })),
-    diverifikasi: bab.dalil.length > 0,
+    dalil: bab.dalil.map(({ sumber, arab, terjemah, mushaf }) => ({ sumber, arab, terjemah, ...(mushaf && { mushaf }) })),
+    diverifikasi: bab.dalil.some((d) => !d.mushaf),
   };
 }

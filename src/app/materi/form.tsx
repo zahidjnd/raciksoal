@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { BATAS_MATERI, type IsianMateri } from "@/lib/materi";
-import { hapusMateri, simpanMateri } from "./actions";
+import { NAMA_SURAH } from "@/lib/surah";
+import { ambilAyat, cocokkanAyat, hapusMateri, simpanMateri } from "./actions";
 
 const kotak = "mt-1 w-full rounded border p-2 text-sm";
 const DALIL_KOSONG = { sumber: "", arab: "", terjemah: "" };
@@ -20,6 +21,22 @@ export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: Isia
   const ubah = (sebagian: Partial<IsianMateri>) => setM({ ...m, ...sebagian });
   const ubahDalil = (i: number, sebagian: Partial<IsianMateri["dalil"][number]>) =>
     ubah({ dalil: m.dalil.map((d, j) => (j === i ? { ...d, ...sebagian } : d)) });
+  const [rujukan, setRujukan] = useState("");
+  const [ayat, setAyat] = useState<{ proses: boolean; pesan?: string }>({ proses: false });
+
+  /** Langkah 9: ambil teks ayat dari data mushaf (tidak diketik guru). */
+  async function ambil() {
+    if (!rujukan.trim()) return;
+    if (m.dalil.length >= BATAS_MATERI.dalil) return setAyat({ proses: false, pesan: `Kotak ayat sudah penuh (maks ${BATAS_MATERI.dalil}).` });
+    setAyat({ proses: true });
+    const r = await ambilAyat(rujukan).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
+    if (!r.ok) return setAyat({ proses: false, pesan: r.pesan });
+    if (m.dalil.some((d) => d.arab === r.arab)) return setAyat({ proses: false, pesan: `${r.sumber} sudah ada di daftar.` });
+    ubah({ dalil: [...m.dalil, { sumber: r.sumber, arab: r.arab, terjemah: "", mushaf: true }] });
+    setRujukan("");
+    setAyat({ proses: false });
+  }
+  const perluCentang = m.dalil.some((d) => !d.mushaf);
 
   /** Langkah 8b: ambil teks dari file Word/PowerPoint di browser (file tidak diunggah ke hosting). */
   async function ambilFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -31,23 +48,37 @@ export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: Isia
     try {
       const { bacaFileOffice } = await import("@/lib/office"); // dimuat hanya saat dipakai
       const r = await bacaFileOffice(await f.arrayBuffer(), f.name);
+      // Langkah 9: teks Arab dicocokkan ke mushaf di server. Ayat → teks resmi; basmalah → dibuang; sisanya usulan.
+      const cocok = await cocokkanAyat(r.arab);
+      if (!cocok) throw new Error("Sesi masuk sudah berakhir. Muat ulang halaman lalu masuk lagi.");
       const ada = new Set(m.dalil.map((d) => d.arab.trim()));
-      const semuaBaru = r.arab.filter((a) => !ada.has(a));
-      const baru = semuaBaru.slice(0, Math.max(0, BATAS_MATERI.dalil - m.dalil.length));
+      const hasil: IsianMateri["dalil"] = [];
+      r.arab.forEach((arab, i) => {
+        const c = cocok[i];
+        const d = c === "basmalah" ? null : c ? { ...c, terjemah: "", mushaf: true } : { sumber: "", arab, terjemah: "", usulan: true };
+        if (d && !ada.has(d.arab)) {
+          hasil.push(d);
+          ada.add(d.arab);
+        }
+      });
+      const baru = hasil.slice(0, Math.max(0, BATAS_MATERI.dalil - m.dalil.length));
+      const nAyat = baru.filter((d) => d.mushaf).length;
+      const nUsulan = baru.length - nAyat;
       setM({
         ...m,
         judul: m.judul || f.name.replace(/\.(docx|pptx)$/i, ""),
         isi: [m.isi.trim(), r.teks.join("\n")].filter(Boolean).join("\n\n"),
-        dalil: [...m.dalil, ...baru.map((arab) => ({ sumber: "", arab, terjemah: "", usulan: true }))],
-        // Aturan 5: ada usulan teks Arab baru → guru wajib memeriksa & mencentang ulang.
-        diverifikasi: baru.length ? false : m.diverifikasi,
+        dalil: [...m.dalil, ...baru],
+        // Aturan 5: ada usulan teks Arab baru (bukan ayat mushaf) → guru wajib memeriksa & mencentang ulang.
+        diverifikasi: nUsulan ? false : m.diverifikasi,
       });
       setMembaca({
         ok: true,
         teks:
           `Dari ${f.name}: ${r.teks.length} paragraf teks ditambahkan ke Isi materi (silakan rapikan/hapus yang tidak perlu).` +
-          (baru.length ? ` ${baru.length} teks Arab diusulkan sebagai ayat/hadis (kotak kuning): lengkapi sumber & terjemahnya, periksa harakatnya, hapus yang tidak perlu.` : "") +
-          (semuaBaru.length > baru.length ? ` ${semuaBaru.length - baru.length} teks Arab lain tidak dimasukkan karena kotak ayat sudah penuh (maks ${BATAS_MATERI.dalil}).` : ""),
+          (nAyat ? ` ${nAyat} ayat ditemukan di mushaf (kotak hijau, teks diganti teks mushaf): tinggal isi terjemahnya.` : "") +
+          (nUsulan ? ` ${nUsulan} teks Arab lain (hadis/doa?) diusulkan (kotak kuning): lengkapi sumber & terjemahnya, periksa harakatnya, hapus yang tidak perlu.` : "") +
+          (hasil.length > baru.length ? ` ${hasil.length - baru.length} teks Arab lain tidak dimasukkan karena kotak ayat sudah penuh (maks ${BATAS_MATERI.dalil}).` : ""),
       });
     } catch (err) {
       setMembaca({ ok: false, teks: (err as Error).message || "File tidak bisa dibaca." });
@@ -111,36 +142,60 @@ export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: Isia
       <fieldset className="space-y-3 rounded border border-emerald-300 bg-emerald-50/40 p-3">
         <legend className="px-1 text-sm font-semibold">Ayat & Hadis Terverifikasi</legend>
         <p className="text-xs text-gray-600">
-          AI tidak boleh mengarang ayat/hadis. Hanya teks Arab di kotak ini yang boleh muncul di soal, jadi salin dari sumber yang terpercaya
-          (mushaf digital, kitab hadis), bukan dari PDF.
+          AI tidak boleh mengarang ayat/hadis. Hanya teks Arab di kotak ini yang boleh muncul di soal. Ayat Al-Qur&apos;an diambil otomatis dari
+          data mushaf; hadis disalin dari kitab/sumber terpercaya (bukan dari PDF) dan wajib Anda periksa.
         </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            className="w-64 rounded border p-2 text-sm"
+            list="daftar-surah"
+            placeholder="Ketik ayat, mis. QS An-Nur: 2 atau 24:2-3"
+            value={rujukan}
+            onChange={(e) => setRujukan(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && ambil()}
+          />
+          <datalist id="daftar-surah">
+            {NAMA_SURAH.map((n, i) => (
+              <option key={n} value={`QS ${n}: `}>{`${i + 1}. ${n}`}</option>
+            ))}
+          </datalist>
+          <button className="rounded bg-emerald-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50" disabled={ayat.proses || !rujukan.trim()} onClick={ambil}>
+            {ayat.proses ? "Mengambil..." : "📖 Ambil ayat"}
+          </button>
+          {ayat.pesan && <span className="text-sm text-red-600">{ayat.pesan}</span>}
+        </div>
         {m.dalil.map((d, i) => (
-          <div key={i} className={`space-y-2 rounded border p-3 ${d.usulan ? "border-amber-400 bg-amber-50" : "bg-white"}`}>
+          <div key={i} className={`space-y-2 rounded border p-3 ${d.mushaf ? "border-emerald-500 bg-white" : d.usulan ? "border-amber-400 bg-amber-50" : "bg-white"}`}>
             <div className="flex items-center justify-between gap-2">
               <span className="text-sm font-semibold">
                 Dalil {i + 1}
-                {d.usulan && <span className="ml-2 font-normal text-amber-800">usulan dari file, periksa harakat & lengkapi sumber/terjemah</span>}
+                {d.mushaf && <span className="ml-2 font-normal text-emerald-700">✓ teks dari mushaf, tinggal isi terjemah</span>}
+                {d.usulan && <span className="ml-2 font-normal text-amber-800">usulan dari file, tidak ditemukan di mushaf: periksa harakat & lengkapi sumber/terjemah</span>}
               </span>
               <button className="rounded border px-2 text-sm" aria-label={`Hapus dalil ${i + 1}`} onClick={() => ubah({ dalil: m.dalil.filter((_, j) => j !== i) })}>
                 ✕ Hapus
               </button>
             </div>
-            <input className={kotak} placeholder="Sumber, mis. QS. Luqmān [31]: 14 / HR. Bukhari" value={d.sumber} onChange={(e) => ubahDalil(i, { sumber: e.target.value })} />
-            <textarea dir="rtl" lang="ar" rows={3} className={`${kotak} font-arab text-2xl`} placeholder="نص الآية أو الحديث" value={d.arab} onChange={(e) => ubahDalil(i, { arab: e.target.value })} />
+            <input className={kotak} readOnly={d.mushaf} placeholder="Sumber hadis, mis. HR. Bukhari dan Muslim" value={d.sumber} onChange={(e) => ubahDalil(i, { sumber: e.target.value })} />
+            <textarea dir="rtl" lang="ar" rows={3} readOnly={d.mushaf} className={`${kotak} font-arab text-2xl ${d.mushaf ? "bg-gray-50" : ""}`} placeholder="نص الحديث" value={d.arab} onChange={(e) => ubahDalil(i, { arab: e.target.value })} />
             <textarea rows={2} className={kotak} placeholder="Terjemah" value={d.terjemah} onChange={(e) => ubahDalil(i, { terjemah: e.target.value })} />
           </div>
         ))}
         {m.dalil.length < BATAS_MATERI.dalil && (
           <button className="rounded border bg-white px-3 py-1 text-sm" onClick={() => ubah({ dalil: [...m.dalil, DALIL_KOSONG] })}>
-            + Tambah ayat/hadis
+            + Tambah hadis (ketik/tempel sendiri)
           </button>
         )}
-        {m.dalil.length > 0 && (
+        {perluCentang && (
           <label className="flex items-start gap-2 text-sm">
             <input type="checkbox" className="mt-1" checked={m.diverifikasi} onChange={(e) => ubah({ diverifikasi: e.target.checked })} />
-            Saya sudah memeriksa teks Arab, harakat, dan terjemah di atas sesuai mushaf/kitab sumbernya.
+            Saya sudah memeriksa teks Arab, harakat, dan terjemah hadis/teks di atas yang bukan dari mushaf sesuai kitab sumbernya.
+            (Ayat Al-Qur&apos;an yang ditempel sendiri akan dicocokkan otomatis ke mushaf saat disimpan.)
           </label>
         )}
+        <p className="text-xs text-gray-500">
+          Teks Al-Qur&apos;an: <a className="underline" href="https://tanzil.net" target="_blank" rel="noreferrer">Tanzil Project (tanzil.net)</a>. Terjemah diisi guru.
+        </p>
       </fieldset>
 
       <div className="flex flex-wrap gap-2">

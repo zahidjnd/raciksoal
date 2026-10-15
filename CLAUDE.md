@@ -36,7 +36,8 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
 2. **Jangan membaca, mengubah, atau menampilkan isi `.env`.**
 3. Data tiap guru **harus terpisah**: guru A tidak boleh bisa membuka soal guru B. Periksa ini di setiap fitur yang menyimpan atau membaca data.
 4. Batasi jumlah pembuatan soal per guru per hari, dan pasang batas waktu (timeout) pada pemanggilan AI.
-5. **Ayat Al-Qur'an dan hadis tidak boleh dikarang AI.** Teksnya harus diambil dari data terverifikasi yang disediakan pemilik, lalu AI hanya membuat soal dari teks itu.
+5. **Ayat Al-Qur'an dan hadis tidak boleh dikarang AI.** Ayat diambil dari data mushaf di aplikasi (Tanzil, `public/quran/`);
+   hadis dari teks yang ditempel & dicentang guru. AI hanya membuat soal dari teks itu. AI tidak pernah dipakai sebagai pemeriksa ayat/hadis.
 6. Setiap hasil soal wajib ada peringatan: "Soal dibuat AI, wajib diperiksa guru sebelum dipakai."
 7. Teks Arab: pakai font Arab yang jelas (Amiri atau Scheherazade) dan dukung arah tulisan kanan ke kiri (RTL).
 8. Jangan menambah library besar atau mengubah stack tanpa bertanya dulu.
@@ -93,15 +94,19 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
 - 2026-10-14: PDF materi: teks Arabnya rusak saat diekstrak → jangan pernah ambil ayat dari PDF.
 
 ## Status
-- Langkah 1–8 SELESAI (per 2026-10-15).
-- BERIKUTNYA, LANGKAH 9 (disetujui pemilik 2026-10-15, belum dikerjakan): AYAT OTOMATIS DARI DATA MUSHAF.
-  Pemilik ingin verifikasi dilonggarkan. Keputusan: JANGAN pakai AI sebagai pemeriksa ayat/hadis (AI sumber salahnya).
-  Rencana: simpan teks Al-Qur'an lengkap (±1,5 MB) di aplikasi. Guru cukup ketik "QS An-Nur: 2" → teks Arab terisi
-  otomatis tanpa centang. Unggah PPT/Word: teks Arab dicocokkan ke mushaf (normalisasi: abaikan harakat/tanda waqaf),
-  kalau ketemu → sumber terisi & teks DIGANTI teks mushaf resmi; basmalah/doa/nama surat diabaikan. HADIS tetap
-  kotak + centang guru (belum ada data hadis berharakat yang bisa jadi patokan pasti).
-  Langkah pertama: cek sumber & LISENSI teks mushaf dan terjemah Kemenag (web akan dijual), pilih yang aman.
-  Setelah itu perbarui aturan 5 jadi "ayat dari data mushaf, hadis dari guru".
+- Langkah 1–9 SELESAI (per 2026-10-15).
+- Langkah 9 (2026-10-15): AYAT OTOMATIS DARI DATA MUSHAF (pilihan pemilik: Tanzil "Simple" = ejaan imla'i berharakat,
+  seperti teks PPT-nya). File asli Tanzil `public/quran/quran-simple.txt` (JANGAN diubah isinya, lisensi; basmalah
+  kepala surah dipisah saat dibaca). `src/lib/surah.ts` = 114 nama surah + pembaca rujukan ("QS An-Nur: 2", "24:2-3",
+  "An-Nur/24: 2", nama lain mis. Al-Insyirah); `src/lib/mushaf.ts` (server) = `ambil` (rujukan → teks) dan `cari`
+  (teks Arab → ayat resmi + sumber, boleh potongan/beberapa ayat). Pencocokan memakai KERANGKA HURUF: harakat, tanda
+  waqaf, alif/ya/waw/hamzah dibuang, ة→ه (perlu karena PPT guru bergaya mushaf Indonesia/Utsmani: الذى, زكوة, ى).
+  Uji PPT laptop pemilik: 7/7 ayat ketemu, hadis tidak. Form Materi: kotak "Ambil ayat" (+ daftar surah), kotak hijau
+  "dari mushaf" (teks/sumber tidak bisa diketik), unggah PPT → ayat jadi hijau, basmalah dibuang, sisanya kuning.
+  SERVER mencocokkan ulang semua dalil saat simpan (`rapikanMateri(…, mushaf().cari)`): cocok → teks & sumber diganti
+  versi mushaf, `mushaf: true`; centang hanya wajib bila ada dalil yang tidak cocok (hadis). Terjemah tetap diisi guru.
+  Tulisan sumber Tanzil + tautan wajib (lisensi): footer layout.tsx dan kotak ayat. Akun uji laptop:
+  `.claude/akun-uji.local.txt` (tidak di-commit).
   HASIL CEK LISENSI (2026-10-15):
   - PMA 44/2016: "mushaf" = ayat lengkap ATAU sebagian, cetak maupun DIGITAL (Psl 1); yang diterbitkan/diedarkan
     wajib Tanda Tashih/Izin Edar LPMQ (Psl 2) dan mengacu Mushaf Standar Indonesia (Psl 4). Teks Al-Qur'an tidak

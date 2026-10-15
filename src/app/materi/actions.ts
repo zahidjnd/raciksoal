@@ -5,9 +5,30 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { materi } from "@/db/schema";
 import { BATAS_MATERI, keIsian, rapikanMateri, type IsianMateri } from "@/lib/materi";
+import { mushaf } from "@/lib/mushaf";
 import { penggunaSaatIni } from "@/lib/sesi";
 
 const SESI_HABIS = "Sesi masuk sudah berakhir. Muat ulang halaman lalu masuk lagi.";
+
+/** Langkah 9: "QS An-Nur: 2" → teks Arab dari data mushaf. */
+export async function ambilAyat(rujukan: string) {
+  if (!(await penggunaSaatIni())) return { ok: false as const, pesan: SESI_HABIS };
+  const r = mushaf().ambil(String(rujukan ?? "").slice(0, 100));
+  return typeof r === "string" ? { ok: false as const, pesan: r } : { ok: true as const, ...r };
+}
+
+/**
+ * Langkah 9: cocokkan teks Arab dari file Word/PowerPoint ke mushaf. Per teks: ayat resmi + sumbernya,
+ * "basmalah" (diabaikan), atau null (tidak ditemukan: hadis/doa, tetap usulan yang wajib diperiksa guru).
+ */
+export async function cocokkanAyat(daftar: string[]) {
+  if (!(await penggunaSaatIni())) return null;
+  const m = mushaf();
+  return (Array.isArray(daftar) ? daftar : []).slice(0, 200).map((a) => {
+    const arab = String(a ?? "").slice(0, 5000);
+    return m.basmalah(arab) ? ("basmalah" as const) : m.cari(arab);
+  });
+}
 
 /**
  * Simpan materi baru (id = null) atau ubah materi milik sendiri. Aturan 3: hanya materi milik guru yang masuk.
@@ -16,7 +37,7 @@ const SESI_HABIS = "Sesi masuk sudah berakhir. Muat ulang halaman lalu masuk lag
 export async function simpanMateri(id: number | null, isian: IsianMateri) {
   const saya = await penggunaSaatIni();
   if (!saya) return { ok: false as const, pesan: SESI_HABIS };
-  const r = rapikanMateri(isian, "");
+  const r = rapikanMateri(isian, "", mushaf().cari);
   if (typeof r === "string") return { ok: false as const, pesan: r };
 
   let idBaru = id;

@@ -16,7 +16,13 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="id" className={amiri.variable}>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        {children}
+        {/* Wajib menurut ketentuan pemakaian teks Tanzil (langkah 9). */}
+        <footer className="py-4 text-center text-xs text-gray-400">
+          Teks Al-Qur&apos;an: <a className="underline" href="https://tanzil.net" target="_blank" rel="noreferrer">Tanzil Project (tanzil.net)</a>
+        </footer>
+      </body>
     </html>
   );
 }
