@@ -102,6 +102,16 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   kotak + centang guru (belum ada data hadis berharakat yang bisa jadi patokan pasti).
   Langkah pertama: cek sumber & LISENSI teks mushaf dan terjemah Kemenag (web akan dijual), pilih yang aman.
   Setelah itu perbarui aturan 5 jadi "ayat dari data mushaf, hadis dari guru".
+  HASIL CEK LISENSI (2026-10-15):
+  - PMA 44/2016: "mushaf" = ayat lengkap ATAU sebagian, cetak maupun DIGITAL (Psl 1); yang diterbitkan/diedarkan
+    wajib Tanda Tashih/Izin Edar LPMQ (Psl 2) dan mengacu Mushaf Standar Indonesia (Psl 4). Teks Al-Qur'an tidak
+    berhak cipta, tapi khat/tanda baca/harakat edisi tertentu = hak cipta penerbitnya (Psl 8). Aturan teknis
+    khusus aplikasi belum ada. → Pemakaian pribadi/internal madrasah: lanjut. SEBELUM DIJUAL: surati LPMQ.
+  - Tanzil (tanzil.net): boleh dipakai di web/aplikasi, teks tidak boleh diubah, wajib cantumkan sumber + tautan
+    tanzil.net (lisensi tertulis paling jelas). Teks Mushaf Standar Indonesia digital & terjemah Kemenag: TIDAK
+    ditemukan lisensi tertulis → jangan dibundel; terjemah tetap diisi guru sampai ada izin LPMQ.
+  - Teks Arab di PPT pemilik = ejaan imla'i berharakat (mirip Tanzil "Simple"), BUKAN rasm Utsmani
+    (فاحشة vs فٰحشة). Pencocokan ke mushaf harus mengabaikan juga beda alif/alif maqshurah/hamzah, bukan hanya harakat.
 - Lain-lain tertunda: uji pemisahan data dengan login akun guru kedua (belum dibuktikan lewat login); tambah bab
   bawaan lain; data uji di DB laptop (materi "Uji: Menjaga Pandangan", set 22–35) boleh dibersihkan bila pemilik setuju.
 - Langkah 1 SELESAI (2026-10-14).
