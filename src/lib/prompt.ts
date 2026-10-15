@@ -46,7 +46,10 @@ export type Pengaturan = {
   bobot?: Record<Bentuk, number>; // tidak ada di set lama (sebelum fitur bobot)
   modelSlot?: number; // nomor model AI di .env (1 = AI_, 2 = AI2_, ...); set lama = 1
   bandingkan?: boolean; // mode "Bandingkan semua model": jangan pakai model cadangan
+  catatan?: string; // catatan tambahan guru untuk AI (opsional)
 };
+
+export const MAKS_CATATAN = 500;
 
 /** Rapikan isian form dari browser (tidak dipercaya begitu saja). Mengembalikan pesan kalau tidak valid. */
 export function bersihkanPengaturan(p: Pengaturan): Pengaturan | string {
@@ -61,7 +64,8 @@ export function bersihkanPengaturan(p: Pengaturan): Pengaturan | string {
   const bobotDari = (b: Bentuk) => angka(p?.bobot?.[b] ?? BOBOT_BAWAAN[b]);
   const bobot = { PG: bobotDari("PG"), PGK: bobotDari("PGK"), BS: bobotDari("BS"), URAIAN: bobotDari("URAIAN") };
   const modelSlot = Math.max(1, Math.min(9, Math.round(Number(p?.modelSlot) || 1)));
-  return { babId: String(p.babId), tujuan: p.tujuan, jumlah, level, kesulitan: p.kesulitan, bobot, modelSlot, bandingkan: p?.bandingkan === true };
+  const catatan = String(p?.catatan ?? "").trim().slice(0, MAKS_CATATAN);
+  return { babId: String(p.babId), tujuan: p.tujuan, jumlah, level, kesulitan: p.kesulitan, bobot, modelSlot, bandingkan: p?.bandingkan === true, catatan };
 }
 
 /**
@@ -150,11 +154,15 @@ export function buatPengguna(p: Pengaturan, jumlah: Record<Bentuk, number>, suda
   const daftarSudah = sudah.length
     ? `\nSoal berikut SUDAH dibuat dalam set ini. Jangan membuat soal yang sama atau mirip (pokok bahasan maupun redaksinya), jangan memakai lagi skenario/kasus yang sama, dan hitung pola "berdebat/berbeda pendapat" yang sudah ada di daftar ini terhadap batas 2 kali. Ambil sisi materi, dalil, atau TP yang lain:\n${sudah.map((s) => `- ${s.slice(0, 160)}`).join("\n")}\n`
     : "";
+  // Catatan guru diikuti, tapi tidak boleh mengalahkan aturan (teks Arab, sumber data, format).
+  const catatanGuru = p.catatan
+    ? `\nCatatan tambahan dari guru (ikuti selama tidak bertentangan dengan aturan di instruksi sistem, terutama aturan teks Arab dan larangan memakai sumber di luar data bab):\n"""${p.catatan}"""\n`
+    : "";
   return `Buat soal untuk ${tujuan}. Aturan ${tujuan}: ${ATURAN_TUJUAN[tujuan].aturan}
 Tingkat kesulitan: ${kesulitan}. Artinya: ${ATURAN_KESULITAN[kesulitan]}
 Jumlah: ${urutan.map((b) => `${b} ${jumlah[b]}`).join(", ")}. Urutkan per bentuk: ${urutan.join(", ")}.
 Komposisi level: LOTS ${p.level.LOTS}%, MOTS ${p.level.MOTS}%, HOTS ${p.level.HOTS}%.
-${daftarSudah}${tambahan}Balas hanya dengan JSON sesuai format.`;
+${catatanGuru}${daftarSudah}${tambahan}Balas hanya dengan JSON sesuai format.`;
 }
 
 /** Permintaan "ganti satu soal": 1 soal baru dengan bentuk, level, dan TP yang sama, tapi berbeda dari semua soal di set. */

@@ -113,5 +113,9 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   kegagalan disimpan di `info.catatan` dan tampil sebagai kotak kuning. Mode "Bandingkan" TIDAK pakai cadangan.
   Uji: konfigurasi `uji-cadangan` di `.claude/launch.json` (port 3002, model utama sengaja palsu).
   DeepSeek (Okt 2026) hanya menerima `deepseek-flash` dan `deepseek-v4-pro`; `deepseek-chat` sudah tidak berlaku.
+- 2026-10-15: Catatan tambahan guru untuk AI (`pengaturan.catatan`, maks 500 huruf), diikuti selama tidak melanggar aturan.
+- 2026-10-15: DIRENCANAKAN setelah login (langkah 5): "materi sendiri" per guru: tempel teks atau unggah Word/PowerPoint
+  (PDF hanya teks Latin; teks Arab dari file TIDAK dipakai), plus kotak "Ayat & hadis terverifikasi" yang ditempel guru
+  + centang konfirmasi → jadi korpus penjaga ayat. Disimpan per guru dan bisa dipakai ulang.
 - 2026-10-14: Atas permintaan pemilik, teks Arab di WORD memakai Traditional Arabic 16 pt (bawaan Windows, sama
   dengan format AFTS), pengecualian dari aturan 7. Tampilan WEB tetap Amiri.

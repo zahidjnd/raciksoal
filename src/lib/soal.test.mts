@@ -2,7 +2,21 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { arabTakTerverifikasi, korpusArab, periksaSoal, rapikanSoal, ratakanKunci, terapkanBobot, type Bab, type Soal } from "./soal.ts";
-import { bagiTahap } from "./prompt.ts";
+import { bagiTahap, bersihkanPengaturan, buatPengguna, MAKS_CATATAN, type Pengaturan } from "./prompt.ts";
+
+test("catatan guru dirapikan, dibatasi panjangnya, dan masuk ke permintaan AI", () => {
+  const isian = {
+    babId: "qurdis11-bab3", tujuan: "Latihan", kesulitan: "Sedang",
+    jumlah: { PG: 2, PGK: 0, BS: 0, URAIAN: 0 }, level: { LOTS: 40, MOTS: 40, HOTS: 20 },
+    catatan: `  fokus pada QS. An-Nur ayat 2 ${"x".repeat(1000)}`,
+  } as Pengaturan;
+  const p = bersihkanPengaturan(isian) as Pengaturan;
+  assert.equal(p.catatan!.length, MAKS_CATATAN);
+  assert.ok(p.catatan!.startsWith("fokus pada QS. An-Nur ayat 2"));
+  assert.ok(buatPengguna(p, p.jumlah, []).includes("fokus pada QS. An-Nur ayat 2"));
+  const tanpa = bersihkanPengaturan({ ...isian, catatan: "   " }) as Pengaturan;
+  assert.ok(!buatPengguna(tanpa, tanpa.jumlah, []).includes("Catatan tambahan dari guru"));
+});
 
 test("bagiTahap membagi soal maks 10 per tahap dengan urutan bentuk tetap", () => {
   const nol = { PG: 0, PGK: 0, BS: 0, URAIAN: 0 };

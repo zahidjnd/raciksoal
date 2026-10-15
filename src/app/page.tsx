@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { ambilDaftarModel, cekHasil, mulaiBuatSoal } from "./actions";
 import { KartuSoal } from "./kartu-soal";
-import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_SOAL, NAMA_BENTUK, TUJUAN, type Pengaturan } from "@/lib/prompt";
+import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_SOAL, NAMA_BENTUK, TUJUAN, type Pengaturan } from "@/lib/prompt";
 import type { Bentuk } from "@/lib/soal";
 import { DAFTAR_BAB as SEMUA_BAB } from "@/data";
 
@@ -167,6 +167,21 @@ export default function Home() {
             <Angka label="HOTS (C4–C6) %" nilai={p.level.HOTS} ubah={(n) => setP({ ...p, level: { ...p.level, HOTS: n } })} />
           </fieldset>
         </div>
+
+        <label className="block text-sm">
+          Catatan tambahan untuk AI (opsional)
+          <textarea
+            className="mt-1 w-full rounded border p-2"
+            rows={2}
+            maxLength={MAKS_CATATAN}
+            placeholder="Contoh: fokus pada QS. An-Nūr ayat 2 saja; pakai nama-nama santri putri; perbanyak soal mufradat"
+            value={p.catatan ?? ""}
+            onChange={(e) => setP({ ...p, catatan: e.target.value })}
+          />
+          <span className="text-xs text-gray-500">
+            {(p.catatan ?? "").length}/{MAKS_CATATAN} huruf. AI tetap wajib mengikuti aturan, termasuk larangan mengarang ayat dan hadis.
+          </span>
+        </label>
 
         <button
           className="w-full rounded bg-emerald-700 px-4 py-3 font-semibold text-white disabled:opacity-50"
