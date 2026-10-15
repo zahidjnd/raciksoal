@@ -7,6 +7,10 @@ import { daftarModel, tanyaAI } from "@/lib/ai";
 import { bagiTahap, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatSistem, type Pengaturan } from "@/lib/prompt";
 import { periksaSoal, rapikanSoal, ratakanKunci, terapkanBobot, type Bab, type Soal } from "@/lib/soal";
 import { DAFTAR_BAB } from "@/data";
+import { bolehAkses } from "@/lib/akses";
+import { penggunaSaatIni } from "@/lib/sesi";
+
+const SESI_HABIS = "Sesi masuk sudah berakhir. Muat ulang halaman lalu masuk lagi.";
 // ponytail: batas harian untuk seluruh web (belum ada login). Jadi per guru di langkah 5.
 const BATAS_PER_HARI = 30;
 const BATAS_GANTI_PER_SET = 30;
@@ -51,12 +55,15 @@ async function tanyaDenganCadangan(sistem: string, pengguna: string, slotUtama: 
 
 /** Model AI yang terpasang di .env (nomor + nama saja, tanpa kunci), untuk pilihan di form. */
 export async function ambilDaftarModel() {
+  if (!(await penggunaSaatIni())) return [];
   return daftarModel();
 }
 
 /** Mulai membuat soal di belakang layar, langsung kembalikan id-nya. Hasil dicek lewat cekHasil(). */
 export async function mulaiBuatSoal(input: Pengaturan) {
   try {
+    const saya = await penggunaSaatIni();
+    if (!saya) return { ok: false as const, pesan: SESI_HABIS };
     const p = bersihkanPengaturan(input);
     if (typeof p === "string") return { ok: false as const, pesan: p };
     const bab = DAFTAR_BAB[p.babId];
@@ -72,7 +79,7 @@ export async function mulaiBuatSoal(input: Pengaturan) {
 
     const [baris] = await db
       .insert(hasilSoal)
-      .values({ status: "proses", babId: bab.id, pengaturan: p, model: model.nama, pesan: "Menyiapkan..." })
+      .values({ status: "proses", guruId: saya.id, babId: bab.id, pengaturan: p, model: model.nama, pesan: "Menyiapkan..." })
       .returning({ id: hasilSoal.id });
 
     void kerjakan(baris.id, bab, p); // sengaja tidak ditunggu, supaya koneksi browser tidak putus
@@ -126,18 +133,23 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
   }
 }
 
-/** Ambil set soal yang sudah selesai + soal nomor `no` (mulai 0). Mengembalikan pesan kalau tidak valid. */
+/**
+ * Ambil set soal yang sudah selesai + soal nomor `no` (mulai 0), HANYA kalau pengguna yang masuk boleh mengaksesnya
+ * (aturan 3: pemilik atau admin). Mengembalikan pesan kalau tidak valid.
+ */
 async function ambilSet(id: number, no: number) {
+  const saya = await penggunaSaatIni();
+  if (!saya) return SESI_HABIS;
   const [h] = await db.select().from(hasilSoal).where(eq(hasilSoal.id, Number(id)));
-  if (!h || h.status !== "selesai") return "Set soal tidak ditemukan atau belum selesai.";
+  // Set milik guru lain dijawab "tidak ditemukan", supaya keberadaannya pun tidak bocor.
+  if (!h || !bolehAkses(h.guruId, saya) || h.status !== "selesai") return "Set soal tidak ditemukan atau belum selesai.";
   const soal = h.soal as Soal[];
   const bab = DAFTAR_BAB[h.babId];
   if (!Number.isInteger(no) || no < 0 || no >= soal.length || !bab) return "Nomor soal tidak valid.";
   return { h, soal, bab };
 }
 
-// ponytail: siapa pun yang tahu id bisa mengedit. Batasi per guru setelah ada login (langkah 5).
-/** Simpan hasil edit guru untuk satu soal. Penjaga teks Arab tetap berlaku untuk editan. */
+/** Simpan hasil edit guru untuk satu soal (hanya pemilik/admin, lewat ambilSet). Penjaga teks Arab tetap berlaku. */
 export async function simpanSoal(id: number, no: number, isian: Soal) {
   try {
     const set = await ambilSet(id, no);
@@ -183,12 +195,16 @@ export async function gantiSatuSoal(id: number, no: number) {
   }
 }
 
-// ponytail: siapa pun yang tahu id bisa melihat hasil. Batasi per guru setelah ada login (langkah 5).
+/** Status + isi satu set, hanya untuk pemiliknya atau admin (aturan 3). Set orang lain dijawab "tidak ada". */
 export async function cekHasil(id: number) {
+  const saya = await penggunaSaatIni();
+  if (!saya) return null;
   const [h] = await db
-    .select({ status: hasilSoal.status, soal: hasilSoal.soal, pesan: hasilSoal.pesan, model: hasilSoal.model, babId: hasilSoal.babId, dibuat: hasilSoal.dibuat, info: hasilSoal.info })
+    .select({ guruId: hasilSoal.guruId, status: hasilSoal.status, soal: hasilSoal.soal, pesan: hasilSoal.pesan, model: hasilSoal.model, babId: hasilSoal.babId, dibuat: hasilSoal.dibuat, info: hasilSoal.info })
     .from(hasilSoal)
     .where(eq(hasilSoal.id, Number(id)));
-  if (!h) return null;
-  return { ...h, soal: h.soal as Soal[] | null, info: h.info as { detik: number; tokenMasuk: number; tokenKeluar: number; catatan?: string[] } | null };
+  if (!h || !bolehAkses(h.guruId, saya)) return null;
+  const { guruId, ...isi } = h; // id pemilik tidak perlu dikirim ke browser
+  void guruId;
+  return { ...isi, soal: h.soal as Soal[] | null, info: h.info as { detik: number; tokenMasuk: number; tokenKeluar: number; catatan?: string[] } | null };
 }

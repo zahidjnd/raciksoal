@@ -3,6 +3,26 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { arabTakTerverifikasi, korpusArab, periksaSoal, rapikanSoal, ratakanKunci, terapkanBobot, type Bab, type Soal } from "./soal.ts";
 import { bagiTahap, bersihkanPengaturan, buatPengguna, MAKS_CATATAN, type Pengaturan } from "./prompt.ts";
+import { bolehAkses, rapikanUsername } from "./akses.ts";
+
+test("aturan 3: guru hanya boleh membuka set miliknya, admin boleh semua", () => {
+  const guruA = { id: "a", peran: "guru" as const };
+  const guruB = { id: "b", peran: "guru" as const };
+  const admin = { id: "z", peran: "admin" as const };
+  assert.equal(bolehAkses("a", guruA), true);
+  assert.equal(bolehAkses("a", guruB), false); // guru B tidak boleh membuka milik guru A
+  assert.equal(bolehAkses("a", admin), true);
+  assert.equal(bolehAkses(null, guruA), false); // set tanpa pemilik hanya untuk admin
+  assert.equal(bolehAkses(null, admin), true);
+  assert.equal(bolehAkses("a", null), false); // belum masuk
+});
+
+test("nama pengguna dirapikan dan dibatasi karakternya", () => {
+  assert.equal(rapikanUsername("  Ustadz.Ahmad "), "ustadz.ahmad");
+  assert.equal(rapikanUsername("ab"), null); // terlalu pendek
+  assert.equal(rapikanUsername("ahmad zaki"), null); // ada spasi
+  assert.equal(rapikanUsername("ahmad'--"), null);
+});
 
 test("catatan guru dirapikan, dibatasi panjangnya, dan masuk ke permintaan AI", () => {
   const isian = {

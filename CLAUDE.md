@@ -123,5 +123,12 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   Set soal lama → milik admin. Dikerjakan bertahap: 5a login + pemisahan data (`guru_id`, satu fungsi pemeriksa
   pemilik untuk lihat/edit/ganti/unduh), 5b kelola akun guru + ganti kata sandi, 5c riwayat + batas per guru,
   5d halaman admin (semua set, peringatan cadangan 24 jam) + info teknis/pilihan model/bandingkan HANYA untuk admin.
+- Langkah 5a (2026-10-15): login Better Auth 1.7.7 (versi dikunci). Tabel `pengguna`, `sesi`, `akun_login`, `verifikasi`
+  (nama properti camelCase = nama field Better Auth). Semua halaman/aksi/unduhan wajib masuk; pemilik dicek lewat
+  `bolehAkses` (src/lib/akses.ts, dites) di `ambilSet`, `cekHasil`, dan rute Word. Set orang lain dijawab "tidak ditemukan".
+  Admin pertama: form di /masuk hanya saat belum ada pengguna & username = ADMIN_USERNAME; set lama tanpa pemilik → admin.
+  Login lewat server action (`src/app/masuk/actions.ts`) + pembatas 5x salah/15 menit per nama pengguna (di memori).
+  Email wajib di Better Auth → diisi otomatis `<username>@raciksoal.local`. Tidak pakai middleware (proxy hosting
+  mengubah Host, redirect absolut bisa salah) — pemeriksaan di halaman/aksi. `.claude/launch.json` berisi env uji laptop.
 - 2026-10-14: Atas permintaan pemilik, teks Arab di WORD memakai Traditional Arabic 16 pt (bawaan Windows, sama
   dengan format AFTS), pengecualian dari aturan 7. Tampilan WEB tetap Amiri.

@@ -5,14 +5,24 @@
       "name": "dev",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
-      "port": 3000
+      "port": 3000,
+      "env": {
+        "BETTER_AUTH_SECRET": "khusus-uji-di-laptop-jangan-dipakai-di-hosting-0000000000",
+        "BETTER_AUTH_URL": "http://localhost:3000",
+        "ADMIN_USERNAME": "admin.uji"
+      }
     },
     {
       "name": "uji-cadangan",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["next", "dev", "-p", "3002"],
       "port": 3002,
-      "env": { "AI_MODEL": "model-palsu-untuk-uji-cadangan" }
+      "env": {
+        "AI_MODEL": "model-palsu-untuk-uji-cadangan",
+        "BETTER_AUTH_SECRET": "khusus-uji-di-laptop-jangan-dipakai-di-hosting-0000000000",
+        "BETTER_AUTH_URL": "http://localhost:3002",
+        "ADMIN_USERNAME": "admin.uji"
+      }
     }
   ]
 }
