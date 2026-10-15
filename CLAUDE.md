@@ -150,5 +150,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   repo itu: `kunci/backup`); 7 salinan di `~/raciksoal-backup/lokal`. Hasil → `backup-status.txt` → pita merah admin
   (`PeringatanBackup` di kepala.tsx: gagal / > 36 jam). Backup manual: file kosong `~/raciksoal-app/jalankan-backup`.
   `status.txt` menyamarkan alamat database. Cara pulihkan: `deploy/pulihkan-backup.md`.
+  Uji pulih 2026-10-15: backup pertama (157 KB) dibuka pemilik dan dipulihkan ke Docker laptop → 2 pengguna,
+  22 set, 5 migrasi, utuh. Uji pulih ulang sesekali (mis. tiap beberapa bulan).
 - 2026-10-14: Atas permintaan pemilik, teks Arab di WORD memakai Traditional Arabic 16 pt (bawaan Windows, sama
   dengan format AFTS), pengecualian dari aturan 7. Tampilan WEB tetap Amiri.
