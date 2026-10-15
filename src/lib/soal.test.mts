@@ -5,6 +5,7 @@ import { arabTakTerverifikasi, korpusArab, periksaKisi, periksaSoal, rapikanSoal
 import { bagiTahap, bersihkanPengaturan, buatPengguna, hitungLevel, MAKS_CATATAN, rencanaLevel, type Pengaturan } from "./prompt.ts";
 import { bolehAkses, rapikanUsername } from "./akses.ts";
 import { keIsian, rapikanMateri } from "./materi.ts";
+import { bacaFileOffice } from "./office.ts";
 
 test("aturan 3: guru hanya boleh membuka set miliknya, admin boleh semua", () => {
   const guruA = { id: "a", peran: "guru" as const };
@@ -241,4 +242,34 @@ test("materi sendiri: TP diberi kode, teks Arab hanya dipercaya dari kotak ayat 
   assert.ok(typeof tanpa !== "string" && !/[؀-ۿ]/.test(JSON.stringify(tanpa.bab)));
   // bolak-balik ke form edit
   assert.ok(typeof r !== "string" && keIsian(r.bab).tp.startsWith("TP 1.1: "));
+});
+
+test("bacaFileOffice: paragraf Latin ke isi, paragraf Arab jadi usulan ayat; slide urut; PDF ditolak", async () => {
+  const ayat = bab.dalil[0].arab;
+  const { Document, Packer, Paragraph, TextRun } = await import("docx");
+  const docx = await Packer.toBuffer(
+    new Document({
+      sections: [{ children: [
+        new Paragraph({ children: [new TextRun("Larangan mendekati zina & bahayanya")] }),
+        new Paragraph({ children: [new TextRun({ text: ayat, rightToLeft: true })] }),
+        new Paragraph({ children: [new TextRun(`Lafaz ${ayat.split(" ")[0]} artinya janganlah`)] }), // Latin + lafaz → tetap di isi
+      ] }],
+    }),
+  );
+  const d = await bacaFileOffice(docx, "Bab 3.docx");
+  assert.deepEqual(d.arab, [ayat]);
+  assert.equal(d.teks.length, 2);
+  assert.equal(d.teks[0], "Larangan mendekati zina & bahayanya"); // entitas &amp; didekode
+
+  const JSZip = (await import("jszip")).default;
+  const zip = new JSZip();
+  const slide = (t: string) => `<p:sld><a:p><a:r><a:t>${t}</a:t></a:r></a:p></p:sld>`;
+  zip.file("ppt/slides/slide10.xml", slide("Slide sepuluh"));
+  zip.file("ppt/slides/slide2.xml", slide("Slide dua"));
+  const pptx = await zip.generateAsync({ type: "uint8array" });
+  assert.deepEqual((await bacaFileOffice(pptx, "x.pptx")).teks, ["Slide dua", "Slide sepuluh"]);
+
+  await assert.rejects(bacaFileOffice(pptx, "materi.pdf"), /PDF tidak didukung/);
+  await assert.rejects(bacaFileOffice(pptx, "lama.doc"), /Format lama/);
+  await assert.rejects(bacaFileOffice(new Uint8Array([1, 2, 3]), "rusak.docx"), /tidak bisa dibaca/);
 });

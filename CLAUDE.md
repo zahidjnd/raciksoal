@@ -93,7 +93,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
 - 2026-10-14: PDF materi: teks Arabnya rusak saat diekstrak → jangan pernah ambil ayat dari PDF.
 
 ## Status
-- Langkah 1–7 dan 8a SELESAI (per 2026-10-15). Berikutnya: 8b (unggah Word/PPT ke materi sendiri), bab lain.
+- Langkah 1–8 SELESAI (per 2026-10-15). Berikutnya: bab bawaan lain (butuh teks Arab bersih dari pemilik), uji guru lain.
 - Langkah 1 SELESAI (2026-10-14).
 - Langkah 2 (2026-10-14): form + buat soal + tampil hasil jalan untuk Bab 3. Belum: bab lain.
 - Langkah 2b (2026-10-14): edit per butir (`simpanSoal`, editan tetap dicek penjaga Arab) dan ganti satu soal
@@ -167,6 +167,11 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   tsconfig `allowImportingTsExtensions` supaya file lib bisa saling impor `./x.ts` (perlu untuk `npm test`).
   BUG DIPERBAIKI: `history.replaceState(null, ...)` membuat Next memuat ulang halaman (GET ?_rsc) yang memutus
   pengecekan status → tampilan macet "0 detik" walau set selesai. Selalu pakai `history.replaceState(history.state, ...)`.
+- Langkah 8b (2026-10-15): unggah .docx/.pptx di form Materi Saya, DIBACA DI BROWSER (`bacaFileOffice`,
+  src/lib/office.ts, jszip 3.10.2 = sudah ada lewat docx, kini tercatat di package.json; tidak diunggah ke hosting).
+  Paragraf Latin → ditambahkan ke Isi; paragraf yang hampir seluruhnya Arab → USULAN kotak ayat (kuning, sumber &
+  terjemah kosong) dan centang verifikasi dikosongkan lagi. PDF/.doc/.ppt ditolak dengan pesan. Uji PPT Bab 3 pemilik:
+  26/26 ayat terbaca persis sama dengan data terverifikasi (+ basmalah & doa kafaratul majelis). LANGKAH 8 SELESAI.
 - Langkah 7 (2026-10-15): backup malam `~/raciksoal-app/backup.sh` (salinan `deploy/backup.sh`), cron `0 2 * * *`.
   pg_dump → gzip → `openssl enc -aes-256-cbc -pbkdf2 -iter 200000` dengan `BACKUP_PASSPHRASE` (.env hosting, diisi
   pemilik, disimpan juga di luar hosting). Dikirim ke repo privat `zahidjnd/raciksoal-backup` (deploy key TULIS khusus

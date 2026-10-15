@@ -8,7 +8,7 @@ export type IsianMateri = {
   judul: string;
   tp: string; // satu TP per baris, boleh diawali kode, mis. "TP 1.2: ..."
   isi: string;
-  dalil: { sumber: string; arab: string; terjemah: string }[];
+  dalil: { sumber: string; arab: string; terjemah: string; usulan?: boolean }[]; // usulan: diambil dari file (tampilan saja)
   diverifikasi: boolean; // centang: guru sudah memeriksa teks ayat/hadis
 };
 
