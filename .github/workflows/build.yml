@@ -30,8 +30,11 @@ jobs:
           mkdir out
           cp -r .next/standalone/. out/
           cp -r .next/static out/.next/static
-          cp -r public out/public
-          cp -r drizzle out/drizzle
+          # Isi folder disalin dengan "/." : standalone kadang sudah membuat out/public (file yang dibaca server, mis.
+          # template Word), dan "cp -r public out/public" lalu salah menaruhnya di out/public/public.
+          mkdir -p out/public out/drizzle
+          cp -r public/. out/public/
+          cp -r drizzle/. out/drizzle/
           rm -f out/.env*
       - name: Kirim ke branch deploy
         run: |
