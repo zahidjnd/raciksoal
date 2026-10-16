@@ -6,7 +6,7 @@ Guru memilih mapel, bab, bentuk soal, dan level kognitif. Web menyusun instruksi
 lalu menampilkan soal + kunci jawaban + kisi-kisi yang bisa diedit dan diekspor ke Word.
 
 Tahap sekarang: **prototipe untuk pemakaian pribadi**, hanya mapel **Al-Qur'an Hadis (Qurdis) kelas 11 MA**.
-Rencana: dipakai 15-20 guru di satu madrasah, lalu jangka panjang dijual.
+Rencana: setelah lancar dipakai pemilik, dipakai 15-20 guru di Al Fatah. TIDAK untuk dijual (jangan diungkit).
 Detail fitur ada di `PRD.md`.
 
 ## Tentang pemilik proyek
@@ -114,7 +114,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   - PMA 44/2016: "mushaf" = ayat lengkap ATAU sebagian, cetak maupun DIGITAL (Psl 1); yang diterbitkan/diedarkan
     wajib Tanda Tashih/Izin Edar LPMQ (Psl 2) dan mengacu Mushaf Standar Indonesia (Psl 4). Teks Al-Qur'an tidak
     berhak cipta, tapi khat/tanda baca/harakat edisi tertentu = hak cipta penerbitnya (Psl 8). Aturan teknis
-    khusus aplikasi belum ada. → Pemakaian pribadi/internal madrasah: lanjut. SEBELUM DIJUAL: surati LPMQ.
+    khusus aplikasi belum ada. → Untuk pemakaian pribadi/internal Al Fatah: aman, lanjut.
   - Tanzil (tanzil.net): boleh dipakai di web/aplikasi, teks tidak boleh diubah, wajib cantumkan sumber + tautan
     tanzil.net (lisensi tertulis paling jelas). Teks Mushaf Standar Indonesia digital & terjemah Kemenag: TIDAK
     ditemukan lisensi tertulis → jangan dibundel; terjemah tetap diisi guru sampai ada izin LPMQ.

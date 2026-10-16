@@ -7,8 +7,9 @@ Standar penulisan soal sudah tertanam di sistem, sehingga hasilnya konsisten.
 
 ## 2. Pengguna dan tahapan
 1. **Tahap 1 (sekarang):** pemilik sendiri, mapel Qurdis kelas 11 MA.
-2. **Tahap 2:** 15-20 guru di satu madrasah, mapel berbeda-beda.
-3. **Tahap 3:** dijual ke madrasah lain.
+2. **Tahap 2:** 15-20 guru di Al Fatah, mapel berbeda-beda.
+
+Web ini untuk internal Al Fatah, tidak untuk dijual.
 
 ## 3. Ruang lingkup MVP (Tahap 1)
 Hanya **Al-Qur'an Hadis kelas 11 MA**, satu atau dua bab.
@@ -79,8 +80,7 @@ Hasil berupa data terstruktur (JSON), tiap butir soal berisi: nomor, tipe, teks 
 ## 11. Risiko
 - Kesalahan konten keislaman (ayat, hadis, perawi, harakat) pada hasil AI. Mitigasi: teks terverifikasi dan review guru wajib.
 - Kualitas pengecoh dan konsistensi pada soal banyak. Mitigasi: contoh soal bagus dan uji beberapa model.
-- Batas hosting (RAM 1 GB, 12 proses serentak). Mitigasi: batasi pemakaian serentak, pindah ke server lebih besar saat dijual.
-- Hak cipta materi buku jika dijual. Mitigasi: guru mengunggah materi sendiri atau memakai ringkasan buatan sendiri.
+- Batas hosting (RAM 1 GB, 12 proses serentak). Mitigasi: batasi pemakaian serentak.
 
 ## 12. Pertanyaan terbuka
 - Model AI mana yang dipilih sebagai default (diputuskan setelah uji perbandingan)?
