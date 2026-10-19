@@ -6,7 +6,7 @@ export default async function Home() {
   const p = await wajibMasuk();
   return (
     <Kerangka p={p}>
-      <BuatSoal />
+      <BuatSoal nama={p.nama} />
     </Kerangka>
   );
 }

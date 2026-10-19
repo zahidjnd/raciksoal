@@ -7,6 +7,7 @@ import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_SOAL, NAMA_B
 import type { BarisKisi, Bentuk } from "@/lib/soal";
 import { DAFTAR_BAB as SEMUA_BAB } from "@/data";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const BAB_BAWAAN = Object.values(SEMUA_BAB);
 const BENTUK = Object.keys(NAMA_BENTUK) as Bentuk[];
@@ -58,7 +59,8 @@ function TabelKisi({ kisi }: { kisi: BarisKisi[] }) {
   );
 }
 
-export function BuatSoal() {
+export function BuatSoal({ nama }: { nama: string }) {
+  const router = useRouter();
   const [p, setP] = useState<Pengaturan>({
     babId: BAB_BAWAAN[0].id,
     tujuan: TUJUAN[0],
@@ -76,6 +78,7 @@ export function BuatSoal() {
   const [hasil, setHasil] = useState<Hasil | null>(null);
   const [error, setError] = useState("");
   const [detik, setDetik] = useState(0);
+  const [buka, setBuka] = useState<"jumlah" | "lanjutan" | null>(null); // panel di bawah kotak ketik
   const [jatah, setJatah] = useState<Awaited<ReturnType<typeof ambilJatah>>>(null);
   const muatJatah = () => ambilJatah().then(setJatah).catch(() => {});
   const jatahHabis = !!jatah?.batas && jatah.terpakai >= jatah.batas;
@@ -99,6 +102,7 @@ export function BuatSoal() {
   useEffect(() => {
     if (id === null) return;
     let berhenti = false;
+    let sempatProses = false;
     const mulai = Date.now();
     const cek = async () => {
       if (berhenti) return;
@@ -110,8 +114,13 @@ export function BuatSoal() {
         return setError("Hasil tidak ditemukan.");
       }
       setHasil(h);
-      if (h.status === "proses") setTimeout(cek, 3000);
-      else muatJatah(); // selesai/gagal: perbarui sisa jatah (set gagal tidak dihitung)
+      if (h.status === "proses") {
+        sempatProses = true;
+        setTimeout(cek, 3000);
+      } else {
+        muatJatah(); // selesai/gagal: perbarui sisa jatah (set gagal tidak dihitung)
+        if (sempatProses) router.refresh(); // riwayat di sidebar ikut diperbarui
+      }
     };
     cek();
     return () => {
@@ -133,144 +142,166 @@ export function BuatSoal() {
     }
     const r = await mulaiBuatSoal(p);
     if (!r.ok) return setError(r.pesan);
-    // Teruskan history.state (data internal router Next.js): dengan null, Next memuat ulang halaman dari server,
-    // dan pemuatan ulang itu memutus pengecekan status sehingga tampilan macet di "0 detik".
-    history.replaceState(history.state, "", `?id=${r.id}`);
-    setId(r.id);
+    // Buka halaman set baru dengan pemuatan penuh (sama seperti membuka dari riwayat): sidebar langsung memuat
+    // set ini (⏳) dan pengecekan status dimulai dari ?id=. JANGAN router.replace / history.replaceState + router.refresh
+    // di sini: navigasi router di tengah pengecekan memutusnya (macet "0 detik"), dan refresh mengembalikan alamat ke "/".
+    location.assign(`/?id=${r.id}`);
   }
 
   const bab = hasil?.bab ?? BAB_BAWAAN[0]; // salinan bab milik set (berisi ayat terverifikasi untuk tampilan & edit)
   const soal = hasil?.soal ?? [];
 
+  // Form tampil saat belum ada set yang dibuka, atau set gagal (supaya bisa langsung dicoba lagi).
+  const tampilForm = id === null || hasil?.status === "gagal";
+  const alasanTerkunci =
+    total < 1 ? "Isi jumlah soal dulu." :
+    total > MAKS_SOAL ? `Jumlah soal maksimal ${MAKS_SOAL}.` :
+    totalLevel !== 100 ? `Komposisi level harus 100% (sekarang ${totalLevel}%), buka Lanjutan.` : "";
+  const chip = "rounded-full border border-gray-300 bg-white px-3 py-1.5 text-sm hover:bg-gray-50";
+  const chipPanel = (b: typeof buka) => `${chip} ${buka === b ? "border-emerald-600 bg-emerald-50 text-emerald-900" : ""}`;
+
   return (
     <div className="space-y-6">
 
-      <section className="space-y-4 rounded-lg border p-4">
-        <label className="block text-sm">
-          Bab
-          <select className="mt-1 w-full rounded border p-2" value={p.babId} onChange={(e) => setP({ ...p, babId: e.target.value })}>
-            <optgroup label="Bab bawaan">
-              {daftarBab.filter((b) => !b.sendiri).map((b) => <option key={b.id} value={b.id}>{b.judul}</option>)}
-            </optgroup>
-            {daftarBab.some((b) => b.sendiri) && (
-              <optgroup label="Materi saya">
-                {daftarBab.filter((b) => b.sendiri).map((b) => <option key={b.id} value={b.id}>{b.judul}</option>)}
-              </optgroup>
+      {tampilForm && (
+        <section className="mx-auto max-w-2xl space-y-3 pt-4 md:pt-16">
+          <div className="pb-2 text-center">
+            <p className="text-gray-600">Assalamu&apos;alaikum, {nama}</p>
+            <h1 className="text-2xl font-semibold">Mau buat soal apa hari ini?</h1>
+          </div>
+
+          <div className="rounded-2xl border border-gray-300 bg-white p-3 shadow-sm focus-within:border-emerald-600">
+            <textarea
+              className="w-full resize-none p-1 outline-none"
+              rows={3}
+              maxLength={MAKS_CATATAN}
+              aria-label="Catatan untuk AI (opsional)"
+              placeholder="Catatan untuk AI (opsional), mis. fokus QS An-Nur ayat 2; pakai nama santri putri; perbanyak soal mufradat"
+              value={p.catatan ?? ""}
+              onChange={(e) => setP({ ...p, catatan: e.target.value })}
+            />
+            <div className="flex flex-wrap items-center gap-2">
+              <select aria-label="Bab" className={`${chip} max-w-[15rem] truncate`} value={p.babId} onChange={(e) => setP({ ...p, babId: e.target.value })}>
+                <optgroup label="Bab bawaan">
+                  {daftarBab.filter((b) => !b.sendiri).map((b) => <option key={b.id} value={b.id}>{b.judul}</option>)}
+                </optgroup>
+                {daftarBab.some((b) => b.sendiri) && (
+                  <optgroup label="Materi saya">
+                    {daftarBab.filter((b) => b.sendiri).map((b) => <option key={b.id} value={b.id}>{b.judul}</option>)}
+                  </optgroup>
+                )}
+              </select>
+              <select
+                aria-label="Tujuan soal"
+                className={chip}
+                value={p.tujuan}
+                onChange={(e) => {
+                  const tujuan = e.target.value as (typeof TUJUAN)[number];
+                  setP({ ...p, tujuan, level: ATURAN_TUJUAN[tujuan].level }); // komposisi level ikut tujuan
+                }}
+              >
+                {TUJUAN.map((t) => <option key={t}>{t}</option>)}
+              </select>
+              <select aria-label="Tingkat kesulitan" className={chip} value={p.kesulitan} onChange={(e) => setP({ ...p, kesulitan: e.target.value })}>
+                {KESULITAN.map((k) => <option key={k} value={k}>Kesulitan: {k}</option>)}
+              </select>
+              <button className={chipPanel("jumlah")} aria-expanded={buka === "jumlah"} onClick={() => setBuka(buka === "jumlah" ? null : "jumlah")}>
+                {total} soal ▾
+              </button>
+              <button className={chipPanel("lanjutan")} aria-expanded={buka === "lanjutan"} onClick={() => setBuka(buka === "lanjutan" ? null : "lanjutan")}>
+                ⚙ Lanjutan
+              </button>
+              <span className="flex-1" />
+              <button
+                aria-label="Buat soal"
+                title="Buat soal"
+                className="h-10 w-10 rounded-full bg-emerald-700 text-xl font-bold text-white hover:bg-emerald-800 disabled:opacity-40"
+                disabled={proses || jatahHabis || !!alasanTerkunci}
+                onClick={buat}
+              >
+                ↑
+              </button>
+            </div>
+
+            {buka === "jumlah" && (
+              <fieldset className="mt-3 space-y-2 border-t pt-3">
+                <legend className="sr-only">Jumlah soal × skor per soal</legend>
+                <p className="text-xs text-gray-500">Jumlah soal × skor per soal</p>
+                {BENTUK.map((b) => (
+                  <div key={b} className="flex items-center justify-between gap-2 text-sm">
+                    {NAMA_BENTUK[b]}
+                    <span className="flex items-center gap-1 whitespace-nowrap">
+                      <input type="number" min={0} max={MAKS_SOAL} aria-label={`Jumlah ${NAMA_BENTUK[b]}`} value={p.jumlah[b]} onChange={(e) => setP({ ...p, jumlah: { ...p.jumlah, [b]: Number(e.target.value) } })} className="w-14 rounded border p-1 text-right" />
+                      ×
+                      <input type="number" min={0} max={100} aria-label={`Skor per soal ${NAMA_BENTUK[b]}`} value={bobot[b]} onChange={(e) => setP({ ...p, bobot: { ...bobot, [b]: Number(e.target.value) } })} className="w-14 rounded border p-1 text-right" />
+                    </span>
+                  </div>
+                ))}
+                <p className={`text-sm ${totalSkor === 100 ? "text-gray-600" : "text-amber-700"}`}>
+                  Total: {total} soal (maks {MAKS_SOAL}), skor {totalSkor}
+                  {totalSkor !== 100 && " (bukan 100)"}
+                </p>
+              </fieldset>
             )}
-          </select>
-          <span className="text-xs text-gray-500">
-            Ingin membuat soal dari materi Anda sendiri? <Link href="/materi" className="text-emerald-800 underline">Tambahkan di Materi Saya</Link>.
-          </span>
-        </label>
 
-        {/* Daftar model hanya dikirim server untuk admin; guru tidak melihat pilihan ini. */}
-        {daftarModel.length > 0 && (
-          <label className="block text-sm">
-            Model AI <span className="rounded bg-amber-100 px-1 text-xs">admin</span>
-            <select className="mt-1 w-full rounded border p-2" value={p.modelSlot} onChange={(e) => setP({ ...p, modelSlot: Number(e.target.value) })}>
-              {daftarModel.map((m) => (
-                <option key={m.slot} value={m.slot}>{m.nama}</option>
-              ))}
-              {daftarModel.length > 1 && <option value={0}>Bandingkan semua model (pengaturan sama)</option>}
-            </select>
-          </label>
-        )}
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block text-sm">
-            Tujuan soal
-            <select
-              className="mt-1 w-full rounded border p-2"
-              value={p.tujuan}
-              onChange={(e) => {
-                const tujuan = e.target.value as (typeof TUJUAN)[number];
-                setP({ ...p, tujuan, level: ATURAN_TUJUAN[tujuan].level }); // komposisi level ikut tujuan
-              }}
-            >
-              {TUJUAN.map((t) => <option key={t}>{t}</option>)}
-            </select>
-          </label>
-          <label className="block text-sm">
-            Tingkat kesulitan
-            <select className="mt-1 w-full rounded border p-2" value={p.kesulitan} onChange={(e) => setP({ ...p, kesulitan: e.target.value })}>
-              {KESULITAN.map((k) => <option key={k}>{k}</option>)}
-            </select>
-          </label>
-        </div>
-
-        <div className="grid gap-6 sm:grid-cols-2">
-          <fieldset className="space-y-2">
-            <legend className="mb-1 text-sm font-semibold">Jumlah soal × skor per soal</legend>
-            {BENTUK.map((b) => (
-              <div key={b} className="flex items-center justify-between gap-2 text-sm">
-                {NAMA_BENTUK[b]}
-                <span className="flex items-center gap-1 whitespace-nowrap">
-                  <input type="number" min={0} max={MAKS_SOAL} aria-label={`Jumlah ${NAMA_BENTUK[b]}`} value={p.jumlah[b]} onChange={(e) => setP({ ...p, jumlah: { ...p.jumlah, [b]: Number(e.target.value) } })} className="w-14 rounded border p-1 text-right" />
-                  ×
-                  <input type="number" min={0} max={100} aria-label={`Skor per soal ${NAMA_BENTUK[b]}`} value={bobot[b]} onChange={(e) => setP({ ...p, bobot: { ...bobot, [b]: Number(e.target.value) } })} className="w-14 rounded border p-1 text-right" />
-                </span>
+            {buka === "lanjutan" && (
+              <div className="mt-3 space-y-3 border-t pt-3">
+                <fieldset className="space-y-2">
+                  <legend className="mb-1 text-sm font-semibold">Komposisi level (total {totalLevel}%)</legend>
+                  <p className="text-xs text-gray-500">Terisi otomatis sesuai tujuan soal, boleh diubah.</p>
+                  <Angka label="LOTS (C1–C2) %" nilai={p.level.LOTS} ubah={(n) => setP({ ...p, level: { ...p.level, LOTS: n } })} />
+                  <Angka label="MOTS (C3) %" nilai={p.level.MOTS} ubah={(n) => setP({ ...p, level: { ...p.level, MOTS: n } })} />
+                  <Angka label="HOTS (C4–C6) %" nilai={p.level.HOTS} ubah={(n) => setP({ ...p, level: { ...p.level, HOTS: n } })} />
+                </fieldset>
+                {/* Daftar model hanya dikirim server untuk admin; guru tidak melihat pilihan ini. */}
+                {daftarModel.length > 0 && (
+                  <label className="block text-sm">
+                    Model AI <span className="rounded bg-amber-100 px-1 text-xs">admin</span>
+                    <select className="mt-1 w-full rounded border p-2" value={p.modelSlot} onChange={(e) => setP({ ...p, modelSlot: Number(e.target.value) })}>
+                      {daftarModel.map((m) => (
+                        <option key={m.slot} value={m.slot}>{m.nama}</option>
+                      ))}
+                      {daftarModel.length > 1 && <option value={0}>Bandingkan semua model (pengaturan sama)</option>}
+                    </select>
+                  </label>
+                )}
               </div>
-            ))}
-            <p className={`text-sm ${totalSkor === 100 ? "text-gray-600" : "text-amber-700"}`}>
-              Total: {total} soal (maks {MAKS_SOAL}), skor {totalSkor}
-              {totalSkor !== 100 && " (bukan 100)"}
-            </p>
-          </fieldset>
-          <fieldset className="space-y-2">
-            <legend className="mb-1 text-sm font-semibold">Komposisi level (total {totalLevel}%)</legend>
-            <p className="text-xs text-gray-500">Terisi otomatis sesuai tujuan soal, boleh diubah.</p>
-            <Angka label="LOTS (C1–C2) %" nilai={p.level.LOTS} ubah={(n) => setP({ ...p, level: { ...p.level, LOTS: n } })} />
-            <Angka label="MOTS (C3) %" nilai={p.level.MOTS} ubah={(n) => setP({ ...p, level: { ...p.level, MOTS: n } })} />
-            <Angka label="HOTS (C4–C6) %" nilai={p.level.HOTS} ubah={(n) => setP({ ...p, level: { ...p.level, HOTS: n } })} />
-          </fieldset>
-        </div>
-
-        <label className="block text-sm">
-          Catatan tambahan untuk AI (opsional)
-          <textarea
-            className="mt-1 w-full rounded border p-2"
-            rows={2}
-            maxLength={MAKS_CATATAN}
-            placeholder="Contoh: fokus pada QS. An-Nūr ayat 2 saja; pakai nama-nama santri putri; perbanyak soal mufradat"
-            value={p.catatan ?? ""}
-            onChange={(e) => setP({ ...p, catatan: e.target.value })}
-          />
-          <span className="text-xs text-gray-500">
-            {(p.catatan ?? "").length}/{MAKS_CATATAN} huruf. AI tetap wajib mengikuti aturan, termasuk larangan mengarang ayat dan hadis.
-          </span>
-        </label>
-
-        <button
-          className="w-full rounded bg-emerald-700 px-4 py-3 font-semibold text-white disabled:opacity-50"
-          disabled={proses || jatahHabis || total < 1 || total > MAKS_SOAL || totalLevel !== 100}
-          onClick={buat}
-        >
-          {proses ? `Sedang membuat soal... ${hasil?.pesan ? `${hasil.pesan}, ` : ""}${detik} detik (bisa 1–3 menit)` : "Buat Soal"}
-        </button>
-        {jatah && (
-          <p className={`text-sm ${jatahHabis ? "font-semibold text-red-600" : "text-gray-600"}`}>
-            {jatah.batas
-              ? `Sisa jatah hari ini: ${Math.max(0, jatah.batas - jatah.terpakai)} dari ${jatah.batas} set soal.`
-              : `Hari ini Anda membuat ${jatah.terpakai} set soal (admin, tanpa batas per guru).`}
-            {jatahHabis && " Silakan lanjutkan besok."}
-          </p>
-        )}
-        {error && <p className="text-red-600">{error}</p>}
-        {banding.length > 0 && (
-          <div className="space-y-1 rounded border border-blue-300 bg-blue-50 p-3 text-sm">
-            <p className="font-semibold">Perbandingan dimulai. Buka tiap hasil (tab baru), tunggu sampai selesai:</p>
-            {banding.map((b) =>
-              b.id ? (
-                <a key={b.nama} className="block text-blue-700 underline" href={`?id=${b.id}`} target="_blank" rel="noreferrer">
-                  {b.nama} (set {b.id})
-                </a>
-              ) : (
-                <p key={b.nama} className="text-red-600">{b.nama}: {b.pesan}</p>
-              ),
             )}
           </div>
-        )}
-      </section>
+
+          {alasanTerkunci && <p className="text-center text-sm text-amber-700">{alasanTerkunci}</p>}
+          <p className="text-center text-xs text-gray-500">
+            {jatah &&
+              (jatah.batas
+                ? `Sisa jatah hari ini: ${Math.max(0, jatah.batas - jatah.terpakai)} dari ${jatah.batas} set. `
+                : `Hari ini Anda membuat ${jatah.terpakai} set (admin, tanpa batas). `)}
+            AI tetap wajib mengikuti aturan, termasuk larangan mengarang ayat dan hadis.{" "}
+            <Link href="/materi" className="text-emerald-800 underline">Pakai materi sendiri</Link>
+          </p>
+          {jatahHabis && <p className="text-center font-semibold text-red-600">Jatah hari ini habis. Silakan lanjutkan besok.</p>}
+          {error && <p className="text-center text-red-600">{error}</p>}
+          {banding.length > 0 && (
+            <div className="space-y-1 rounded border border-blue-300 bg-blue-50 p-3 text-sm">
+              <p className="font-semibold">Perbandingan dimulai. Buka tiap hasil (tab baru), tunggu sampai selesai:</p>
+              {banding.map((b) =>
+                b.id ? (
+                  <a key={b.nama} className="block text-blue-700 underline" href={`?id=${b.id}`} target="_blank" rel="noreferrer">
+                    {b.nama} (set {b.id})
+                  </a>
+                ) : (
+                  <p key={b.nama} className="text-red-600">{b.nama}: {b.pesan}</p>
+                ),
+              )}
+            </div>
+          )}
+        </section>
+      )}
+
+      {proses && (
+        <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900">
+          ⏳ Sedang membuat soal... {hasil?.pesan ? `${hasil.pesan}, ` : ""}{detik} detik (bisa 1–3 menit). Halaman ini boleh ditinggal; set tersimpan di riwayat.
+        </p>
+      )}
 
       {hasil?.status === "gagal" && <p className="rounded border border-red-300 bg-red-50 p-3 text-red-700">Gagal membuat soal: {hasil.pesan}</p>}
 

@@ -217,3 +217,11 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   `ambilRiwayat` = fungsi bersama dengan /riwayat, disaring per guru; menu; Keluar), di HP dilipat dengan <details> ☰.
   Tautan ke "/" dan "/?id=" sengaja <a> biasa (BuatSoal membaca ?id= hanya saat dimuat). Sidebar belum ikut berubah
   saat set baru selesai dibuat (baru muncul setelah pindah halaman).
+- Langkah 10b (2026-10-19): Buat Soal ala kotak ketik AI (`buat-soal.tsx`): sapaan + kotak "Catatan untuk AI" besar,
+  tombol pilihan Bab/Tujuan/Kesulitan (select biasa bergaya chip), "N soal ▾" dan "⚙ Lanjutan" (komposisi level + model admin)
+  membuka panel di bawah kotak; tombol bulat ↑ terkunci dengan alasan tertulis (jumlah/komposisi salah). Form hanya tampil
+  bila belum ada set dibuka atau set gagal; saat proses tampil kotak "⏳ Sedang membuat soal...".
+  PENTING: setelah `mulaiBuatSoal` berhasil → `location.assign("/?id=..")` (muat penuh, sama seperti buka dari riwayat).
+  `router.replace` di tengah pengecekan status MEMUTUSNYA (macet "0 detik"); `history.replaceState` + `router.refresh()`
+  mengembalikan alamat ke "/". `router.refresh()` hanya dipanggil setelah status selesai/gagal (sidebar ⏳ → selesai).
+  Uji laptop: set 36–38 (2 soal PG, admin.uji) sengaja dibuat untuk tes ini.
