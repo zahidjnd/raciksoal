@@ -254,3 +254,9 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   Kemenag di kop), `hijau-tua`, `hijau-muda` di `@theme` globals.css (JANGAN pakai `emerald-*` lagi); huruf Plus Jakarta
   Sans (`--font-latin`, next/font); tombol aksi `rounded-lg`, tombol pilihan `rounded-full`; tanpa emoji hiasan di tombol;
   `garis-judul` (@utility) di setiap h1 (rata tengah + `after:mx-auto`); hanya mode terang. Audit antislop 001 tertutup semua.
+- 2026-10-19 GAYA CLAUDE.AI (pilihan pemilik, menggantikan motif garis judul): DESIGN.md diperbarui. Token krem di
+  `@theme` (krem #FAF9F5 latar, krem-tua sidebar, krem-sorot, garis, tinta, pudar #5F5E5A); judul h1 serif Source Serif 4
+  (`--font-judul`, @layer base); input/select/textarea putih di @layer base; kartu `bg-white`; semua tombol `rounded-lg`.
+  Sidebar ala Claude: Set baru + menu di atas, Riwayat, profil (lingkaran huruf awal hijau → /akun) + Keluar di bawah.
+  Buat Soal: sapaan serif besar + tombol cepat `CEPAT` (UH 25, PAS 25, Latihan 10 PG bobot 10) yang hanya mengisi
+  pengaturan. Logo/nama/huruf khusus Anthropic TIDAK dipakai. Komposisi PAS resmi belum diketahui (preset PAS = 25 soal bawaan).

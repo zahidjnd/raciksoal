@@ -10,7 +10,7 @@ const Pesan = ({ h }: { h: { ok: boolean; pesan: string } | null }) =>
 export function FormTambahGuru() {
   const [hasil, kirim, proses] = useActionState(tambahGuru, null);
   return (
-    <form action={kirim} className="space-y-3 rounded-xl border p-4" key={hasil?.ok ? hasil.pesan : "isi"}>
+    <form action={kirim} className="space-y-3 rounded-xl border bg-white p-4" key={hasil?.ok ? hasil.pesan : "isi"}>
       <h2 className="font-semibold">Tambah akun guru</h2>
       <div className="grid gap-3 sm:grid-cols-3">
         <label className="block text-sm">

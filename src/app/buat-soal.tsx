@@ -10,6 +10,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 const BAB_BAWAAN = Object.values(SEMUA_BAB);
+
+/** Tombol cepat di bawah kotak ketik (DESIGN.md). Jumlah & skor bawaan AFTS; latihan 10 PG x 10 = skor 100. */
+const CEPAT: { label: string; isi: Pick<Pengaturan, "jumlah" | "bobot"> & { tujuan: (typeof TUJUAN)[number] } }[] = [
+  { label: "Ulangan harian · 25 soal", isi: { tujuan: "Ulangan Harian", jumlah: { PG: 10, PGK: 5, BS: 5, URAIAN: 5 }, bobot: BOBOT_BAWAAN } },
+  { label: "PAS · 25 soal", isi: { tujuan: "PAS", jumlah: { PG: 10, PGK: 5, BS: 5, URAIAN: 5 }, bobot: BOBOT_BAWAAN } },
+  { label: "Latihan cepat · 10 PG", isi: { tujuan: "Latihan", jumlah: { PG: 10, PGK: 0, BS: 0, URAIAN: 0 }, bobot: { ...BOBOT_BAWAAN, PG: 10 } } },
+];
 const BENTUK = Object.keys(NAMA_BENTUK) as Bentuk[];
 
 type Hasil = NonNullable<Awaited<ReturnType<typeof cekHasil>>>;
@@ -26,7 +33,7 @@ function Angka({ label, nilai, ubah }: { label: string; nilai: number; ubah: (n:
 /** Tabel kisi-kisi (langkah 6, tab Kisi-kisi): satu baris per soal. Set lama tidak punya kisi-kisi. */
 function TabelKisi({ kisi }: { kisi: BarisKisi[] }) {
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto bg-white">
         <table className="w-full min-w-[640px] border-collapse text-sm">
           <thead>
             <tr className="bg-gray-100 text-left">
@@ -160,8 +167,8 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
     total < 1 ? "Isi jumlah soal dulu." :
     total > MAKS_SOAL ? `Jumlah soal maksimal ${MAKS_SOAL}.` :
     totalLevel !== 100 ? `Komposisi level harus 100% (sekarang ${totalLevel}%), buka Lanjutan.` : "";
-  const chip = "inline-flex items-center rounded-full border border-gray-300 bg-white px-3 py-1.5 text-sm hover:bg-gray-50 max-md:min-h-11";
-  // Pilihan (Bab, Tujuan, tab) lonjong; aksi (unduh) kotak bersudut lembut. Lihat DESIGN.md.
+  // Pilihan dan aksi sama-sama kotak bersudut lembut seperti claude.ai (DESIGN.md).
+  const chip = "inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm hover:bg-krem max-md:min-h-11";
   const aksi2 = "inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm hover:bg-gray-50 max-md:min-h-11";
   const chipPanel = (b: typeof buka) => `${chip} ${buka === b ? "border-hijau bg-hijau-muda text-hijau-tua" : ""}`;
 
@@ -170,10 +177,7 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
 
       {tampilForm && (
         <section className="mx-auto max-w-2xl space-y-3 pt-4 md:pt-16">
-          <div className="pb-2 text-center">
-            <p className="text-gray-600">Assalamu&apos;alaikum, {nama}</p>
-            <h1 className="garis-judul text-2xl font-semibold after:mx-auto">Mau buat soal apa hari ini?</h1>
-          </div>
+          <h1 className="pb-4 text-center text-3xl md:text-4xl">Assalamu&apos;alaikum, {nama}</h1>
 
           <div className="rounded-2xl border border-gray-300 bg-white p-3 shadow-sm focus-within:border-hijau focus-within:ring-2 focus-within:ring-hijau">
             <textarea
@@ -181,7 +185,7 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
               rows={3}
               maxLength={MAKS_CATATAN}
               aria-label="Catatan untuk AI (opsional)"
-              placeholder="Catatan untuk AI (opsional), mis. fokus QS An-Nur ayat 2; pakai nama santri putri; perbanyak soal mufradat"
+              placeholder="Mau buat soal apa hari ini? Catatan untuk AI (opsional), mis. fokus QS An-Nur ayat 2; pakai nama santri putri"
               value={p.catatan ?? ""}
               onChange={(e) => setP({ ...p, catatan: e.target.value })}
             />
@@ -272,14 +276,23 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
             )}
           </div>
 
+          {/* Tombol cepat: mengisi pengaturan siap pakai (belum membuat soal); guru tetap menekan "Buat soal". */}
+          <div className="flex flex-wrap justify-center gap-2">
+            {CEPAT.map((c) => (
+              <button key={c.label} className={`${chip} text-pudar hover:text-tinta`} onClick={() => setP({ ...p, ...c.isi, level: ATURAN_TUJUAN[c.isi.tujuan].level })}>
+                {c.label}
+              </button>
+            ))}
+            <Link href="/materi" className={`${chip} text-pudar hover:text-tinta`}>Pakai materi saya</Link>
+          </div>
+
           {alasanTerkunci && <p className="text-center text-sm text-amber-700">{alasanTerkunci}</p>}
-          <p className="text-center text-xs text-gray-500">
+          <p className="text-center text-xs text-pudar">
             {jatah &&
               (jatah.batas
                 ? `Sisa jatah hari ini: ${Math.max(0, jatah.batas - jatah.terpakai)} dari ${jatah.batas} set. `
                 : `Hari ini Anda membuat ${jatah.terpakai} set (admin, tanpa batas). `)}
-            AI tetap wajib mengikuti aturan, termasuk larangan mengarang ayat dan hadis.{" "}
-            <Link href="/materi" className="text-hijau underline">Pakai materi sendiri</Link>
+            AI tetap wajib mengikuti aturan, termasuk larangan mengarang ayat dan hadis.
           </p>
           {jatahHabis && <p className="text-center font-semibold text-red-600">Jatah hari ini habis. Silakan lanjutkan besok.</p>}
           {error && <p className="text-center text-red-600">{error}</p>}
@@ -326,7 +339,7 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
       {hasil?.status === "selesai" && (
         <section className="space-y-4">
           <div>
-            <h1 className="garis-judul text-xl font-semibold">{bab.judul}</h1>
+            <h1 className="text-xl">{bab.judul}</h1>
             <p className="text-sm text-gray-500">
               {soal.length} soal
               {hasil.model && <> · model: <b>{hasil.model}</b></>}
@@ -403,7 +416,7 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
           )}
 
           {/* Tombol unduh menempel di bawah layar. File Word selalu mengikuti isi terbaru (termasuk editan). */}
-          <div className="sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center gap-2 border-t bg-white px-4 py-2 md:-mx-8 md:px-8">
+          <div className="sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center gap-2 border-t border-garis bg-krem px-4 py-2 md:-mx-8 md:px-8">
             <span className="text-sm font-semibold">Unduh<span className="hidden sm:inline"> Word</span>:</span>
             <a className="inline-flex items-center rounded-lg bg-hijau px-4 py-1.5 text-sm font-semibold text-white hover:bg-hijau-tua max-md:min-h-11" href={`/api/word?id=${id}&jenis=soal`}>
               Soal

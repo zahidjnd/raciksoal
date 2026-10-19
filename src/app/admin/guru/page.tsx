@@ -27,12 +27,12 @@ export default async function KelolaGuru() {
 
   return (
     <Kerangka p={p}>
-      <h1 className="garis-judul text-xl font-semibold">Kelola guru</h1>
+      <h1 className="text-xl">Kelola guru</h1>
       <FormTambahGuru />
       <section className="space-y-3">
         <h2 className="font-semibold">Daftar akun ({daftar.length})</h2>
         {daftar.map((g) => (
-          <article key={g.id} className={`space-y-2 rounded-xl border p-3 ${g.nonaktif ? "bg-gray-100 opacity-75" : ""}`}>
+          <article key={g.id} className={`space-y-2 rounded-xl border p-3 ${g.nonaktif ? "bg-gray-100 opacity-75" : "bg-white"}`}>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <p>
                 <span className="font-semibold">{g.nama}</span> <span className="text-sm text-gray-500">@{g.username}</span>{" "}

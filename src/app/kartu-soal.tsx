@@ -65,7 +65,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, onUbah }: Props) {
 
   const dalil = bab.dalil.find((d) => d.id === s.dalil_id);
   return (
-    <article id={`soal-${no}`} className={`scroll-mt-4 space-y-2 rounded-xl border p-4 ${s.peringatan?.length ? "border-red-400 bg-red-50" : ""} ${mengganti ? "opacity-50" : ""}`}>
+    <article id={`soal-${no}`} className={`scroll-mt-4 space-y-2 rounded-xl border p-4 ${s.peringatan?.length ? "border-red-400 bg-red-50" : "bg-white"} ${mengganti ? "opacity-50" : ""}`}>
       {s.peringatan?.map((w, i) => (
         <p key={i} className="text-sm font-semibold text-red-700">⚠️ {w}</p>
       ))}

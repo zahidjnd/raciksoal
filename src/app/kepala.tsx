@@ -94,75 +94,78 @@ export function ambilRiwayat(guruId: string, batas: number) {
 }
 
 const BATAS_SIDEBAR = 15;
-const tautan = "block truncate rounded-md px-2 py-3 text-gray-700 hover:bg-gray-200 md:py-1.5";
+const tautan = "block truncate rounded-lg px-3 py-3 text-tinta hover:bg-krem-sorot md:py-1.5";
 
 /**
- * Kerangka setiap halaman setelah masuk (gaya aplikasi AI): sidebar kiri berisi Set baru, riwayat set,
- * menu, dan tombol Keluar; di HP sidebar dilipat di balik tombol ☰. Isi halaman di sebelah kanan.
+ * Kerangka setiap halaman setelah masuk (gaya claude.ai, DESIGN.md): sidebar kiri berisi menu, riwayat set,
+ * dan profil + Keluar di bawah; di HP sidebar dilipat di balik tombol ☰. Isi halaman di sebelah kanan.
  */
 export async function Kerangka({ p, children }: { p: Pengguna; children: React.ReactNode }) {
   const admin = p.peran === "admin";
   const riwayat = await ambilRiwayat(p.id, BATAS_SIDEBAR);
   const menu = [
-    { href: "/materi", label: "Materi Saya" },
+    { href: "/materi", label: "Materi saya" },
     ...(admin
       ? [
-          { href: "/admin/set", label: "Semua Set" },
-          { href: "/admin/guru", label: "Kelola Guru" },
+          { href: "/admin/set", label: "Semua set" },
+          { href: "/admin/guru", label: "Kelola guru" },
         ]
       : []),
-    { href: "/akun", label: "Akun" },
   ];
 
   // Tautan ke halaman utama sengaja <a> biasa (bukan Link): halaman Buat Soal membaca ?id= hanya saat dimuat.
   const isi = (
-    <div className="flex flex-1 flex-col gap-1 p-3 text-sm">
+    <div className="flex flex-1 flex-col gap-0.5 p-3 text-sm">
       {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- sengaja muat penuh, lihat komentar di atas */}
-      <a href="/" className="mb-2 rounded-lg border border-gray-300 bg-white px-3 py-3 font-semibold md:py-2 text-hijau hover:bg-hijau-muda">
-        + Set baru
+      <a href="/" className={`${tautan} bg-krem-sorot font-semibold`}>
+        <span className="mr-2 font-bold text-hijau">+</span>Set baru
       </a>
-      <p className="px-2 pt-2 text-xs text-gray-500">Riwayat</p>
-      {riwayat.length === 0 && <p className="px-2 text-xs text-gray-600">Belum ada set soal.</p>}
+      {menu.map((m) => (
+        <Link key={m.href} href={m.href} className={tautan}>{m.label}</Link>
+      ))}
+
+      <p className="px-3 pt-5 pb-1 text-xs text-pudar">Riwayat</p>
+      {riwayat.length === 0 && <p className="px-3 text-xs text-pudar">Belum ada set soal.</p>}
       {riwayat.map((s) => {
         const pg = s.pengaturan as Pengaturan;
         return (
           <a key={s.id} href={`/?id=${s.id}`} className={tautan} title={`set ${s.id}`}>
             {s.status === "gagal" && "⚠️ "}
             {pg.tujuan} · {judulPendek(s.judulBab, s.babId)}
-            {s.status === "proses" && <span className="text-gray-600"> (proses)</span>}
+            {s.status === "proses" && <span className="text-pudar"> (proses)</span>}
           </a>
         );
       })}
       {riwayat.length === BATAS_SIDEBAR && (
-        <Link href="/riwayat" className="flex min-h-11 items-center px-2 text-xs text-hijau hover:underline md:min-h-0 md:py-1">Lihat semua riwayat</Link>
+        <Link href="/riwayat" className="flex min-h-11 items-center px-3 text-xs text-hijau hover:underline md:min-h-0 md:py-1">Lihat semua riwayat</Link>
       )}
 
-      <div className="mt-auto space-y-1 border-t border-gray-200 pt-3">
-        {menu.map((m) => (
-          <Link key={m.href} href={m.href} className={tautan}>{m.label}</Link>
-        ))}
-        <div className="flex items-center justify-between gap-2 px-2 pt-2">
-          <span className="truncate text-gray-600">
-            {p.nama} {admin && <span className="rounded bg-amber-100 px-1 text-xs">admin</span>}
+      <div className="mt-auto flex items-center gap-2 border-t border-garis pt-3">
+        <Link href="/akun" className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-2 hover:bg-krem-sorot" title="Akun">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-hijau text-sm font-semibold text-white" aria-hidden>
+            {p.nama.trim().charAt(0).toUpperCase()}
           </span>
-          <form action={keluar}>
-            <button className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs hover:bg-gray-100">Keluar</button>
-          </form>
-        </div>
+          <span className="truncate">
+            {p.nama} <span className="text-pudar">· {admin ? "Admin" : "Guru"}</span>
+          </span>
+        </Link>
+        <form action={keluar}>
+          <button className="rounded-lg px-2 py-1 text-xs text-pudar hover:bg-krem-sorot hover:text-tinta">Keluar</button>
+        </form>
       </div>
     </div>
   );
 
   return (
     <div className="md:flex">
-      <aside className="hidden w-64 shrink-0 border-r border-gray-200 bg-gray-50 md:sticky md:top-0 md:flex md:h-screen md:flex-col md:overflow-y-auto">
-        <p className="px-5 pt-4 text-lg font-bold">Racik Soal</p>
+      <aside className="hidden w-64 shrink-0 border-r border-garis bg-krem-tua md:sticky md:top-0 md:flex md:h-screen md:flex-col md:overflow-y-auto">
+        <p className="px-6 pt-5 pb-2 font-serif text-xl">Racik Soal</p>
         {isi}
       </aside>
       {/* HP: sidebar dilipat. <details> bawaan browser, tanpa JavaScript. */}
-      <details className="border-b border-gray-200 bg-gray-50 md:hidden">
-        <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3 text-lg font-bold">
-          <span aria-hidden>☰</span> Racik Soal
+      <details className="border-b border-garis bg-krem-tua md:hidden">
+        <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3 font-serif text-xl">
+          <span aria-hidden className="font-sans">☰</span> Racik Soal
         </summary>
         {isi}
       </details>

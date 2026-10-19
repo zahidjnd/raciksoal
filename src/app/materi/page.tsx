@@ -16,7 +16,7 @@ export default async function MateriSaya() {
     <Kerangka p={p}>
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h1 className="garis-judul text-xl font-semibold">Materi saya ({daftar.length})</h1>
+          <h1 className="text-xl">Materi saya ({daftar.length})</h1>
           <Link href="/materi/baru" className="inline-flex items-center rounded-lg bg-hijau px-4 py-2 text-sm font-semibold text-white max-md:min-h-11">+ Tambah materi</Link>
         </div>
         <p className="text-sm text-gray-600">
@@ -25,7 +25,7 @@ export default async function MateriSaya() {
         {daftar.map((m) => {
           const bab = m.bab as Bab;
           return (
-            <article key={m.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border p-3">
+            <article key={m.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-white p-3">
               <div>
                 <p className="font-semibold">{bab.judul}</p>
                 <p className="text-xs text-gray-500">

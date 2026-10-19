@@ -13,7 +13,7 @@ export default function HalamanError({ reset }: { error: Error; reset: () => voi
   });
   return (
     <main className="mx-auto max-w-sm space-y-4 p-4 pt-16 text-center">
-      <h1 className="garis-judul text-xl font-semibold after:mx-auto">Halaman gagal dimuat</h1>
+      <h1 className="text-xl">Halaman gagal dimuat</h1>
       <p className="text-gray-600">
         Server sedang bermasalah. Set soal yang sudah tersimpan tidak hilang. Coba lagi sebentar lagi; kalau masih gagal, hubungi admin Racik Soal.
       </p>

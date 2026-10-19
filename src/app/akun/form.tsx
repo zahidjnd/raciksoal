@@ -8,7 +8,7 @@ const kotak = "mt-1 w-full rounded border p-2";
 export function FormKataSandi() {
   const [hasil, kirim, proses] = useActionState(gantiKataSandi, null);
   return (
-    <form action={kirim} className="space-y-4 rounded-xl border p-4" key={hasil?.ok ? "selesai" : "isi"}>
+    <form action={kirim} className="space-y-4 rounded-xl border bg-white p-4" key={hasil?.ok ? "selesai" : "isi"}>
       <h2 className="font-semibold">Ganti kata sandi</h2>
       <label className="block text-sm">
         Kata sandi lama

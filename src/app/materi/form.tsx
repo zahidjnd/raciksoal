@@ -98,8 +98,8 @@ export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: Isia
   }
 
   return (
-    <section className="space-y-5 rounded-xl border p-4">
-      <h1 className="garis-judul text-xl font-semibold">{id ? "Ubah materi" : "Tambah materi"}</h1>
+    <section className="space-y-5 rounded-xl border bg-white p-4">
+      <h1 className="text-xl">{id ? "Ubah materi" : "Tambah materi"}</h1>
 
       <div className="space-y-1 rounded border border-dashed border-hijau p-3 text-sm">
         <p className="font-semibold">Ambil dari file Word/PowerPoint (opsional)</p>
