@@ -23,12 +23,10 @@ function Angka({ label, nilai, ubah }: { label: string; nilai: number; ubah: (n:
   );
 }
 
-/** Tabel kisi-kisi (langkah 6): satu baris per soal. Set lama tidak punya kisi-kisi. */
+/** Tabel kisi-kisi (langkah 6, tab Kisi-kisi): satu baris per soal. Set lama tidak punya kisi-kisi. */
 function TabelKisi({ kisi }: { kisi: BarisKisi[] }) {
   return (
-    <details className="rounded-lg border p-3">
-      <summary className="cursor-pointer font-semibold">📋 Kisi-kisi ({kisi.length} soal)</summary>
-      <div className="mt-3 overflow-x-auto">
+    <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] border-collapse text-sm">
           <thead>
             <tr className="bg-gray-100 text-left">
@@ -54,8 +52,7 @@ function TabelKisi({ kisi }: { kisi: BarisKisi[] }) {
             ))}
           </tbody>
         </table>
-      </div>
-    </details>
+    </div>
   );
 }
 
@@ -79,6 +76,8 @@ export function BuatSoal({ nama }: { nama: string }) {
   const [error, setError] = useState("");
   const [detik, setDetik] = useState(0);
   const [buka, setBuka] = useState<"jumlah" | "lanjutan" | null>(null); // panel di bawah kotak ketik
+  const [tab, setTab] = useState<"soal" | "kisi">("soal"); // halaman hasil
+  const [semuaKunci, setSemuaKunci] = useState(false);
   const [jatah, setJatah] = useState<Awaited<ReturnType<typeof ambilJatah>>>(null);
   const muatJatah = () => ambilJatah().then(setJatah).catch(() => {});
   const jatahHabis = !!jatah?.batas && jatah.terpakai >= jatah.batas;
@@ -150,6 +149,12 @@ export function BuatSoal({ nama }: { nama: string }) {
 
   const bab = hasil?.bab ?? BAB_BAWAAN[0]; // salinan bab milik set (berisi ayat terverifikasi untuk tampilan & edit)
   const soal = hasil?.soal ?? [];
+
+  /** Deret nomor: pindah ke tab Soal dulu (kartu belum tampil saat tab Kisi-kisi), lalu gulir ke soalnya. */
+  function lompat(no: number) {
+    setTab("soal");
+    setTimeout(() => document.getElementById(`soal-${no}`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+  }
 
   // Form tampil saat belum ada set yang dibuka, atau set gagal (supaya bisa langsung dicoba lagi).
   const tampilForm = id === null || hasil?.status === "gagal";
@@ -306,65 +311,95 @@ export function BuatSoal({ nama }: { nama: string }) {
       {hasil?.status === "gagal" && <p className="rounded border border-red-300 bg-red-50 p-3 text-red-700">Gagal membuat soal: {hasil.pesan}</p>}
 
       {hasil?.status === "selesai" && (
-        <section className="space-y-6">
-          <p className="rounded border border-amber-400 bg-amber-50 p-3 font-semibold text-amber-900">
+        <section className="space-y-4">
+          <div>
+            <h1 className="text-xl font-semibold">{bab.judul}</h1>
+            <p className="text-sm text-gray-500">
+              {soal.length} soal
+              {hasil.model && <> · model: <b>{hasil.model}</b></>}
+              {hasil.info && ` · ${hasil.info.detik} detik · ${(hasil.info.tokenMasuk + hasil.info.tokenKeluar).toLocaleString("id-ID")} token`}
+              {` · ${soal.filter((s) => s.peringatan?.length).length} soal ditandai`}
+            </p>
+          </div>
+          <p className="rounded-lg border border-amber-400 bg-amber-50 p-3 font-semibold text-amber-900">
             ⚠️ Soal dibuat AI, wajib diperiksa guru sebelum dipakai.
           </p>
-          <p className="text-sm text-gray-500">
-            {bab.judul} · {soal.length} soal
-            {hasil.model && <> · model: <b>{hasil.model}</b></>}
-            {hasil.info && ` · ${hasil.info.detik} detik · ${(hasil.info.tokenMasuk + hasil.info.tokenKeluar).toLocaleString("id-ID")} token`}
-            {` · ${soal.filter((s) => s.peringatan?.length).length} soal ditandai`}
-          </p>
           {!!hasil.info?.catatan?.length && (
-            <div className="rounded border border-amber-400 bg-amber-50 p-3 text-sm text-amber-900">
+            <div className="rounded-lg border border-amber-400 bg-amber-50 p-3 text-sm text-amber-900">
               <p className="font-semibold">⚠️ Model cadangan dipakai, karena model utama gagal:</p>
               <ul className="list-disc pl-5">
                 {hasil.info.catatan.map((c, i) => <li key={i}>{c}</li>)}
               </ul>
             </div>
           )}
-          <div className="flex flex-wrap gap-2">
-            <a className="rounded bg-blue-700 px-4 py-2 font-semibold text-white" href={`/api/word?id=${id}&jenis=soal`}>
-              ⬇️ Unduh Soal (Word)
-            </a>
-            <a className="rounded border border-blue-700 px-4 py-2 font-semibold text-blue-700" href={`/api/word?id=${id}&jenis=kunci`}>
-              ⬇️ Unduh Kunci & Pembahasan (Word)
-            </a>
-            {!!hasil.kisi?.length && (
-              <a className="rounded border border-blue-700 px-4 py-2 font-semibold text-blue-700" href={`/api/word?id=${id}&jenis=kisi`}>
-                ⬇️ Unduh Kisi-kisi (Word)
-              </a>
+
+          {/* Deret nomor: lompat ke soal; merah = ditandai penjaga ayat, wajib dicek. */}
+          <nav aria-label="Lompat ke nomor soal" className="flex flex-wrap gap-1">
+            {soal.map((s, i) => (
+              <button
+                key={i}
+                onClick={() => lompat(i + 1)}
+                title={s.peringatan?.length ? `Soal ${i + 1} ditandai, wajib dicek` : `Soal ${i + 1}`}
+                className={`h-8 w-8 rounded-md border text-sm ${s.peringatan?.length ? "border-red-400 bg-red-50 font-semibold text-red-700" : "border-gray-300 hover:bg-gray-100"}`}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </nav>
+
+          <div className="flex flex-wrap items-center gap-2 border-b pb-3">
+            {!!hasil.kisi?.length &&
+              (["soal", "kisi"] as const).map((t) => (
+                <button key={t} aria-pressed={tab === t} onClick={() => setTab(t)} className={`${chip} ${tab === t ? "border-emerald-600 bg-emerald-50 font-semibold text-emerald-900" : ""}`}>
+                  {t === "soal" ? "Soal" : `Kisi-kisi (${hasil.kisi!.length})`}
+                </button>
+              ))}
+            <span className="flex-1" />
+            {tab === "soal" && (
+              <button className={chip} onClick={() => setSemuaKunci(!semuaKunci)}>
+                {semuaKunci ? "Sembunyikan semua kunci" : "🔑 Tampilkan semua kunci"}
+              </button>
             )}
           </div>
-          <p className="text-xs text-gray-500">File Word mengikuti isi terbaru, termasuk soal yang sudah Anda edit atau ganti.</p>
 
-          {!!hasil.kisi?.length && <TabelKisi kisi={hasil.kisi} />}
+          {tab === "kisi" && !!hasil.kisi?.length ? (
+            <TabelKisi kisi={hasil.kisi} />
+          ) : (
+            BENTUK.filter((b) => soal.some((s) => s.bentuk === b)).map((b) => (
+              <div key={b} className="space-y-4">
+                <h2 className="text-lg font-bold">{NAMA_BENTUK[b]}</h2>
+                {soal.map(
+                  (s, i) =>
+                    s.bentuk === b && (
+                      <KartuSoal
+                        key={i}
+                        hasilId={id!}
+                        no={i + 1}
+                        s={s}
+                        bab={bab}
+                        semuaKunci={semuaKunci}
+                        onUbah={(baru) => {
+                          setHasil({ ...hasil, soal: soal.map((x, j) => (j === i ? baru : x)) });
+                          cekHasil(id!).then((h) => h && setHasil(h)).catch(() => {}); // kisi-kisi ikut berubah di server
+                        }}
+                      />
+                    ),
+                )}
+              </div>
+            ))
+          )}
 
-          {BENTUK.filter((b) => soal.some((s) => s.bentuk === b)).map((b) => (
-            <div key={b} className="space-y-4">
-              <h2 className="text-lg font-bold">{NAMA_BENTUK[b]}</h2>
-              {soal.map(
-                (s, i) =>
-                  s.bentuk === b && (
-                    <KartuSoal
-                      key={i}
-                      hasilId={id!}
-                      no={i + 1}
-                      s={s}
-                      bab={bab}
-                      onUbah={(baru) => {
-                        setHasil({ ...hasil, soal: soal.map((x, j) => (j === i ? baru : x)) });
-                        cekHasil(id!).then((h) => h && setHasil(h)).catch(() => {}); // kisi-kisi ikut berubah di server
-                      }}
-                    />
-                  ),
-              )}
-            </div>
-          ))}
+          {/* Tombol unduh menempel di bawah layar. File Word selalu mengikuti isi terbaru (termasuk editan). */}
+          <div className="sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center gap-2 border-t bg-white/95 px-4 py-2 backdrop-blur md:-mx-8 md:px-8">
+            <a className="rounded-full bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800" href={`/api/word?id=${id}&jenis=soal`}>
+              ⬇️ Soal<span className="hidden sm:inline"> (Word)</span>
+            </a>
+            <a className={chip} href={`/api/word?id=${id}&jenis=kunci`}>⬇️ Kunci<span className="hidden sm:inline"> & Pembahasan</span></a>
+            {!!hasil.kisi?.length && <a className={chip} href={`/api/word?id=${id}&jenis=kisi`}>⬇️ Kisi-kisi</a>}
+            <span className="hidden text-xs text-gray-500 sm:inline">Mengikuti isi terbaru, termasuk soal yang diedit/diganti.</span>
+          </div>
         </section>
       )}
     </div>
   );
 }
-

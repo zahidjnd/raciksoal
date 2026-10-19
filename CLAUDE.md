@@ -225,3 +225,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   `router.replace` di tengah pengecekan status MEMUTUSNYA (macet "0 detik"); `history.replaceState` + `router.refresh()`
   mengembalikan alamat ke "/". `router.refresh()` hanya dipanggil setelah status selesai/gagal (sidebar ⏳ → selesai).
   Uji laptop: set 36–38 (2 soal PG, admin.uji) sengaja dibuat untuk tes ini.
+- Langkah 10c (2026-10-19): halaman hasil "mode periksa": judul bab + info, peringatan AI (aturan 6), deret nomor (tombol,
+  merah = ditandai; `lompat` pindah ke tab Soal lalu gulir ke `#soal-N`), tab Soal | Kisi-kisi (TabelKisi tidak dilipat lagi),
+  kunci & pembahasan DILIPAT per kartu (`KartuSoal` prop `semuaKunci` + tombol per soal), bilah unduh Word `sticky bottom-0`
+  (di HP label diringkas agar satu baris).

@@ -7,6 +7,7 @@ import { LEVEL, POLA_ARAB, type Bab, type Soal } from "@/lib/soal";
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
 const HURUF = ["A", "B", "C", "D", "E"];
 const kotak = "w-full rounded border p-2 text-sm";
+const tombol = "rounded-full border border-gray-300 bg-white px-3 py-1 text-sm hover:bg-gray-50 disabled:opacity-50";
 
 /** Teks campuran Latin + Arab: bagian Arab ditulis kanan-ke-kiri dengan font Arab. */
 export function Teks({ teks }: { teks: string }) {
@@ -19,10 +20,12 @@ export function Teks({ teks }: { teks: string }) {
   );
 }
 
-type Props = { hasilId: number; no: number; s: Soal; bab: Bab; onUbah: (s: Soal) => void };
+type Props = { hasilId: number; no: number; s: Soal; bab: Bab; semuaKunci: boolean; onUbah: (s: Soal) => void };
 
-export function KartuSoal({ hasilId, no, s, bab, onUbah }: Props) {
+export function KartuSoal({ hasilId, no, s, bab, semuaKunci, onUbah }: Props) {
   const [edit, setEdit] = useState(false);
+  const [lihatKunci, setLihatKunci] = useState(false); // kunci & pembahasan dilipat, dibuka per soal atau semua sekaligus
+  const tampilKunci = semuaKunci || lihatKunci;
   const [mengganti, setMengganti] = useState(false);
   const [error, setError] = useState("");
 
@@ -54,7 +57,7 @@ export function KartuSoal({ hasilId, no, s, bab, onUbah }: Props) {
 
   const dalil = bab.dalil.find((d) => d.id === s.dalil_id);
   return (
-    <article className={`space-y-2 rounded-lg border p-4 ${s.peringatan?.length ? "border-red-400 bg-red-50" : ""} ${mengganti ? "opacity-50" : ""}`}>
+    <article id={`soal-${no}`} className={`scroll-mt-4 space-y-2 rounded-xl border p-4 ${s.peringatan?.length ? "border-red-400 bg-red-50" : ""} ${mengganti ? "opacity-50" : ""}`}>
       {s.peringatan?.map((w, i) => (
         <p key={i} className="text-sm font-semibold text-red-700">⚠️ {w}</p>
       ))}
@@ -72,6 +75,7 @@ export function KartuSoal({ hasilId, no, s, bab, onUbah }: Props) {
           {s.pilihan.map((o, i) => <li key={i}><Teks teks={o} /></li>)}
         </ol>
       )}
+      {tampilKunci && (
       <div className="space-y-1 rounded bg-emerald-50 p-3 text-sm">
         <p><span className="font-semibold">Kunci:</span> <Teks teks={[s.kunci].flat().join(", ")} /></p>
         {s.rubrik && (
@@ -82,9 +86,15 @@ export function KartuSoal({ hasilId, no, s, bab, onUbah }: Props) {
         <p><span className="font-semibold">Pembahasan:</span> <Teks teks={s.pembahasan} /></p>
         <p className="text-gray-500">{s.level} · {s.tp} · skor {s.skor}</p>
       </div>
+      )}
       <div className="flex flex-wrap gap-2">
-        <button className="rounded border px-3 py-1 text-sm" disabled={mengganti} onClick={() => setEdit(true)}>✏️ Edit</button>
-        <button className="rounded border px-3 py-1 text-sm" disabled={mengganti} onClick={ganti}>
+        {!semuaKunci && (
+          <button className={tombol} aria-expanded={lihatKunci} onClick={() => setLihatKunci(!lihatKunci)}>
+            {lihatKunci ? "Tutup kunci" : "🔑 Kunci & pembahasan"}
+          </button>
+        )}
+        <button className={tombol} disabled={mengganti} onClick={() => setEdit(true)}>✏️ Edit</button>
+        <button className={tombol} disabled={mengganti} onClick={ganti}>
           {mengganti ? "Sedang membuat soal pengganti..." : "🔄 Ganti soal ini"}
         </button>
       </div>
