@@ -96,6 +96,13 @@ body {
   opacity: 1;
 }
 
+/* Laptop: sidebar diam di kiri (lebar 16rem), jadi tulisan sumber Tanzil di kaki halaman ikut digeser ke area isi. */
+@media (min-width: 768px) {
+  body:has(aside[aria-label="Menu"]) > footer {
+    padding-left: 16rem;
+  }
+}
+
 /* HP: semua tombol dan kotak isian minimal 44px tinggi supaya nyaman disentuh jari.
    Tautan yang berbentuk tombol diberi `max-md:min-h-11` langsung di kelasnya. */
 @media (max-width: 767px) {

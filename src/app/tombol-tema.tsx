@@ -11,7 +11,7 @@ export function TombolTema({ awal }: { awal: "terang" | "gelap" }) {
   const gelap = tema === "gelap";
 
   function ganti() {
-    // Baca dari halaman, bukan dari state: tombol ini ada dua (sidebar laptop & menu HP) dan keduanya harus sepakat.
+    // Baca dari halaman (sumber kebenaran: atribut yang dipasang server dari cookie), bukan dari state.
     const baru = document.documentElement.dataset.tema === "gelap" ? "terang" : "gelap";
     if (baru === "gelap") document.documentElement.dataset.tema = "gelap";
     else delete document.documentElement.dataset.tema;

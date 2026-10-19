@@ -274,3 +274,9 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   Token baru: `kartu`, `hijau-teks`, `bahaya(-muda/-garis)`, `peringatan(-muda/-garis)`. WAJIB pakai token; JANGAN
   `bg-white`/`text-hijau` (untuk tulisan)/`red-*`/`amber-*`/`gray-*`. Uji: pindai 9 tampilan di KEDUA mode, lulus semua.
   Belum: simpan pilihan per akun di database (kalau ingin ikut ke semua perangkat guru).
+- 2026-10-19 SIDEBAR LACI (pilihan pemilik, contoh Claude Android): `src/app/laci-sidebar.tsx` (client) membungkus isi
+  sidebar dari `Kerangka`: satu elemen untuk laptop (fixed kiri, `md:pl-64` di pembungkus; kaki halaman Tanzil digeser
+  lewat `body:has(aside[aria-label="Menu"]) > footer` di globals.css) dan HP (laci dari kiri + latar gelap, tutup ✕/
+  ketuk luar/Esc/klik tautan, body overflow hidden). Visibilitas laci diatur PENGATUR WAKTU 200 ms (bukan transisi CSS
+  visibility; di halaman latar belakang transisi tidak jalan → laci macet). Baris di daftar yang digulir WAJIB `shrink-0`
+  (tanpa itu flex-col memeras baris jadi 24px). Uji: HP 375x600/700 & laptop 1280x700, kedua tema.
