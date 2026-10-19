@@ -37,6 +37,8 @@ Yang TIDAK ditiru: logo bintang, nama "Claude", dan huruf khusus milik Anthropic
 - Satu warna garis tepi lembut `#DDDBD2` (`batas`) untuk kartu, tombol, dan kotak isian.
 - Judul halaman serif 24px, subjudul bagian serif 18px, isi 14 sampai 16px.
 - Daftar panjang (Riwayat, Semua Set): satu kartu putih berisi baris bergaris pemisah tipis, bukan kotak per baris.
+- Scrollbar tipis ala claude.ai di seluruh aplikasi: tanpa panah, jalur transparan, batang abu lembut (`gulir`),
+  sedikit lebih tegas saat area disorot (`gulir-tegas`); warna ikut mode terang/gelap.
 - Kartu: sudut 12px (`rounded-xl`); kotak ketik utama: 16px (`rounded-2xl`) dengan bayangan tipis, satu-satunya
   elemen berbayangan (pusat perhatian halaman Buat Soal).
 - Ikon: tanpa emoji hiasan; cukup kata kerja yang jelas. Emoji hanya untuk peringatan (⚠️).

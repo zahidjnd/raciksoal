@@ -15,6 +15,8 @@
   --color-pudar: #5f5e5a; /* teks pudar; 5,2:1 bahkan di atas krem-sorot */
   --color-batas: #dddbd2; /* garis tepi kartu, tombol, dan kotak isian (satu warna lembut) */
   --color-kartu: #ffffff; /* kartu, kotak ketik, kotak isian */
+  --color-gulir: #d3d1c7; /* batang scrollbar */
+  --color-gulir-tegas: #b5b3aa; /* batang scrollbar saat area digulir disorot */
   /* Warna makna (bukan hiasan): bahaya = error / soal ditandai penjaga ayat; peringatan = kotak "Soal dibuat AI". */
   --color-bahaya-muda: #fef2f2;
   --color-bahaya: #b91c1c;
@@ -41,6 +43,8 @@
   --color-pudar: #b5b3aa;
   --color-batas: #44433e;
   --color-kartu: #30302e;
+  --color-gulir: #4a4944;
+  --color-gulir-tegas: #6b6a64;
   --color-bahaya-muda: #3b1f1f;
   --color-bahaya: #f2a3a3;
   --color-bahaya-garis: #8b3a3a;
@@ -56,6 +60,15 @@ body {
 }
 
 @layer base {
+  /* Scrollbar tipis ala claude.ai: tanpa panah, jalur transparan, batang abu lembut; lebih tegas saat area disorot.
+     Aturan standar (Chrome/Edge 121+, Firefox). HP memakai scrollbar bawaan sistem yang memang tipis. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-gulir) transparent;
+  }
+  *:hover {
+    scrollbar-color: var(--color-gulir-tegas) transparent;
+  }
   /* Satu warna garis tepi untuk semua kartu dan kontrol (bawaan Tailwind v4 = warna teks, terlalu gelap). */
   *,
   ::before,

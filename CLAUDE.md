@@ -280,3 +280,5 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   ketuk luar/Esc/klik tautan, body overflow hidden). Visibilitas laci diatur PENGATUR WAKTU 200 ms (bukan transisi CSS
   visibility; di halaman latar belakang transisi tidak jalan → laci macet). Baris di daftar yang digulir WAJIB `shrink-0`
   (tanpa itu flex-col memeras baris jadi 24px). Uji: HP 375x600/700 & laptop 1280x700, kedua tema.
+- 2026-10-19 SCROLLBAR ala claude.ai: `scrollbar-width: thin` + `scrollbar-color: var(--color-gulir) transparent` untuk `*`
+  di @layer base globals.css (`*:hover` → `gulir-tegas`). Token `gulir`/`gulir-tegas` punya nilai gelap. Tanpa ::-webkit-*.
