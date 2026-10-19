@@ -210,3 +210,10 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   22 set, 5 migrasi, utuh. Uji pulih ulang sesekali (mis. tiap beberapa bulan).
 - 2026-10-14: Atas permintaan pemilik, teks Arab di WORD memakai Traditional Arabic 16 pt (bawaan Windows, sama
   dengan format AFTS), pengecualian dari aturan 7. Tampilan WEB tetap Amiri.
+- Langkah 10a (2026-10-19): UI GAYA APLIKASI AI (pilihan pemilik, contoh A). Rencana: 10a kerangka sidebar, 10b Buat Soal
+  ala kotak ketik AI + tombol pilihan, 10c hasil "mode periksa" (deret nomor, kunci dilipat, unduh menempel), 10d sentuhan
+  akhir. "Minta perubahan" per soal = fitur AI terpisah, nanti. Selama langkah 10: commit di laptop, JANGAN push sampai pemilik setuju.
+  10a: `Kerangka` (src/app/kepala.tsx) membungkus semua halaman setelah masuk: sidebar kiri (Set baru, 15 set terakhir via
+  `ambilRiwayat` = fungsi bersama dengan /riwayat, disaring per guru; menu; Keluar), di HP dilipat dengan <details> ☰.
+  Tautan ke "/" dan "/?id=" sengaja <a> biasa (BuatSoal membaca ?id= hanya saat dimuat). Sidebar belum ikut berubah
+  saat set baru selesai dibuat (baru muncul setelah pindah halaman).

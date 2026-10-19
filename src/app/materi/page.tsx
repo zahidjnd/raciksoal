@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { materi } from "@/db/schema";
 import { wajibMasuk } from "@/lib/sesi";
 import type { Bab } from "@/lib/soal";
-import { Kepala } from "../kepala";
+import { Kerangka } from "../kepala";
 import { TombolHapusMateri } from "./form";
 
 export default async function MateriSaya() {
@@ -13,8 +13,7 @@ export default async function MateriSaya() {
   const daftar = await db.select().from(materi).where(eq(materi.guruId, p.id)).orderBy(desc(materi.diubah));
 
   return (
-    <main className="mx-auto max-w-3xl space-y-6 p-4">
-      <Kepala p={p} />
+    <Kerangka p={p}>
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-semibold">Materi saya ({daftar.length})</h2>
@@ -42,6 +41,6 @@ export default async function MateriSaya() {
           );
         })}
       </section>
-    </main>
+    </Kerangka>
   );
 }

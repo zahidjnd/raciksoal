@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { hasilSoal, pengguna } from "@/db/schema";
 import { wajibMasuk } from "@/lib/sesi";
-import { Kepala } from "../../kepala";
+import { Kerangka } from "../../kepala";
 import { AksiGuru, FormTambahGuru } from "./form";
 
 export default async function KelolaGuru() {
@@ -26,8 +26,7 @@ export default async function KelolaGuru() {
     .orderBy(asc(pengguna.createdAt));
 
   return (
-    <main className="mx-auto max-w-3xl space-y-6 p-4">
-      <Kepala p={p} />
+    <Kerangka p={p}>
       <FormTambahGuru />
       <section className="space-y-3">
         <h2 className="font-semibold">Daftar akun ({daftar.length})</h2>
@@ -47,6 +46,6 @@ export default async function KelolaGuru() {
           </article>
         ))}
       </section>
-    </main>
+    </Kerangka>
   );
 }

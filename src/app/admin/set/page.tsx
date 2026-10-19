@@ -6,7 +6,7 @@ import { hasilSoal, pengguna } from "@/db/schema";
 import { judulPendek } from "@/lib/bab";
 import type { Pengaturan } from "@/lib/prompt";
 import { wajibMasuk } from "@/lib/sesi";
-import { Kepala } from "../../kepala";
+import { Kerangka } from "../../kepala";
 
 const BATAS_TAMPIL = 200;
 
@@ -35,8 +35,7 @@ export default async function SemuaSet() {
     .limit(BATAS_TAMPIL);
 
   return (
-    <main className="mx-auto max-w-3xl space-y-6 p-4">
-      <Kepala p={p} />
+    <Kerangka p={p}>
       <section className="space-y-3">
         <h2 className="font-semibold">Semua set soal ({daftar.length}{daftar.length === BATAS_TAMPIL ? " terbaru" : ""})</h2>
         {daftar.map((s) => {
@@ -67,6 +66,6 @@ export default async function SemuaSet() {
           );
         })}
       </section>
-    </main>
+    </Kerangka>
   );
 }

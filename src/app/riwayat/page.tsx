@@ -1,11 +1,8 @@
-import { desc, eq, sql } from "drizzle-orm";
 import Link from "next/link";
-import { db } from "@/db";
-import { hasilSoal } from "@/db/schema";
 import { judulPendek } from "@/lib/bab";
 import type { Pengaturan } from "@/lib/prompt";
 import { wajibMasuk } from "@/lib/sesi";
-import { Kepala } from "../kepala";
+import { ambilRiwayat, Kerangka } from "../kepala";
 
 const BATAS_TAMPIL = 100;
 const LABEL_STATUS: Record<string, string> = { proses: "sedang dibuat", selesai: "selesai", gagal: "gagal" };
@@ -13,24 +10,10 @@ const LABEL_STATUS: Record<string, string> = { proses: "sedang dibuat", selesai:
 export default async function Riwayat() {
   const p = await wajibMasuk();
   // Aturan 3: hanya set milik pengguna yang sedang masuk (admin melihat semua set di halaman admin, langkah 5d).
-  const daftar = await db
-    .select({
-      id: hasilSoal.id,
-      dibuat: hasilSoal.dibuat,
-      status: hasilSoal.status,
-      babId: hasilSoal.babId,
-      judulBab: sql<string | null>`${hasilSoal.bab}->>'judul'`,
-      pengaturan: hasilSoal.pengaturan,
-      jumlahSoal: sql<number>`coalesce(jsonb_array_length(${hasilSoal.soal}), 0)::int`,
-    })
-    .from(hasilSoal)
-    .where(eq(hasilSoal.guruId, p.id))
-    .orderBy(desc(hasilSoal.dibuat))
-    .limit(BATAS_TAMPIL);
+  const daftar = await ambilRiwayat(p.id, BATAS_TAMPIL);
 
   return (
-    <main className="mx-auto max-w-3xl space-y-6 p-4">
-      <Kepala p={p} />
+    <Kerangka p={p}>
       <section className="space-y-3">
         <h2 className="font-semibold">Riwayat set soal Anda ({daftar.length}{daftar.length === BATAS_TAMPIL ? " terbaru" : ""})</h2>
         {daftar.length === 0 && (
@@ -63,6 +46,6 @@ export default async function Riwayat() {
           );
         })}
       </section>
-    </main>
+    </Kerangka>
   );
 }

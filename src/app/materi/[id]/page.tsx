@@ -5,7 +5,7 @@ import { materi } from "@/db/schema";
 import { keIsian, type IsianMateri } from "@/lib/materi";
 import { wajibMasuk } from "@/lib/sesi";
 import type { Bab } from "@/lib/soal";
-import { Kepala } from "../../kepala";
+import { Kerangka } from "../../kepala";
 import { FormMateri } from "../form";
 
 const KOSONG: IsianMateri = { judul: "", tp: "", isi: "", dalil: [], diverifikasi: false };
@@ -21,9 +21,8 @@ export default async function UbahMateri({ params }: { params: Promise<{ id: str
     awal = keIsian(m.bab as Bab);
   }
   return (
-    <main className="mx-auto max-w-3xl space-y-6 p-4">
-      <Kepala p={p} />
+    <Kerangka p={p}>
       <FormMateri id={id === "baru" ? null : Number(id)} awal={awal} />
-    </main>
+    </Kerangka>
   );
 }

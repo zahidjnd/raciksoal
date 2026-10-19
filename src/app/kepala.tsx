@@ -5,6 +5,8 @@ import Link from "next/link";
 import { db } from "@/db";
 import { hasilSoal } from "@/db/schema";
 import type { Pengguna } from "@/lib/auth";
+import { judulPendek } from "@/lib/bab";
+import type { Pengaturan } from "@/lib/prompt";
 import { keluar } from "./masuk/actions";
 
 /** Ringkas alasan kegagalan: buang "Tahap n:" dan isi JSON panjang dari penyedia AI. */
@@ -73,12 +75,35 @@ async function PeringatanBackup() {
   );
 }
 
-/** Bagian atas setiap halaman setelah masuk: judul, menu, nama pengguna, tombol Keluar. */
-export function Kepala({ p }: { p: Pengguna }) {
+/** Set soal milik satu guru, terbaru dulu (aturan 3: selalu disaring per guru). Dipakai sidebar dan /riwayat. */
+export function ambilRiwayat(guruId: string, batas: number) {
+  return db
+    .select({
+      id: hasilSoal.id,
+      dibuat: hasilSoal.dibuat,
+      status: hasilSoal.status,
+      babId: hasilSoal.babId,
+      judulBab: sql<string | null>`${hasilSoal.bab}->>'judul'`,
+      pengaturan: hasilSoal.pengaturan,
+      jumlahSoal: sql<number>`coalesce(jsonb_array_length(${hasilSoal.soal}), 0)::int`,
+    })
+    .from(hasilSoal)
+    .where(eq(hasilSoal.guruId, guruId))
+    .orderBy(desc(hasilSoal.dibuat))
+    .limit(batas);
+}
+
+const BATAS_SIDEBAR = 15;
+const tautan = "block truncate rounded-md px-2 py-1.5 text-gray-700 hover:bg-gray-200";
+
+/**
+ * Kerangka setiap halaman setelah masuk (gaya aplikasi AI): sidebar kiri berisi Set baru, riwayat set,
+ * menu, dan tombol Keluar; di HP sidebar dilipat di balik tombol ☰. Isi halaman di sebelah kanan.
+ */
+export async function Kerangka({ p, children }: { p: Pengguna; children: React.ReactNode }) {
   const admin = p.peran === "admin";
+  const riwayat = await ambilRiwayat(p.id, BATAS_SIDEBAR);
   const menu = [
-    { href: "/", label: "Buat Soal" },
-    { href: "/riwayat", label: "Riwayat" },
     { href: "/materi", label: "Materi Saya" },
     ...(admin
       ? [
@@ -88,28 +113,62 @@ export function Kepala({ p }: { p: Pengguna }) {
       : []),
     { href: "/akun", label: "Akun" },
   ];
-  return (
-    <header className="space-y-2">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold">Racik Soal</h1>
-        <div className="flex items-center gap-3 text-sm">
-          <span>
+
+  // Tautan ke halaman utama sengaja <a> biasa (bukan Link): halaman Buat Soal membaca ?id= hanya saat dimuat.
+  const isi = (
+    <div className="flex flex-1 flex-col gap-1 p-3 text-sm">
+      <a href="/" className="mb-2 rounded-lg border border-gray-300 bg-white px-3 py-2 font-semibold text-emerald-800 hover:bg-emerald-50">
+        + Set baru
+      </a>
+      <p className="px-2 pt-2 text-xs text-gray-500">Riwayat</p>
+      {riwayat.length === 0 && <p className="px-2 text-xs text-gray-400">Belum ada set soal.</p>}
+      {riwayat.map((s) => {
+        const pg = s.pengaturan as Pengaturan;
+        return (
+          <a key={s.id} href={`/?id=${s.id}`} className={tautan} title={`set ${s.id}`}>
+            {s.status === "gagal" ? "⚠️ " : s.status === "proses" ? "⏳ " : ""}
+            {pg.tujuan} · {judulPendek(s.judulBab, s.babId)}
+          </a>
+        );
+      })}
+      {riwayat.length === BATAS_SIDEBAR && (
+        <Link href="/riwayat" className="px-2 py-1 text-xs text-emerald-800 hover:underline">Lihat semua riwayat</Link>
+      )}
+
+      <div className="mt-auto space-y-1 border-t border-gray-200 pt-3">
+        {menu.map((m) => (
+          <Link key={m.href} href={m.href} className={tautan}>{m.label}</Link>
+        ))}
+        <div className="flex items-center justify-between gap-2 px-2 pt-2">
+          <span className="truncate text-gray-600">
             {p.nama} {admin && <span className="rounded bg-amber-100 px-1 text-xs">admin</span>}
           </span>
           <form action={keluar}>
-            <button className="rounded border px-3 py-1">Keluar</button>
+            <button className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs hover:bg-gray-100">Keluar</button>
           </form>
         </div>
       </div>
-      <nav className="flex flex-wrap gap-4 border-b pb-2 text-sm">
-        {menu.map((m) => (
-          <Link key={m.href} href={m.href} className="text-emerald-800 underline-offset-4 hover:underline">
-            {m.label}
-          </Link>
-        ))}
-      </nav>
-      {admin && <PeringatanAdmin />}
-      {admin && <PeringatanBackup />}
-    </header>
+    </div>
+  );
+
+  return (
+    <div className="md:flex">
+      <aside className="hidden w-64 shrink-0 border-r border-gray-200 bg-gray-50 md:sticky md:top-0 md:flex md:h-screen md:flex-col md:overflow-y-auto">
+        <p className="px-5 pt-4 text-lg font-bold">Racik Soal</p>
+        {isi}
+      </aside>
+      {/* HP: sidebar dilipat. <details> bawaan browser, tanpa JavaScript. */}
+      <details className="border-b border-gray-200 bg-gray-50 md:hidden">
+        <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3 text-lg font-bold">
+          <span aria-hidden>☰</span> Racik Soal
+        </summary>
+        {isi}
+      </details>
+      <main className="mx-auto w-full max-w-3xl min-w-0 space-y-6 p-4 md:p-8">
+        {admin && <PeringatanAdmin />}
+        {admin && <PeringatanBackup />}
+        {children}
+      </main>
+    </div>
   );
 }
