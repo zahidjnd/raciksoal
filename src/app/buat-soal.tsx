@@ -11,12 +11,20 @@ import { useRouter } from "next/navigation";
 
 const BAB_BAWAAN = Object.values(SEMUA_BAB);
 
-/** Tombol cepat di bawah kotak ketik (DESIGN.md). Jumlah & skor bawaan AFTS; latihan 10 PG x 10 = skor 100. */
-const CEPAT: { label: string; isi: Pick<Pengaturan, "jumlah" | "bobot"> & { tujuan: (typeof TUJUAN)[number] } }[] = [
-  { label: "Ulangan harian · 25 soal", isi: { tujuan: "Ulangan Harian", jumlah: { PG: 10, PGK: 5, BS: 5, URAIAN: 5 }, bobot: BOBOT_BAWAAN } },
-  { label: "PAS · 25 soal", isi: { tujuan: "PAS", jumlah: { PG: 10, PGK: 5, BS: 5, URAIAN: 5 }, bobot: BOBOT_BAWAAN } },
-  { label: "Latihan cepat · 10 PG", isi: { tujuan: "Latihan", jumlah: { PG: 10, PGK: 0, BS: 0, URAIAN: 0 }, bobot: { ...BOBOT_BAWAAN, PG: 10 } } },
+/** Kartu jenis soal di atas kotak ketik (DESIGN.md). Keterangan diringkas dari ATURAN_TUJUAN di src/lib/prompt.ts. */
+const ikon = (d: string) => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d={d} />
+  </svg>
+);
+const JENIS: { tujuan: (typeof TUJUAN)[number]; ket: string; ikon: React.ReactNode }[] = [
+  { tujuan: "Ulangan Harian", ket: "Cek ketercapaian tiap TP dalam satu bab.", ikon: ikon("M7 4h10a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM9 13l2 2 4-4") },
+  { tujuan: "PTS", ket: "Gaya ujian resmi tengah semester, merata ke semua TP.", ikon: ikon("M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zM4 10h16M9 3v4M15 3v4") },
+  { tujuan: "PAS", ket: "Gaya ujian resmi akhir semester, merata ke semua dalil.", ikon: ikon("M5 21V4h11l-2 4 2 4H5") },
+  { tujuan: "Latihan", ket: "Pembahasan panjang agar siswa bisa belajar mandiri.", ikon: ikon("M4 20h4L19 9l-4-4L4 16z") },
 ];
+/** Contoh catatan untuk AI: sekali klik mengisi kotak catatan (umum, berlaku untuk bab mana pun). */
+const CONTOH_CATATAN = ["Pakai nama santri putri", "Perbanyak soal kasus sehari-hari", "Bahasa sederhana"];
 const BENTUK = Object.keys(NAMA_BENTUK) as Bentuk[];
 
 type Hasil = NonNullable<Awaited<ReturnType<typeof cekHasil>>>;
@@ -176,8 +184,41 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
     <div className="space-y-6">
 
       {tampilForm && (
-        <section className="mx-auto max-w-2xl space-y-3 pt-4 md:pt-16">
-          <h1 className="pb-4 text-center text-3xl md:text-4xl">Assalamu&apos;alaikum, {nama}</h1>
+        <section className="mx-auto max-w-3xl space-y-3 pt-4 md:pt-12">
+          <div className="pb-2 text-center">
+            <h1 className="text-3xl md:text-4xl">Assalamu&apos;alaikum, {nama}</h1>
+            <p className="mt-1 text-sm text-pudar">
+              Pilih jenis soal, lalu atur bab dan jumlah soal di kotak bawah. Bab sendiri?{" "}
+              <Link href="/materi" className="text-hijau underline">Tambahkan di Materi saya</Link>
+            </p>
+          </div>
+
+          {/* Kartu jenis soal: pilihan setara, jadi sengaja berbentuk sama. Memilih kartu ikut mengatur komposisi level. */}
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4" role="radiogroup" aria-label="Jenis soal">
+            {JENIS.map((j) => {
+              const pilih = p.tujuan === j.tujuan;
+              return (
+                <button
+                  key={j.tujuan}
+                  role="radio"
+                  aria-checked={pilih}
+                  onClick={() => setP({ ...p, tujuan: j.tujuan, level: ATURAN_TUJUAN[j.tujuan].level })}
+                  className={`rounded-xl border bg-white p-3 text-left hover:border-pudar/40 ${pilih ? "border-hijau bg-hijau-muda/50 ring-1 ring-hijau" : ""}`}
+                >
+                  <span className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-hijau-muda text-hijau">{j.ikon}</span>
+                  <span className="block text-sm font-semibold">{j.tujuan}</span>
+                  <span className="mt-0.5 block text-xs leading-snug text-pudar">{j.ket}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 pt-2">
+            <span className="text-xs text-pudar">Contoh catatan:</span>
+            {CONTOH_CATATAN.map((c) => (
+              <button key={c} className={chip} onClick={() => setP({ ...p, catatan: c })}>{c}</button>
+            ))}
+          </div>
 
           <div className="rounded-2xl border bg-white p-3 shadow-sm focus-within:border-hijau focus-within:ring-2 focus-within:ring-hijau">
             <textarea
@@ -185,12 +226,12 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
               rows={3}
               maxLength={MAKS_CATATAN}
               aria-label="Catatan untuk AI (opsional)"
-              placeholder="Mau buat soal apa hari ini? Catatan untuk AI (opsional), mis. fokus QS An-Nur ayat 2; pakai nama santri putri"
+              placeholder="Catatan untuk AI (opsional), mis. fokus pada satu ayat; pakai nama santri putri"
               value={p.catatan ?? ""}
               onChange={(e) => setP({ ...p, catatan: e.target.value })}
             />
             <div className="flex flex-wrap items-center gap-2">
-              <select aria-label="Bab" className={`${chip} max-w-[15rem] truncate`} value={p.babId} onChange={(e) => setP({ ...p, babId: e.target.value })}>
+              <select aria-label="Bab" className={`${chip} max-w-[11rem] truncate`} value={p.babId} onChange={(e) => setP({ ...p, babId: e.target.value })}>
                 <optgroup label="Bab bawaan">
                   {daftarBab.filter((b) => !b.sendiri).map((b) => <option key={b.id} value={b.id}>{b.judul}</option>)}
                 </optgroup>
@@ -199,17 +240,6 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
                     {daftarBab.filter((b) => b.sendiri).map((b) => <option key={b.id} value={b.id}>{b.judul}</option>)}
                   </optgroup>
                 )}
-              </select>
-              <select
-                aria-label="Tujuan soal"
-                className={chip}
-                value={p.tujuan}
-                onChange={(e) => {
-                  const tujuan = e.target.value as (typeof TUJUAN)[number];
-                  setP({ ...p, tujuan, level: ATURAN_TUJUAN[tujuan].level }); // komposisi level ikut tujuan
-                }}
-              >
-                {TUJUAN.map((t) => <option key={t}>{t}</option>)}
               </select>
               <select aria-label="Tingkat kesulitan" className={chip} value={p.kesulitan} onChange={(e) => setP({ ...p, kesulitan: e.target.value })}>
                 {KESULITAN.map((k) => <option key={k} value={k}>Kesulitan: {k}</option>)}
@@ -220,9 +250,8 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
               <button className={chipPanel("lanjutan")} aria-expanded={buka === "lanjutan"} onClick={() => setBuka(buka === "lanjutan" ? null : "lanjutan")}>
                 Lanjutan ▾
               </button>
-              <span className="flex-1" />
               <button
-                className="h-10 rounded-lg bg-hijau px-4 font-semibold text-white hover:bg-hijau-tua disabled:opacity-40"
+                className="ml-auto h-10 rounded-lg bg-hijau px-4 font-semibold text-white hover:bg-hijau-tua disabled:opacity-40"
                 disabled={proses || jatahHabis || !!alasanTerkunci}
                 onClick={buat}
               >
@@ -274,16 +303,6 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
                 )}
               </div>
             )}
-          </div>
-
-          {/* Tombol cepat: mengisi pengaturan siap pakai (belum membuat soal); guru tetap menekan "Buat soal". */}
-          <div className="flex flex-wrap justify-center gap-2">
-            {CEPAT.map((c) => (
-              <button key={c.label} className={`${chip} text-pudar hover:text-tinta`} onClick={() => setP({ ...p, ...c.isi, level: ATURAN_TUJUAN[c.isi.tujuan].level })}>
-                {c.label}
-              </button>
-            ))}
-            <Link href="/materi" className={`${chip} text-pudar hover:text-tinta`}>Pakai materi saya</Link>
           </div>
 
           {alasanTerkunci && <p className="text-center text-sm text-amber-700">{alasanTerkunci}</p>}

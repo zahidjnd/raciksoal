@@ -264,3 +264,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   = terlalu gelap); dua tinggi kontrol: `h-8` (32px) kecil & `h-10` (40px) standar, input/select 40px di @layer base, HP 44px;
   h1 24px / h2 18px serif; Riwayat & Semua Set = satu kartu `divide-y`; warna abu `gray-*` diganti `pudar`/`krem`
   (JANGAN pakai `gray-*` lagi). Ukur ulang 12 halaman: garis 1 warna, tinggi hanya 32/40 (HP 44), kontras & luberan lulus.
+- 2026-10-19 BUAT SOAL MODEL KARTU (pilihan pemilik, contoh DataByte): `JENIS` (4 kartu tujuan, role=radio, klik =
+  tujuan + komposisi level) dan `CONTOH_CATATAN` di buat-soal.tsx; pilihan Tujuan di kotak ketik & tombol cepat `CEPAT`
+  DIHAPUS; tautan Materi saya pindah ke kalimat petunjuk. Baris kontrol kotak ketik pas-pasan di lebar 768px:
+  pilihan Bab `max-w-[11rem]`, tombol Buat soal `ml-auto` (jangan tambah tombol lagi di baris itu tanpa cek ulang).

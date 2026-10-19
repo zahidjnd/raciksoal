@@ -44,8 +44,11 @@ Yang TIDAK ditiru: logo bintang, nama "Claude", dan huruf khusus milik Anthropic
 ## Tata letak
 - Sidebar kiri: nama "Racik Soal" (serif), menu (Set baru, Materi saya, lalu menu admin), "Riwayat", dan di bawah
   lingkaran huruf awal nama + nama (menuju halaman Akun) + tombol Keluar. Di HP dilipat di balik ☰.
-- Halaman Buat Soal: sapaan serif besar di tengah, kotak ketik putih, lalu tombol cepat (pengaturan siap pakai:
-  Ulangan harian 25 soal, PAS 40 soal, Latihan cepat 10 PG, Pakai materi saya).
+- Halaman Buat Soal (urutan dari atas, pilihan pemilik 2026-10-19): sapaan serif + kalimat petunjuk; **4 kartu jenis
+  soal** (Ulangan Harian, PTS, PAS, Latihan; ikon garis sederhana buatan sendiri, nama, keterangan dari aturan tiap jenis;
+  kartu terpilih bergaris hijau; sengaja berbentuk sama karena pilihannya setara); "Contoh catatan:" (sekali klik mengisi
+  kotak catatan); lalu kotak ketik putih di bawah (catatan, Bab, Kesulitan, jumlah soal, Lanjutan, tombol Buat soal).
+  HP: kartu 2 x 2.
 - Halaman hasil tetap "mode periksa" (deret nomor, kunci dilipat, bilah unduh), bukan bentuk obrolan.
 
 ## Tema
