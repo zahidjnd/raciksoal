@@ -50,6 +50,10 @@ export type Pengaturan = {
 };
 
 export const MAKS_CATATAN = 500;
+export const MAKS_INSTRUKSI = 300;
+
+/** Instruksi "Minta perubahan" dari browser: dirapikan, dipotong, dan tanda """ dibuang supaya tidak keluar dari kutipan. */
+export const bersihkanInstruksi = (s: unknown) => String(s ?? "").replace(/"{3,}/g, '"').trim().slice(0, MAKS_INSTRUKSI);
 
 /** Rapikan isian form dari browser (tidak dipercaya begitu saja). Mengembalikan pesan kalau tidak valid. */
 export function bersihkanPengaturan(p: Pengaturan): Pengaturan | string {
@@ -253,8 +257,21 @@ ${daftarSudah}${tambahan}Balas hanya dengan JSON sesuai format.`;
  * Permintaan "ganti satu soal": 1 soal baru dengan bentuk, level, dan TP yang sama (dan indikator kisi-kisi
  * yang sama bila ada), tapi skenario berbeda dari semua soal di set.
  */
-export function buatPenggantiPengguna(p: Pengaturan, lama: Soal, semua: Soal[], kisi?: BarisKisi) {
+export function buatPenggantiPengguna(p: Pengaturan, lama: Soal, semua: Soal[], kisi?: BarisKisi, instruksi = "") {
   const jumlah = { PG: 0, PGK: 0, BS: 0, URAIAN: 0, [lama.bentuk]: 1 };
+  if (instruksi) {
+    // "Minta perubahan": soal yang sama ditulis ulang sesuai instruksi guru. Instruksi tidak boleh mengalahkan aturan sistem.
+    const { peringatan, stimulus, ...isiLama } = lama;
+    void peringatan;
+    void stimulus;
+    const tambahan = `\nIni permintaan MENGUBAH satu soal sesuai instruksi guru. Soal saat ini (JSON):
+${JSON.stringify(isiLama)}
+${kisi ? `Kisi-kisinya: indikator "${kisi.indikator}", stimulus "${kisi.stimulus}".\n` : ""}Instruksi guru (ikuti selama tidak bertentangan dengan aturan di instruksi sistem: jangan mengetik ayat/hadis, jangan memakai dalil atau fakta di luar data bab, tetap bentuk ${lama.bentuk}):
+"""${bersihkanInstruksi(instruksi)}"""
+Kembalikan tepat 1 soal hasil perubahan. Bagian yang tidak diminta untuk diubah biarkan sama. "level" dan "tp" boleh berubah bila instruksi menuntutnya.
+Tambahkan field "indikator" (indikator soal gaya Kemenag yang sesuai dengan soal hasil perubahan) dan "stimulus" (jenis + skenario, maks 15 kata, atau "tanpa stimulus").\n`;
+    return buatPengguna(p, jumlah, semua.filter((s) => s !== lama).map((s) => s.pertanyaan), tambahan);
+  }
   const sasaran = kisi
     ? `dengan bentuk ${kisi.bentuk}, ${kisi.tp}, level ${kisi.level}, tetap mengukur indikator: "${kisi.indikator}". Skenario lama ("${kisi.stimulus}") JANGAN dipakai lagi; pilih skenario baru yang belum ada di set ini. Tambahkan field "stimulus" pada soal berisi jenis + skenario baru (maks 15 kata) atau "tanpa stimulus"`
     : `${lama.bentuk} pengganti dengan level ${lama.level} dan ${lama.tp} (abaikan komposisi level di atas)`;

@@ -15,6 +15,7 @@ export type Soal = {
   skor: number;
   peringatan?: string[]; // diisi aplikasi, bukan AI
   stimulus?: string; // hanya pada jawaban "ganti satu soal": ringkasan skenario baru untuk kisi-kisi
+  indikator?: string; // hanya pada jawaban "minta perubahan": indikator baru untuk kisi-kisi
 };
 
 export type Bab = {

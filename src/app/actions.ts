@@ -4,8 +4,8 @@ import { and, eq, gte, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { hasilSoal } from "@/db/schema";
 import { daftarModel, tanyaAI } from "@/lib/ai";
-import { bagiTahap, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatPermintaanKisi, buatSistem, type Pengaturan } from "@/lib/prompt";
-import { arabTakTerverifikasi, korpusArab, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, terapkanBobot, type Bab, type BarisKisi, type Soal } from "@/lib/soal";
+import { bagiTahap, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatPermintaanKisi, buatSistem, type Pengaturan } from "@/lib/prompt";
+import { arabTakTerverifikasi, korpusArab, LEVEL, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, terapkanBobot, type Bab, type BarisKisi, type Soal } from "@/lib/soal";
 import { babDariSet, babMilik, daftarBabMilik } from "@/lib/bab";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
@@ -224,44 +224,58 @@ export async function simpanSoal(id: number, no: number, isian: Soal) {
   }
 }
 
-/** Minta AI membuat 1 soal pengganti (bentuk, level, TP sama; skenario berbeda dari semua soal di set). */
-export async function gantiSatuSoal(id: number, no: number) {
+/**
+ * Minta AI membuat 1 soal pengganti (bentuk, level, TP sama; skenario berbeda dari semua soal di set).
+ * Dengan `instruksi` ("Minta perubahan"): soal yang sama ditulis ulang sesuai instruksi guru; bentuk tetap,
+ * level/TP/indikator boleh berubah dan ikut ke kisi-kisi. Batas 30x per set dipakai bersama.
+ */
+export async function gantiSatuSoal(id: number, no: number, instruksiMentah?: string) {
+  const ubah = instruksiMentah !== undefined;
+  const instruksi = bersihkanInstruksi(instruksiMentah);
   try {
+    if (ubah && !instruksi) return { ok: false as const, pesan: "Tulis dulu perubahan yang diminta." };
     const set = await ambilSet(id, no);
     if (typeof set === "string") return { ok: false as const, pesan: set };
     const { h, bab } = set;
-    if (h.jumlahGanti >= BATAS_GANTI_PER_SET) return { ok: false as const, pesan: `Batas ${BATAS_GANTI_PER_SET} kali ganti soal untuk set ini sudah habis.` };
+    if (h.jumlahGanti >= BATAS_GANTI_PER_SET) return { ok: false as const, pesan: `Batas ${BATAS_GANTI_PER_SET} kali ganti/ubah soal untuk set ini sudah habis.` };
 
     const lama = set.soal[no];
     const kisi = h.kisi as BarisKisi[] | null; // set lama: tanpa kisi-kisi
     const baris = kisi?.[no];
     const sistem = buatSistem(bab);
-    const pengguna = buatPenggantiPengguna(h.pengaturan as Pengaturan, lama, set.soal, baris);
+    const pengguna = buatPenggantiPengguna(h.pengaturan as Pengaturan, lama, set.soal, baris, instruksi);
     const p = h.pengaturan as Pengaturan;
     // Model utama sama dengan set; cadangan dipakai kalau gagal (kecuali set hasil "Bandingkan semua model").
     const r = await tanyaDenganCadangan(sistem, pengguna, p.modelSlot ?? 1, !p.bandingkan, (d) => ambilSoal(d));
     // Prompt & jawaban mentah penggantian ikut disimpan (untuk perbandingan model, langkah 4).
     const catat = {
       jumlahGanti: h.jumlahGanti + 1,
-      prompt: `${h.prompt}\n\n---\n\n[GANTI SOAL NOMOR ${no + 1} dengan ${r.model}]\n${pengguna}`,
+      prompt: `${h.prompt}\n\n---\n\n[${ubah ? "UBAH" : "GANTI"} SOAL NOMOR ${no + 1} dengan ${r.model}]\n${pengguna}`,
       // set lama (sebelum pembuatan bertahap) menyimpan satu jawaban mentah, bukan array
       jawabanAi: JSON.stringify([...(h.jawabanAi?.startsWith("[") ? JSON.parse(h.jawabanAi) : [h.jawabanAi].filter(Boolean)), r.jawaban]),
     };
-    const { stimulus, ...baru } = r.hasil[0];
-    const [soal] = periksaSoal([baris ? samakanDenganKisi(baru, baris) : { ...baru, bentuk: lama.bentuk }], bab);
-    ratakanKunci([soal]); // posisi kunci PG/PGK diacak
+    const { stimulus, indikator, ...baru } = r.hasil[0];
+    // Ubah: level/TP dari AI dipakai hanya kalau valid. Ganti: disamakan dengan kisi-kisi.
+    const hasilUbah = { ...baru, bentuk: lama.bentuk, level: LEVEL.includes(baru.level) ? baru.level : lama.level, tp: bab.tp.some((t) => t.kode === baru.tp) ? baru.tp : lama.tp };
+    const [soal] = periksaSoal([ubah ? hasilUbah : baris ? samakanDenganKisi(baru, baris) : { ...baru, bentuk: lama.bentuk }], bab);
+    if (!ubah) ratakanKunci([soal]); // posisi kunci PG/PGK diacak (tidak saat "ubah", supaya guru tidak bingung)
     if (p.bobot) terapkanBobot([soal], p.bobot);
     set.soal[no] = soal;
-    // Skenario baru dicatat di baris kisi-kisi (indikator tetap).
-    // (aturan 5: skenario berisi teks Arab yang tidak terverifikasi tidak dipakai)
-    const skenario = String(stimulus ?? "").trim();
-    const skenarioAman = skenario && !arabTakTerverifikasi(skenario, korpusArab(bab)).length;
-    if (kisi && baris) kisi[no] = { ...baris, stimulus: skenarioAman ? skenario : baris.stimulus };
+    // Skenario (dan pada "ubah": indikator, TP, level) baru dicatat di baris kisi-kisi.
+    // (aturan 5: teks berisi Arab yang tidak terverifikasi tidak dipakai)
+    const aman = (x: unknown) => {
+      const t = String(x ?? "").trim();
+      return t && !arabTakTerverifikasi(t, korpusArab(bab)).length ? t : null;
+    };
+    if (kisi && baris) {
+      kisi[no] = { ...baris, stimulus: aman(stimulus) ?? baris.stimulus };
+      if (ubah) kisi[no] = { ...kisi[no], indikator: aman(indikator) ?? baris.indikator, tp: soal.tp, level: soal.level };
+    }
     await db.update(hasilSoal).set({ ...catat, soal: set.soal, kisi }).where(eq(hasilSoal.id, h.id));
     return { ok: true as const, soal };
   } catch (e) {
     const admin = (await penggunaSaatIni().catch(() => null))?.peran === "admin";
-    return { ok: false as const, pesan: admin ? `Gagal mengganti: ${pesanError(e)}` : PESAN_GAGAL_GURU };
+    return { ok: false as const, pesan: admin ? `Gagal ${ubah ? "mengubah" : "mengganti"}: ${pesanError(e)}` : ubah ? `Gagal mengubah soal, ${SARAN_GURU}` : PESAN_GAGAL_GURU };
   }
 }
 

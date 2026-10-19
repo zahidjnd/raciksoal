@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { gantiSatuSoal, simpanSoal } from "./actions";
 import { LEVEL, POLA_ARAB, type Bab, type Soal } from "@/lib/soal";
+import { MAKS_INSTRUKSI } from "@/lib/prompt";
 
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
 const HURUF = ["A", "B", "C", "D", "E"];
@@ -26,17 +27,24 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, onUbah }: Props) {
   const [edit, setEdit] = useState(false);
   const [lihatKunci, setLihatKunci] = useState(false); // kunci & pembahasan dilipat, dibuka per soal atau semua sekaligus
   const tampilKunci = semuaKunci || lihatKunci;
-  const [mengganti, setMengganti] = useState(false);
+  const [proses, setProses] = useState<"" | "ganti" | "ubah">("");
+  const mengganti = proses !== "";
+  const [instruksi, setInstruksi] = useState("");
   const [error, setError] = useState("");
 
-  async function ganti() {
-    if (!confirm(`Ganti soal nomor ${no} dengan soal baru dari AI? Soal lama akan hilang.`)) return;
+  async function ganti(jenis: "ganti" | "ubah") {
+    if (jenis === "ganti" && !confirm(`Ganti soal nomor ${no} dengan soal baru dari AI? Soal lama akan hilang.`)) return;
+    if (jenis === "ubah" && !instruksi.trim()) return setError("Tulis dulu perubahan yang diminta.");
     setError("");
-    setMengganti(true);
-    const r = await gantiSatuSoal(hasilId, no - 1).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
-    setMengganti(false);
-    if (r.ok) onUbah(r.soal);
-    else setError(r.pesan);
+    setProses(jenis);
+    const r = await gantiSatuSoal(hasilId, no - 1, jenis === "ubah" ? instruksi : undefined).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
+    setProses("");
+    if (!r.ok) return setError(r.pesan);
+    const isi = (x: Soal) => JSON.stringify([x.pertanyaan, x.pilihan, x.kunci, x.pembahasan, x.dalil_id]);
+    if (jenis === "ubah" && isi(r.soal) === isi(s))
+      setError("AI tidak mengubah soal ini. Mungkin instruksinya bertentangan dengan aturan (mis. meminta ayat/hadis di luar data bab). Coba tulis instruksi lain.");
+    onUbah(r.soal);
+    setInstruksi("");
   }
 
   if (edit)
@@ -94,10 +102,30 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, onUbah }: Props) {
           </button>
         )}
         <button className={tombol} disabled={mengganti} onClick={() => setEdit(true)}>✏️ Edit</button>
-        <button className={tombol} disabled={mengganti} onClick={ganti}>
-          {mengganti ? "Sedang membuat soal pengganti..." : "🔄 Ganti soal ini"}
+        <button className={tombol} disabled={mengganti} onClick={() => ganti("ganti")}>
+          {proses === "ganti" ? "Sedang membuat soal pengganti..." : "🔄 Ganti soal ini"}
         </button>
       </div>
+      <form
+        className="flex gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          ganti("ubah");
+        }}
+      >
+        <input
+          className="min-w-0 flex-1 rounded-full border border-gray-300 px-3 py-1 text-sm"
+          placeholder="Minta perubahan, mis. jadikan lebih sulit"
+          aria-label={`Minta perubahan soal nomor ${no}`}
+          maxLength={MAKS_INSTRUKSI}
+          value={instruksi}
+          disabled={mengganti}
+          onChange={(e) => setInstruksi(e.target.value)}
+        />
+        <button className={tombol} disabled={mengganti || !instruksi.trim()}>
+          {proses === "ubah" ? "Sedang mengubah soal..." : "✨ Ubah"}
+        </button>
+      </form>
       {error && <p className="text-sm text-red-600">{error}</p>}
     </article>
   );

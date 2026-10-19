@@ -233,3 +233,13 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   tombol "Pilih file Word/PowerPoint" (input file asli `sr-only`, label jadi tombol), tombol utama/sekunder `rounded-full`,
   kartu `rounded-xl`, judul halaman `h1 text-xl` di Riwayat/Materi/Akun/Kelola Guru/Semua Set, halaman Masuk berkartu.
   Set uji laptop 39 (2 PG). LANGKAH 10 SELESAI DI LAPTOP, belum di-push (menunggu pemilik mencoba).
+- Langkah 11 (2026-10-19): "MINTA PERUBAHAN" per soal. Kotak kecil + tombol "✨ Ubah" di tiap kartu (`kartu-soal.tsx`).
+  Server = `gantiSatuSoal(id, no, instruksi)` (tanpa instruksi = ganti biasa): pemeriksa pemilik `ambilSet`/`bolehAkses`
+  dan batas 30x per set DIPAKAI BERSAMA dengan "Ganti". Instruksi maks 300 huruf (`bersihkanInstruksi`, """ dibuang),
+  dikutip di prompt dengan pesan "ikuti selama tidak bertentangan dengan aturan" (`buatPenggantiPengguna`). AI menerima
+  soal lama utuh; bentuk dikunci, level/TP boleh berubah bila valid, indikator+stimulus+TP+level ikut ke kisi-kisi.
+  Hasil tetap lewat `periksaSoal` (penjaga ayat). Saat "ubah", pilihan TIDAK diacak ulang. Kalau AI mengembalikan soal
+  yang sama (biasanya karena menolak instruksi yang melanggar aturan, mis. minta Ayat Kursi), guru diberi tahu.
+  Uji laptop set 39: "lebih sulit + santri putri Aisyah" → berubah, level C5, kisi ikut; ayat di luar bab diketik guru
+  → soal ditandai merah; batas 30x → pesan. Soal 2 set 39 sengaja dibiarkan bertanda merah (bekas uji).
+  Belum di-push (menunggu pemilik).
