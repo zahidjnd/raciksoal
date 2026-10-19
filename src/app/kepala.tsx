@@ -2,12 +2,14 @@ import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { and, desc, eq, gte, or, sql } from "drizzle-orm";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { db } from "@/db";
 import { hasilSoal } from "@/db/schema";
 import type { Pengguna } from "@/lib/auth";
 import { judulPendek } from "@/lib/bab";
 import type { Pengaturan } from "@/lib/prompt";
 import { keluar } from "./masuk/actions";
+import { TombolTema } from "./tombol-tema";
 
 /** Ringkas alasan kegagalan: buang "Tahap n:" dan isi JSON panjang dari penyedia AI. */
 const ringkas = (t: string) =>
@@ -36,7 +38,7 @@ async function PeringatanAdmin() {
   const alasan = [...new Set(masalah.flatMap((m) => [...(m.catatan ?? []), ...(m.status === "gagal" && m.pesan ? [m.pesan] : [])]).map(ringkas))].slice(0, 3);
 
   return (
-    <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-800">
+    <div className="rounded-lg border border-bahaya-garis bg-bahaya-muda p-3 text-sm text-bahaya">
       <p className="font-semibold">
         ⚠️ 24 jam terakhir: {cadangan > 0 && `${cadangan} set memakai model cadangan`}
         {cadangan > 0 && gagal > 0 && ", "}
@@ -69,7 +71,7 @@ async function PeringatanBackup() {
   }
   if (!pesan) return null;
   return (
-    <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-800">
+    <div className="rounded-lg border border-bahaya-garis bg-bahaya-muda p-3 text-sm text-bahaya">
       ⚠️ {pesan} Cek <code>backup.log</code> di hosting.
     </div>
   );
@@ -103,6 +105,7 @@ const tautan = "block truncate rounded-lg px-3 py-3 text-tinta hover:bg-krem-sor
 export async function Kerangka({ p, children }: { p: Pengguna; children: React.ReactNode }) {
   const admin = p.peran === "admin";
   const riwayat = await ambilRiwayat(p.id, BATAS_SIDEBAR);
+  const tema = (await cookies()).get("tema")?.value === "gelap" ? "gelap" : "terang";
   const menu = [
     { href: "/materi", label: "Materi saya" },
     ...(admin
@@ -118,7 +121,7 @@ export async function Kerangka({ p, children }: { p: Pengguna; children: React.R
     <div className="flex flex-1 flex-col gap-0.5 p-3 text-sm">
       {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- sengaja muat penuh, lihat komentar di atas */}
       <a href="/" className={`${tautan} bg-krem-sorot font-semibold`}>
-        <span className="mr-2 font-bold text-hijau">+</span>Set baru
+        <span className="mr-2 font-bold text-hijau-teks">+</span>Set baru
       </a>
       {menu.map((m) => (
         <Link key={m.href} href={m.href} className={tautan}>{m.label}</Link>
@@ -137,7 +140,7 @@ export async function Kerangka({ p, children }: { p: Pengguna; children: React.R
         );
       })}
       {riwayat.length === BATAS_SIDEBAR && (
-        <Link href="/riwayat" className="flex min-h-11 items-center px-3 text-xs text-hijau hover:underline md:min-h-0 md:py-1">Lihat semua riwayat</Link>
+        <Link href="/riwayat" className="flex min-h-11 items-center px-3 text-xs text-hijau-teks hover:underline md:min-h-0 md:py-1">Lihat semua riwayat</Link>
       )}
 
       <div className="mt-auto flex items-center gap-2 border-t border-garis pt-3">
@@ -149,6 +152,7 @@ export async function Kerangka({ p, children }: { p: Pengguna; children: React.R
             {p.nama} <span className="text-pudar">· {admin ? "Admin" : "Guru"}</span>
           </span>
         </Link>
+        <TombolTema awal={tema} />
         <form action={keluar}>
           <button className="h-8 rounded-lg px-2 text-xs text-pudar hover:bg-krem-sorot hover:text-tinta">Keluar</button>
         </form>

@@ -9,7 +9,7 @@ const tombol = "w-full rounded-lg bg-hijau h-10 px-4 font-semibold text-white di
 export function FormMasuk() {
   const [hasil, kirim, proses] = useActionState(masuk, null);
   return (
-    <form action={kirim} className="space-y-4 rounded-2xl border bg-white p-5 shadow-sm">
+    <form action={kirim} className="space-y-4 rounded-2xl border bg-kartu p-5 shadow-sm">
       <label className="block text-sm">
         Nama pengguna
         <input name="username" autoComplete="username" autoCapitalize="none" required className={kotak} />
@@ -19,7 +19,7 @@ export function FormMasuk() {
         <input name="password" type="password" autoComplete="current-password" required className={kotak} />
       </label>
       <button className={tombol} disabled={proses}>{proses ? "Memeriksa..." : "Masuk"}</button>
-      {hasil && <p className="text-sm text-red-600">{hasil.pesan}</p>}
+      {hasil && <p className="text-sm text-bahaya">{hasil.pesan}</p>}
       <p className="text-xs text-pudar">Belum punya akun atau lupa kata sandi? Hubungi admin Racik Soal di madrasah.</p>
     </form>
   );
@@ -28,7 +28,7 @@ export function FormMasuk() {
 export function FormAdminPertama() {
   const [hasil, kirim, proses] = useActionState(buatAdminPertama, null);
   return (
-    <form action={kirim} className="space-y-4 rounded-lg border border-amber-400 p-4">
+    <form action={kirim} className="space-y-4 rounded-lg border border-peringatan-garis p-4">
       <div>
         <p className="font-semibold">Buat akun admin pertama</p>
         <p className="text-xs text-pudar">Hanya muncul sekali. Nama pengguna harus sama dengan ADMIN_USERNAME di .env.</p>
@@ -50,7 +50,7 @@ export function FormAdminPertama() {
         <input name="ulang" type="password" autoComplete="new-password" minLength={8} required className={kotak} />
       </label>
       <button className={tombol} disabled={proses}>{proses ? "Membuat..." : "Buat admin & masuk"}</button>
-      {hasil && <p className="text-sm text-red-600">{hasil.pesan}</p>}
+      {hasil && <p className="text-sm text-bahaya">{hasil.pesan}</p>}
     </form>
   );
 }

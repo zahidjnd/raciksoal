@@ -8,7 +8,7 @@ import { MAKS_INSTRUKSI } from "@/lib/prompt";
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
 const HURUF = ["A", "B", "C", "D", "E"];
 const kotak = "w-full rounded-lg border p-2 text-sm";
-const tombol = "rounded-lg border bg-white h-8 px-3 text-sm hover:bg-krem disabled:opacity-50";
+const tombol = "rounded-lg border bg-kartu h-8 px-3 text-sm hover:bg-krem disabled:opacity-50";
 
 /** Teks campuran Latin + Arab: bagian Arab ditulis kanan-ke-kiri dengan font Arab. */
 export function Teks({ teks }: { teks: string }) {
@@ -65,9 +65,9 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, onUbah }: Props) {
 
   const dalil = bab.dalil.find((d) => d.id === s.dalil_id);
   return (
-    <article id={`soal-${no}`} className={`scroll-mt-4 space-y-2 rounded-xl border p-4 ${s.peringatan?.length ? "border-red-400 bg-red-50" : "bg-white"} ${mengganti ? "opacity-50" : ""}`}>
+    <article id={`soal-${no}`} className={`scroll-mt-4 space-y-2 rounded-xl border p-4 ${s.peringatan?.length ? "border-bahaya-garis bg-bahaya-muda" : "bg-kartu"} ${mengganti ? "opacity-50" : ""}`}>
       {s.peringatan?.map((w, i) => (
-        <p key={i} className="text-sm font-semibold text-red-700">⚠️ {w}</p>
+        <p key={i} className="text-sm font-semibold text-bahaya">⚠️ {w}</p>
       ))}
       <p>
         <span className="font-semibold">{no}.</span> <Teks teks={s.pertanyaan} />
@@ -114,7 +114,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, onUbah }: Props) {
         }}
       >
         <input
-          className="min-w-0 flex-1 rounded-lg border bg-white h-8 px-3 text-sm"
+          className="min-w-0 flex-1 rounded-lg border bg-kartu h-8 px-3 text-sm"
           placeholder="Minta perubahan, mis. jadikan lebih sulit"
           aria-label={`Minta perubahan soal nomor ${no}`}
           maxLength={MAKS_INSTRUKSI}
@@ -126,7 +126,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, onUbah }: Props) {
           {proses === "ubah" ? "Sedang mengubah soal..." : "Ubah soal"}
         </button>
       </form>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-bahaya">{error}</p>}
     </article>
   );
 }
@@ -249,7 +249,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan }: FormProps) {
         </button>
         <button className="rounded-lg border h-10 px-4" disabled={menyimpan} onClick={onBatal}>Batal</button>
       </div>
-      {error && <p className="text-red-600">{error}</p>}
+      {error && <p className="text-bahaya">{error}</p>}
     </article>
   );
 }

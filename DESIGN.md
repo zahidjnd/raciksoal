@@ -13,7 +13,7 @@ Yang TIDAK ditiru: logo bintang, nama "Claude", dan huruf khusus milik Anthropic
 
 ## Warna
 - Latar halaman krem `#FAF9F5`; sidebar krem lebih tua `#F4F3EE`; garis batas `#E6E4DC`; sorotan/hover sidebar `#E9E7DF`.
-- Kotak ketik, kartu soal, dan kotak isian: putih, supaya isi terbaca jelas di atas latar krem.
+- Kotak ketik, kartu soal, dan kotak isian: putih (mode gelap: `#30302E`), supaya isi terbaca jelas di atas latar krem.
 - Teks utama `#1F1E1D`; teks pudar `#5F5E5A` (kontras di atas krem tetap di atas 4,5:1).
 - Satu aksen: **hijau Kemenag `#006316`** (dari logo Kemenag di kop madrasah) untuk tombol utama, tanda "+" Set baru,
   lingkaran nama pengguna, keadaan terpilih, fokus, dan tautan. Putih di atas hijau ini 7,5:1.
@@ -52,8 +52,18 @@ Yang TIDAK ditiru: logo bintang, nama "Claude", dan huruf khusus milik Anthropic
 - Halaman hasil tetap "mode periksa" (deret nomor, kunci dilipat, bilah unduh), bukan bentuk obrolan.
 
 ## Tema
-- Hanya mode terang. Alasan: guru menyiapkan dokumen untuk dicetak (Word berlatar putih), jadi layar terang memudahkan
-  memeriksa hasil sebelum dicetak.
+- **Terang (bawaan) dan gelap**, dipilih guru lewat **ikon bulan/matahari** di baris profil sidebar. Tanpa mode
+  otomatis (keputusan pemilik). Pilihan disimpan di cookie `tema` selama 1 tahun **per perangkat/browser**, jadi tetap
+  terpakai setelah keluar lalu masuk lagi. File Word tetap berlatar putih (untuk dicetak).
+- Gelap = abu-hangat seperti claude.ai (bukan hitam): latar `#262624`, sidebar `#1F1E1D`, kartu `#30302E`,
+  garis `#44433E`, teks `#EEEDE6`, teks pudar `#B5B3AA`.
+- Hijau di gelap: tombol `#1A7F37` (putih di atasnya 5,1:1); tulisan/tautan `#6CC783` karena `#006316` hanya 2,5:1
+  di latar gelap; latar terpilih `#1E3A26`.
+- Warna makna punya pasangan gelap sendiri: bahaya (latar `#3B1F1F`, teks `#F2A3A3`), peringatan (latar `#3A2F14`,
+  teks `#F3D58A`).
+- Aturan kode: semua warna lewat token di `globals.css` (`bg-kartu`, `text-hijau-teks`, `bahaya`, `peringatan`,
+  `batas`, `pudar`, `krem`); jangan memakai warna tetap (`bg-white`, `red-*`, `amber-*`, `gray-*`), supaya kedua mode
+  selalu ikut.
 
 ## Aset
 - Logo Kemenag dan gambar kubah dari kop TIDAK dipasang di web tanpa izin tertulis pemilik. Nama "Racik Soal"

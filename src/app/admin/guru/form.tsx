@@ -5,12 +5,12 @@ import { resetKataSandi, tambahGuru, ubahStatus } from "./actions";
 
 const kotak = "mt-1 w-full rounded-lg border p-2";
 const Pesan = ({ h }: { h: { ok: boolean; pesan: string } | null }) =>
-  h && <p className={`text-sm ${h.ok ? "text-hijau" : "text-red-600"}`}>{h.pesan}</p>;
+  h && <p className={`text-sm ${h.ok ? "text-hijau-teks" : "text-bahaya"}`}>{h.pesan}</p>;
 
 export function FormTambahGuru() {
   const [hasil, kirim, proses] = useActionState(tambahGuru, null);
   return (
-    <form action={kirim} className="space-y-3 rounded-xl border bg-white p-4" key={hasil?.ok ? hasil.pesan : "isi"}>
+    <form action={kirim} className="space-y-3 rounded-xl border bg-kartu p-4" key={hasil?.ok ? hasil.pesan : "isi"}>
       <h2>Tambah akun guru</h2>
       <div className="grid gap-3 sm:grid-cols-3">
         <label className="block text-sm">
@@ -54,7 +54,7 @@ export function AksiGuru({ userId, nonaktif, dirinya }: { userId: string; nonakt
           >
             <input type="hidden" name="userId" value={userId} />
             <input type="hidden" name="aksi" value={nonaktif ? "aktifkan" : "nonaktifkan"} />
-            <button className={`rounded-lg border h-8 px-3 text-sm ${nonaktif ? "" : "border-red-300 text-red-700"}`} disabled={prosesStatus}>
+            <button className={`rounded-lg border h-8 px-3 text-sm ${nonaktif ? "" : "border-bahaya-garis text-bahaya"}`} disabled={prosesStatus}>
               {nonaktif ? "Aktifkan" : "Nonaktifkan"}
             </button>
           </form>

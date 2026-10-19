@@ -32,12 +32,12 @@ export default async function KelolaGuru() {
       <section className="space-y-3">
         <h2>Daftar akun ({daftar.length})</h2>
         {daftar.map((g) => (
-          <article key={g.id} className={`space-y-2 rounded-xl border p-3 ${g.nonaktif ? "bg-krem-sorot opacity-75" : "bg-white"}`}>
+          <article key={g.id} className={`space-y-2 rounded-xl border p-3 ${g.nonaktif ? "bg-krem-sorot opacity-75" : "bg-kartu"}`}>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <p>
                 <span className="font-semibold">{g.nama}</span> <span className="text-sm text-pudar">@{g.username}</span>{" "}
-                {g.peran === "admin" && <span className="rounded bg-amber-100 px-1 text-xs">admin</span>}{" "}
-                {g.nonaktif && <span className="rounded bg-red-100 px-1 text-xs text-red-700">nonaktif</span>}
+                {g.peran === "admin" && <span className="rounded bg-peringatan-muda px-1 text-xs">admin</span>}{" "}
+                {g.nonaktif && <span className="rounded bg-bahaya-muda px-1 text-xs text-bahaya">nonaktif</span>}
               </p>
               <p className="text-xs text-pudar">
                 {g.jumlahSet} set soal · dibuat {g.dibuat.toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta" })}

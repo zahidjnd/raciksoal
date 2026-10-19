@@ -268,3 +268,9 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   tujuan + komposisi level) dan `CONTOH_CATATAN` di buat-soal.tsx; pilihan Tujuan di kotak ketik & tombol cepat `CEPAT`
   DIHAPUS; tautan Materi saya pindah ke kalimat petunjuk. Baris kontrol kotak ketik pas-pasan di lebar 768px:
   pilihan Bab `max-w-[11rem]`, tombol Buat soal `ml-auto` (jangan tambah tombol lagi di baris itu tanpa cek ulang).
+- 2026-10-19 MODE GELAP (pilihan pemilik: ikon bulan/matahari, TANPA otomatis, bawaan terang): `src/app/tombol-tema.tsx`
+  menulis cookie `tema` (1 tahun, per perangkat, tidak dihapus saat Keluar); `layout.tsx` membaca cookie di server →
+  `<html data-tema="gelap">` (tanpa kedipan). Nilai gelap = blok `[data-tema="gelap"]` di globals.css untuk token yang sama.
+  Token baru: `kartu`, `hijau-teks`, `bahaya(-muda/-garis)`, `peringatan(-muda/-garis)`. WAJIB pakai token; JANGAN
+  `bg-white`/`text-hijau` (untuk tulisan)/`red-*`/`amber-*`/`gray-*`. Uji: pindai 9 tampilan di KEDUA mode, lulus semua.
+  Belum: simpan pilihan per akun di database (kalau ingin ikut ke semua perangkat guru).

@@ -98,12 +98,12 @@ export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: Isia
   }
 
   return (
-    <section className="space-y-5 rounded-xl border bg-white p-4">
+    <section className="space-y-5 rounded-xl border bg-kartu p-4">
       <h1 className="text-2xl">{id ? "Ubah materi" : "Tambah materi"}</h1>
 
       <div className="space-y-1 rounded-lg border border-dashed border-hijau p-3 text-sm">
         <p className="font-semibold">Ambil dari file Word/PowerPoint (opsional)</p>
-        <label className="inline-flex h-10 cursor-pointer items-center rounded-lg border border-hijau max-md:min-h-11 bg-white px-4 font-semibold text-hijau hover:bg-hijau-muda focus-within:ring-2 focus-within:ring-hijau">
+        <label className="inline-flex h-10 cursor-pointer items-center rounded-lg border border-hijau max-md:min-h-11 bg-kartu px-4 font-semibold text-hijau-teks hover:bg-hijau-muda focus-within:ring-2 focus-within:ring-hijau">
           Pilih file Word/PowerPoint
           <input type="file" accept=".docx,.pptx" className="sr-only" onChange={ambilFile} />
         </label>
@@ -111,7 +111,7 @@ export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: Isia
           File .docx / .pptx dibaca di perangkat Anda (tidak diunggah). Teksnya ditambahkan ke Isi materi; teks Arabnya hanya menjadi
           USULAN ayat/hadis yang wajib Anda periksa. PDF tidak didukung.
         </p>
-        {membaca && <p className={membaca.ok ? "text-hijau" : "text-red-600"}>{membaca.teks}</p>}
+        {membaca && <p className={membaca.ok ? "text-hijau-teks" : "text-bahaya"}>{membaca.teks}</p>}
       </div>
 
       <label className="block text-sm">
@@ -134,7 +134,7 @@ export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: Isia
       <label className="block text-sm">
         Isi materi
         <textarea dir="auto" className={kotak} rows={12} placeholder="Tempel ringkasan materi di sini (dari buku, modul, atau PPT)." value={m.isi} onChange={(e) => ubah({ isi: e.target.value })} />
-        <span className={`text-xs ${m.isi.length > BATAS_MATERI.isi ? "font-semibold text-red-600" : "text-pudar"}`}>
+        <span className={`text-xs ${m.isi.length > BATAS_MATERI.isi ? "font-semibold text-bahaya" : "text-pudar"}`}>
           {m.isi.length.toLocaleString("id-ID")}/{BATAS_MATERI.isi.toLocaleString("id-ID")} huruf. Teks Arab di sini hanya dipakai bila sama persis dengan
           ayat/hadis di kotak bawah; selebihnya dibuang otomatis.
         </span>
@@ -163,15 +163,15 @@ export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: Isia
           <button className="rounded-lg bg-hijau h-10 px-3 text-sm font-semibold text-white disabled:opacity-50" disabled={ayat.proses || !rujukan.trim()} onClick={ambil}>
             {ayat.proses ? "Mengambil..." : "Ambil ayat"}
           </button>
-          {ayat.pesan && <span className="text-sm text-red-600">{ayat.pesan}</span>}
+          {ayat.pesan && <span className="text-sm text-bahaya">{ayat.pesan}</span>}
         </div>
         {m.dalil.map((d, i) => (
-          <div key={i} className={`space-y-2 rounded-lg border p-3 ${d.mushaf ? "border-hijau bg-white" : d.usulan ? "border-amber-400 bg-amber-50" : "bg-white"}`}>
+          <div key={i} className={`space-y-2 rounded-lg border p-3 ${d.mushaf ? "border-hijau bg-kartu" : d.usulan ? "border-peringatan-garis bg-peringatan-muda" : "bg-kartu"}`}>
             <div className="flex items-center justify-between gap-2">
               <span className="text-sm font-semibold">
                 Dalil {i + 1}
-                {d.mushaf && <span className="ml-2 font-normal text-hijau">✓ teks dari mushaf, tinggal isi terjemah</span>}
-                {d.usulan && <span className="ml-2 font-normal text-amber-800">usulan dari file, tidak ditemukan di mushaf: periksa harakat & lengkapi sumber/terjemah</span>}
+                {d.mushaf && <span className="ml-2 font-normal text-hijau-teks">✓ teks dari mushaf, tinggal isi terjemah</span>}
+                {d.usulan && <span className="ml-2 font-normal text-peringatan">usulan dari file, tidak ditemukan di mushaf: periksa harakat & lengkapi sumber/terjemah</span>}
               </span>
               <button className="rounded-lg border px-2 text-sm" aria-label={`Hapus dalil ${i + 1}`} onClick={() => ubah({ dalil: m.dalil.filter((_, j) => j !== i) })}>
                 ✕ Hapus
@@ -183,7 +183,7 @@ export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: Isia
           </div>
         ))}
         {m.dalil.length < BATAS_MATERI.dalil && (
-          <button className="rounded-lg border bg-white h-8 px-3 text-sm" onClick={() => ubah({ dalil: [...m.dalil, DALIL_KOSONG] })}>
+          <button className="rounded-lg border bg-kartu h-8 px-3 text-sm" onClick={() => ubah({ dalil: [...m.dalil, DALIL_KOSONG] })}>
             + Tambah hadis (ketik/tempel sendiri)
           </button>
         )}
@@ -207,10 +207,10 @@ export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: Isia
         {id && <Link href="/" className="inline-flex items-center rounded-lg border h-10 px-4 max-md:min-h-11">Buat soal dari materi ini</Link>}
       </div>
       {pesan && (
-        <div className={`text-sm ${pesan.ok ? "text-hijau" : "text-red-600"}`}>
+        <div className={`text-sm ${pesan.ok ? "text-hijau-teks" : "text-bahaya"}`}>
           <p>{pesan.teks}</p>
           {!!pesan.dihapus?.length && (
-            <p className="mt-1 rounded-lg border border-amber-400 bg-amber-50 p-2 text-amber-900">
+            <p className="mt-1 rounded-lg border border-peringatan-garis bg-peringatan-muda p-2 text-peringatan">
               ⚠️ {pesan.dihapus.length} potongan teks Arab dibuang dari judul/TP/isi karena tidak ada di kotak Ayat & Hadis Terverifikasi:{" "}
               <span dir="rtl" lang="ar" className="font-arab text-lg">{pesan.dihapus.join(" | ")}</span>. Bila perlu, tambahkan ayat/hadis lengkapnya ke kotak itu.
             </p>
@@ -234,7 +234,7 @@ export function TombolHapusMateri({ id, judul }: { id: number; judul: string }) 
     router.refresh();
   }
   return (
-    <button className="rounded-lg border h-8 px-3 text-sm text-red-700 disabled:opacity-50" disabled={proses} onClick={hapus}>
+    <button className="rounded-lg border h-8 px-3 text-sm text-bahaya disabled:opacity-50" disabled={proses} onClick={hapus}>
       {proses ? "Menghapus..." : "Hapus"}
     </button>
   );

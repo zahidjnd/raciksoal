@@ -18,11 +18,11 @@ export default async function Riwayat() {
         <h1 className="text-2xl">Riwayat set soal Anda ({daftar.length}{daftar.length === BATAS_TAMPIL ? " terbaru" : ""})</h1>
         {daftar.length === 0 && (
           <p className="text-sm text-pudar">
-            Belum ada set soal. <Link href="/" className="text-hijau underline">Buat soal pertama Anda</Link>.
+            Belum ada set soal. <Link href="/" className="text-hijau-teks underline">Buat soal pertama Anda</Link>.
           </p>
         )}
         {daftar.length > 0 && (
-        <div className="divide-y divide-batas overflow-hidden rounded-xl border bg-white">
+        <div className="divide-y divide-batas overflow-hidden rounded-xl border bg-kartu">
         {daftar.map((s) => {
           const pg = s.pengaturan as Pengaturan;
           const bab = judulPendek(s.judulBab, s.babId);
@@ -36,7 +36,7 @@ export default async function Riwayat() {
                 <span className="font-semibold">{pg.tujuan}</span> · {bab} · {pg.kesulitan}
                 {s.status === "selesai" && <span className="text-pudar"> · {s.jumlahSoal} soal</span>}
                 {s.status !== "selesai" && (
-                  <span className={`ml-1 rounded px-1 text-xs ${s.status === "gagal" ? "bg-red-100 text-red-700" : "bg-amber-100"}`}>
+                  <span className={`ml-1 rounded px-1 text-xs ${s.status === "gagal" ? "bg-bahaya-muda text-bahaya" : "bg-peringatan-muda"}`}>
                     {LABEL_STATUS[s.status] ?? s.status}
                   </span>
                 )}

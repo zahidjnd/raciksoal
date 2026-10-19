@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Amiri, Plus_Jakarta_Sans, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 
@@ -17,9 +18,11 @@ export const metadata: Metadata = {
   description: "Pembuatan soal berbasis AI untuk guru madrasah",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  // Mode gelap dipasang dari server (cookie `tema`, diatur TombolTema), jadi tidak ada kedipan putih saat halaman dibuka.
+  const gelap = (await cookies()).get("tema")?.value === "gelap";
   return (
-    <html lang="id" className={`${amiri.variable} ${jakarta.variable} ${serif.variable}`}>
+    <html lang="id" data-tema={gelap ? "gelap" : undefined} className={`${amiri.variable} ${jakarta.variable} ${serif.variable}`}>
       <body className="antialiased">
         {children}
         {/* Wajib menurut ketentuan pemakaian teks Tanzil (langkah 9). */}

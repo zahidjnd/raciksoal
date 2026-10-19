@@ -25,7 +25,7 @@ export default async function MateriSaya() {
         {daftar.map((m) => {
           const bab = m.bab as Bab;
           return (
-            <article key={m.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-white p-3">
+            <article key={m.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-kartu p-3">
               <div>
                 <p className="font-semibold">{bab.judul}</p>
                 <p className="text-xs text-pudar">
