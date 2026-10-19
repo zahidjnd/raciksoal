@@ -37,7 +37,7 @@ export default async function SemuaSet() {
   return (
     <Kerangka p={p}>
       <section className="space-y-3">
-        <h2 className="font-semibold">Semua set soal ({daftar.length}{daftar.length === BATAS_TAMPIL ? " terbaru" : ""})</h2>
+        <h1 className="text-xl font-semibold">Semua set soal ({daftar.length}{daftar.length === BATAS_TAMPIL ? " terbaru" : ""})</h1>
         {daftar.map((s) => {
           const pg = s.pengaturan as Pengaturan;
           const bab = judulPendek(s.judulBab, s.babId);
@@ -45,7 +45,7 @@ export default async function SemuaSet() {
             <Link
               key={s.id}
               href={`/?id=${s.id}`}
-              className={`block space-y-1 rounded-lg border p-3 hover:bg-emerald-50 ${s.status === "gagal" ? "border-red-300" : s.cadangan ? "border-amber-400" : ""}`}
+              className={`block space-y-1 rounded-xl border p-3 hover:bg-emerald-50 ${s.status === "gagal" ? "border-red-300" : s.cadangan ? "border-amber-400" : ""}`}
             >
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <span>

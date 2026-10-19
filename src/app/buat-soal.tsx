@@ -303,9 +303,17 @@ export function BuatSoal({ nama }: { nama: string }) {
       )}
 
       {proses && (
-        <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900">
-          ⏳ Sedang membuat soal... {hasil?.pesan ? `${hasil.pesan}, ` : ""}{detik} detik (bisa 1–3 menit). Halaman ini boleh ditinggal; set tersimpan di riwayat.
-        </p>
+        <div className="mx-auto flex max-w-2xl items-center gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-900 md:mt-16" role="status">
+          <span className="h-8 w-8 shrink-0 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" aria-hidden />
+          <div>
+            <p className="font-semibold">
+              Sedang meracik soal<span className="animate-pulse">...</span> {detik} detik
+            </p>
+            <p className="text-sm">
+              {hasil?.pesan ? `${hasil.pesan}. ` : "Menyusun kisi-kisi dulu. "}Biasanya 1–3 menit. Halaman ini boleh ditinggal; set tersimpan di riwayat.
+            </p>
+          </div>
+        </div>
       )}
 
       {hasil?.status === "gagal" && <p className="rounded border border-red-300 bg-red-50 p-3 text-red-700">Gagal membuat soal: {hasil.pesan}</p>}

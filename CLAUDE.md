@@ -229,3 +229,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   merah = ditandai; `lompat` pindah ke tab Soal lalu gulir ke `#soal-N`), tab Soal | Kisi-kisi (TabelKisi tidak dilipat lagi),
   kunci & pembahasan DILIPAT per kartu (`KartuSoal` prop `semuaKunci` + tombol per soal), bilah unduh Word `sticky bottom-0`
   (di HP label diringkas agar satu baris).
+- Langkah 10d (2026-10-19): sentuhan akhir: kotak tunggu berputar "Sedang meracik soal..." (Tailwind animate-spin),
+  tombol "Pilih file Word/PowerPoint" (input file asli `sr-only`, label jadi tombol), tombol utama/sekunder `rounded-full`,
+  kartu `rounded-xl`, judul halaman `h1 text-xl` di Riwayat/Materi/Akun/Kelola Guru/Semua Set, halaman Masuk berkartu.
+  Set uji laptop 39 (2 PG). LANGKAH 10 SELESAI DI LAPTOP, belum di-push (menunggu pemilik mencoba).

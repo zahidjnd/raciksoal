@@ -15,7 +15,7 @@ export default async function Riwayat() {
   return (
     <Kerangka p={p}>
       <section className="space-y-3">
-        <h2 className="font-semibold">Riwayat set soal Anda ({daftar.length}{daftar.length === BATAS_TAMPIL ? " terbaru" : ""})</h2>
+        <h1 className="text-xl font-semibold">Riwayat set soal Anda ({daftar.length}{daftar.length === BATAS_TAMPIL ? " terbaru" : ""})</h1>
         {daftar.length === 0 && (
           <p className="text-sm text-gray-600">
             Belum ada set soal. <Link href="/" className="text-emerald-800 underline">Buat soal pertama Anda</Link>.
@@ -28,7 +28,7 @@ export default async function Riwayat() {
             <Link
               key={s.id}
               href={`/?id=${s.id}`}
-              className="flex flex-wrap items-baseline justify-between gap-2 rounded-lg border p-3 hover:bg-emerald-50"
+              className="flex flex-wrap items-baseline justify-between gap-2 rounded-xl border p-3 hover:bg-emerald-50"
             >
               <span>
                 <span className="font-semibold">{pg.tujuan}</span> · {bab} · {pg.kesulitan}

@@ -98,13 +98,14 @@ export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: Isia
   }
 
   return (
-    <section className="space-y-5 rounded-lg border p-4">
-      <h2 className="font-semibold">{id ? "Ubah materi" : "Tambah materi"}</h2>
+    <section className="space-y-5 rounded-xl border p-4">
+      <h1 className="text-xl font-semibold">{id ? "Ubah materi" : "Tambah materi"}</h1>
 
       <div className="space-y-1 rounded border border-dashed border-emerald-500 p-3 text-sm">
-        <label className="block font-semibold">
-          📄 Ambil dari file Word/PowerPoint (opsional)
-          <input type="file" accept=".docx,.pptx" className="mt-1 block w-full text-sm" onChange={ambilFile} />
+        <p className="font-semibold">📄 Ambil dari file Word/PowerPoint (opsional)</p>
+        <label className="inline-block cursor-pointer rounded-full border border-emerald-600 bg-white px-4 py-1.5 font-semibold text-emerald-800 hover:bg-emerald-50 focus-within:ring-2 focus-within:ring-emerald-500">
+          Pilih file Word/PowerPoint
+          <input type="file" accept=".docx,.pptx" className="sr-only" onChange={ambilFile} />
         </label>
         <p className="text-xs text-gray-500">
           File .docx / .pptx dibaca di perangkat Anda (tidak diunggah). Teksnya ditambahkan ke Isi materi; teks Arabnya hanya menjadi
@@ -159,7 +160,7 @@ export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: Isia
               <option key={n} value={`QS ${n}: `}>{`${i + 1}. ${n}`}</option>
             ))}
           </datalist>
-          <button className="rounded bg-emerald-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50" disabled={ayat.proses || !rujukan.trim()} onClick={ambil}>
+          <button className="rounded-full bg-emerald-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50" disabled={ayat.proses || !rujukan.trim()} onClick={ambil}>
             {ayat.proses ? "Mengambil..." : "📖 Ambil ayat"}
           </button>
           {ayat.pesan && <span className="text-sm text-red-600">{ayat.pesan}</span>}
@@ -182,7 +183,7 @@ export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: Isia
           </div>
         ))}
         {m.dalil.length < BATAS_MATERI.dalil && (
-          <button className="rounded border bg-white px-3 py-1 text-sm" onClick={() => ubah({ dalil: [...m.dalil, DALIL_KOSONG] })}>
+          <button className="rounded-full border bg-white px-3 py-1 text-sm" onClick={() => ubah({ dalil: [...m.dalil, DALIL_KOSONG] })}>
             + Tambah hadis (ketik/tempel sendiri)
           </button>
         )}
@@ -199,11 +200,11 @@ export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: Isia
       </fieldset>
 
       <div className="flex flex-wrap gap-2">
-        <button className="rounded bg-emerald-700 px-4 py-2 font-semibold text-white disabled:opacity-50" disabled={menyimpan} onClick={simpan}>
+        <button className="rounded-full bg-emerald-700 px-4 py-2 font-semibold text-white disabled:opacity-50" disabled={menyimpan} onClick={simpan}>
           {menyimpan ? "Menyimpan..." : "Simpan materi"}
         </button>
-        <Link href="/materi" className="rounded border px-4 py-2">Kembali</Link>
-        {id && <Link href="/" className="rounded border px-4 py-2">Buat soal dari materi ini</Link>}
+        <Link href="/materi" className="rounded-full border px-4 py-2">Kembali</Link>
+        {id && <Link href="/" className="rounded-full border px-4 py-2">Buat soal dari materi ini</Link>}
       </div>
       {pesan && (
         <div className={`text-sm ${pesan.ok ? "text-emerald-700" : "text-red-600"}`}>
@@ -233,7 +234,7 @@ export function TombolHapusMateri({ id, judul }: { id: number; judul: string }) 
     router.refresh();
   }
   return (
-    <button className="rounded border px-3 py-1 text-sm text-red-700 disabled:opacity-50" disabled={proses} onClick={hapus}>
+    <button className="rounded-full border px-3 py-1 text-sm text-red-700 disabled:opacity-50" disabled={proses} onClick={hapus}>
       {proses ? "Menghapus..." : "Hapus"}
     </button>
   );

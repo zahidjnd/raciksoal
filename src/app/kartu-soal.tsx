@@ -216,10 +216,10 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan }: FormProps) {
       </div>
 
       <div className="flex gap-2">
-        <button className="rounded bg-emerald-700 px-4 py-2 font-semibold text-white disabled:opacity-50" disabled={menyimpan} onClick={simpan}>
+        <button className="rounded-full bg-emerald-700 px-4 py-2 font-semibold text-white disabled:opacity-50" disabled={menyimpan} onClick={simpan}>
           {menyimpan ? "Menyimpan..." : "Simpan"}
         </button>
-        <button className="rounded border px-4 py-2" disabled={menyimpan} onClick={onBatal}>Batal</button>
+        <button className="rounded-full border px-4 py-2" disabled={menyimpan} onClick={onBatal}>Batal</button>
       </div>
       {error && <p className="text-red-600">{error}</p>}
     </article>

@@ -4,12 +4,12 @@ import { useActionState } from "react";
 import { buatAdminPertama, masuk } from "./actions";
 
 const kotak = "mt-1 w-full rounded border p-2";
-const tombol = "w-full rounded bg-emerald-700 px-4 py-2 font-semibold text-white disabled:opacity-50";
+const tombol = "w-full rounded-full bg-emerald-700 px-4 py-2 font-semibold text-white disabled:opacity-50";
 
 export function FormMasuk() {
   const [hasil, kirim, proses] = useActionState(masuk, null);
   return (
-    <form action={kirim} className="space-y-4 rounded-lg border p-4">
+    <form action={kirim} className="space-y-4 rounded-2xl border bg-white p-5 shadow-sm">
       <label className="block text-sm">
         Nama pengguna
         <input name="username" autoComplete="username" autoCapitalize="none" required className={kotak} />

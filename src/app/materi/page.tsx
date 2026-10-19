@@ -16,8 +16,8 @@ export default async function MateriSaya() {
     <Kerangka p={p}>
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="font-semibold">Materi saya ({daftar.length})</h2>
-          <Link href="/materi/baru" className="rounded bg-emerald-700 px-4 py-2 text-sm font-semibold text-white">+ Tambah materi</Link>
+          <h1 className="text-xl font-semibold">Materi saya ({daftar.length})</h1>
+          <Link href="/materi/baru" className="rounded-full bg-emerald-700 px-4 py-2 text-sm font-semibold text-white">+ Tambah materi</Link>
         </div>
         <p className="text-sm text-gray-600">
           Materi di sini hanya bisa dilihat dan dipakai oleh Anda. Setelah disimpan, materi muncul di pilihan Bab pada form Buat Soal.
@@ -25,7 +25,7 @@ export default async function MateriSaya() {
         {daftar.map((m) => {
           const bab = m.bab as Bab;
           return (
-            <article key={m.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3">
+            <article key={m.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border p-3">
               <div>
                 <p className="font-semibold">{bab.judul}</p>
                 <p className="text-xs text-gray-500">
@@ -34,7 +34,7 @@ export default async function MateriSaya() {
                 </p>
               </div>
               <div className="flex gap-2">
-                <Link href={`/materi/${m.id}`} className="rounded border px-3 py-1 text-sm">Ubah</Link>
+                <Link href={`/materi/${m.id}`} className="rounded-full border px-3 py-1 text-sm">Ubah</Link>
                 <TombolHapusMateri id={m.id} judul={bab.judul} />
               </div>
             </article>
