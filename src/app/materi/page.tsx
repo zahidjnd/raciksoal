@@ -17,7 +17,7 @@ export default async function MateriSaya() {
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h1 className="text-xl font-semibold">Materi saya ({daftar.length})</h1>
-          <Link href="/materi/baru" className="rounded-full bg-emerald-700 px-4 py-2 text-sm font-semibold text-white">+ Tambah materi</Link>
+          <Link href="/materi/baru" className="inline-flex items-center rounded-full bg-emerald-700 px-4 py-2 text-sm font-semibold text-white max-md:min-h-11">+ Tambah materi</Link>
         </div>
         <p className="text-sm text-gray-600">
           Materi di sini hanya bisa dilihat dan dipakai oleh Anda. Setelah disimpan, materi muncul di pilihan Bab pada form Buat Soal.
@@ -34,7 +34,7 @@ export default async function MateriSaya() {
                 </p>
               </div>
               <div className="flex gap-2">
-                <Link href={`/materi/${m.id}`} className="rounded-full border px-3 py-1 text-sm">Ubah</Link>
+                <Link href={`/materi/${m.id}`} className="inline-flex items-center rounded-full border px-3 py-1 text-sm max-md:min-h-11">Ubah</Link>
                 <TombolHapusMateri id={m.id} judul={bab.judul} />
               </div>
             </article>

@@ -114,7 +114,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, onUbah }: Props) {
         }}
       >
         <input
-          className="min-w-0 flex-1 rounded-full border border-gray-300 px-3 py-1 text-sm"
+          className="min-w-0 flex-1 rounded-full border border-gray-300 bg-white px-3 py-1 text-sm"
           placeholder="Minta perubahan, mis. jadikan lebih sulit"
           aria-label={`Minta perubahan soal nomor ${no}`}
           maxLength={MAKS_INSTRUKSI}
@@ -123,7 +123,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, onUbah }: Props) {
           onChange={(e) => setInstruksi(e.target.value)}
         />
         <button className={tombol} disabled={mengganti || !instruksi.trim()}>
-          {proses === "ubah" ? "Sedang mengubah soal..." : "✨ Ubah"}
+          {proses === "ubah" ? "Sedang mengubah soal..." : "Ubah soal"}
         </button>
       </form>
       {error && <p className="text-sm text-red-600">{error}</p>}

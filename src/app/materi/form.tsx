@@ -203,8 +203,8 @@ export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: Isia
         <button className="rounded-full bg-emerald-700 px-4 py-2 font-semibold text-white disabled:opacity-50" disabled={menyimpan} onClick={simpan}>
           {menyimpan ? "Menyimpan..." : "Simpan materi"}
         </button>
-        <Link href="/materi" className="rounded-full border px-4 py-2">Kembali</Link>
-        {id && <Link href="/" className="rounded-full border px-4 py-2">Buat soal dari materi ini</Link>}
+        <Link href="/materi" className="inline-flex items-center rounded-full border px-4 py-2 max-md:min-h-11">Kembali</Link>
+        {id && <Link href="/" className="inline-flex items-center rounded-full border px-4 py-2 max-md:min-h-11">Buat soal dari materi ini</Link>}
       </div>
       {pesan && (
         <div className={`text-sm ${pesan.ok ? "text-emerald-700" : "text-red-600"}`}>

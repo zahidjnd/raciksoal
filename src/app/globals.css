@@ -10,3 +10,20 @@ body {
   font-family: var(--font-arab), "Traditional Arabic", serif;
   line-height: 2.2;
 }
+
+/* Teks contoh di kotak isian: bawaan Tailwind terlalu pucat (3,4:1). Abu-500 = 4,8:1 di latar putih (WCAG AA). */
+::placeholder {
+  color: var(--color-gray-500);
+  opacity: 1;
+}
+
+/* HP: semua tombol dan kotak isian minimal 44px tinggi supaya nyaman disentuh jari.
+   Tautan yang berbentuk tombol diberi `max-md:min-h-11` langsung di kelasnya. */
+@media (max-width: 767px) {
+  button,
+  select,
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea {
+    min-height: 44px;
+  }
+}

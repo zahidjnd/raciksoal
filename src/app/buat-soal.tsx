@@ -56,7 +56,7 @@ function TabelKisi({ kisi }: { kisi: BarisKisi[] }) {
   );
 }
 
-export function BuatSoal({ nama }: { nama: string }) {
+export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null }) {
   const router = useRouter();
   const [p, setP] = useState<Pengaturan>({
     babId: BAB_BAWAAN[0].id,
@@ -71,7 +71,7 @@ export function BuatSoal({ nama }: { nama: string }) {
   // Bab bawaan + materi sendiri milik guru (langkah 8); sebelum termuat, tampilkan bab bawaan saja.
   const [daftarBab, setDaftarBab] = useState(BAB_BAWAAN.map((b) => ({ id: b.id, judul: b.judul, sendiri: false })));
   const [banding, setBanding] = useState<{ nama: string; id?: number; pesan?: string }[]>([]);
-  const [id, setId] = useState<number | null>(null);
+  const [id, setId] = useState<number | null>(awalId); // dari ?id= (dibaca server), mis. buka set dari riwayat
   const [hasil, setHasil] = useState<Hasil | null>(null);
   const [error, setError] = useState("");
   const [detik, setDetik] = useState(0);
@@ -86,12 +86,10 @@ export function BuatSoal({ nama }: { nama: string }) {
   const bobot = p.bobot ?? BOBOT_BAWAAN;
   const totalSkor = BENTUK.reduce((s, b) => s + p.jumlah[b] * bobot[b], 0);
   const totalLevel = p.level.LOTS + p.level.MOTS + p.level.HOTS;
-  const proses = id !== null && (!hasil || hasil.status === "proses");
+  const memuat = id !== null && !hasil; // set dibuka, data belum terbaca (bisa set lama yang sudah selesai)
+  const proses = hasil?.status === "proses";
 
-  // Buka hasil lama lewat alamat ?id=... (misalnya setelah halaman dimuat ulang).
   useEffect(() => {
-    const lama = Number(new URLSearchParams(location.search).get("id"));
-    if (lama) setId(lama);
     ambilDaftarModel().then(setDaftarModel).catch(() => {});
     ambilDaftarBab().then((d) => d.length && setDaftarBab(d)).catch(() => {});
     muatJatah();
@@ -125,7 +123,7 @@ export function BuatSoal({ nama }: { nama: string }) {
     return () => {
       berhenti = true;
     };
-  }, [id]);
+  }, [id, router]);
 
   async function buat() {
     setError("");
@@ -162,7 +160,7 @@ export function BuatSoal({ nama }: { nama: string }) {
     total < 1 ? "Isi jumlah soal dulu." :
     total > MAKS_SOAL ? `Jumlah soal maksimal ${MAKS_SOAL}.` :
     totalLevel !== 100 ? `Komposisi level harus 100% (sekarang ${totalLevel}%), buka Lanjutan.` : "";
-  const chip = "rounded-full border border-gray-300 bg-white px-3 py-1.5 text-sm hover:bg-gray-50";
+  const chip = "inline-flex items-center rounded-full border border-gray-300 bg-white px-3 py-1.5 text-sm hover:bg-gray-50 max-md:min-h-11";
   const chipPanel = (b: typeof buka) => `${chip} ${buka === b ? "border-emerald-600 bg-emerald-50 text-emerald-900" : ""}`;
 
   return (
@@ -175,7 +173,7 @@ export function BuatSoal({ nama }: { nama: string }) {
             <h1 className="text-2xl font-semibold">Mau buat soal apa hari ini?</h1>
           </div>
 
-          <div className="rounded-2xl border border-gray-300 bg-white p-3 shadow-sm focus-within:border-emerald-600">
+          <div className="rounded-2xl border border-gray-300 bg-white p-3 shadow-sm focus-within:border-emerald-600 focus-within:ring-2 focus-within:ring-emerald-600">
             <textarea
               className="w-full resize-none p-1 outline-none"
               rows={3}
@@ -302,6 +300,13 @@ export function BuatSoal({ nama }: { nama: string }) {
         </section>
       )}
 
+      {memuat && (
+        <p className="flex items-center gap-3 text-gray-600 md:mt-16" role="status">
+          <span className="h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-gray-200 border-t-gray-600" aria-hidden />
+          Membuka set soal...
+        </p>
+      )}
+
       {proses && (
         <div className="mx-auto flex max-w-2xl items-center gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-900 md:mt-16" role="status">
           <span className="h-8 w-8 shrink-0 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" aria-hidden />
@@ -348,7 +353,7 @@ export function BuatSoal({ nama }: { nama: string }) {
                 key={i}
                 onClick={() => lompat(i + 1)}
                 title={s.peringatan?.length ? `Soal ${i + 1} ditandai, wajib dicek` : `Soal ${i + 1}`}
-                className={`h-8 w-8 rounded-md border text-sm ${s.peringatan?.length ? "border-red-400 bg-red-50 font-semibold text-red-700" : "border-gray-300 hover:bg-gray-100"}`}
+                className={`h-11 w-11 rounded-md border text-sm md:h-8 md:w-8 ${s.peringatan?.length ? "border-red-400 bg-red-50 font-semibold text-red-700" : "border-gray-300 hover:bg-gray-100"}`}
               >
                 {i + 1}
               </button>
@@ -399,7 +404,7 @@ export function BuatSoal({ nama }: { nama: string }) {
 
           {/* Tombol unduh menempel di bawah layar. File Word selalu mengikuti isi terbaru (termasuk editan). */}
           <div className="sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center gap-2 border-t bg-white/95 px-4 py-2 backdrop-blur md:-mx-8 md:px-8">
-            <a className="rounded-full bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800" href={`/api/word?id=${id}&jenis=soal`}>
+            <a className="inline-flex items-center rounded-full bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 max-md:min-h-11" href={`/api/word?id=${id}&jenis=soal`}>
               ⬇️ Soal<span className="hidden sm:inline"> (Word)</span>
             </a>
             <a className={chip} href={`/api/word?id=${id}&jenis=kunci`}>⬇️ Kunci<span className="hidden sm:inline"> & Pembahasan</span></a>

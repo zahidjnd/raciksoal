@@ -243,3 +243,10 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   Uji laptop set 39: "lebih sulit + santri putri Aisyah" → berubah, level C5, kisi ikut; ayat di luar bab diketik guru
   → soal ditandai merah; batas 30x → pesan. Soal 2 set 39 sengaja dibiarkan bertanda merah (bekas uji).
   Belum di-push (menunggu pemilik).
+- 2026-10-19 ANTISLOP (mode after): audit `anti-slop/audit-001-2026-10-19.md` (12 temuan). Diperbaiki 2–8: kontras
+  (footer Tanzil abu-600, placeholder abu-500 di globals.css), cincin fokus kotak Catatan AI, tombol HP min 44px (globals.css
+  + `max-md:min-h-11` pada tautan-tombol), "Membuka set soal..." + `awalId` dari searchParams (page.tsx) agar form kosong tidak
+  berkedip, `error.tsx` (Coba lagi = router.refresh + reset) dan `not-found.tsx` berbahasa Indonesia, "✨ Ubah" → "Ubah soal".
+  MENUNGGU ARAH DESAIN pemilik untuk no. 1, 9, 10, 11, 12 (DESIGN.md: warna, huruf, bentuk tombol, alasan mode terang).
+  PENTING: `next build` menjalankan lint; error lint = build GitHub gagal = hosting tidak berubah. Sebelum push, jalankan
+  `npx next lint` (atau `npm run build` saat server dev MATI). `<a href="/">` sengaja dipakai → wajib komentar eslint-disable.

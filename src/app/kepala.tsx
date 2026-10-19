@@ -94,7 +94,7 @@ export function ambilRiwayat(guruId: string, batas: number) {
 }
 
 const BATAS_SIDEBAR = 15;
-const tautan = "block truncate rounded-md px-2 py-1.5 text-gray-700 hover:bg-gray-200";
+const tautan = "block truncate rounded-md px-2 py-3 text-gray-700 hover:bg-gray-200 md:py-1.5";
 
 /**
  * Kerangka setiap halaman setelah masuk (gaya aplikasi AI): sidebar kiri berisi Set baru, riwayat set,
@@ -117,11 +117,12 @@ export async function Kerangka({ p, children }: { p: Pengguna; children: React.R
   // Tautan ke halaman utama sengaja <a> biasa (bukan Link): halaman Buat Soal membaca ?id= hanya saat dimuat.
   const isi = (
     <div className="flex flex-1 flex-col gap-1 p-3 text-sm">
-      <a href="/" className="mb-2 rounded-lg border border-gray-300 bg-white px-3 py-2 font-semibold text-emerald-800 hover:bg-emerald-50">
+      {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- sengaja muat penuh, lihat komentar di atas */}
+      <a href="/" className="mb-2 rounded-lg border border-gray-300 bg-white px-3 py-3 font-semibold md:py-2 text-emerald-800 hover:bg-emerald-50">
         + Set baru
       </a>
       <p className="px-2 pt-2 text-xs text-gray-500">Riwayat</p>
-      {riwayat.length === 0 && <p className="px-2 text-xs text-gray-400">Belum ada set soal.</p>}
+      {riwayat.length === 0 && <p className="px-2 text-xs text-gray-600">Belum ada set soal.</p>}
       {riwayat.map((s) => {
         const pg = s.pengaturan as Pengaturan;
         return (
@@ -132,7 +133,7 @@ export async function Kerangka({ p, children }: { p: Pengguna; children: React.R
         );
       })}
       {riwayat.length === BATAS_SIDEBAR && (
-        <Link href="/riwayat" className="px-2 py-1 text-xs text-emerald-800 hover:underline">Lihat semua riwayat</Link>
+        <Link href="/riwayat" className="flex min-h-11 items-center px-2 text-xs text-emerald-800 hover:underline md:min-h-0 md:py-1">Lihat semua riwayat</Link>
       )}
 
       <div className="mt-auto space-y-1 border-t border-gray-200 pt-3">

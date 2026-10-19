@@ -19,7 +19,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className="antialiased">
         {children}
         {/* Wajib menurut ketentuan pemakaian teks Tanzil (langkah 9). */}
-        <footer className="py-4 text-center text-xs text-gray-400">
+        <footer className="py-4 text-center text-xs text-gray-600">
           Teks Al-Qur&apos;an: <a className="underline" href="https://tanzil.net" target="_blank" rel="noreferrer">Tanzil Project (tanzil.net)</a>
         </footer>
       </body>
