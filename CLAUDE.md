@@ -250,3 +250,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   MENUNGGU ARAH DESAIN pemilik untuk no. 1, 9, 10, 11, 12 (DESIGN.md: warna, huruf, bentuk tombol, alasan mode terang).
   PENTING: `next build` menjalankan lint; error lint = build GitHub gagal = hosting tidak berubah. Sebelum push, jalankan
   `npx next lint` (atau `npm run build` saat server dev MATI). `<a href="/">` sengaja dipakai → wajib komentar eslint-disable.
+- 2026-10-19 DESAIN (DESIGN.md, pilihan pemilik: hijau saja, TANPA EMAS, bersih): token warna `hijau` #006316 (logo
+  Kemenag di kop), `hijau-tua`, `hijau-muda` di `@theme` globals.css (JANGAN pakai `emerald-*` lagi); huruf Plus Jakarta
+  Sans (`--font-latin`, next/font); tombol aksi `rounded-lg`, tombol pilihan `rounded-full`; tanpa emoji hiasan di tombol;
+  `garis-judul` (@utility) di setiap h1 (rata tengah + `after:mx-auto`); hanya mode terang. Audit antislop 001 tertutup semua.

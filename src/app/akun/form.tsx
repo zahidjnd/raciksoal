@@ -22,10 +22,10 @@ export function FormKataSandi() {
         Ulangi kata sandi baru
         <input name="ulang" type="password" autoComplete="new-password" minLength={8} required className={kotak} />
       </label>
-      <button className="rounded-full bg-emerald-700 px-4 py-2 font-semibold text-white disabled:opacity-50" disabled={proses}>
+      <button className="rounded-lg bg-hijau px-4 py-2 font-semibold text-white disabled:opacity-50" disabled={proses}>
         {proses ? "Menyimpan..." : "Simpan kata sandi baru"}
       </button>
-      {hasil && <p className={`text-sm ${hasil.ok ? "text-emerald-700" : "text-red-600"}`}>{hasil.pesan}</p>}
+      {hasil && <p className={`text-sm ${hasil.ok ? "text-hijau" : "text-red-600"}`}>{hasil.pesan}</p>}
     </form>
   );
 }

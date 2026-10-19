@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { buatAdminPertama, masuk } from "./actions";
 
 const kotak = "mt-1 w-full rounded border p-2";
-const tombol = "w-full rounded-full bg-emerald-700 px-4 py-2 font-semibold text-white disabled:opacity-50";
+const tombol = "w-full rounded-lg bg-hijau px-4 py-2 font-semibold text-white disabled:opacity-50";
 
 export function FormMasuk() {
   const [hasil, kirim, proses] = useActionState(masuk, null);

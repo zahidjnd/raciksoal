@@ -6,7 +6,7 @@ export default async function HalamanAkun() {
   const p = await wajibMasuk();
   return (
     <Kerangka p={p}>
-      <h1 className="text-xl font-semibold">Akun</h1>
+      <h1 className="garis-judul text-xl font-semibold">Akun</h1>
       <section className="space-y-1 text-sm">
         <p>
           <span className="text-gray-500">Nama:</span> {p.nama}

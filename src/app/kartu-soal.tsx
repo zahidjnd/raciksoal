@@ -8,7 +8,7 @@ import { MAKS_INSTRUKSI } from "@/lib/prompt";
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
 const HURUF = ["A", "B", "C", "D", "E"];
 const kotak = "w-full rounded border p-2 text-sm";
-const tombol = "rounded-full border border-gray-300 bg-white px-3 py-1 text-sm hover:bg-gray-50 disabled:opacity-50";
+const tombol = "rounded-lg border border-gray-300 bg-white px-3 py-1 text-sm hover:bg-gray-50 disabled:opacity-50";
 
 /** Teks campuran Latin + Arab: bagian Arab ditulis kanan-ke-kiri dengan font Arab. */
 export function Teks({ teks }: { teks: string }) {
@@ -84,7 +84,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, onUbah }: Props) {
         </ol>
       )}
       {tampilKunci && (
-      <div className="space-y-1 rounded bg-emerald-50 p-3 text-sm">
+      <div className="space-y-1 rounded bg-hijau-muda p-3 text-sm">
         <p><span className="font-semibold">Kunci:</span> <Teks teks={[s.kunci].flat().join(", ")} /></p>
         {s.rubrik && (
           <ul className="list-disc pl-5">
@@ -98,12 +98,12 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, onUbah }: Props) {
       <div className="flex flex-wrap gap-2">
         {!semuaKunci && (
           <button className={tombol} aria-expanded={lihatKunci} onClick={() => setLihatKunci(!lihatKunci)}>
-            {lihatKunci ? "Tutup kunci" : "🔑 Kunci & pembahasan"}
+            {lihatKunci ? "Tutup kunci" : "Kunci & pembahasan"}
           </button>
         )}
-        <button className={tombol} disabled={mengganti} onClick={() => setEdit(true)}>✏️ Edit</button>
+        <button className={tombol} disabled={mengganti} onClick={() => setEdit(true)}>Edit</button>
         <button className={tombol} disabled={mengganti} onClick={() => ganti("ganti")}>
-          {proses === "ganti" ? "Sedang membuat soal pengganti..." : "🔄 Ganti soal ini"}
+          {proses === "ganti" ? "Sedang membuat soal pengganti..." : "Ganti soal ini"}
         </button>
       </div>
       <form
@@ -114,7 +114,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, onUbah }: Props) {
         }}
       >
         <input
-          className="min-w-0 flex-1 rounded-full border border-gray-300 bg-white px-3 py-1 text-sm"
+          className="min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 py-1 text-sm"
           placeholder="Minta perubahan, mis. jadikan lebih sulit"
           aria-label={`Minta perubahan soal nomor ${no}`}
           maxLength={MAKS_INSTRUKSI}
@@ -148,7 +148,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan }: FormProps) {
   }
 
   return (
-    <article className="space-y-3 rounded-lg border-2 border-emerald-600 p-4 text-sm">
+    <article className="space-y-3 rounded-lg border-2 border-hijau p-4 text-sm">
       <p className="font-semibold">Edit soal nomor {no}</p>
 
       <label className="block">
@@ -244,10 +244,10 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan }: FormProps) {
       </div>
 
       <div className="flex gap-2">
-        <button className="rounded-full bg-emerald-700 px-4 py-2 font-semibold text-white disabled:opacity-50" disabled={menyimpan} onClick={simpan}>
+        <button className="rounded-lg bg-hijau px-4 py-2 font-semibold text-white disabled:opacity-50" disabled={menyimpan} onClick={simpan}>
           {menyimpan ? "Menyimpan..." : "Simpan"}
         </button>
-        <button className="rounded-full border px-4 py-2" disabled={menyimpan} onClick={onBatal}>Batal</button>
+        <button className="rounded-lg border px-4 py-2" disabled={menyimpan} onClick={onBatal}>Batal</button>
       </div>
       {error && <p className="text-red-600">{error}</p>}
     </article>

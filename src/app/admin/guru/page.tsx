@@ -27,7 +27,7 @@ export default async function KelolaGuru() {
 
   return (
     <Kerangka p={p}>
-      <h1 className="text-xl font-semibold">Kelola guru</h1>
+      <h1 className="garis-judul text-xl font-semibold">Kelola guru</h1>
       <FormTambahGuru />
       <section className="space-y-3">
         <h2 className="font-semibold">Daftar akun ({daftar.length})</h2>

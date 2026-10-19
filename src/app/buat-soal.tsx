@@ -161,7 +161,9 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
     total > MAKS_SOAL ? `Jumlah soal maksimal ${MAKS_SOAL}.` :
     totalLevel !== 100 ? `Komposisi level harus 100% (sekarang ${totalLevel}%), buka Lanjutan.` : "";
   const chip = "inline-flex items-center rounded-full border border-gray-300 bg-white px-3 py-1.5 text-sm hover:bg-gray-50 max-md:min-h-11";
-  const chipPanel = (b: typeof buka) => `${chip} ${buka === b ? "border-emerald-600 bg-emerald-50 text-emerald-900" : ""}`;
+  // Pilihan (Bab, Tujuan, tab) lonjong; aksi (unduh) kotak bersudut lembut. Lihat DESIGN.md.
+  const aksi2 = "inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm hover:bg-gray-50 max-md:min-h-11";
+  const chipPanel = (b: typeof buka) => `${chip} ${buka === b ? "border-hijau bg-hijau-muda text-hijau-tua" : ""}`;
 
   return (
     <div className="space-y-6">
@@ -170,10 +172,10 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
         <section className="mx-auto max-w-2xl space-y-3 pt-4 md:pt-16">
           <div className="pb-2 text-center">
             <p className="text-gray-600">Assalamu&apos;alaikum, {nama}</p>
-            <h1 className="text-2xl font-semibold">Mau buat soal apa hari ini?</h1>
+            <h1 className="garis-judul text-2xl font-semibold after:mx-auto">Mau buat soal apa hari ini?</h1>
           </div>
 
-          <div className="rounded-2xl border border-gray-300 bg-white p-3 shadow-sm focus-within:border-emerald-600 focus-within:ring-2 focus-within:ring-emerald-600">
+          <div className="rounded-2xl border border-gray-300 bg-white p-3 shadow-sm focus-within:border-hijau focus-within:ring-2 focus-within:ring-hijau">
             <textarea
               className="w-full resize-none p-1 outline-none"
               rows={3}
@@ -212,17 +214,15 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
                 {total} soal ▾
               </button>
               <button className={chipPanel("lanjutan")} aria-expanded={buka === "lanjutan"} onClick={() => setBuka(buka === "lanjutan" ? null : "lanjutan")}>
-                ⚙ Lanjutan
+                Lanjutan ▾
               </button>
               <span className="flex-1" />
               <button
-                aria-label="Buat soal"
-                title="Buat soal"
-                className="h-10 w-10 rounded-full bg-emerald-700 text-xl font-bold text-white hover:bg-emerald-800 disabled:opacity-40"
+                className="h-10 rounded-lg bg-hijau px-4 font-semibold text-white hover:bg-hijau-tua disabled:opacity-40"
                 disabled={proses || jatahHabis || !!alasanTerkunci}
                 onClick={buat}
               >
-                ↑
+                Buat soal
               </button>
             </div>
 
@@ -279,7 +279,7 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
                 ? `Sisa jatah hari ini: ${Math.max(0, jatah.batas - jatah.terpakai)} dari ${jatah.batas} set. `
                 : `Hari ini Anda membuat ${jatah.terpakai} set (admin, tanpa batas). `)}
             AI tetap wajib mengikuti aturan, termasuk larangan mengarang ayat dan hadis.{" "}
-            <Link href="/materi" className="text-emerald-800 underline">Pakai materi sendiri</Link>
+            <Link href="/materi" className="text-hijau underline">Pakai materi sendiri</Link>
           </p>
           {jatahHabis && <p className="text-center font-semibold text-red-600">Jatah hari ini habis. Silakan lanjutkan besok.</p>}
           {error && <p className="text-center text-red-600">{error}</p>}
@@ -308,8 +308,8 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
       )}
 
       {proses && (
-        <div className="mx-auto flex max-w-2xl items-center gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-900 md:mt-16" role="status">
-          <span className="h-8 w-8 shrink-0 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-700" aria-hidden />
+        <div className="mx-auto flex max-w-2xl items-center gap-4 rounded-2xl border border-hijau/25 bg-hijau-muda p-5 text-hijau-tua md:mt-16" role="status">
+          <span className="h-8 w-8 shrink-0 animate-spin rounded-full border-4 border-hijau/25 border-t-hijau" aria-hidden />
           <div>
             <p className="font-semibold">
               Sedang meracik soal<span className="animate-pulse">...</span> {detik} detik
@@ -326,7 +326,7 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
       {hasil?.status === "selesai" && (
         <section className="space-y-4">
           <div>
-            <h1 className="text-xl font-semibold">{bab.judul}</h1>
+            <h1 className="garis-judul text-xl font-semibold">{bab.judul}</h1>
             <p className="text-sm text-gray-500">
               {soal.length} soal
               {hasil.model && <> · model: <b>{hasil.model}</b></>}
@@ -363,14 +363,14 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
           <div className="flex flex-wrap items-center gap-2 border-b pb-3">
             {!!hasil.kisi?.length &&
               (["soal", "kisi"] as const).map((t) => (
-                <button key={t} aria-pressed={tab === t} onClick={() => setTab(t)} className={`${chip} ${tab === t ? "border-emerald-600 bg-emerald-50 font-semibold text-emerald-900" : ""}`}>
+                <button key={t} aria-pressed={tab === t} onClick={() => setTab(t)} className={`${chip} ${tab === t ? "border-hijau bg-hijau-muda font-semibold text-hijau-tua" : ""}`}>
                   {t === "soal" ? "Soal" : `Kisi-kisi (${hasil.kisi!.length})`}
                 </button>
               ))}
             <span className="flex-1" />
             {tab === "soal" && (
               <button className={chip} onClick={() => setSemuaKunci(!semuaKunci)}>
-                {semuaKunci ? "Sembunyikan semua kunci" : "🔑 Tampilkan semua kunci"}
+                {semuaKunci ? "Sembunyikan semua kunci" : "Tampilkan semua kunci"}
               </button>
             )}
           </div>
@@ -403,12 +403,13 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
           )}
 
           {/* Tombol unduh menempel di bawah layar. File Word selalu mengikuti isi terbaru (termasuk editan). */}
-          <div className="sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center gap-2 border-t bg-white/95 px-4 py-2 backdrop-blur md:-mx-8 md:px-8">
-            <a className="inline-flex items-center rounded-full bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 max-md:min-h-11" href={`/api/word?id=${id}&jenis=soal`}>
-              ⬇️ Soal<span className="hidden sm:inline"> (Word)</span>
+          <div className="sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center gap-2 border-t bg-white px-4 py-2 md:-mx-8 md:px-8">
+            <span className="text-sm font-semibold">Unduh<span className="hidden sm:inline"> Word</span>:</span>
+            <a className="inline-flex items-center rounded-lg bg-hijau px-4 py-1.5 text-sm font-semibold text-white hover:bg-hijau-tua max-md:min-h-11" href={`/api/word?id=${id}&jenis=soal`}>
+              Soal
             </a>
-            <a className={chip} href={`/api/word?id=${id}&jenis=kunci`}>⬇️ Kunci<span className="hidden sm:inline"> & Pembahasan</span></a>
-            {!!hasil.kisi?.length && <a className={chip} href={`/api/word?id=${id}&jenis=kisi`}>⬇️ Kisi-kisi</a>}
+            <a className={aksi2} href={`/api/word?id=${id}&jenis=kunci`}>Kunci<span className="hidden sm:inline"> & pembahasan</span></a>
+            {!!hasil.kisi?.length && <a className={aksi2} href={`/api/word?id=${id}&jenis=kisi`}>Kisi-kisi</a>}
             <span className="hidden text-xs text-gray-500 sm:inline">Mengikuti isi terbaru, termasuk soal yang diedit/diganti.</span>
           </div>
         </section>

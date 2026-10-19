@@ -118,7 +118,7 @@ export async function Kerangka({ p, children }: { p: Pengguna; children: React.R
   const isi = (
     <div className="flex flex-1 flex-col gap-1 p-3 text-sm">
       {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- sengaja muat penuh, lihat komentar di atas */}
-      <a href="/" className="mb-2 rounded-lg border border-gray-300 bg-white px-3 py-3 font-semibold md:py-2 text-emerald-800 hover:bg-emerald-50">
+      <a href="/" className="mb-2 rounded-lg border border-gray-300 bg-white px-3 py-3 font-semibold md:py-2 text-hijau hover:bg-hijau-muda">
         + Set baru
       </a>
       <p className="px-2 pt-2 text-xs text-gray-500">Riwayat</p>
@@ -127,13 +127,14 @@ export async function Kerangka({ p, children }: { p: Pengguna; children: React.R
         const pg = s.pengaturan as Pengaturan;
         return (
           <a key={s.id} href={`/?id=${s.id}`} className={tautan} title={`set ${s.id}`}>
-            {s.status === "gagal" ? "⚠️ " : s.status === "proses" ? "⏳ " : ""}
+            {s.status === "gagal" && "⚠️ "}
             {pg.tujuan} · {judulPendek(s.judulBab, s.babId)}
+            {s.status === "proses" && <span className="text-gray-600"> (proses)</span>}
           </a>
         );
       })}
       {riwayat.length === BATAS_SIDEBAR && (
-        <Link href="/riwayat" className="flex min-h-11 items-center px-2 text-xs text-emerald-800 hover:underline md:min-h-0 md:py-1">Lihat semua riwayat</Link>
+        <Link href="/riwayat" className="flex min-h-11 items-center px-2 text-xs text-hijau hover:underline md:min-h-0 md:py-1">Lihat semua riwayat</Link>
       )}
 
       <div className="mt-auto space-y-1 border-t border-gray-200 pt-3">

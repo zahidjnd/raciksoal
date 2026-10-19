@@ -12,7 +12,7 @@ export default async function HalamanMasuk() {
   return (
     <main className="mx-auto max-w-sm space-y-6 p-4 pt-16">
       <div className="text-center">
-        <h1 className="text-2xl font-bold">Racik Soal</h1>
+        <h1 className="garis-judul text-2xl font-bold after:mx-auto">Racik Soal</h1>
         <p className="text-sm text-gray-500">Pembuat soal Al-Qur&apos;an Hadis berbantuan AI</p>
       </div>
       {n === 0 ? <FormAdminPertama /> : <FormMasuk />}
