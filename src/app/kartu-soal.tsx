@@ -7,8 +7,8 @@ import { MAKS_INSTRUKSI } from "@/lib/prompt";
 
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
 const HURUF = ["A", "B", "C", "D", "E"];
-const kotak = "w-full rounded border p-2 text-sm";
-const tombol = "rounded-lg border border-gray-300 bg-white px-3 py-1 text-sm hover:bg-gray-50 disabled:opacity-50";
+const kotak = "w-full rounded-lg border p-2 text-sm";
+const tombol = "rounded-lg border bg-white h-8 px-3 text-sm hover:bg-krem disabled:opacity-50";
 
 /** Teks campuran Latin + Arab: bagian Arab ditulis kanan-ke-kiri dengan font Arab. */
 export function Teks({ teks }: { teks: string }) {
@@ -73,9 +73,9 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, onUbah }: Props) {
         <span className="font-semibold">{no}.</span> <Teks teks={s.pertanyaan} />
       </p>
       {dalil && (
-        <figure className="rounded bg-gray-50 p-3">
+        <figure className="rounded bg-krem p-3">
           <p dir="rtl" lang="ar" className="font-arab text-2xl">{dalil.arab}</p>
-          <figcaption className="mt-1 text-xs text-gray-500">{dalil.sumber} · teks terverifikasi</figcaption>
+          <figcaption className="mt-1 text-xs text-pudar">{dalil.sumber} · teks terverifikasi</figcaption>
         </figure>
       )}
       {s.pilihan && (
@@ -92,7 +92,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, onUbah }: Props) {
           </ul>
         )}
         <p><span className="font-semibold">Pembahasan:</span> <Teks teks={s.pembahasan} /></p>
-        <p className="text-gray-500">{s.level} · {s.tp} · skor {s.skor}</p>
+        <p className="text-pudar">{s.level} · {s.tp} · skor {s.skor}</p>
       </div>
       )}
       <div className="flex flex-wrap gap-2">
@@ -114,7 +114,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, onUbah }: Props) {
         }}
       >
         <input
-          className="min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 py-1 text-sm"
+          className="min-w-0 flex-1 rounded-lg border bg-white h-8 px-3 text-sm"
           placeholder="Minta perubahan, mis. jadikan lebih sulit"
           aria-label={`Minta perubahan soal nomor ${no}`}
           maxLength={MAKS_INSTRUKSI}
@@ -208,11 +208,11 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan }: FormProps) {
             {(s.rubrik ?? []).map((r, i) => (
               <div key={i} className="flex gap-2">
                 <input dir="auto" className={kotak} value={r.kriteria} onChange={(e) => ubah({ rubrik: s.rubrik!.map((x, j) => (j === i ? { ...x, kriteria: e.target.value } : x)) })} />
-                <input type="number" min={0} aria-label="Skor" className="w-16 rounded border p-2 text-right" value={r.skor} onChange={(e) => ubah({ rubrik: s.rubrik!.map((x, j) => (j === i ? { ...x, skor: Number(e.target.value) } : x)) })} />
-                <button className="rounded border px-2" aria-label="Hapus kriteria" onClick={() => ubah({ rubrik: s.rubrik!.filter((_, j) => j !== i) })}>✕</button>
+                <input type="number" min={0} aria-label="Skor" className="w-16 rounded-lg border p-2 text-right" value={r.skor} onChange={(e) => ubah({ rubrik: s.rubrik!.map((x, j) => (j === i ? { ...x, skor: Number(e.target.value) } : x)) })} />
+                <button className="rounded-lg border px-2" aria-label="Hapus kriteria" onClick={() => ubah({ rubrik: s.rubrik!.filter((_, j) => j !== i) })}>✕</button>
               </div>
             ))}
-            <button className="rounded border px-2 py-1" onClick={() => ubah({ rubrik: [...(s.rubrik ?? []), { kriteria: "", skor: 1 }] })}>+ Tambah kriteria</button>
+            <button className="h-8 rounded-lg border px-2" onClick={() => ubah({ rubrik: [...(s.rubrik ?? []), { kriteria: "", skor: 1 }] })}>+ Tambah kriteria</button>
           </fieldset>
         </>
       )}
@@ -244,10 +244,10 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan }: FormProps) {
       </div>
 
       <div className="flex gap-2">
-        <button className="rounded-lg bg-hijau px-4 py-2 font-semibold text-white disabled:opacity-50" disabled={menyimpan} onClick={simpan}>
+        <button className="rounded-lg bg-hijau h-10 px-4 font-semibold text-white disabled:opacity-50" disabled={menyimpan} onClick={simpan}>
           {menyimpan ? "Menyimpan..." : "Simpan"}
         </button>
-        <button className="rounded-lg border px-4 py-2" disabled={menyimpan} onClick={onBatal}>Batal</button>
+        <button className="rounded-lg border h-10 px-4" disabled={menyimpan} onClick={onBatal}>Batal</button>
       </div>
       {error && <p className="text-red-600">{error}</p>}
     </article>

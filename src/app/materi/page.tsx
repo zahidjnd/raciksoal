@@ -16,10 +16,10 @@ export default async function MateriSaya() {
     <Kerangka p={p}>
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h1 className="text-xl">Materi saya ({daftar.length})</h1>
-          <Link href="/materi/baru" className="inline-flex items-center rounded-lg bg-hijau px-4 py-2 text-sm font-semibold text-white max-md:min-h-11">+ Tambah materi</Link>
+          <h1 className="text-2xl">Materi saya ({daftar.length})</h1>
+          <Link href="/materi/baru" className="inline-flex items-center rounded-lg bg-hijau h-10 px-4 text-sm font-semibold text-white max-md:min-h-11">+ Tambah materi</Link>
         </div>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-pudar">
           Materi di sini hanya bisa dilihat dan dipakai oleh Anda. Setelah disimpan, materi muncul di pilihan Bab pada form Buat Soal.
         </p>
         {daftar.map((m) => {
@@ -28,13 +28,13 @@ export default async function MateriSaya() {
             <article key={m.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-white p-3">
               <div>
                 <p className="font-semibold">{bab.judul}</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-pudar">
                   {bab.tp.length} TP · {bab.dalil.length} ayat/hadis · {bab.materi.join("").length.toLocaleString("id-ID")} huruf · diubah{" "}
                   {m.diubah.toLocaleString("id-ID", { timeZone: "Asia/Jakarta", dateStyle: "medium", timeStyle: "short" })}
                 </p>
               </div>
               <div className="flex gap-2">
-                <Link href={`/materi/${m.id}`} className="inline-flex items-center rounded-lg border px-3 py-1 text-sm max-md:min-h-11">Ubah</Link>
+                <Link href={`/materi/${m.id}`} className="inline-flex items-center rounded-lg border h-8 px-3 text-sm max-md:min-h-11">Ubah</Link>
                 <TombolHapusMateri id={m.id} judul={bab.judul} />
               </div>
             </article>

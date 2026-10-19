@@ -7,7 +7,7 @@ import { BATAS_MATERI, type IsianMateri } from "@/lib/materi";
 import { NAMA_SURAH } from "@/lib/surah";
 import { ambilAyat, cocokkanAyat, hapusMateri, simpanMateri } from "./actions";
 
-const kotak = "mt-1 w-full rounded border p-2 text-sm";
+const kotak = "mt-1 w-full rounded-lg border p-2 text-sm";
 const DALIL_KOSONG = { sumber: "", arab: "", terjemah: "" };
 const BATAS_FILE = 30 * 1024 * 1024; // dibaca di browser, jadi boleh besar (PPT berisi gambar)
 
@@ -99,15 +99,15 @@ export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: Isia
 
   return (
     <section className="space-y-5 rounded-xl border bg-white p-4">
-      <h1 className="text-xl">{id ? "Ubah materi" : "Tambah materi"}</h1>
+      <h1 className="text-2xl">{id ? "Ubah materi" : "Tambah materi"}</h1>
 
-      <div className="space-y-1 rounded border border-dashed border-hijau p-3 text-sm">
+      <div className="space-y-1 rounded-lg border border-dashed border-hijau p-3 text-sm">
         <p className="font-semibold">Ambil dari file Word/PowerPoint (opsional)</p>
-        <label className="inline-block cursor-pointer rounded-lg border border-hijau bg-white px-4 py-1.5 font-semibold text-hijau hover:bg-hijau-muda focus-within:ring-2 focus-within:ring-hijau">
+        <label className="inline-flex h-10 cursor-pointer items-center rounded-lg border border-hijau max-md:min-h-11 bg-white px-4 font-semibold text-hijau hover:bg-hijau-muda focus-within:ring-2 focus-within:ring-hijau">
           Pilih file Word/PowerPoint
           <input type="file" accept=".docx,.pptx" className="sr-only" onChange={ambilFile} />
         </label>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-pudar">
           File .docx / .pptx dibaca di perangkat Anda (tidak diunggah). Teksnya ditambahkan ke Isi materi; teks Arabnya hanya menjadi
           USULAN ayat/hadis yang wajib Anda periksa. PDF tidak didukung.
         </p>
@@ -128,27 +128,27 @@ export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: Isia
           value={m.tp}
           onChange={(e) => ubah({ tp: e.target.value })}
         />
-        <span className="text-xs text-gray-500">Boleh diawali kode (mis. TP 1.1:); tanpa kode diberi nomor otomatis. Maks {BATAS_MATERI.tp} TP.</span>
+        <span className="text-xs text-pudar">Boleh diawali kode (mis. TP 1.1:); tanpa kode diberi nomor otomatis. Maks {BATAS_MATERI.tp} TP.</span>
       </label>
 
       <label className="block text-sm">
         Isi materi
         <textarea dir="auto" className={kotak} rows={12} placeholder="Tempel ringkasan materi di sini (dari buku, modul, atau PPT)." value={m.isi} onChange={(e) => ubah({ isi: e.target.value })} />
-        <span className={`text-xs ${m.isi.length > BATAS_MATERI.isi ? "font-semibold text-red-600" : "text-gray-500"}`}>
+        <span className={`text-xs ${m.isi.length > BATAS_MATERI.isi ? "font-semibold text-red-600" : "text-pudar"}`}>
           {m.isi.length.toLocaleString("id-ID")}/{BATAS_MATERI.isi.toLocaleString("id-ID")} huruf. Teks Arab di sini hanya dipakai bila sama persis dengan
           ayat/hadis di kotak bawah; selebihnya dibuang otomatis.
         </span>
       </label>
 
-      <fieldset className="space-y-3 rounded border border-hijau/40 bg-hijau-muda/40 p-3">
+      <fieldset className="space-y-3 rounded-lg border border-hijau/40 bg-hijau-muda/40 p-3">
         <legend className="px-1 text-sm font-semibold">Ayat & Hadis Terverifikasi</legend>
-        <p className="text-xs text-gray-600">
+        <p className="text-xs text-pudar">
           AI tidak boleh mengarang ayat/hadis. Hanya teks Arab di kotak ini yang boleh muncul di soal. Ayat Al-Qur&apos;an diambil otomatis dari
           data mushaf; hadis disalin dari kitab/sumber terpercaya (bukan dari PDF) dan wajib Anda periksa.
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <input
-            className="w-64 rounded border p-2 text-sm"
+            className="w-64 rounded-lg border p-2 text-sm"
             list="daftar-surah"
             placeholder="Ketik ayat, mis. QS An-Nur: 2 atau 24:2-3"
             value={rujukan}
@@ -160,30 +160,30 @@ export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: Isia
               <option key={n} value={`QS ${n}: `}>{`${i + 1}. ${n}`}</option>
             ))}
           </datalist>
-          <button className="rounded-lg bg-hijau px-3 py-2 text-sm font-semibold text-white disabled:opacity-50" disabled={ayat.proses || !rujukan.trim()} onClick={ambil}>
+          <button className="rounded-lg bg-hijau h-10 px-3 text-sm font-semibold text-white disabled:opacity-50" disabled={ayat.proses || !rujukan.trim()} onClick={ambil}>
             {ayat.proses ? "Mengambil..." : "Ambil ayat"}
           </button>
           {ayat.pesan && <span className="text-sm text-red-600">{ayat.pesan}</span>}
         </div>
         {m.dalil.map((d, i) => (
-          <div key={i} className={`space-y-2 rounded border p-3 ${d.mushaf ? "border-hijau bg-white" : d.usulan ? "border-amber-400 bg-amber-50" : "bg-white"}`}>
+          <div key={i} className={`space-y-2 rounded-lg border p-3 ${d.mushaf ? "border-hijau bg-white" : d.usulan ? "border-amber-400 bg-amber-50" : "bg-white"}`}>
             <div className="flex items-center justify-between gap-2">
               <span className="text-sm font-semibold">
                 Dalil {i + 1}
                 {d.mushaf && <span className="ml-2 font-normal text-hijau">✓ teks dari mushaf, tinggal isi terjemah</span>}
                 {d.usulan && <span className="ml-2 font-normal text-amber-800">usulan dari file, tidak ditemukan di mushaf: periksa harakat & lengkapi sumber/terjemah</span>}
               </span>
-              <button className="rounded border px-2 text-sm" aria-label={`Hapus dalil ${i + 1}`} onClick={() => ubah({ dalil: m.dalil.filter((_, j) => j !== i) })}>
+              <button className="rounded-lg border px-2 text-sm" aria-label={`Hapus dalil ${i + 1}`} onClick={() => ubah({ dalil: m.dalil.filter((_, j) => j !== i) })}>
                 ✕ Hapus
               </button>
             </div>
             <input className={kotak} readOnly={d.mushaf} placeholder="Sumber hadis, mis. HR. Bukhari dan Muslim" value={d.sumber} onChange={(e) => ubahDalil(i, { sumber: e.target.value })} />
-            <textarea dir="rtl" lang="ar" rows={3} readOnly={d.mushaf} className={`${kotak} font-arab text-2xl ${d.mushaf ? "bg-gray-50" : ""}`} placeholder="نص الحديث" value={d.arab} onChange={(e) => ubahDalil(i, { arab: e.target.value })} />
+            <textarea dir="rtl" lang="ar" rows={3} readOnly={d.mushaf} className={`${kotak} font-arab text-2xl ${d.mushaf ? "bg-krem" : ""}`} placeholder="نص الحديث" value={d.arab} onChange={(e) => ubahDalil(i, { arab: e.target.value })} />
             <textarea rows={2} className={kotak} placeholder="Terjemah" value={d.terjemah} onChange={(e) => ubahDalil(i, { terjemah: e.target.value })} />
           </div>
         ))}
         {m.dalil.length < BATAS_MATERI.dalil && (
-          <button className="rounded-lg border bg-white px-3 py-1 text-sm" onClick={() => ubah({ dalil: [...m.dalil, DALIL_KOSONG] })}>
+          <button className="rounded-lg border bg-white h-8 px-3 text-sm" onClick={() => ubah({ dalil: [...m.dalil, DALIL_KOSONG] })}>
             + Tambah hadis (ketik/tempel sendiri)
           </button>
         )}
@@ -194,23 +194,23 @@ export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: Isia
             (Ayat Al-Qur&apos;an yang ditempel sendiri akan dicocokkan otomatis ke mushaf saat disimpan.)
           </label>
         )}
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-pudar">
           Teks Al-Qur&apos;an: <a className="underline" href="https://tanzil.net" target="_blank" rel="noreferrer">Tanzil Project (tanzil.net)</a>. Terjemah diisi guru.
         </p>
       </fieldset>
 
       <div className="flex flex-wrap gap-2">
-        <button className="rounded-lg bg-hijau px-4 py-2 font-semibold text-white disabled:opacity-50" disabled={menyimpan} onClick={simpan}>
+        <button className="rounded-lg bg-hijau h-10 px-4 font-semibold text-white disabled:opacity-50" disabled={menyimpan} onClick={simpan}>
           {menyimpan ? "Menyimpan..." : "Simpan materi"}
         </button>
-        <Link href="/materi" className="inline-flex items-center rounded-lg border px-4 py-2 max-md:min-h-11">Kembali</Link>
-        {id && <Link href="/" className="inline-flex items-center rounded-lg border px-4 py-2 max-md:min-h-11">Buat soal dari materi ini</Link>}
+        <Link href="/materi" className="inline-flex items-center rounded-lg border h-10 px-4 max-md:min-h-11">Kembali</Link>
+        {id && <Link href="/" className="inline-flex items-center rounded-lg border h-10 px-4 max-md:min-h-11">Buat soal dari materi ini</Link>}
       </div>
       {pesan && (
         <div className={`text-sm ${pesan.ok ? "text-hijau" : "text-red-600"}`}>
           <p>{pesan.teks}</p>
           {!!pesan.dihapus?.length && (
-            <p className="mt-1 rounded border border-amber-400 bg-amber-50 p-2 text-amber-900">
+            <p className="mt-1 rounded-lg border border-amber-400 bg-amber-50 p-2 text-amber-900">
               ⚠️ {pesan.dihapus.length} potongan teks Arab dibuang dari judul/TP/isi karena tidak ada di kotak Ayat & Hadis Terverifikasi:{" "}
               <span dir="rtl" lang="ar" className="font-arab text-lg">{pesan.dihapus.join(" | ")}</span>. Bila perlu, tambahkan ayat/hadis lengkapnya ke kotak itu.
             </p>
@@ -234,7 +234,7 @@ export function TombolHapusMateri({ id, judul }: { id: number; judul: string }) 
     router.refresh();
   }
   return (
-    <button className="rounded-lg border px-3 py-1 text-sm text-red-700 disabled:opacity-50" disabled={proses} onClick={hapus}>
+    <button className="rounded-lg border h-8 px-3 text-sm text-red-700 disabled:opacity-50" disabled={proses} onClick={hapus}>
       {proses ? "Menghapus..." : "Hapus"}
     </button>
   );

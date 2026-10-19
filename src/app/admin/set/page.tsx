@@ -37,7 +37,8 @@ export default async function SemuaSet() {
   return (
     <Kerangka p={p}>
       <section className="space-y-3">
-        <h1 className="text-xl">Semua set soal ({daftar.length}{daftar.length === BATAS_TAMPIL ? " terbaru" : ""})</h1>
+        <h1 className="text-2xl">Semua set soal ({daftar.length}{daftar.length === BATAS_TAMPIL ? " terbaru" : ""})</h1>
+        <div className="divide-y divide-batas overflow-hidden rounded-xl border bg-white">
         {daftar.map((s) => {
           const pg = s.pengaturan as Pengaturan;
           const bab = judulPendek(s.judulBab, s.babId);
@@ -45,18 +46,18 @@ export default async function SemuaSet() {
             <Link
               key={s.id}
               href={`/?id=${s.id}`}
-              className={`block space-y-1 rounded-xl border bg-white p-3 hover:bg-hijau-muda ${s.status === "gagal" ? "border-red-300" : s.cadangan ? "border-amber-400" : ""}`}
+              className="block space-y-1 px-4 py-3 hover:bg-krem"
             >
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <span>
                   <span className="font-semibold">{s.guru ?? "(tanpa pemilik)"}</span> · {pg.tujuan} · {bab} · {pg.kesulitan}
-                  {s.status === "selesai" && <span className="text-gray-600"> · {s.jumlahSoal} soal</span>}
+                  {s.status === "selesai" && <span className="text-pudar"> · {s.jumlahSoal} soal</span>}
                 </span>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-pudar">
                   {s.dibuat.toLocaleString("id-ID", { timeZone: "Asia/Jakarta", dateStyle: "medium", timeStyle: "short" })} · set {s.id}
                 </span>
               </div>
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-pudar">
                 model: {s.model ?? "-"}
                 {!!s.cadangan && <span className="ml-1 rounded bg-amber-100 px-1 text-amber-900">cadangan dipakai</span>}
                 {s.status === "gagal" && <span className="ml-1 rounded bg-red-100 px-1 text-red-700">gagal: {s.pesan?.slice(0, 160)}</span>}
@@ -65,6 +66,7 @@ export default async function SemuaSet() {
             </Link>
           );
         })}
+        </div>
       </section>
     </Kerangka>
   );

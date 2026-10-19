@@ -36,7 +36,7 @@ async function PeringatanAdmin() {
   const alasan = [...new Set(masalah.flatMap((m) => [...(m.catatan ?? []), ...(m.status === "gagal" && m.pesan ? [m.pesan] : [])]).map(ringkas))].slice(0, 3);
 
   return (
-    <div className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-800">
+    <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-800">
       <p className="font-semibold">
         ⚠️ 24 jam terakhir: {cadangan > 0 && `${cadangan} set memakai model cadangan`}
         {cadangan > 0 && gagal > 0 && ", "}
@@ -69,7 +69,7 @@ async function PeringatanBackup() {
   }
   if (!pesan) return null;
   return (
-    <div className="rounded border border-red-300 bg-red-50 p-3 text-sm text-red-800">
+    <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-800">
       ⚠️ {pesan} Cek <code>backup.log</code> di hosting.
     </div>
   );
@@ -150,7 +150,7 @@ export async function Kerangka({ p, children }: { p: Pengguna; children: React.R
           </span>
         </Link>
         <form action={keluar}>
-          <button className="rounded-lg px-2 py-1 text-xs text-pudar hover:bg-krem-sorot hover:text-tinta">Keluar</button>
+          <button className="h-8 rounded-lg px-2 text-xs text-pudar hover:bg-krem-sorot hover:text-tinta">Keluar</button>
         </form>
       </div>
     </div>

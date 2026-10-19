@@ -25,7 +25,7 @@ function Angka({ label, nilai, ubah }: { label: string; nilai: number; ubah: (n:
   return (
     <label className="flex items-center justify-between gap-2 text-sm">
       {label}
-      <input type="number" min={0} max={MAKS_SOAL} value={nilai} onChange={(e) => ubah(Number(e.target.value))} className="w-20 rounded border p-1 text-right" />
+      <input type="number" min={0} max={MAKS_SOAL} value={nilai} onChange={(e) => ubah(Number(e.target.value))} className="w-20 rounded-lg border p-1 text-right" />
     </label>
   );
 }
@@ -36,7 +36,7 @@ function TabelKisi({ kisi }: { kisi: BarisKisi[] }) {
     <div className="overflow-x-auto bg-white">
         <table className="w-full min-w-[640px] border-collapse text-sm">
           <thead>
-            <tr className="bg-gray-100 text-left">
+            <tr className="bg-krem-sorot text-left">
               {["No. Soal", "TP", "Materi", "Indikator Soal", "Level", "Bentuk"].map((j) => (
                 <th key={j} className="border p-2">{j}</th>
               ))}
@@ -51,7 +51,7 @@ function TabelKisi({ kisi }: { kisi: BarisKisi[] }) {
                 <td className="border p-2">
                   {k.peringatan?.map((w, i) => <span key={i} className="block font-semibold text-red-700">⚠️ {w}</span>)}
                   <Teks teks={k.indikator} />
-                  <span className="block text-xs text-gray-500">Stimulus: <Teks teks={k.stimulus} /></span>
+                  <span className="block text-xs text-pudar">Stimulus: <Teks teks={k.stimulus} /></span>
                 </td>
                 <td className="border p-2 text-center">{k.level}</td>
                 <td className="border p-2 whitespace-nowrap">{NAMA_BENTUK[k.bentuk]}</td>
@@ -168,8 +168,8 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
     total > MAKS_SOAL ? `Jumlah soal maksimal ${MAKS_SOAL}.` :
     totalLevel !== 100 ? `Komposisi level harus 100% (sekarang ${totalLevel}%), buka Lanjutan.` : "";
   // Pilihan dan aksi sama-sama kotak bersudut lembut seperti claude.ai (DESIGN.md).
-  const chip = "inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm hover:bg-krem max-md:min-h-11";
-  const aksi2 = "inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm hover:bg-gray-50 max-md:min-h-11";
+  const chip = "inline-flex items-center rounded-lg border bg-white h-8 px-3 text-sm hover:bg-krem max-md:min-h-11";
+  const aksi2 = "inline-flex items-center rounded-lg border bg-white h-8 px-3 text-sm hover:bg-krem max-md:min-h-11";
   const chipPanel = (b: typeof buka) => `${chip} ${buka === b ? "border-hijau bg-hijau-muda text-hijau-tua" : ""}`;
 
   return (
@@ -179,7 +179,7 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
         <section className="mx-auto max-w-2xl space-y-3 pt-4 md:pt-16">
           <h1 className="pb-4 text-center text-3xl md:text-4xl">Assalamu&apos;alaikum, {nama}</h1>
 
-          <div className="rounded-2xl border border-gray-300 bg-white p-3 shadow-sm focus-within:border-hijau focus-within:ring-2 focus-within:ring-hijau">
+          <div className="rounded-2xl border bg-white p-3 shadow-sm focus-within:border-hijau focus-within:ring-2 focus-within:ring-hijau">
             <textarea
               className="w-full resize-none p-1 outline-none"
               rows={3}
@@ -233,18 +233,18 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
             {buka === "jumlah" && (
               <fieldset className="mt-3 space-y-2 border-t pt-3">
                 <legend className="sr-only">Jumlah soal × skor per soal</legend>
-                <p className="text-xs text-gray-500">Jumlah soal × skor per soal</p>
+                <p className="text-xs text-pudar">Jumlah soal × skor per soal</p>
                 {BENTUK.map((b) => (
                   <div key={b} className="flex items-center justify-between gap-2 text-sm">
                     {NAMA_BENTUK[b]}
                     <span className="flex items-center gap-1 whitespace-nowrap">
-                      <input type="number" min={0} max={MAKS_SOAL} aria-label={`Jumlah ${NAMA_BENTUK[b]}`} value={p.jumlah[b]} onChange={(e) => setP({ ...p, jumlah: { ...p.jumlah, [b]: Number(e.target.value) } })} className="w-14 rounded border p-1 text-right" />
+                      <input type="number" min={0} max={MAKS_SOAL} aria-label={`Jumlah ${NAMA_BENTUK[b]}`} value={p.jumlah[b]} onChange={(e) => setP({ ...p, jumlah: { ...p.jumlah, [b]: Number(e.target.value) } })} className="w-14 rounded-lg border p-1 text-right" />
                       ×
-                      <input type="number" min={0} max={100} aria-label={`Skor per soal ${NAMA_BENTUK[b]}`} value={bobot[b]} onChange={(e) => setP({ ...p, bobot: { ...bobot, [b]: Number(e.target.value) } })} className="w-14 rounded border p-1 text-right" />
+                      <input type="number" min={0} max={100} aria-label={`Skor per soal ${NAMA_BENTUK[b]}`} value={bobot[b]} onChange={(e) => setP({ ...p, bobot: { ...bobot, [b]: Number(e.target.value) } })} className="w-14 rounded-lg border p-1 text-right" />
                     </span>
                   </div>
                 ))}
-                <p className={`text-sm ${totalSkor === 100 ? "text-gray-600" : "text-amber-700"}`}>
+                <p className={`text-sm ${totalSkor === 100 ? "text-pudar" : "text-amber-700"}`}>
                   Total: {total} soal (maks {MAKS_SOAL}), skor {totalSkor}
                   {totalSkor !== 100 && " (bukan 100)"}
                 </p>
@@ -255,7 +255,7 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
               <div className="mt-3 space-y-3 border-t pt-3">
                 <fieldset className="space-y-2">
                   <legend className="mb-1 text-sm font-semibold">Komposisi level (total {totalLevel}%)</legend>
-                  <p className="text-xs text-gray-500">Terisi otomatis sesuai tujuan soal, boleh diubah.</p>
+                  <p className="text-xs text-pudar">Terisi otomatis sesuai tujuan soal, boleh diubah.</p>
                   <Angka label="LOTS (C1–C2) %" nilai={p.level.LOTS} ubah={(n) => setP({ ...p, level: { ...p.level, LOTS: n } })} />
                   <Angka label="MOTS (C3) %" nilai={p.level.MOTS} ubah={(n) => setP({ ...p, level: { ...p.level, MOTS: n } })} />
                   <Angka label="HOTS (C4–C6) %" nilai={p.level.HOTS} ubah={(n) => setP({ ...p, level: { ...p.level, HOTS: n } })} />
@@ -264,7 +264,7 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
                 {daftarModel.length > 0 && (
                   <label className="block text-sm">
                     Model AI <span className="rounded bg-amber-100 px-1 text-xs">admin</span>
-                    <select className="mt-1 w-full rounded border p-2" value={p.modelSlot} onChange={(e) => setP({ ...p, modelSlot: Number(e.target.value) })}>
+                    <select className="mt-1 w-full rounded-lg border p-2" value={p.modelSlot} onChange={(e) => setP({ ...p, modelSlot: Number(e.target.value) })}>
                       {daftarModel.map((m) => (
                         <option key={m.slot} value={m.slot}>{m.nama}</option>
                       ))}
@@ -297,7 +297,7 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
           {jatahHabis && <p className="text-center font-semibold text-red-600">Jatah hari ini habis. Silakan lanjutkan besok.</p>}
           {error && <p className="text-center text-red-600">{error}</p>}
           {banding.length > 0 && (
-            <div className="space-y-1 rounded border border-blue-300 bg-blue-50 p-3 text-sm">
+            <div className="space-y-1 rounded-lg border border-blue-300 bg-blue-50 p-3 text-sm">
               <p className="font-semibold">Perbandingan dimulai. Buka tiap hasil (tab baru), tunggu sampai selesai:</p>
               {banding.map((b) =>
                 b.id ? (
@@ -314,7 +314,7 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
       )}
 
       {memuat && (
-        <p className="flex items-center gap-3 text-gray-600 md:mt-16" role="status">
+        <p className="flex items-center gap-3 text-pudar md:mt-16" role="status">
           <span className="h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-gray-200 border-t-gray-600" aria-hidden />
           Membuka set soal...
         </p>
@@ -334,18 +334,19 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
         </div>
       )}
 
-      {hasil?.status === "gagal" && <p className="rounded border border-red-300 bg-red-50 p-3 text-red-700">Gagal membuat soal: {hasil.pesan}</p>}
+      {hasil?.status === "gagal" && <p className="rounded-lg border border-red-300 bg-red-50 p-3 text-red-700">Gagal membuat soal: {hasil.pesan}</p>}
 
       {hasil?.status === "selesai" && (
-        <section className="space-y-4">
-          <div>
-            <h1 className="text-xl">{bab.judul}</h1>
-            <p className="text-sm text-gray-500">
+        <section className="space-y-5">
+          <div className="space-y-1">
+            <h1 className="text-2xl">{bab.judul}</h1>
+            <p className="text-sm text-pudar">
               {soal.length} soal
               {hasil.model && <> · model: <b>{hasil.model}</b></>}
               {hasil.info && ` · ${hasil.info.detik} detik · ${(hasil.info.tokenMasuk + hasil.info.tokenKeluar).toLocaleString("id-ID")} token`}
               {` · ${soal.filter((s) => s.peringatan?.length).length} soal ditandai`}
             </p>
+            <p className="text-xs text-pudar">File Word di bilah bawah selalu mengikuti isi terbaru, termasuk soal yang diedit atau diganti.</p>
           </div>
           <p className="rounded-lg border border-amber-400 bg-amber-50 p-3 font-semibold text-amber-900">
             ⚠️ Soal dibuat AI, wajib diperiksa guru sebelum dipakai.
@@ -366,7 +367,7 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
                 key={i}
                 onClick={() => lompat(i + 1)}
                 title={s.peringatan?.length ? `Soal ${i + 1} ditandai, wajib dicek` : `Soal ${i + 1}`}
-                className={`h-11 w-11 rounded-md border text-sm md:h-8 md:w-8 ${s.peringatan?.length ? "border-red-400 bg-red-50 font-semibold text-red-700" : "border-gray-300 hover:bg-gray-100"}`}
+                className={`h-11 w-11 rounded-lg border text-sm md:h-8 md:w-8 ${s.peringatan?.length ? "border-red-400 bg-red-50 font-semibold text-red-700" : "bg-white hover:bg-krem"}`}
               >
                 {i + 1}
               </button>
@@ -393,7 +394,7 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
           ) : (
             BENTUK.filter((b) => soal.some((s) => s.bentuk === b)).map((b) => (
               <div key={b} className="space-y-4">
-                <h2 className="text-lg font-bold">{NAMA_BENTUK[b]}</h2>
+                <h2>{NAMA_BENTUK[b]}</h2>
                 {soal.map(
                   (s, i) =>
                     s.bentuk === b && (
@@ -418,12 +419,11 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
           {/* Tombol unduh menempel di bawah layar. File Word selalu mengikuti isi terbaru (termasuk editan). */}
           <div className="sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center gap-2 border-t border-garis bg-krem px-4 py-2 md:-mx-8 md:px-8">
             <span className="text-sm font-semibold">Unduh<span className="hidden sm:inline"> Word</span>:</span>
-            <a className="inline-flex items-center rounded-lg bg-hijau px-4 py-1.5 text-sm font-semibold text-white hover:bg-hijau-tua max-md:min-h-11" href={`/api/word?id=${id}&jenis=soal`}>
+            <a className="inline-flex h-8 items-center rounded-lg bg-hijau px-4 text-sm font-semibold text-white hover:bg-hijau-tua max-md:min-h-11" href={`/api/word?id=${id}&jenis=soal`}>
               Soal
             </a>
-            <a className={aksi2} href={`/api/word?id=${id}&jenis=kunci`}>Kunci<span className="hidden sm:inline"> & pembahasan</span></a>
+            <a className={aksi2} href={`/api/word?id=${id}&jenis=kunci`}><span>Kunci<span className="hidden sm:inline"> &amp; pembahasan</span></span></a>
             {!!hasil.kisi?.length && <a className={aksi2} href={`/api/word?id=${id}&jenis=kisi`}>Kisi-kisi</a>}
-            <span className="hidden text-xs text-gray-500 sm:inline">Mengikuti isi terbaru, termasuk soal yang diedit/diganti.</span>
           </div>
         </section>
       )}

@@ -260,3 +260,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   Sidebar ala Claude: Set baru + menu di atas, Riwayat, profil (lingkaran huruf awal hijau → /akun) + Keluar di bawah.
   Buat Soal: sapaan serif besar + tombol cepat `CEPAT` (UH 25, PAS 25, Latihan 10 PG bobot 10) yang hanya mengisi
   pengaturan. Logo/nama/huruf khusus Anthropic TIDAK dipakai. Komposisi PAS resmi belum diketahui (preset PAS = 25 soal bawaan).
+- 2026-10-19 RAPIKAN PROPORSI: garis tepi bawaan = token `batas` #DDDBD2 (@layer base; Tailwind v4 bawaannya warna teks
+  = terlalu gelap); dua tinggi kontrol: `h-8` (32px) kecil & `h-10` (40px) standar, input/select 40px di @layer base, HP 44px;
+  h1 24px / h2 18px serif; Riwayat & Semua Set = satu kartu `divide-y`; warna abu `gray-*` diganti `pudar`/`krem`
+  (JANGAN pakai `gray-*` lagi). Ukur ulang 12 halaman: garis 1 warna, tinggi hanya 32/40 (HP 44), kontras & luberan lulus.

@@ -11,6 +11,7 @@
   --color-garis: #e6e4dc; /* batas sidebar */
   --color-tinta: #1f1e1d; /* teks utama */
   --color-pudar: #5f5e5a; /* teks pudar; 5,2:1 bahkan di atas krem-sorot */
+  --color-batas: #dddbd2; /* garis tepi kartu, tombol, dan kotak isian (satu warna lembut) */
   --font-serif: var(--font-judul), Georgia, serif;
 }
 
@@ -21,10 +22,26 @@ body {
 }
 
 @layer base {
-  /* Judul memakai serif seperti claude.ai. */
-  h1 {
+  /* Satu warna garis tepi untuk semua kartu dan kontrol (bawaan Tailwind v4 = warna teks, terlalu gelap). */
+  *,
+  ::before,
+  ::after,
+  ::file-selector-button {
+    border-color: var(--color-batas);
+  }
+  /* Judul memakai serif seperti claude.ai. Halaman: h1 24px; bagian: h2 18px. */
+  h1,
+  h2 {
     font-family: var(--font-serif);
     font-weight: 500;
+  }
+  h2 {
+    font-size: 1.125rem;
+  }
+  /* Ukuran kontrol (DESIGN.md): kotak isian & pilihan standar 40px; tombol kecil 32px (`h-8`) atau standar 40px (`h-10`). */
+  input:not([type="checkbox"]):not([type="radio"]),
+  select {
+    height: 2.5rem;
   }
   /* Kotak isian putih di atas latar krem (kelas bg-* tetap bisa menimpa). */
   input:not([type="checkbox"]):not([type="radio"]),

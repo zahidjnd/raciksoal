@@ -6,16 +6,16 @@ export default async function HalamanAkun() {
   const p = await wajibMasuk();
   return (
     <Kerangka p={p}>
-      <h1 className="text-xl">Akun</h1>
+      <h1 className="text-2xl">Akun</h1>
       <section className="space-y-1 text-sm">
         <p>
-          <span className="text-gray-500">Nama:</span> {p.nama}
+          <span className="text-pudar">Nama:</span> {p.nama}
         </p>
         <p>
-          <span className="text-gray-500">Nama pengguna:</span> {p.username}
+          <span className="text-pudar">Nama pengguna:</span> {p.username}
         </p>
         <p>
-          <span className="text-gray-500">Peran:</span> {p.peran === "admin" ? "Admin" : "Guru"}
+          <span className="text-pudar">Peran:</span> {p.peran === "admin" ? "Admin" : "Guru"}
         </p>
       </section>
       <div className="max-w-sm">

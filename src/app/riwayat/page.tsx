@@ -15,12 +15,14 @@ export default async function Riwayat() {
   return (
     <Kerangka p={p}>
       <section className="space-y-3">
-        <h1 className="text-xl">Riwayat set soal Anda ({daftar.length}{daftar.length === BATAS_TAMPIL ? " terbaru" : ""})</h1>
+        <h1 className="text-2xl">Riwayat set soal Anda ({daftar.length}{daftar.length === BATAS_TAMPIL ? " terbaru" : ""})</h1>
         {daftar.length === 0 && (
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-pudar">
             Belum ada set soal. <Link href="/" className="text-hijau underline">Buat soal pertama Anda</Link>.
           </p>
         )}
+        {daftar.length > 0 && (
+        <div className="divide-y divide-batas overflow-hidden rounded-xl border bg-white">
         {daftar.map((s) => {
           const pg = s.pengaturan as Pengaturan;
           const bab = judulPendek(s.judulBab, s.babId);
@@ -28,23 +30,25 @@ export default async function Riwayat() {
             <Link
               key={s.id}
               href={`/?id=${s.id}`}
-              className="flex flex-wrap items-baseline justify-between gap-2 rounded-xl border bg-white p-3 hover:bg-hijau-muda"
+              className="flex flex-wrap items-baseline justify-between gap-2 px-4 py-3 hover:bg-krem"
             >
               <span>
                 <span className="font-semibold">{pg.tujuan}</span> · {bab} · {pg.kesulitan}
-                {s.status === "selesai" && <span className="text-gray-600"> · {s.jumlahSoal} soal</span>}
+                {s.status === "selesai" && <span className="text-pudar"> · {s.jumlahSoal} soal</span>}
                 {s.status !== "selesai" && (
                   <span className={`ml-1 rounded px-1 text-xs ${s.status === "gagal" ? "bg-red-100 text-red-700" : "bg-amber-100"}`}>
                     {LABEL_STATUS[s.status] ?? s.status}
                   </span>
                 )}
               </span>
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-pudar">
                 {s.dibuat.toLocaleString("id-ID", { timeZone: "Asia/Jakarta", dateStyle: "medium", timeStyle: "short" })} · set {s.id}
               </span>
             </Link>
           );
         })}
+        </div>
+        )}
       </section>
     </Kerangka>
   );
