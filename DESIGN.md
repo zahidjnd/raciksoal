@@ -46,7 +46,8 @@ Yang TIDAK ditiru: logo bintang, nama "Claude", dan huruf khusus milik Anthropic
 ## Tata letak
 - Sidebar kiri, tiga bagian (pilihan pemilik, contoh Claude Android): **atas diam** ("Racik Soal" + Set baru),
   **tengah digulir** (Materi saya, menu admin, Riwayat), **bawah diam** (lingkaran huruf awal + nama ke halaman Akun,
-  ikon tema, Keluar). Laptop: diam di kiri setinggi layar. HP: laci meluncur dari kiri (85% lebar) di atas halaman
+  ikon tema, Keluar). Laptop: diam di kiri setinggi layar, lebar 288px di layar >= 1280px (seperti claude.ai),
+  256px di 768–1279px (supaya baris kotak ketik tetap muat). Nama di baris bawah, peran (Admin/Guru) di baris kecil di bawahnya. HP: laci meluncur dari kiri (85% lebar) di atas halaman
   yang digelapkan; tutup lewat ✕, ketuk area gelap, Esc, atau memilih tautan; halaman di belakang tidak ikut tergulir.
 - Halaman Buat Soal (urutan dari atas, pilihan pemilik 2026-10-19): sapaan serif + kalimat petunjuk; **4 kartu jenis
   soal** (Ulangan Harian, PTS, PAS, Latihan; ikon garis sederhana buatan sendiri, nama, keterangan dari aturan tiap jenis;

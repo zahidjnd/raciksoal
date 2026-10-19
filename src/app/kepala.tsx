@@ -119,7 +119,7 @@ export async function Kerangka({ p, children }: { p: Pengguna; children: React.R
 
   // Tautan ke halaman utama sengaja <a> biasa (bukan Link): halaman Buat Soal membaca ?id= hanya saat dimuat.
   return (
-    <div className="md:pl-64">
+    <div className="md:pl-64 xl:pl-72">
       <LaciSidebar>
         {/* Atas (diam): Set baru selalu terlihat. */}
         <div className="shrink-0 px-3 pb-2 text-sm">
@@ -158,8 +158,9 @@ export async function Kerangka({ p, children }: { p: Pengguna; children: React.R
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-hijau text-sm font-semibold text-white" aria-hidden>
               {p.nama.trim().charAt(0).toUpperCase()}
             </span>
-            <span className="truncate">
-              {p.nama} <span className="text-pudar">· {admin ? "Admin" : "Guru"}</span>
+            <span className="min-w-0 leading-tight">
+              <span className="block truncate">{p.nama}</span>
+              <span className="block text-xs text-pudar">{admin ? "Admin" : "Guru"}</span>
             </span>
           </Link>
           <TombolTema awal={tema} />

@@ -109,10 +109,16 @@ body {
   opacity: 1;
 }
 
-/* Laptop: sidebar diam di kiri (lebar 16rem), jadi tulisan sumber Tanzil di kaki halaman ikut digeser ke area isi. */
+/* Sidebar diam di kiri (16rem sampai 1279px, 18rem di laptop >= 1280px seperti claude.ai), jadi tulisan sumber Tanzil di kaki
+   halaman ikut digeser ke area isi. Samakan dengan md:w-64 / xl:w-72 di laci-sidebar.tsx & md:pl-64 / xl:pl-72 di kepala.tsx. */
 @media (min-width: 768px) {
   body:has(aside[aria-label="Menu"]) > footer {
     padding-left: 16rem;
+  }
+}
+@media (min-width: 1280px) {
+  body:has(aside[aria-label="Menu"]) > footer {
+    padding-left: 18rem;
   }
 }
 
