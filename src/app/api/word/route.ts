@@ -5,7 +5,7 @@ import { babDariSet } from "@/lib/bab";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
 import { ambilNamaMadrasah } from "@/lib/sekolah";
-import type { Pengaturan } from "@/lib/prompt";
+import { namaTujuan, type Pengaturan } from "@/lib/prompt";
 import type { BarisKisi, Soal } from "@/lib/soal";
 import { buatWordKisi, buatWordKunci, buatWordSoal } from "@/lib/word";
 
@@ -36,7 +36,7 @@ export async function GET(req: Request) {
       : jenis === "kunci"
         ? await buatWordKunci(h.soal as Soal[], bab, p, h.dibuat)
         : await buatWordSoal(h.soal as Soal[], bab, p, h.dibuat, await ambilNamaMadrasah());
-  const nama = `${NAMA_FILE[jenis]} ${p.tujuan} ${bab.judul.split(":")[0]} (set ${id}).docx`;
+  const nama = `${NAMA_FILE[jenis]} ${namaTujuan(p.tujuan)} ${bab.judul.split(":")[0]} (set ${id}).docx`;
 
   return new Response(new Uint8Array(isi), {
     headers: {

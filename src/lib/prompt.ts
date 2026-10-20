@@ -1,6 +1,10 @@
 import { identitasBab, MAKS_GABUNG, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal.ts";
 
 export const TUJUAN = ["Ulangan Harian", "PTS", "PAS", "Latihan", "Latihan TKA"] as const;
+/** Nama yang tampil (pilihan pemilik 2026-10-20: AFTS & ASAS sesuai istilah madrasah). Kode "PTS"/"PAS" tetap disimpan agar set lama terbaca. */
+const NAMA_TUJUAN: Record<string, string> = { PTS: "AFTS", PAS: "ASAS" };
+const KEPANJANGAN: Record<string, string> = { PTS: "Asesmen Formatif Tengah Semester", PAS: "Asesmen Sumatif Akhir Semester" };
+export const namaTujuan = (t: string) => NAMA_TUJUAN[t] ?? t;
 /** ATURAN-SOAL.md bagian 9: TKA hanya PG, PG kompleks, Kategori (tanpa uraian), memakai soal grup. */
 export const TKA = "Latihan TKA";
 export const NAMA_LEVEL_TKA = { LOTS: "Pemahaman", MOTS: "Penerapan", HOTS: "Penalaran" } as const;
@@ -327,7 +331,8 @@ function kepalaPermintaan(p: Pengaturan) {
   const catatanGuru = p.catatan
     ? `\nCatatan dari guru (PRIORITAS TERTINGGI):\n"""${p.catatan}"""\n${KUNCI_CATATAN}\n`
     : "";
-  return `Tujuan: ${tujuan}. Aturan ${tujuan}: ${ATURAN_TUJUAN[tujuan].aturan}
+  const nama = `${namaTujuan(tujuan)}${KEPANJANGAN[tujuan] ? ` (${KEPANJANGAN[tujuan]})` : ""}`;
+  return `Tujuan: ${nama}. Aturan ${namaTujuan(tujuan)}: ${ATURAN_TUJUAN[tujuan].aturan}
 Tingkat kesulitan: ${kesulitan}. Artinya: ${ATURAN_KESULITAN[kesulitan]}
 ${catatanGuru}`;
 }

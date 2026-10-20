@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { hasilSoal, pengguna } from "@/db/schema";
 import { judulPendek } from "@/lib/bab";
-import type { Pengaturan } from "@/lib/prompt";
+import { namaTujuan, type Pengaturan } from "@/lib/prompt";
 import { wajibMasuk } from "@/lib/sesi";
 import { Kerangka } from "../../kepala";
 
@@ -50,7 +50,7 @@ export default async function SemuaSet() {
             >
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <span>
-                  <span className="font-semibold">{s.guru ?? "(tanpa pemilik)"}</span> · {pg.tujuan} · {bab} · {pg.kesulitan}
+                  <span className="font-semibold">{s.guru ?? "(tanpa pemilik)"}</span> · {namaTujuan(pg.tujuan)} · {bab} · {pg.kesulitan}
                   {s.status === "selesai" && <span className="text-pudar"> · {s.jumlahSoal} soal</span>}
                 </span>
                 <span className="text-xs text-pudar">

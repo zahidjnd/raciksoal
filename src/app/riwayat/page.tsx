@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { judulPendek } from "@/lib/bab";
-import type { Pengaturan } from "@/lib/prompt";
+import { namaTujuan, type Pengaturan } from "@/lib/prompt";
 import { wajibMasuk } from "@/lib/sesi";
 import { ambilRiwayat, Kerangka } from "../kepala";
 
@@ -33,7 +33,7 @@ export default async function Riwayat() {
               className="flex flex-wrap items-baseline justify-between gap-2 px-4 py-3 hover:bg-krem"
             >
               <span>
-                <span className="font-semibold">{pg.tujuan}</span> · {bab} · {pg.kesulitan}
+                <span className="font-semibold">{namaTujuan(pg.tujuan)}</span> · {bab} · {pg.kesulitan}
                 {s.status === "selesai" && <span className="text-pudar"> · {s.jumlahSoal} soal</span>}
                 {s.status !== "selesai" && (
                   <span className={`ml-1 rounded px-1 text-xs ${s.status === "gagal" ? "bg-bahaya-muda text-bahaya" : "bg-peringatan-muda"}`}>

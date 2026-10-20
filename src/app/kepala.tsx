@@ -7,7 +7,7 @@ import { db } from "@/db";
 import { hasilSoal } from "@/db/schema";
 import type { Pengguna } from "@/lib/auth";
 import { judulPendek } from "@/lib/bab";
-import type { Pengaturan } from "@/lib/prompt";
+import { namaTujuan, type Pengaturan } from "@/lib/prompt";
 import { keluar } from "./masuk/actions";
 import { LaciSidebar } from "./laci-sidebar";
 import { TombolTema } from "./tombol-tema";
@@ -142,7 +142,7 @@ export async function Kerangka({ p, lebar = false, children }: { p: Pengguna; le
             return (
               <a key={s.id} href={`/?id=${s.id}`} className={tautan} title={`set ${s.id}`}>
                 {s.status === "gagal" && "⚠️ "}
-                {pg.tujuan} · {judulPendek(s.judulBab, s.babId)}
+                {namaTujuan(pg.tujuan)} · {judulPendek(s.judulBab, s.babId)}
                 {s.status === "proses" && <span className="text-pudar"> (proses)</span>}
               </a>
             );

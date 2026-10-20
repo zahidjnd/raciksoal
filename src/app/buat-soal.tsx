@@ -6,7 +6,7 @@ import { simpanMateri } from "./materi/actions";
 import { KartuSoal, Teks } from "./kartu-soal";
 import { KotakMateri, type MateriLama } from "./kotak-materi";
 import { FormIdentitas } from "./form-identitas";
-import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_SOAL, NAMA_BENTUK, NAMA_LEVEL_TKA, semesterDari, TKA, TUJUAN, WAKTU_BAWAAN, type Identitas, type Pengaturan } from "@/lib/prompt";
+import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_SOAL, NAMA_BENTUK, NAMA_LEVEL_TKA, namaTujuan, semesterDari, TKA, TUJUAN, WAKTU_BAWAAN, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { KELAS, pilihanAngka, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { DAFTAR_MAPEL, type IsianMateri } from "@/lib/materi";
 import { useRouter } from "next/navigation";
@@ -29,8 +29,8 @@ const ikon = (d: string) => (
 );
 const JENIS: { tujuan: (typeof TUJUAN)[number]; ket: string; ikon: React.ReactNode }[] = [
   { tujuan: "Ulangan Harian", ket: "Cek ketercapaian tiap TP dalam satu bab.", ikon: ikon("M7 4h10a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM9 13l2 2 4-4") },
-  { tujuan: "PTS", ket: "Gaya ujian resmi tengah semester, merata ke semua TP.", ikon: ikon("M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zM4 10h16M9 3v4M15 3v4") },
-  { tujuan: "PAS", ket: "Gaya ujian resmi akhir semester, merata ke semua materi.", ikon: ikon("M5 21V4h11l-2 4 2 4H5") },
+  { tujuan: "PTS", ket: "Asesmen Formatif Tengah Semester, merata ke semua TP.", ikon: ikon("M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zM4 10h16M9 3v4M15 3v4") },
+  { tujuan: "PAS", ket: "Asesmen Sumatif Akhir Semester, merata ke semua materi.", ikon: ikon("M5 21V4h11l-2 4 2 4H5") },
   { tujuan: "Latihan", ket: "Pembahasan panjang agar siswa bisa belajar mandiri.", ikon: ikon("M4 20h4L19 9l-4-4L4 16z") },
   { tujuan: "Latihan TKA", ket: "Gaya TKA pusat: soal grup, tanpa uraian.", ikon: ikon("M12 3l9 5-9 5-9-5 9-5zM5 10.5V16l7 4 7-4v-5.5") },
 ];
@@ -282,7 +282,7 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
                   className={`rounded-xl border bg-kartu p-3 text-left hover:border-pudar/40 ${pilih ? "border-hijau bg-hijau-muda/50 ring-1 ring-hijau" : ""}`}
                 >
                   <span className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-hijau-muda text-hijau-teks">{j.ikon}</span>
-                  <span className="block text-sm font-semibold">{j.tujuan}</span>
+                  <span className="block text-sm font-semibold">{namaTujuan(j.tujuan)}</span>
                   <span className="mt-0.5 block text-xs leading-snug text-pudar">{j.ket}</span>
                 </button>
               );
@@ -296,7 +296,7 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
               rows={3}
               maxLength={MAKS_CATATAN}
               aria-label="Catatan untuk AI (opsional)"
-              placeholder="Catatan untuk AI (opsional), bebas seperti chat. Mis. soal cerita tentang kehidupan pesantren; bahasa sederhana"
+              placeholder="Catatan untuk AI (opsional), bebas seperti chat. Mis. soal cerita tentang kehidupan pesantren; bahasa sederhana; dan lain-lain"
               value={p.catatan ?? ""}
               onChange={(e) => setP({ ...p, catatan: e.target.value })}
             />
