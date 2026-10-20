@@ -284,3 +284,6 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   di @layer base globals.css (`*:hover` → `gulir-tegas`). Token `gulir`/`gulir-tegas` punya nilai gelap. Tanpa ::-webkit-*.
 - 2026-10-19 LEBAR SIDEBAR: 288px (`xl:w-72`, `xl:pl-72`, footer 18rem @1280px) di layar >= 1280px; 256px di 768–1279px
   (lg:w-72 sempat dicoba: di 1024px tombol Buat soal turun baris). Peran (Admin/Guru) jadi baris kecil di bawah nama.
+- 2026-10-20 HALAMAN MASUK DIRAPIKAN: kartu di tengah layar, lingkaran "R", slogan "Racik soal lebih cepat, hasilnya
+  tetap cermat" (tanpa nama mapel, karena nanti semua mapel), "MA Al-Fatah", tombol Lihat kata sandi, pesan salah = kotak
+  merah `role="alert"`, catatan bawah cukup "Hubungi admin." (pilihan pemilik).

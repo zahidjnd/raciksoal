@@ -10,10 +10,14 @@ export default async function HalamanMasuk() {
   const [{ n }] = await db.select({ n: count() }).from(pengguna);
 
   return (
-    <main className="mx-auto max-w-sm space-y-6 p-4 pt-16">
+    <main className="mx-auto flex min-h-[85dvh] max-w-sm flex-col justify-center space-y-6 p-4">
       <div className="text-center">
+        <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-hijau font-serif text-2xl font-semibold text-white" aria-hidden>
+          R
+        </span>
         <h1 className="text-2xl">Racik Soal</h1>
-        <p className="text-sm text-pudar">Pembuat soal Al-Qur&apos;an Hadis berbantuan AI</p>
+        <p className="text-sm text-pudar">Racik soal lebih cepat, hasilnya tetap cermat</p>
+        <p className="mt-1 text-xs font-semibold tracking-wide text-hijau-teks">MA Al-Fatah</p>
       </div>
       {n === 0 ? <FormAdminPertama /> : <FormMasuk />}
     </main>
