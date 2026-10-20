@@ -8,7 +8,7 @@ import type { Bab } from "@/lib/soal";
 import { Kerangka } from "../../kepala";
 import { FormMateri } from "../form";
 
-const KOSONG: IsianMateri = { judul: "", tp: "", isi: "", dalil: [], diverifikasi: false };
+const KOSONG: IsianMateri = { mapel: "", kelas: "", judul: "", tp: "", isi: "", dalil: [], diverifikasi: false };
 
 /** /materi/baru atau /materi/12 (hanya materi milik sendiri, aturan 3). */
 export default async function UbahMateri({ params }: { params: Promise<{ id: string }> }) {

@@ -1,10 +1,19 @@
 // "Materi sendiri" milik guru (langkah 8). Tanpa import "@/..." supaya bisa dites langsung: npm test
-import { arabTakTerverifikasi, korpusArab, POLA_ARAB, type Bab } from "./soal.ts";
+import { arabTakTerverifikasi, identitasBab, KELAS, korpusArab, POLA_ARAB, type Bab } from "./soal.ts";
 
-export const BATAS_MATERI = { judul: 150, tp: 15, teksTp: 500, isiMin: 100, isi: 30000, dalil: 20, teksDalil: 3000, perGuru: 50 };
+export const BATAS_MATERI = { judul: 150, mapel: 60, tp: 15, teksTp: 500, isiMin: 100, isi: 30000, dalil: 20, teksDalil: 3000, perGuru: 50 };
+
+/** Saran isian kolom Mapel (boleh diketik lain). */
+export const DAFTAR_MAPEL = [
+  "Al-Qur'an Hadis", "Akidah Akhlak", "Fikih", "Sejarah Kebudayaan Islam", "Bahasa Arab", "Bahasa Indonesia", "Bahasa Inggris",
+  "Matematika", "Fisika", "Kimia", "Biologi", "Ekonomi", "Geografi", "Sosiologi", "Sejarah", "Pendidikan Pancasila", "Informatika",
+  "Ilmu Tafsir", "Ilmu Hadis", "Ushul Fikih", "Ilmu Kalam", "Akhlak",
+];
 
 /** Isian form "Materi Saya" (apa adanya dari browser, belum dipercaya). */
 export type IsianMateri = {
+  mapel: string;
+  kelas: string; // "X" | "XI" | "XII"
   judul: string;
   tp: string; // satu TP per baris, boleh diawali kode, mis. "TP 1.2: ..."
   isi: string;
@@ -27,6 +36,11 @@ const teks = (x: unknown) => String(x ?? "").normalize("NFC").trim();
  */
 export function rapikanMateri(x: Partial<IsianMateri>, id: string, cariAyat?: CariAyat): { bab: Bab; dihapus: string[] } | string {
   const B = BATAS_MATERI;
+  const mapel = teks(x?.mapel).replace(/\s+/g, " ");
+  if (!mapel) return "Mata pelajaran wajib diisi.";
+  if (mapel.length > B.mapel) return `Nama mata pelajaran maksimal ${B.mapel} huruf.`;
+  const kelas = teks(x?.kelas);
+  if (!KELAS.includes(kelas)) return "Pilih kelas X, XI, atau XII.";
   const judul = teks(x?.judul);
   if (!judul) return "Judul materi wajib diisi.";
   if (judul.length > B.judul) return `Judul maksimal ${B.judul} huruf.`;
@@ -71,12 +85,13 @@ export function rapikanMateri(x: Partial<IsianMateri>, id: string, cariAyat?: Ca
   if (isi.length > B.isi) return `Isi materi terlalu panjang (maksimal ${B.isi.toLocaleString("id-ID")} huruf, sekarang ${isi.length.toLocaleString("id-ID")}).`;
   const materi = isi.split("\n").map((b) => bersihkan(b.trim())).filter(Boolean);
 
-  return { bab: { id, judul: bersihkan(judul), tp, dalil, materi }, dihapus };
+  return { bab: { id, mapel: bersihkan(mapel), kelas, judul: bersihkan(judul), tp, dalil, materi }, dihapus };
 }
 
-/** Kebalikan rapikanMateri: data bab tersimpan → isian form (untuk mengedit). */
+/** Kebalikan rapikanMateri: data bab tersimpan → isian form (untuk mengedit). Materi lama tanpa mapel → identitasBab. */
 export function keIsian(bab: Bab): IsianMateri {
   return {
+    ...identitasBab(bab),
     judul: bab.judul,
     tp: bab.tp.map((t) => `${t.kode}: ${t.teks}`).join("\n"),
     isi: bab.materi.join("\n"),

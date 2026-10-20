@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { BATAS_MATERI, type IsianMateri } from "@/lib/materi";
+import { BATAS_MATERI, DAFTAR_MAPEL, type IsianMateri } from "@/lib/materi";
+import { KELAS } from "@/lib/soal";
 import { NAMA_SURAH } from "@/lib/surah";
 import { ambilAyat, cocokkanAyat, hapusMateri, simpanMateri } from "./actions";
 
@@ -114,6 +115,23 @@ export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: Isia
         {membaca && <p className={membaca.ok ? "text-hijau-teks" : "text-bahaya"}>{membaca.teks}</p>}
       </div>
 
+      <div className="grid gap-3 sm:grid-cols-[1fr_8rem]">
+        <label className="block text-sm">
+          Mata pelajaran
+          <input className={kotak} list="daftar-mapel" maxLength={BATAS_MATERI.mapel} placeholder="Contoh: Fikih" value={m.mapel} onChange={(e) => ubah({ mapel: e.target.value })} />
+          <datalist id="daftar-mapel">
+            {DAFTAR_MAPEL.map((n) => <option key={n} value={n} />)}
+          </datalist>
+        </label>
+        <label className="block text-sm">
+          Kelas
+          <select className={kotak} value={m.kelas} onChange={(e) => ubah({ kelas: e.target.value })}>
+            <option value="">Pilih</option>
+            {KELAS.map((k) => <option key={k} value={k}>{k}</option>)}
+          </select>
+        </label>
+      </div>
+
       <label className="block text-sm">
         Judul materi
         <input className={kotak} maxLength={BATAS_MATERI.judul} placeholder="Contoh: Bab I: Berbakti kepada Orang Tua" value={m.judul} onChange={(e) => ubah({ judul: e.target.value })} />
@@ -144,7 +162,7 @@ export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: Isia
         <legend className="px-1 text-sm font-semibold">Ayat & Hadis Terverifikasi</legend>
         <p className="text-xs text-pudar">
           AI tidak boleh mengarang ayat/hadis. Hanya teks Arab di kotak ini yang boleh muncul di soal. Ayat Al-Qur&apos;an diambil otomatis dari
-          data mushaf; hadis disalin dari kitab/sumber terpercaya (bukan dari PDF) dan wajib Anda periksa.
+          data mushaf; hadis disalin dari kitab/sumber terpercaya (bukan dari PDF) dan wajib Anda periksa. Mapel tanpa ayat/hadis: biarkan kosong.
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <input

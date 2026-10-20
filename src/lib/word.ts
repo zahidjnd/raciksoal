@@ -21,9 +21,8 @@ import {
   type ParagraphChild,
 } from "docx";
 import { NAMA_BENTUK, type Pengaturan } from "./prompt";
-import { POLA_ARAB, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
+import { identitasBab, POLA_ARAB, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
 
-const MAPEL = "Al-Qur'an Hadis";
 const PERINGATAN = "Soal dibuat AI, wajib diperiksa guru sebelum dipakai.";
 
 const FONT = "Times New Roman";
@@ -54,6 +53,8 @@ const PETUNJUK: Record<Bentuk, string> = {
   BS: "Pilihlah jawaban A jika pernyataan bernilai BENAR, atau jawaban B jika SALAH!",
   URAIAN: "Jawablah pertanyaan berikut dengan singkat, jelas, dan tepat!",
 };
+
+const NAMA_KELAS: Record<string, string> = { X: "Sepuluh", XI: "Sebelas", XII: "Dua Belas" };
 
 const aset = (nama: string) => readFileSync(path.join(process.cwd(), "public", "word", nama));
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
@@ -119,6 +120,7 @@ export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tangga
   });
 
   const { judul, tp } = judulAsesmen(p, tanggal);
+  const { mapel, kelas } = identitasBab(bab);
   return patchDocument({
     outputType: "nodebuffer",
     data: aset("template-soal.docx"),
@@ -126,6 +128,8 @@ export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tangga
     patches: {
       judul: { type: PatchType.PARAGRAPH, children: [new TextRun(judul)] },
       tp: { type: PatchType.PARAGRAPH, children: [new TextRun(tp)] },
+      mapel: { type: PatchType.PARAGRAPH, children: [new TextRun(mapel)] },
+      kelas: { type: PatchType.PARAGRAPH, children: [new TextRun(`${kelas} (${NAMA_KELAS[kelas]})`)] },
       isi: { type: PatchType.DOCUMENT, children: isi },
     },
   });
@@ -143,7 +147,7 @@ export function buatWordKunci(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Da
 
   const isi: (Paragraph | Table)[] = [
     tengah("KUNCI JAWABAN & PEDOMAN PENSKORAN (PEGANGAN GURU)", 26),
-    tengah(`${judul} ${MAPEL.toUpperCase()} KELAS XI (TP ${tp})`),
+    tengah(`${judul} ${identitasBab(bab).mapel.toUpperCase()} KELAS ${identitasBab(bab).kelas} (TP ${tp})`),
     tengah(`${bab.judul} | ${soal.length} soal | Total skor: ${total}`, UKURAN, false),
     par([new TextRun({ text: `⚠️ ${PERINGATAN}`, bold: true, color: "C00000" })], { alignment: AlignmentType.CENTER, spacing: { before: 120, after: 200 } }),
   ];
@@ -248,7 +252,7 @@ export function buatWordKisi(kisi: BarisKisi[], bab: Bab, p: Pengaturan, tanggal
     tengah("KISI-KISI PENULISAN SOAL", 26),
     tengah(`${judul} TAHUN PELAJARAN ${tp}`),
     par([], { spacing: { after: 120 } }),
-    par([r("Mata Pelajaran\t: ", { bold: true }), r(`${MAPEL} — Kelas XI`)], { tabStops: [{ type: TabStopType.LEFT, position: 2000 }], spacing: { after: 0 } }),
+    par([r("Mata Pelajaran\t: ", { bold: true }), r(`${identitasBab(bab).mapel} — Kelas ${identitasBab(bab).kelas}`)], { tabStops: [{ type: TabStopType.LEFT, position: 2000 }], spacing: { after: 0 } }),
     par([r("Materi\t: ", { bold: true }), r(bab.judul)], { tabStops: [{ type: TabStopType.LEFT, position: 2000 }], spacing: { after: 0 } }),
     par([r("Jumlah Soal\t: ", { bold: true }), r(kelompokKisi(kisi))], { tabStops: [{ type: TabStopType.LEFT, position: 2000 }], spacing: { after: 0 } }),
     par([r("Level Kognitif\t: ", { bold: true }), r(`LOTS ${hitung.LOTS} (${persen(hitung.LOTS)}), MOTS ${hitung.MOTS} (${persen(hitung.MOTS)}), HOTS ${hitung.HOTS} (${persen(hitung.HOTS)})`)], { tabStops: [{ type: TabStopType.LEFT, position: 2000 }], spacing: { after: 120 } }),

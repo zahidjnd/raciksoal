@@ -82,6 +82,8 @@ test("teks Arab guru dicocokkan ke mushaf: ejaan/harakat berbeda tetap ketemu, t
 
 test("aturan 5: ayat dari mushaf tidak perlu centang, hadis tetap wajib dicentang", () => {
   const isian = {
+    mapel: "Al-Qur'an Hadis",
+    kelas: "XI",
     judul: "Uji",
     tp: "TP 1.1: Memahami larangan zina",
     isi: "Isi materi ".repeat(20),

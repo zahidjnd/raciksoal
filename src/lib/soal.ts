@@ -21,6 +21,8 @@ export type Soal = {
 export type Bab = {
   id: string;
   judul: string;
+  mapel?: string; // kosong pada set/materi lama (semuanya Al-Qur'an Hadis kelas XI) → lihat identitasBab
+  kelas?: string; // "X" | "XI" | "XII"
   tp: { kode: string; teks: string }[];
   // mushaf: teks Arab diambil/dicocokkan dari data mushaf (langkah 9), bukan ketikan guru
   dalil: { id: string; sumber: string; arab: string; terjemah: string; mufradat: { arab: string; arti: string }[]; mushaf?: boolean }[];
@@ -41,6 +43,25 @@ export type BarisKisi = {
 };
 
 const URUTAN_BENTUK: Bentuk[] = ["PG", "PGK", "BS", "URAIAN"];
+
+export const KELAS = ["X", "XI", "XII"];
+
+/** Mapel & kelas sebuah bab. Data lama tanpa keduanya = Al-Qur'an Hadis kelas XI (satu-satunya mapel waktu itu). */
+export function identitasBab(bab: Pick<Bab, "mapel" | "kelas">) {
+  const kelas = String(bab.kelas ?? "").trim().split(" ")[0].toUpperCase();
+  return { mapel: bab.mapel?.trim() || "Al-Qur'an Hadis", kelas: KELAS.includes(kelas) ? kelas : "XI" };
+}
+
+/**
+ * Tanggapan AI atas catatan guru (tampil di atas hasil). Dipotong, dan teks Arab yang tidak ada di data
+ * terverifikasi dibuang (aturan 5), karena tanggapan juga tulisan AI.
+ */
+export function bersihkanTanggapan(x: unknown, bab: Bab): string {
+  const korpus = korpusArab(bab);
+  const t = String(x ?? "").trim().slice(0, 1000);
+  const asing = new Set(arabTakTerverifikasi(t, korpus));
+  return asing.size ? t.replace(new RegExp(POLA_ARAB, "g"), (p) => (asing.has(p) ? "…" : p)) : t;
+}
 
 /**
  * Rapikan kisi-kisi dari AI: jumlah baris per bentuk harus pas dengan permintaan (kelebihan dibuang),

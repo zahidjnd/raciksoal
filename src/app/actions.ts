@@ -5,7 +5,7 @@ import { db } from "@/db";
 import { hasilSoal } from "@/db/schema";
 import { daftarModel, tanyaAI } from "@/lib/ai";
 import { bagiTahap, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatPermintaanKisi, buatSistem, type Pengaturan } from "@/lib/prompt";
-import { arabTakTerverifikasi, korpusArab, LEVEL, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, terapkanBobot, type Bab, type BarisKisi, type Soal } from "@/lib/soal";
+import { arabTakTerverifikasi, bersihkanTanggapan, korpusArab, LEVEL, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, terapkanBobot, type Bab, type BarisKisi, type Soal } from "@/lib/soal";
 import { babDariSet, babMilik, daftarBabMilik } from "@/lib/bab";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
@@ -142,7 +142,8 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
   const semua: Soal[] = [];
   const mulai = Date.now();
   const dipakai = new Set<string>(); // model yang benar-benar menghasilkan soal (bisa lebih dari satu kalau cadangan dipakai)
-  const info = { detik: 0, tokenMasuk: 0, tokenKeluar: 0, catatan: [] as string[] };
+  // tanggapan: balasan AI atas catatan guru (dikirim juga ke guru, lihat cekHasil)
+  const info: { detik: number; tokenMasuk: number; tokenKeluar: number; catatan: string[]; tanggapan?: string } = { detik: 0, tokenMasuk: 0, tokenKeluar: 0, catatan: [] };
   // Prompt, jawaban mentah, waktu, dan token setiap tahap disimpan untuk perbandingan model (langkah 4).
   const simpan = (data: Partial<typeof hasilSoal.$inferInsert>) =>
     db
@@ -168,7 +169,11 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
 
   try {
     await simpan({ pesan: "Menyusun kisi-kisi" });
-    const kisi = await tanya("Kisi-kisi", buatPermintaanKisi(p), (d) => periksaKisi((d as { kisi?: unknown })?.kisi, p.jumlah, bab));
+    const { kisi, tanggapan } = await tanya("Kisi-kisi", buatPermintaanKisi(p), (d) => {
+      const isi = d as { kisi?: unknown; tanggapan?: unknown };
+      return { kisi: periksaKisi(isi?.kisi, p.jumlah, bab), tanggapan: p.catatan ? bersihkanTanggapan(isi?.tanggapan, bab) : "" };
+    });
+    if (tanggapan) info.tanggapan = tanggapan;
     await simpan({ kisi });
 
     let awal = 0;
@@ -284,20 +289,23 @@ export async function cekHasil(id: number) {
   const saya = await penggunaSaatIni();
   if (!saya) return null;
   const [h] = await db
-    .select({ guruId: hasilSoal.guruId, status: hasilSoal.status, soal: hasilSoal.soal, kisi: hasilSoal.kisi, bab: hasilSoal.bab, pesan: hasilSoal.pesan, model: hasilSoal.model, babId: hasilSoal.babId, dibuat: hasilSoal.dibuat, info: hasilSoal.info })
+    .select({ guruId: hasilSoal.guruId, status: hasilSoal.status, soal: hasilSoal.soal, kisi: hasilSoal.kisi, bab: hasilSoal.bab, pesan: hasilSoal.pesan, model: hasilSoal.model, babId: hasilSoal.babId, dibuat: hasilSoal.dibuat, info: hasilSoal.info, pengaturan: hasilSoal.pengaturan })
     .from(hasilSoal)
     .where(eq(hasilSoal.id, Number(id)));
   if (!h || !bolehAkses(h.guruId, saya)) return null;
-  const { guruId, ...isi } = h; // id pemilik tidak perlu dikirim ke browser
+  const { guruId, pengaturan, ...isi } = h; // id pemilik tidak perlu dikirim ke browser
   void guruId;
   const soal = h.soal as Soal[] | null;
   const kisi = h.kisi as BarisKisi[] | null;
+  // Catatan guru + tanggapan AI atasnya (ATURAN-SOAL.md bagian 6), untuk guru maupun admin.
+  const catatan = (pengaturan as Pengaturan).catatan || null;
+  const tanggapan = (h.info as { tanggapan?: string } | null)?.tanggapan || null;
   // Data bab (untuk menampilkan ayat & form edit) cukup dikirim saat selesai, tidak di setiap pengecekan.
   const bab = h.status === "selesai" ? (babDariSet(h) ?? null) : null;
   if (saya.peran !== "admin") {
     // Guru tidak menerima info teknis (model, waktu, token, catatan cadangan) maupun rincian error penyedia AI.
     // (halaman sudah menambahkan awalan "Gagal membuat soal:")
-    return { ...isi, soal, kisi, bab, model: null, info: null, pesan: h.status === "gagal" ? SARAN_GURU : h.pesan };
+    return { ...isi, soal, kisi, bab, catatan, tanggapan, model: null, info: null, pesan: h.status === "gagal" ? SARAN_GURU : h.pesan };
   }
-  return { ...isi, soal, kisi, bab, info: h.info as { detik: number; tokenMasuk: number; tokenKeluar: number; catatan?: string[] } | null };
+  return { ...isi, soal, kisi, bab, catatan, tanggapan, info: h.info as { detik: number; tokenMasuk: number; tokenKeluar: number; catatan?: string[] } | null };
 }

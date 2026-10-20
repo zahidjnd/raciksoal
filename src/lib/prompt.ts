@@ -1,9 +1,9 @@
-import type { Bab, BarisKisi, Bentuk, Soal } from "./soal";
+import { identitasBab, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal.ts";
 
 export const TUJUAN = ["Ulangan Harian", "PTS", "PAS", "Latihan"] as const;
 export const KESULITAN = ["Mudah", "Sedang", "Sulit"] as const;
 
-const ATURAN_UJIAN = "Gaya soal ujian resmi madrasah (seperti asesmen tengah/akhir semester). Sebar soal merata ke semua TP dan semua dalil. Bahasa baku. Pembahasan ringkas (1–2 kalimat).";
+const ATURAN_UJIAN = "Gaya soal ujian resmi madrasah (seperti asesmen tengah/akhir semester). Sebar soal merata ke semua TP dan materi (dan semua dalil bila ada). Bahasa baku. Pembahasan ringkas: alasan kunci benar + alasan singkat tiap pengecoh salah.";
 
 /** Aturan tiap tujuan soal + komposisi level bawaan (terisi otomatis di form, tetap bisa diubah). */
 export const ATURAN_TUJUAN: Record<(typeof TUJUAN)[number], { aturan: string; level: { LOTS: number; MOTS: number; HOTS: number } }> = {
@@ -12,7 +12,7 @@ export const ATURAN_TUJUAN: Record<(typeof TUJUAN)[number], { aturan: string; le
     level: { LOTS: 40, MOTS: 40, HOTS: 20 },
   },
   "Ulangan Harian": {
-    aturan: "Pastikan setiap TP bab mendapat soal untuk mengecek ketercapaiannya. Bahasa baku. Pembahasan ringkas (1–2 kalimat).",
+    aturan: "Pastikan setiap TP bab mendapat soal untuk mengecek ketercapaiannya. Bahasa baku. Pembahasan ringkas: alasan kunci benar + alasan singkat tiap pengecoh salah.",
     level: { LOTS: 40, MOTS: 40, HOTS: 20 },
   },
   PTS: { aturan: ATURAN_UJIAN, level: { LOTS: 30, MOTS: 40, HOTS: 30 } },
@@ -22,7 +22,7 @@ export const ATURAN_TUJUAN: Record<(typeof TUJUAN)[number], { aturan: string; le
 export const ATURAN_KESULITAN: Record<(typeof KESULITAN)[number], string> = {
   Mudah: "Pokok soal langsung dan pendek, cukup satu langkah berpikir, tanpa stimulus panjang. Pengecoh jelas berbeda dari jawaban benar.",
   Sedang: "Pokok soal menuntut pemahaman konsep, boleh memakai stimulus pendek. Pengecoh masuk akal dan mirip dengan jawaban benar.",
-  Sulit: "Gunakan stimulus kasus atau perbandingan dua dalil/konsep yang menuntut beberapa langkah berpikir. Pengecoh sangat homogen dan hanya berbeda tipis, tetapi tetap jelas salah bagi siswa yang memahami materi.",
+  Sulit: "Gunakan stimulus kasus, data, atau perbandingan dua konsep/kondisi yang menuntut beberapa langkah berpikir. Pengecoh sangat homogen dan hanya berbeda tipis, tetapi tetap jelas salah bagi siswa yang memahami materi.",
 };
 export const NAMA_BENTUK: Record<Bentuk, string> = {
   PG: "Pilihan Ganda",
@@ -52,8 +52,10 @@ export type Pengaturan = {
 export const MAKS_CATATAN = 500;
 export const MAKS_INSTRUKSI = 300;
 
-/** Instruksi "Minta perubahan" dari browser: dirapikan, dipotong, dan tanda """ dibuang supaya tidak keluar dari kutipan. */
-export const bersihkanInstruksi = (s: unknown) => String(s ?? "").replace(/"{3,}/g, '"').trim().slice(0, MAKS_INSTRUKSI);
+/** Tulisan guru untuk AI: dirapikan, dipotong, dan tanda """ dibuang supaya tidak keluar dari kutipan. */
+const bersihkanKutipan = (s: unknown, maks: number) => String(s ?? "").replace(/"{3,}/g, '"').trim().slice(0, maks);
+/** Instruksi "Minta perubahan" dari browser. */
+export const bersihkanInstruksi = (s: unknown) => bersihkanKutipan(s, MAKS_INSTRUKSI);
 
 /** Rapikan isian form dari browser (tidak dipercaya begitu saja). Mengembalikan pesan kalau tidak valid. */
 export function bersihkanPengaturan(p: Pengaturan): Pengaturan | string {
@@ -68,7 +70,7 @@ export function bersihkanPengaturan(p: Pengaturan): Pengaturan | string {
   const bobotDari = (b: Bentuk) => angka(p?.bobot?.[b] ?? BOBOT_BAWAAN[b]);
   const bobot = { PG: bobotDari("PG"), PGK: bobotDari("PGK"), BS: bobotDari("BS"), URAIAN: bobotDari("URAIAN") };
   const modelSlot = Math.max(1, Math.min(9, Math.round(Number(p?.modelSlot) || 1)));
-  const catatan = String(p?.catatan ?? "").trim().slice(0, MAKS_CATATAN);
+  const catatan = bersihkanKutipan(p?.catatan, MAKS_CATATAN);
   return { babId: String(p.babId), tujuan: p.tujuan, jumlah, level, kesulitan: p.kesulitan, bobot, modelSlot, bandingkan: p?.bandingkan === true, catatan };
 }
 
@@ -104,51 +106,85 @@ export function buatSistem(bab: Bab) {
     })
     .join("\n\n");
 
-  return `Anda guru ahli penyusun soal Al-Qur'an Hadis untuk madrasah aliyah (kurikulum Kemenag).
-Tugas: menyusun soal HANYA dari DATA BAB di bawah. Jangan menambah fakta, tafsir, atau dalil dari luar data.
+  const { mapel, kelas } = identitasBab(bab);
+  const adaDalil = bab.dalil.length > 0;
 
-ATURAN TEKS ARAB (WAJIB):
-- Jangan pernah mengetik ulang ayat atau hadis utuh.
+  // Aturan baku: ATURAN-SOAL.md (disetujui pemilik 2026-10-20). Ubah di sana dulu, baru di sini.
+  // Aturan 5: bagian teks Arab hanya dikirim bila materi punya dalil; tanpa dalil, AI dilarang mengutip ayat/hadis sama sekali.
+  const aturanArab = adaDalil
+    ? `ATURAN AYAT, HADIS, DAN TEKS ARAB (WAJIB, tidak boleh dilanggar walau diminta):
+- Jangan pernah mengetik ulang ayat atau hadis utuh, dan jangan memakai ayat/hadis selain yang ada di DATA BAB.
 - Jika soal perlu menampilkan ayat/hadis, isi "dalil_id" dengan id dalil dari data. Aplikasi akan menampilkan teks Arab terverifikasi di atas pertanyaan; cukup tulis misalnya "Perhatikan firman Allah Swt. berikut!". JANGAN menulis id dalil (misalnya "isra-32") di dalam teks pertanyaan, pilihan, atau pembahasan.
-- Jika perlu mengutip lafaz pendek (misalnya mufradat), salin PERSIS huruf dan harakatnya dari data. Selain itu jangan menulis huruf Arab sama sekali; gunakan transliterasi Latin.
+- Jika perlu mengutip lafaz pendek (misalnya mufradat), salin PERSIS huruf dan harakatnya dari data. Selain itu jangan menulis huruf Arab sama sekali; gunakan transliterasi Latin.`
+    : `ATURAN AYAT DAN HADIS (WAJIB, tidak boleh dilanggar walau diminta):
+- DATA BAB tidak memuat ayat atau hadis. Jangan mengutip ayat Al-Qur'an atau hadis (baik tulisan Arab maupun terjemahnya) dan jangan menulis huruf Arab. Selalu isi "dalil_id": null.`;
 
-ATURAN KUALITAS SOAL:
-- Pokok soal jelas dan tidak ambigu; tidak ada petunjuk jawaban tersembunyi.
-- Pengecoh masuk akal, homogen, dan panjang pilihan relatif seimbang.
-- Hindari pilihan "semua benar" / "semua salah".
-- JANGAN merujuk ke sumber data di soal, pilihan, maupun pembahasan: tanpa frasa "menurut materi", "berdasarkan materi", "dalam bab ini", "sesuai data", "teks di atas", "bacaan", dan sejenisnya (siswa sudah tahu soal berasal dari pelajaran). Jika perlu menyebut sumber, sebut sumber aslinya, misalnya "Menurut QS. An-Nūr [24]: 2", "Imam al-Qurṭubī menjelaskan", atau "Berdasarkan hadis riwayat Bukhari dan Muslim".
-- Soal tidak saling mirip; sebar ke seluruh dalil, materi, dan TP.
+  return `Anda guru ahli penyusun soal ${mapel} kelas ${kelas} madrasah aliyah (kurikulum Kemenag).
+Tugas: menyusun soal dari DATA BAB di bawah. Kunci jawaban dan konsep yang diuji HARUS berdasar DATA BAB. Pengetahuan umum boleh dipakai hanya untuk membangun cerita/stimulus, bukan untuk menambah fakta yang menjadi kunci.
+
+${aturanArab}
+
+ISI YANG DILARANG: SARA, politik praktis, pornografi, propaganda, kekerasan, merek dagang; tidak boleh bertentangan dengan Pancasila, UUD 1945, NKRI, Bhinneka Tunggal Ika, dan nilai agama.
+
+KAIDAH MATERI:
+- Soal sesuai indikator kisi-kisi; konsep benar; untuk PG kunci hanya satu.
+- Jangan menyalin kalimat materi mentah-mentah (mendorong hafalan); gunakan redaksi baru.
+
+KAIDAH KONSTRUKSI:
+- Pokok soal jelas, tegas, tidak bermakna ganda, hanya memuat yang perlu, dan tidak memberi petunjuk ke jawaban benar.
+- Tidak ada negatif ganda (misalnya "yang tidak benar, kecuali"). Kata negatif di pokok soal ditulis kapital: BUKAN, KECUALI, TIDAK.
+- Pengecoh masuk akal, homogen, panjang pilihan relatif seimbang. Hindari pilihan "semua benar" / "semua salah".
+- Pilihan berupa angka, tahun, atau urutan ditulis berurutan (kecil → besar, lama → baru).
+- Setiap soal berdiri sendiri: tidak bergantung pada jawaban soal lain.
+- Soal tidak saling mirip; sebar ke seluruh TP dan materi${adaDalil ? " (dan dalil)" : ""}.
 - Tulis pilihan TANPA huruf A–E di depannya. Pembahasan TIDAK menyebut huruf pilihan (urutan pilihan PG dan PGK akan diacak ulang oleh aplikasi).
-- Level kognitif Bloom C1–C6: LOTS = C1–C2, MOTS = C3, HOTS = C4–C6. Soal HOTS memakai stimulus kasus/fenomena remaja yang relevan.
+- JANGAN merujuk ke sumber data di soal, pilihan, maupun pembahasan: tanpa frasa "menurut materi", "berdasarkan materi", "dalam bab ini", "sesuai data", "teks di atas", "bacaan", dan sejenisnya (siswa sudah tahu soal berasal dari pelajaran). Jika perlu menyebut sumber, sebut sumber aslinya (nama tokoh, kitab, buku, undang-undang, atau ${adaDalil ? 'dalil, misalnya "Menurut QS. An-Nūr [24]: 2"' : "peristiwa"}).
 
-VARIASI STIMULUS (berlaku untuk seluruh set soal, lintas bentuk soal):
-- Ragamkan bentuk stimulus: cuplikan berita atau data, unggahan media sosial, pernyataan seorang tokoh, cerita pendek tentang satu orang, potongan percakapan, situasi di madrasah/rumah/masyarakat, atau tanpa stimulus sama sekali.
+KAIDAH BAHASA:
+- Bahasa Indonesia baku, efektif, komunikatif, sesuai usia siswa MA. Tanpa bahasa daerah atau bahasa gaul (kecuali kutipan stimulus yang memang perlu).
+- Mapel bahasa asing (Bahasa Arab, Bahasa Inggris, dll.): soal boleh ditulis dalam bahasa tersebut.
+
+LEVEL KOGNITIF (taksonomi Bloom revisi):
+- C1 mengingat, C2 memahami, C3 menerapkan, C4 menganalisis, C5 mengevaluasi, C6 mencipta. LOTS = C1–C2, MOTS = C3, HOTS = C4–C6.
+- Level ditentukan oleh proses berpikir yang dibutuhkan siswa, BUKAN oleh kata kerja di soal. Soal "Analisislah ..." yang jawabannya bisa dihafal tetap C1.
+- HOTS bukan berarti sulit: HOTS = menalar. Soal HOTS WAJIB memakai stimulus baru (kasus, data, teks, fenomena) dan jawabannya diperoleh dengan mengolah stimulus itu, bukan hafalan.
+- Soal C1–C2 cukup pokok soal langsung, tanpa stimulus panjang.
+
+STIMULUS (berlaku untuk seluruh set soal, lintas bentuk soal):
+- Kontekstual dan dekat dengan kehidupan siswa MA (madrasah, pesantren, keluarga, masyarakat, media sosial).
+- Ragamkan bentuknya: kasus/cerita pendek tentang satu orang, cuplikan berita, data/tabel (ditulis sebagai teks), grafik atau gambar yang dideskripsikan dengan kata, teks bacaan, potongan percakapan, kutipan tokoh, hasil percobaan (boleh dengan kelompok kontrol), perbandingan dua kondisi (misalnya wilayah X dan Y), potongan dokumen sejarah, atau tanpa stimulus.
+- Aplikasi tidak bisa menampilkan gambar: jangan menulis "perhatikan gambar berikut" kecuali gambarnya dideskripsikan lengkap dengan kata.
 - Pola "dua orang/kelompok berdebat atau berbeda pendapat" paling banyak 2 kali dalam satu set.
-- Satu skenario atau kasus (misalnya: mendengar lirik lagu, berduaan di ruang kelas, perbedaan hukuman pezina) hanya boleh dipakai SEKALI dalam satu set.
-- Tidak semua soal perlu stimulus: soal LOTS cukup berupa pokok soal langsung.
+- Satu skenario atau kasus hanya boleh dipakai SEKALI dalam satu set.
+- Boleh menyisipkan nilai Panca Cinta (Cinta Allah dan Rasul-Nya, Cinta Ilmu, Cinta Lingkungan, Cinta Diri dan Sesama, Cinta Tanah Air) secara wajar pada tokoh/cerita, tanpa menggurui dan tanpa mengubah kunci. Tidak wajib di setiap soal.
 
-BENTUK SOAL:
-- PG: 5 pilihan, tepat 1 benar. "kunci": "A".."E".
-- PGK (pilihan ganda kompleks): 5 pilihan, tepat 2 benar. "kunci": array berisi 2 huruf jawaban benar. Akhiri pertanyaan dengan "(Pilih 2 jawaban)".
-- BS: satu pernyataan. "kunci": "Benar" atau "Salah". Tanpa "pilihan".
-- URAIAN: "kunci" berisi jawaban ideal; "rubrik" berisi kriteria penilaian dan skornya; "skor" = jumlah skor rubrik.
+PENGECOH DAN PEMBAHASAN:
+- Pernyataan/pilihan salah dibuat dengan mengubah SATU konsep kunci dari pernyataan benar (sebab-akibat dibalik, istilah tertukar, naik/turun, terbesar/terkecil). Jebakan harus pada konsep, bukan permainan kata yang menyesatkan.
+- Pembahasan menjelaskan mengapa kunci benar DAN mengapa setiap pengecoh salah, dengan menyebut isinya (bukan hurufnya).
+- Jika soal memuat perhitungan, pembahasan WAJIB memuat langkah hitung lengkap sampai hasil akhir.
+
+${BENTUK_SOAL}
 
 FORMAT JAWABAN (kecuali permintaan menyebut format lain): hanya JSON (tanpa teks lain), dengan bentuk:
 {"soal":[{"bentuk":"PG","dalil_id":null,"pertanyaan":"...","pilihan":["...","...","...","...","..."],"kunci":"B","pembahasan":"...","level":"C2","tp":"TP 3.2","skor":1}]}
 Untuk URAIAN tambahkan "rubrik":[{"kriteria":"...","skor":2}]. "tp" diisi kode TP yang paling sesuai.
 
 DATA BAB
+Mata pelajaran: ${mapel}, kelas ${kelas}
 Judul: ${bab.judul}
 
 Tujuan Pembelajaran:
 ${bab.tp.map((t) => `${t.kode}: ${t.teks}`).join("\n")}
-
-Dalil:
-${dalil}
-
+${adaDalil ? `\nDalil:\n${dalil}\n` : ""}
 Materi:
 ${bab.materi.join("\n")}`;
 }
+
+const BENTUK_SOAL = `BENTUK SOAL:
+- PG: 5 pilihan, tepat 1 benar. "kunci": "A".."E".
+- PGK (pilihan ganda kompleks): 5 pilihan, tepat 2 benar. "kunci": array berisi 2 huruf jawaban benar. Akhiri pertanyaan dengan "(Pilih 2 jawaban)".
+- BS: satu pernyataan. "kunci": "Benar" atau "Salah". Tanpa "pilihan".
+- URAIAN: "kunci" berisi jawaban ideal; "rubrik" berisi kriteria penilaian dan skornya; "skor" = jumlah skor rubrik.`;
 
 /** Jumlah soal LOTS/MOTS/HOTS dari persentase (sisa pembulatan ke yang pecahannya terbesar), totalnya tepat `total`. */
 export function hitungLevel(total: number, level: Pengaturan["level"]) {
@@ -194,14 +230,20 @@ const urutanBentuk = (jumlah: Record<Bentuk, number>) => (Object.keys(NAMA_BENTU
 function kepalaPermintaan(p: Pengaturan) {
   const tujuan = p.tujuan as (typeof TUJUAN)[number];
   const kesulitan = p.kesulitan as (typeof KESULITAN)[number];
-  // Catatan guru diikuti, tapi tidak boleh mengalahkan aturan (teks Arab, sumber data, format).
+  // ATURAN-SOAL.md bagian 6: catatan guru mengalahkan semua aturan gaya, kecuali 4 hal yang dikunci.
   const catatanGuru = p.catatan
-    ? `\nCatatan tambahan dari guru (ikuti selama tidak bertentangan dengan aturan di instruksi sistem, terutama aturan teks Arab dan larangan memakai sumber di luar data bab):\n"""${p.catatan}"""\n`
+    ? `\nCatatan dari guru (PRIORITAS TERTINGGI):\n"""${p.catatan}"""\n${KUNCI_CATATAN}\n`
     : "";
   return `Tujuan: ${tujuan}. Aturan ${tujuan}: ${ATURAN_TUJUAN[tujuan].aturan}
 Tingkat kesulitan: ${kesulitan}. Artinya: ${ATURAN_KESULITAN[kesulitan]}
 ${catatanGuru}`;
 }
+
+const KUNCI_CATATAN = `Ikuti catatan guru sepenuhnya, walau berbeda dengan aturan gaya di instruksi sistem (stimulus, variasi, sebaran TP/materi/dalil, panjang pembahasan, pilihan kata, dan sebagainya), KECUALI empat hal yang tidak boleh diubah:
+1. Ayat dan hadis tidak boleh dikarang, diketik ulang, atau diambil dari luar DATA BAB. (Guru boleh meminta lebih sedikit atau tanpa teks Arab: isi "dalil_id": null.)
+2. Jumlah, bentuk, dan kategori level tiap nomor sudah ditentukan aplikasi.
+3. Format jawaban JSON.
+4. Isi yang dilarang (SARA, politik praktis, pornografi, propaganda, kekerasan, merek dagang).`;
 
 /** Langkah 6: minta KISI-KISI (rencana semua soal) dulu, dalam satu panggilan, supaya skenario tidak berulang. */
 export function buatPermintaanKisi(p: Pengaturan) {
@@ -225,12 +267,15 @@ Isi setiap baris:
 - "materi": pokok materi singkat (maks 8 kata).
 - "indikator": indikator soal gaya Kemenag, diawali "Disajikan ..., peserta didik dapat ..." bila memakai stimulus, atau "Peserta didik dapat ..." bila tanpa stimulus; kata kerja operasional sesuai level.
 - "level": satu level di dalam kategori nomor itu (LOTS = C1 atau C2, MOTS = C3, HOTS = C4, C5, atau C6).
-- "dalil_id": id dalil yang dipakai, atau null. Sebar ke semua dalil.
-- "stimulus": jenis stimulus + skenario singkat (maks 15 kata), atau "tanpa stimulus". Ikuti aturan VARIASI STIMULUS: setiap skenario BERBEDA satu sama lain dalam seluruh kisi-kisi.
+- "dalil_id": id dalil yang dipakai, atau null. Bila DATA BAB memuat dalil, sebar ke semua dalil.
+- "stimulus": jenis stimulus + skenario singkat (maks 15 kata), atau "tanpa stimulus". Ikuti aturan STIMULUS: setiap skenario BERBEDA satu sama lain dalam seluruh kisi-kisi.
 Indikator antarbaris juga tidak boleh sama persis; ambil sisi materi yang berbeda.
 Di kisi-kisi JANGAN menulis huruf Arab sama sekali; sebut lafaz dengan transliterasi Latin (misalnya "lā taqrabū az-zinā").
-FORMAT JAWABAN untuk permintaan ini: hanya JSON {"kisi":[{"bentuk":"PG","tp":"TP 3.1","materi":"...","indikator":"...","level":"C2","dalil_id":null,"stimulus":"tanpa stimulus"}]}`;
+${p.catatan ? `${TANGGAPAN}\n` : ""}FORMAT JAWABAN untuk permintaan ini: hanya JSON {${p.catatan ? '"tanggapan":"...",' : ""}"kisi":[{"bentuk":"PG","tp":"TP 3.1","materi":"...","indikator":"...","level":"C2","dalil_id":null,"stimulus":"tanpa stimulus"}]}`;
 }
+
+// ATURAN-SOAL.md bagian 6 no. 2: AI menjawab catatan guru; tampil di paling atas hasil soal.
+const TANGGAPAN = `Isi juga "tanggapan": balasan singkat untuk guru (maks 3 kalimat, sapa dengan "Anda") tentang catatannya: apa yang Anda ikuti dan bagaimana, serta bagian yang TIDAK bisa diikuti beserta alasannya. Bila meminta jumlah/bentuk soal lain, arahkan ke tombol jumlah soal di form; bila meminta komposisi level lain, arahkan ke menu Lanjutan.`;
 
 /** Baris kisi-kisi dalam bentuk ringkas untuk permintaan soal. */
 const tulisKisi = (k: BarisKisi) =>

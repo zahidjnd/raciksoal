@@ -20,11 +20,11 @@ const ikon = (d: string) => (
 const JENIS: { tujuan: (typeof TUJUAN)[number]; ket: string; ikon: React.ReactNode }[] = [
   { tujuan: "Ulangan Harian", ket: "Cek ketercapaian tiap TP dalam satu bab.", ikon: ikon("M7 4h10a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM9 13l2 2 4-4") },
   { tujuan: "PTS", ket: "Gaya ujian resmi tengah semester, merata ke semua TP.", ikon: ikon("M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zM4 10h16M9 3v4M15 3v4") },
-  { tujuan: "PAS", ket: "Gaya ujian resmi akhir semester, merata ke semua dalil.", ikon: ikon("M5 21V4h11l-2 4 2 4H5") },
+  { tujuan: "PAS", ket: "Gaya ujian resmi akhir semester, merata ke semua materi.", ikon: ikon("M5 21V4h11l-2 4 2 4H5") },
   { tujuan: "Latihan", ket: "Pembahasan panjang agar siswa bisa belajar mandiri.", ikon: ikon("M4 20h4L19 9l-4-4L4 16z") },
 ];
 /** Contoh catatan untuk AI: sekali klik mengisi kotak catatan (umum, berlaku untuk bab mana pun). */
-const CONTOH_CATATAN = ["Pakai nama santri putri", "Perbanyak soal kasus sehari-hari", "Bahasa sederhana"];
+const CONTOH_CATATAN = ["Pakai nama santri putri", "Soal cerita kehidupan pesantren", "Tanpa teks Arab", "Bahasa sederhana"];
 const BENTUK = Object.keys(NAMA_BENTUK) as Bentuk[];
 
 type Hasil = NonNullable<Awaited<ReturnType<typeof cekHasil>>>;
@@ -226,7 +226,7 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
               rows={3}
               maxLength={MAKS_CATATAN}
               aria-label="Catatan untuk AI (opsional)"
-              placeholder="Catatan untuk AI (opsional), mis. fokus pada satu ayat; pakai nama santri putri"
+              placeholder="Catatan untuk AI (opsional), bebas seperti chat. Mis. soal cerita tentang kehidupan pesantren; bahasa sederhana"
               value={p.catatan ?? ""}
               onChange={(e) => setP({ ...p, catatan: e.target.value })}
             />
@@ -370,6 +370,15 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
           <p className="rounded-lg border border-peringatan-garis bg-peringatan-muda p-3 font-semibold text-peringatan">
             ⚠️ Soal dibuat AI, wajib diperiksa guru sebelum dipakai.
           </p>
+          {hasil.catatan && (
+            <div className="space-y-1 rounded-lg border bg-kartu p-3 text-sm">
+              <p className="text-pudar">Catatan Anda: <span className="text-tinta">&ldquo;{hasil.catatan}&rdquo;</span></p>
+              <p>
+                <span className="font-semibold">Tanggapan AI:</span>{" "}
+                {hasil.tanggapan ? <Teks teks={hasil.tanggapan} /> : <span className="text-pudar">(AI tidak memberi tanggapan; periksa apakah catatan sudah diikuti.)</span>}
+              </p>
+            </div>
+          )}
           {!!hasil.info?.catatan?.length && (
             <div className="rounded-lg border border-peringatan-garis bg-peringatan-muda p-3 text-sm text-peringatan">
               <p className="font-semibold">⚠️ Model cadangan dipakai, karena model utama gagal:</p>
