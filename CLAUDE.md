@@ -309,3 +309,19 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   Uji laptop: set 44 (catatan "Tanpa teks Arab"), 45 (PGK + Kategori), 46–47 (TKA, grup), 48 (Bahasa Arab TKA),
   materi-3 "Uji: Al-Madrasah" (Bahasa Arab). Belum: hadis karangan dalam mode Bahasa Arab tidak bisa dideteksi otomatis
   (hanya dicegah lewat instruksi).
+- 2026-10-20 MATERI DI HALAMAN UTAMA (pilihan pemilik): urutan form = mapel & kelas (`PilihMapel`, `DAFTAR_MAPEL` +
+  "Lainnya", diingat di localStorage) → `KotakMateri` (src/app/kotak-materi.tsx: tempel teks / lampirkan banyak
+  .docx/.pptx / "Pakai materi sebelumnya" yang disaring mapel+kelas) → kartu jenis → kotak catatan.
+  `analisaMateri` (actions.ts): `susunDraf` (materi.ts; paragraf urut, ayat → mushaf, basmalah dibuang, Arab lain →
+  usulan hadis wajib centang, kecuali Bahasa Arab) lalu AI (`buatAnalisaMateri`) mengusulkan judul, TP, pokok,
+  sumber/terjemah; `terapkanAnalisa` hanya memakai sumber/terjemah yang TERTULIS di teks guru. Batas 30 analisa/guru/hari
+  (di memori). Draf jadi kartu yang bisa diedit; DISIMPAN OTOMATIS (`simpanMateri`) saat "Buat soal". Terjemah dalil kini
+  opsional, sumber wajib. Maks 5 materi per set (`gabungBab`: TP & dalil dinomori ulang; `hasil_soal.bab_id` =
+  "materi-3,materi-5"); harus satu mapel & kelas. BAB III BAWAAN tidak bisa dipilih lagi (`babMilik` hanya materi);
+  file JSON-nya TETAP untuk set lama. Menu "Materi saya" dihapus dari sidebar → tautan "Kelola materi" (halaman /materi
+  tetap). "Pakai materi ini lagi" di halaman hasil → `/?materi=...`.
+  IDENTITAS UJIAN: `pengaturan.identitas` {semester, tahun, tanggal, waktu} (bawaan: dari tanggal, 90 menit), panel
+  "Identitas ▾" di Buat Soal dan "Identitas ujian di kop Word" di halaman hasil (`ubahIdentitas`, tanpa AI). Nama
+  madrasah: /admin/pengaturan (tabel `pengaturan_web`, migrasi 0007; bawaan "MADRASAH ALIYAH AL-FATAH"). Kop Word
+  kini punya penanda {{sekolah}} {{hari}} {{waktu}} (skrip `--mapel-kelas` juga menambahkannya). Logo & alamat tetap.
+  Uji laptop: materi-4 Fikih "Bab 2: Thaharah" (set 49), set 50 = gabungan materi-1 + materi-5.
