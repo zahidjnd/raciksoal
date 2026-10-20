@@ -50,6 +50,13 @@
       "when": 1792070383946,
       "tag": "0006_materi",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792507631684,
+      "tag": "0007_pengaturan_web",
+      "breakpoints": true
     }
   ]
 }

@@ -4,6 +4,7 @@ import { hasilSoal } from "@/db/schema";
 import { babDariSet } from "@/lib/bab";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
+import { ambilNamaMadrasah } from "@/lib/sekolah";
 import type { Pengaturan } from "@/lib/prompt";
 import type { BarisKisi, Soal } from "@/lib/soal";
 import { buatWordKisi, buatWordKunci, buatWordSoal } from "@/lib/word";
@@ -30,7 +31,11 @@ export async function GET(req: Request) {
   const kisi = h.kisi as BarisKisi[] | null;
   if (jenis === "kisi" && !kisi?.length) return new Response("Set soal ini dibuat sebelum ada fitur kisi-kisi.", { status: 404 });
   const isi =
-    jenis === "kisi" ? await buatWordKisi(kisi!, bab, p, h.dibuat) : await (jenis === "kunci" ? buatWordKunci : buatWordSoal)(h.soal as Soal[], bab, p, h.dibuat);
+    jenis === "kisi"
+      ? await buatWordKisi(kisi!, bab, p, h.dibuat)
+      : jenis === "kunci"
+        ? await buatWordKunci(h.soal as Soal[], bab, p, h.dibuat)
+        : await buatWordSoal(h.soal as Soal[], bab, p, h.dibuat, await ambilNamaMadrasah());
   const nama = `${NAMA_FILE[jenis]} ${p.tujuan} ${bab.judul.split(":")[0]} (set ${id}).docx`;
 
   return new Response(new Uint8Array(isi), {

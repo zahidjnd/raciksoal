@@ -107,15 +107,14 @@ export async function Kerangka({ p, children }: { p: Pengguna; children: React.R
   const admin = p.peran === "admin";
   const riwayat = await ambilRiwayat(p.id, BATAS_SIDEBAR);
   const tema = (await cookies()).get("tema")?.value === "gelap" ? "gelap" : "terang";
-  const menu = [
-    { href: "/materi", label: "Materi saya" },
-    ...(admin
-      ? [
-          { href: "/admin/set", label: "Semua set" },
-          { href: "/admin/guru", label: "Kelola guru" },
-        ]
-      : []),
-  ];
+  // Materi kini dimasukkan langsung di halaman utama (2026-10-20); halaman kelolanya lewat tautan "Kelola materi" di sana.
+  const menu = admin
+    ? [
+        { href: "/admin/set", label: "Semua set" },
+        { href: "/admin/guru", label: "Kelola guru" },
+        { href: "/admin/pengaturan", label: "Pengaturan" },
+      ]
+    : [];
 
   // Tautan ke halaman utama sengaja <a> biasa (bukan Link): halaman Buat Soal membaca ?id= hanya saat dimuat.
   return (

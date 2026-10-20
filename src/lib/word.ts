@@ -20,7 +20,7 @@ import {
   WidthType,
   type ParagraphChild,
 } from "docx";
-import { NAMA_BENTUK, type Pengaturan } from "./prompt";
+import { NAMA_BENTUK, semesterDari, WAKTU_BAWAAN, type Pengaturan } from "./prompt";
 import { identitasBab, kategoriBaru, POLA_ARAB, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
 
 const PERINGATAN = "Soal dibuat AI, wajib diperiksa guru sebelum dipakai.";
@@ -86,13 +86,17 @@ const bernomor = (label: string, isi: ParagraphChild[], kiri = 400, opsi = {}) =
     ...opsi,
   });
 
+/** Judul ujian & tahun pelajaran: dari identitas ujian (diisi guru), selain itu dari tanggal pembuatan set. */
 function judulAsesmen(p: Pengaturan, tanggal: Date) {
-  const bulan = tanggal.getMonth() + 1;
-  const tahun = tanggal.getFullYear();
-  const { semester, tp } = bulan >= 7 ? { semester: "GANJIL", tp: `${tahun}/${tahun + 1}` } : { semester: "GENAP", tp: `${tahun - 1}/${tahun}` };
+  const awal = semesterDari(tanggal);
+  const semester = (p.identitas?.semester ?? awal.semester).toUpperCase();
   const judul = JUDUL[p.tujuan] ?? "SOAL";
-  return { judul: p.tujuan === "PTS" || p.tujuan === "PAS" ? `${judul} ${semester}` : judul, tp };
+  return { judul: p.tujuan === "PTS" || p.tujuan === "PAS" ? `${judul} ${semester}` : judul, tp: p.identitas?.tahun ?? awal.tahun };
 }
+
+/** "2026-12-07" → "Senin, 7 Desember 2026"; kosong → "" (diisi tangan di kertas). */
+const hariTanggal = (t?: string) =>
+  t ? new Date(`${t}T00:00:00Z`).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }) : "";
 
 /** Urutan bentuk yang ada di set, dengan nomor soal global (1, 2, 3, ...). */
 function kelompok(soal: Soal[]) {
@@ -102,7 +106,7 @@ function kelompok(soal: Soal[]) {
 }
 
 /** Lembar soal untuk siswa: kop asli format AFTS + soal 2 kolom (tanpa kunci). */
-export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Date) {
+export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Date, sekolah = "MADRASAH ALIYAH AL-FATAH") {
   const isi: (Paragraph | Table)[] = [];
   kelompok(soal).forEach(({ bentuk, butir }, k) => {
     const kategori = bentuk === "BS" && butir.some((x) => kategoriBaru(x.s));
@@ -141,6 +145,9 @@ export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tangga
       tp: { type: PatchType.PARAGRAPH, children: [new TextRun(tp)] },
       mapel: { type: PatchType.PARAGRAPH, children: [new TextRun(mapel)] },
       kelas: { type: PatchType.PARAGRAPH, children: [new TextRun(`${kelas} (${NAMA_KELAS[kelas]})`)] },
+      sekolah: { type: PatchType.PARAGRAPH, children: [new TextRun(sekolah)] },
+      hari: { type: PatchType.PARAGRAPH, children: [new TextRun(hariTanggal(p.identitas?.tanggal))] },
+      waktu: { type: PatchType.PARAGRAPH, children: [new TextRun(String(p.identitas?.waktu ?? WAKTU_BAWAAN))] },
       isi: { type: PatchType.DOCUMENT, children: isi },
     },
   });

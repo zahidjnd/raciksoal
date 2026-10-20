@@ -10,14 +10,23 @@ import re, sys, zipfile
 tujuan = "public/word/template-soal.docx"
 POLA_T = re.compile(r"(<w:t(?: [^>]*)?>)([^<]*)(</w:t>)")
 # Isi kolom identitas di format AFTS (mapel pertama sekolah = Qurdis kelas XI) → penanda
-IDENTITAS = {"Al-Qur'an Hadis": "{{mapel}}", "XI (Sebelas)": "{{kelas}}"}
+IDENTITAS = {"Al-Qur'an Hadis": "{{mapel}}", "XI (Sebelas)": "{{kelas}}", "90": "{{waktu}}", "MADRASAH ALIYAH AL-FATAH": "{{sekolah}}"}
+# Kolom isi "Hari, Tanggal" di kop asli berupa paragraf kosong (tanpa teks): sisipkan penanda {{hari}} ke dalamnya.
+PARAGRAF_HARI = re.compile(r'(<w:p w14:paraId="3B0B9CD3"[^>]*>.*?</w:pPr>)(</w:p>)', re.S)
+RUN_HARI = '<w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/></w:rPr><w:t>{{hari}}</w:t></w:r>'
 
 
 def ganti_identitas(kop):
     teks = [t[1] for t in POLA_T.findall(kop)]
-    for asli in IDENTITAS:
+    for asli, penanda in IDENTITAS.items():
+        if penanda in teks:
+            continue  # sudah diganti sebelumnya
         assert teks.count(asli) == 1, f"Teks kop '{asli}' tidak ditemukan tepat satu kali; sesuaikan skrip."
-    return POLA_T.sub(lambda m: m.group(1) + IDENTITAS.get(m.group(2), m.group(2)) + m.group(3), kop)
+    kop = POLA_T.sub(lambda m: m.group(1) + IDENTITAS.get(m.group(2), m.group(2)) + m.group(3), kop)
+    if "{{hari}}" not in kop:
+        kop, n = PARAGRAF_HARI.subn(lambda m: m.group(1) + RUN_HARI + m.group(2), kop, count=1)
+        assert n == 1, "Kolom isi 'Hari, Tanggal' di kop tidak ditemukan; sesuaikan skrip."
+    return kop
 
 
 def tulis(isi):

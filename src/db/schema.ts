@@ -105,6 +105,13 @@ export const hasilSoal = pgTable(
   (t) => [index("hasil_soal_guru_idx").on(t.guruId, t.dibuat)],
 );
 
+/** Pengaturan web yang diatur admin sekali (mis. nama madrasah di kop Word). Satu baris per kunci. */
+export const pengaturanWeb = pgTable("pengaturan_web", {
+  kunci: text("kunci").primaryKey(),
+  nilai: jsonb("nilai").notNull(),
+  diubah: timestamp("diubah", { withTimezone: true }).defaultNow().notNull(),
+});
+
 /** Materi sendiri milik guru (langkah 8). `bab` = data bab (judul, tp, dalil terverifikasi guru, materi). Aturan 3: per guru. */
 export const materi = pgTable(
   "materi",

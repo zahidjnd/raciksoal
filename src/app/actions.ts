@@ -382,12 +382,13 @@ export async function cekHasil(id: number) {
   // Catatan guru + tanggapan AI atasnya (ATURAN-SOAL.md bagian 6), untuk guru maupun admin.
   const catatan = (pengaturan as Pengaturan).catatan || null;
   const tanggapan = (h.info as { tanggapan?: string } | null)?.tanggapan || null;
+  const identitas = (pengaturan as Pengaturan).identitas ?? {}; // kop Word, bisa diubah di halaman hasil
   // Data bab (untuk menampilkan ayat & form edit) cukup dikirim saat selesai, tidak di setiap pengecekan.
   const bab = h.status === "selesai" ? (babDariSet(h) ?? null) : null;
   if (saya.peran !== "admin") {
     // Guru tidak menerima info teknis (model, waktu, token, catatan cadangan) maupun rincian error penyedia AI.
     // (halaman sudah menambahkan awalan "Gagal membuat soal:")
-    return { ...isi, soal, kisi, bab, catatan, tanggapan, model: null, info: null, pesan: h.status === "gagal" ? SARAN_GURU : h.pesan };
+    return { ...isi, soal, kisi, bab, catatan, tanggapan, identitas, model: null, info: null, pesan: h.status === "gagal" ? SARAN_GURU : h.pesan };
   }
-  return { ...isi, soal, kisi, bab, catatan, tanggapan, info: h.info as { detik: number; tokenMasuk: number; tokenKeluar: number; catatan?: string[] } | null };
+  return { ...isi, soal, kisi, bab, catatan, tanggapan, identitas, info: h.info as { detik: number; tokenMasuk: number; tokenKeluar: number; catatan?: string[] } | null };
 }

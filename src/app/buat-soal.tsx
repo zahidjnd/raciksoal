@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ambilDaftarBab, ambilDaftarModel, ambilJatah, cekHasil, mulaiBuatSoal } from "./actions";
+import { ambilDaftarBab, ambilDaftarModel, ambilJatah, cekHasil, mulaiBuatSoal, ubahIdentitas } from "./actions";
 import { simpanMateri } from "./materi/actions";
 import { KartuSoal, Teks } from "./kartu-soal";
 import { KotakMateri, type MateriLama } from "./kotak-materi";
 import { FormIdentitas } from "./form-identitas";
-import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_SOAL, NAMA_BENTUK, NAMA_LEVEL_TKA, semesterDari, TKA, TUJUAN, WAKTU_BAWAAN, type Pengaturan } from "@/lib/prompt";
+import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_SOAL, NAMA_BENTUK, NAMA_LEVEL_TKA, semesterDari, TKA, TUJUAN, WAKTU_BAWAAN, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { KELAS, pilihanAngka, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { DAFTAR_MAPEL, type IsianMateri } from "@/lib/materi";
 import { useRouter } from "next/navigation";
@@ -441,6 +441,12 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
               {` · ${soal.filter((s) => s.peringatan?.length).length} soal ditandai`}
             </p>
             <p className="text-xs text-pudar">File Word di bilah bawah selalu mengikuti isi terbaru, termasuk soal yang diedit atau diganti.</p>
+            {/* Set dari materi (bukan set lama dari bab bawaan): buat set baru dengan materi yang sama. Muat penuh, lihat komentar di kepala.tsx. */}
+            {hasil.babId.split(",").every((b) => /^materi-\d+$/.test(b)) && (
+              <a href={`/?materi=${hasil.babId}`} className="inline-block text-sm text-hijau-teks underline">
+                Pakai materi ini lagi untuk set baru
+              </a>
+            )}
           </div>
           <p className="rounded-lg border border-peringatan-garis bg-peringatan-muda p-3 font-semibold text-peringatan">
             ⚠️ Soal dibuat AI, wajib diperiksa guru sebelum dipakai.
@@ -521,6 +527,8 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
             ))
           )}
 
+          <IdentitasHasil key={id} id={id!} awal={hasil.identitas} />
+
           {/* Tombol unduh menempel di bawah layar. File Word selalu mengikuti isi terbaru (termasuk editan). */}
           <div className="sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center gap-2 border-t border-garis bg-krem px-4 py-2 md:-mx-8 md:px-8">
             <span className="text-sm font-semibold">Unduh<span className="hidden sm:inline"> Word</span>:</span>
@@ -564,6 +572,38 @@ function PilihMapel({ mapel, kelas, ubah }: { mapel: string; kelas: string; ubah
         <option value="">Kelas</option>
         {KELAS.map((k) => <option key={k} value={k}>Kelas {k}</option>)}
       </select>
+    </div>
+  );
+}
+
+/** Halaman hasil: identitas ujian (kop Word) bisa diubah kapan saja tanpa membuat soal ulang (tanpa AI). */
+function IdentitasHasil({ id, awal }: { id: number; awal: Identitas }) {
+  const [buka, setBuka] = useState(false);
+  const [nilai, setNilai] = useState<Identitas>(awal);
+  const [pesan, setPesan] = useState("");
+  const [proses, setProses] = useState(false);
+  async function simpan() {
+    setProses(true);
+    const r = await ubahIdentitas(id, nilai).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
+    setProses(false);
+    setPesan(r.ok ? "Tersimpan. Unduh ulang Word untuk melihat perubahannya." : r.pesan);
+  }
+  return (
+    <div className="rounded-xl border bg-kartu p-3 text-sm">
+      <button className="font-semibold" aria-expanded={buka} onClick={() => setBuka(!buka)}>
+        Identitas ujian di kop Word {buka ? "▴" : "▾"}
+      </button>
+      {buka && (
+        <div className="mt-3 space-y-3">
+          <FormIdentitas nilai={nilai} ubah={setNilai} />
+          <div className="flex flex-wrap items-center gap-2">
+            <button className="h-8 rounded-lg bg-hijau px-3 font-semibold text-white disabled:opacity-50 max-md:min-h-11" disabled={proses} onClick={simpan}>
+              {proses ? "Menyimpan..." : "Simpan identitas"}
+            </button>
+            {pesan && <span className="text-pudar">{pesan}</span>}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
