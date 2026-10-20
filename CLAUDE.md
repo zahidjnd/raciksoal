@@ -288,3 +288,24 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   tetap cermat" (tanpa nama mapel, karena nanti semua mapel), ikon mata (SVG) lihat kata sandi, pesan salah = kotak
   merah `role="alert"`, catatan bawah cukup "Hubungi admin." Tanpa nama madrasah dan tanpa catatan Tanzil (disembunyikan
   lewat `body:has(#halaman-masuk) > footer` di globals.css; halaman ini tidak memuat teks Al-Qur'an). Pilihan pemilik.
+- 2026-10-20 ATURAN BAKU SOAL: `ATURAN-SOAL.md` (disetujui pemilik, semua mapel MA + gaya TKA). Ubah aturan di sana dulu,
+  baru di `buatSistem` (prompt.ts). Dikerjakan bertahap A–F (commit terpisah, BELUM di-push, uji coba guru lain
+  menunggu semua tuntas):
+  B: instruksi AI universal (`identitasBab`: mapel & kelas dari bab; data lama tanpa mapel = Qurdis XI); aturan dalil
+  hanya dikirim bila materi punya dalil (tanpa dalil: AI dilarang mengutip ayat/hadis). Materi saya: kolom Mapel (+ saran
+  `DAFTAR_MAPEL`) & Kelas wajib. Kop Word: penanda {{mapel}}/{{kelas}} (`scripts/buat-template-word.py --mapel-kelas`).
+  Catatan guru = PRIORITAS TERTINGGI kecuali 4 kunci (`KUNCI_CATATAN`); AI membalas `tanggapan` di panggilan kisi-kisi
+  → `info.tanggapan` → kotak "Tanggapan AI" di atas hasil (guru juga melihatnya). """ dibuang dari catatan.
+  C: pilihan yang semuanya angka (`pilihanAngka`, format Indonesia) DIURUTKAN, tidak diacak; PGK 2 atau 3 kunci
+  (`KUNCI_PGK`), petunjuk "(Pilih semua jawaban yang tepat)", penskoran PGK & Kategori 1/0 (semua benar = skor penuh).
+  D: kode bentuk "BS" dipertahankan, tapi soal baru = PG kompleks KATEGORI: `pernyataan` (4), `label` (salah satu
+  `LABEL_KATEGORI`), `kunci` array label. `kategoriBaru(s)` membedakan dari B/S lama (1 pernyataan) yang tetap tampil.
+  E: jenis "Latihan TKA" (`TKA`): tanpa uraian (ditolak server), level bernama Pemahaman/Penerapan/Penalaran.
+  Soal grup: nomor grup dari `rencanaGrup` (aplikasi, bukan AI), wacana ditulis AI di jawaban kisi-kisi
+  (`pasangWacana`), disalin ke `grup`/`wacana` tiap soal & baris kisi; edit wacana ikut ke seluruh grup; ganti/ubah soal
+  tetap di grupnya. Grup hanya dalam satu bentuk.
+  F: Materi saya "Teks Arab: dalil / Bahasa Arab" (`bab.teksArab = "bahasa"`): Arab boleh ditulis AI, tapi potongan
+  yang dikenali `mushaf().cari` sebagai ayat dan tidak persis data terverifikasi tetap ditandai (`pemeriksaArab`).
+  Uji laptop: set 44 (catatan "Tanpa teks Arab"), 45 (PGK + Kategori), 46–47 (TKA, grup), 48 (Bahasa Arab TKA),
+  materi-3 "Uji: Al-Madrasah" (Bahasa Arab). Belum: hadis karangan dalam mode Bahasa Arab tidak bisa dideteksi otomatis
+  (hanya dicegah lewat instruksi).

@@ -186,6 +186,9 @@ dokumen resmi Pusmendik tidak bisa dibuka dari sini).
 5. Stimulus: bacaan, grafik/tabel (dideskripsikan dengan kata), data percobaan, kasus nyata.
 6. 🆕 Di aplikasi: kartu jenis **"Latihan TKA"** = bentuk PG / PGK / Kategori saja, bawaan 25 soal,
    label level memakai nama TKA, soal grup aktif.
+   Penyederhanaan (2026-10-20): satu grup hanya berisi soal **berbentuk sama** (lembar soal tetap per bagian bentuk),
+   dan nomor grup ditentukan aplikasi (separuh soal tiap bentuk, di akhir bagian, 2–3 soal per grup), karena AI
+   mengabaikan perintah "kira-kira separuh". AI hanya menulis wacananya.
 
 ## 10. Aturan tambahan dari contoh try out TKA Biologi (disetujui 2026-10-20)
 
