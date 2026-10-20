@@ -11,6 +11,7 @@ import { namaTujuan, type Pengaturan } from "@/lib/prompt";
 import { keluar } from "./masuk/actions";
 import { LaciSidebar } from "./laci-sidebar";
 import { TombolTema } from "./tombol-tema";
+import paket from "../../package.json";
 
 /** Ringkas alasan kegagalan: buang "Tahap n:" dan isi JSON panjang dari penyedia AI. */
 const ringkas = (t: string) =>
@@ -160,7 +161,8 @@ export async function Kerangka({ p, lebar = false, children }: { p: Pengguna; le
             </span>
             <span className="min-w-0 leading-tight">
               <span className="block truncate">{p.nama}</span>
-              <span className="block text-xs text-pudar">{admin ? "Admin" : "Guru"}</span>
+              {/* Nomor versi (package.json, lihat CATATAN-VERSI.md): kalau guru melapor masalah, versinya langsung terlihat. */}
+              <span className="block text-xs text-pudar">{admin ? "Admin" : "Guru"} · v{paket.version}</span>
             </span>
           </Link>
           <TombolTema awal={tema} />

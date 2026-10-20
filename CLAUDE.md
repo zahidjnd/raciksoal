@@ -49,6 +49,10 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
 - Sebelum mengubah banyak file, jelaskan rencananya dulu dan minta persetujuan.
 - Minta AI membalas dalam **format JSON terstruktur**, bukan teks bebas, supaya soal bisa diedit per butir dan diekspor.
 - Simpan prompt dan nama model yang dipakai pada setiap hasil, untuk keperluan membandingkan kualitas.
+- VERSI (sejak 2026-10-20, mulai 0.8.0): sebelum setiap push, naikkan versi (`npm version X.Y.Z --no-git-tag-version`;
+  Z = perbaikan kecil, Y = fitur baru), tulis perubahannya dalam bahasa sederhana di `CATATAN-VERSI.md`, commit, beri
+  penanda git `vX.Y.Z`, lalu kabari pemilik versinya. Nomor versi tampil di sidebar (dari package.json).
+  0.9.0 = setelah daftar "Persiapan menuju 0.9.0" di CATATAN-VERSI.md beres (siap uji coba guru); 1.0.0 = dipakai resmi.
 - Kalau terjadi error, jelaskan penyebabnya dengan bahasa sederhana sebelum memperbaiki.
 
 ## Urutan pembangunan
