@@ -31,6 +31,9 @@ export type Bab = {
   judul: string;
   mapel?: string; // kosong pada set/materi lama (semuanya Al-Qur'an Hadis kelas XI) → lihat identitasBab
   kelas?: string; // "X" | "XI" | "XII"
+  // Tahap F: "bahasa" = teks Arab adalah isi pelajaran (mis. Bahasa Arab), boleh ditulis AI; yang mirip ayat tetap dijaga.
+  // Kosong/"dalil" = semua teks Arab wajib persis data terverifikasi (aturan 5).
+  teksArab?: "dalil" | "bahasa";
   tp: { kode: string; teks: string }[];
   // mushaf: teks Arab diambil/dicocokkan dari data mushaf (langkah 9), bukan ketikan guru
   dalil: { id: string; sumber: string; arab: string; terjemah: string; mufradat: { arab: string; arti: string }[]; mushaf?: boolean }[];
@@ -97,10 +100,9 @@ export function identitasBab(bab: Pick<Bab, "mapel" | "kelas">) {
  * Tanggapan AI atas catatan guru (tampil di atas hasil). Dipotong, dan teks Arab yang tidak ada di data
  * terverifikasi dibuang (aturan 5), karena tanggapan juga tulisan AI.
  */
-export function bersihkanTanggapan(x: unknown, bab: Bab): string {
-  const korpus = korpusArab(bab);
+export function bersihkanTanggapan(x: unknown, bab: Bab, cekAyat?: CekAyat): string {
   const t = String(x ?? "").trim().slice(0, 1000);
-  const asing = new Set(arabTakTerverifikasi(t, korpus));
+  const asing = new Set(pemeriksaArab(bab, cekAyat)(t));
   return asing.size ? t.replace(new RegExp(POLA_ARAB, "g"), (p) => (asing.has(p) ? "…" : p)) : t;
 }
 
@@ -109,17 +111,17 @@ export function bersihkanTanggapan(x: unknown, bab: Bab): string {
  * diurutkan PG → PGK → BS → URAIAN dan diberi nomor. Dalil yang tidak ada di data bab dikosongkan.
  * Melempar error kalau ada bentuk yang kurang (supaya model cadangan dicoba).
  */
-export function periksaKisi(data: unknown, jumlah: Record<Bentuk, number>, bab: Bab): BarisKisi[] {
+export function periksaKisi(data: unknown, jumlah: Record<Bentuk, number>, bab: Bab, cekAyat?: CekAyat): BarisKisi[] {
   const teks = (x: unknown) => String(x ?? "").trim();
   const mentah = Array.isArray(data) ? (data as Partial<BarisKisi>[]) : [];
   const dalilAda = new Set(bab.dalil.map((d) => d.id));
-  const korpus = korpusArab(bab);
+  const arabAsingDi = pemeriksaArab(bab, cekAyat);
   const hasil = URUTAN_BENTUK.flatMap((b) => {
     const baris = mentah.filter((k) => teks(k?.bentuk).toUpperCase() === b).slice(0, jumlah[b]);
     if (baris.length < jumlah[b]) throw new Error(`kisi-kisi ${b} hanya ${baris.length} dari ${jumlah[b]} baris.`);
     return baris.map((k) => {
       const isi = { materi: teks(k.materi), indikator: teks(k.indikator), stimulus: teks(k.stimulus) };
-      const arabAsing = Object.values(isi).flatMap((t) => arabTakTerverifikasi(t, korpus));
+      const arabAsing = Object.values(isi).flatMap(arabAsingDi);
       return {
         no: 0,
         bentuk: b,
@@ -141,7 +143,7 @@ export function periksaKisi(data: unknown, jumlah: Record<Bentuk, number>, bab: 
  * bentuk sama dan nomor grup sama, dan wacananya ada. Selebihnya jadi soal tunggal. Grup dinomori ulang 1, 2, ...
  * `kisi[i].grup` = nomor grup usulan AI (dari periksaKisi). Teks Arab di wacana dicek (aturan 5).
  */
-export function pasangWacana(kisi: BarisKisi[], wacana: unknown, bab: Bab): BarisKisi[] {
+export function pasangWacana(kisi: BarisKisi[], wacana: unknown, bab: Bab, cekAyat?: CekAyat): BarisKisi[] {
   const teksWacana = new Map<number, string>();
   for (const w of Array.isArray(wacana) ? wacana : []) {
     const t = String((w as { teks?: unknown })?.teks ?? "").trim().slice(0, 3000);
@@ -149,7 +151,7 @@ export function pasangWacana(kisi: BarisKisi[], wacana: unknown, bab: Bab): Bari
     if (t && Number.isInteger(g)) teksWacana.set(g, t);
   }
   const g = kisi.map((k) => k.grup ?? NaN);
-  const korpus = korpusArab(bab);
+  const arabAsingDi = pemeriksaArab(bab, cekAyat);
   const hasil = kisi.map((k) => ({ ...k, grup: null as number | null, wacana: undefined as string | undefined }));
   let nomor = 0;
   for (let i = 0; i < hasil.length; ) {
@@ -158,7 +160,7 @@ export function pasangWacana(kisi: BarisKisi[], wacana: unknown, bab: Bab): Bari
     const teks = teksWacana.get(g[i]);
     if (j > i && teks) {
       nomor++;
-      const arab = arabTakTerverifikasi(teks, korpus);
+      const arab = arabAsingDi(teks);
       for (let x = i; x <= j; x++) {
         hasil[x] = { ...hasil[x], grup: nomor, wacana: teks };
         if (arab.length) hasil[x].peringatan = [...(hasil[x].peringatan ?? []), `Teks Arab di wacana tidak cocok dengan data terverifikasi: ${arab.join(" | ")}`];
@@ -190,6 +192,20 @@ export const korpusArab = (bab: Bab) => rapikan(JSON.stringify(bab));
 /** Potongan teks Arab yang TIDAK ada persis (huruf + harakat) di data terverifikasi. Harus kosong. */
 export function arabTakTerverifikasi(teks: string, korpus: string): string[] {
   return (teks.match(new RegExp(POLA_ARAB, "g")) ?? []).filter((p) => !korpus.includes(rapikan(p)));
+}
+
+/** "Apakah teks Arab ini potongan ayat Al-Qur'an?" (server: mushaf().cari). Disuntikkan supaya file ini tetap bisa dites. */
+export type CekAyat = (arab: string) => boolean;
+
+/**
+ * Penjaga teks Arab sebuah bab (aturan 5): mengembalikan potongan Arab yang harus ditandai.
+ * Mode "dalil": semua Arab yang tidak persis data terverifikasi. Mode "bahasa" (mapel Bahasa Arab): Arab bebas,
+ * KECUALI yang dikenali sebagai ayat Al-Qur'an (`cekAyat`) tetapi tidak persis data terverifikasi.
+ */
+export function pemeriksaArab(bab: Bab, cekAyat?: CekAyat) {
+  const korpus = korpusArab(bab);
+  if (bab.teksArab !== "bahasa") return (t: string) => arabTakTerverifikasi(t, korpus);
+  return (t: string) => arabTakTerverifikasi(t, korpus).filter((p) => cekAyat?.(p) ?? false);
 }
 
 export const LEVEL = ["C1", "C2", "C3", "C4", "C5", "C6"];
@@ -261,8 +277,8 @@ export function bersihkanKodeDalil(teks: string, idDalil: Set<string>) {
 }
 
 /** Beri peringatan pada soal yang bermasalah. Aturan 5: teks Arab hanya boleh dari data terverifikasi. */
-export function periksaSoal(soal: Soal[], bab: Bab): Soal[] {
-  const korpus = korpusArab(bab);
+export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
+  const arabAsingDi = pemeriksaArab(bab, cekAyat);
   const dalilAda = new Set(bab.dalil.map((d) => d.id));
   return soal.map((asli) => {
     // Bersihkan kode dalil yang bocor; kalau AI lupa mengisi dalil_id, pakai kode yang ditemukan di teks.
@@ -282,8 +298,9 @@ export function periksaSoal(soal: Soal[], bab: Bab): Soal[] {
     if (!s.dalil_id && ditemukan) s.dalil_id = ditemukan;
     const peringatan: string[] = [];
     const semuaTeks = [s.wacana ?? "", s.pertanyaan, ...(s.pilihan ?? []), ...(s.pernyataan ?? []), ...[s.kunci].flat(), s.pembahasan, ...(s.rubrik ?? []).map((r) => r.kriteria)];
-    const arabAsing = semuaTeks.flatMap((t) => arabTakTerverifikasi(String(t ?? ""), korpus));
-    if (arabAsing.length) peringatan.push(`Teks Arab tidak cocok dengan data terverifikasi: ${arabAsing.join(" | ")}`);
+    const arabAsing = semuaTeks.flatMap((t) => arabAsingDi(String(t ?? "")));
+    if (arabAsing.length)
+      peringatan.push(`${bab.teksArab === "bahasa" ? "Teks Arab mirip ayat Al-Qur'an tetapi" : "Teks Arab"} tidak cocok dengan data terverifikasi: ${arabAsing.join(" | ")}`);
     if (s.dalil_id && !dalilAda.has(s.dalil_id)) peringatan.push(`Dalil "${s.dalil_id}" tidak ada di data bab.`);
     if ((s.bentuk === "PG" || s.bentuk === "PGK") && s.pilihan?.length !== 5) peringatan.push("Jumlah pilihan bukan 5.");
     if (s.bentuk === "PGK" && !KUNCI_PGK.includes(new Set([s.kunci].flat()).size)) peringatan.push("Kunci PG kompleks harus 2 atau 3 jawaban.");

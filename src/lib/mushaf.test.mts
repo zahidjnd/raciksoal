@@ -101,3 +101,10 @@ test("aturan 5: ayat dari mushaf tidak perlu centang, hadis tetap wajib dicentan
   assert.ok(typeof rapikanMateri({ ...isian, dalil: [...isian.dalil, hadis], diverifikasi: true }, "x", m.cari) !== "string");
   assert.match(String(rapikanMateri({ ...isian, dalil: [{ ...isian.dalil[0], terjemah: "" }] }, "x", m.cari)), /terjemah wajib/);
 });
+
+test("mode Bahasa Arab: kalimat Arab sehari-hari tidak dianggap ayat, ayat (beda harakat/ejaan) dikenali", () => {
+  const m = mushaf();
+  for (const kalimat of ["ذَهَبَ الطَّالِبُ إِلَى الْمَدْرَسَةِ", "هَذَا كِتَابٌ جَدِيْدٌ", "أَيْنَ تَسْكُنُ يَا أَحْمَدُ؟", "أَنَا أُحِبُّ اللُّغَةَ الْعَرَبِيَّةَ"])
+    assert.equal(m.cari(kalimat), null, kalimat);
+  assert.ok(m.cari("ولا تقربوا الزنى انه كان فاحشة")); // QS Al-Isra: 32 tanpa harakat
+});

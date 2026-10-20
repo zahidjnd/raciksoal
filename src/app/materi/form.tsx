@@ -54,8 +54,10 @@ export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: Isia
       if (!cocok) throw new Error("Sesi masuk sudah berakhir. Muat ulang halaman lalu masuk lagi.");
       const ada = new Set(m.dalil.map((d) => d.arab.trim()));
       const hasil: IsianMateri["dalil"] = [];
+      const arabIsi: string[] = []; // mode Bahasa Arab: teks Arab bukan ayat = isi pelajaran, masuk ke Isi materi
       r.arab.forEach((arab, i) => {
         const c = cocok[i];
+        if (!c && m.teksArab === "bahasa") return void arabIsi.push(arab);
         const d = c === "basmalah" ? null : c ? { ...c, terjemah: "", mushaf: true } : { sumber: "", arab, terjemah: "", usulan: true };
         if (d && !ada.has(d.arab)) {
           hasil.push(d);
@@ -68,7 +70,7 @@ export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: Isia
       setM({
         ...m,
         judul: m.judul || f.name.replace(/\.(docx|pptx)$/i, ""),
-        isi: [m.isi.trim(), r.teks.join("\n")].filter(Boolean).join("\n\n"),
+        isi: [m.isi.trim(), [...r.teks, ...arabIsi].join("\n")].filter(Boolean).join("\n\n"),
         dalil: [...m.dalil, ...baru],
         // Aturan 5: ada usulan teks Arab baru (bukan ayat mushaf) → guru wajib memeriksa & mencentang ulang.
         diverifikasi: nUsulan ? false : m.diverifikasi,
@@ -118,7 +120,14 @@ export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: Isia
       <div className="grid gap-3 sm:grid-cols-[1fr_8rem]">
         <label className="block text-sm">
           Mata pelajaran
-          <input className={kotak} list="daftar-mapel" maxLength={BATAS_MATERI.mapel} placeholder="Contoh: Fikih" value={m.mapel} onChange={(e) => ubah({ mapel: e.target.value })} />
+          <input
+            className={kotak}
+            list="daftar-mapel"
+            maxLength={BATAS_MATERI.mapel}
+            placeholder="Contoh: Fikih"
+            value={m.mapel}
+            onChange={(e) => ubah({ mapel: e.target.value, ...(/bahasa arab/i.test(e.target.value) && { teksArab: "bahasa" as const }) })}
+          />
           <datalist id="daftar-mapel">
             {DAFTAR_MAPEL.map((n) => <option key={n} value={n} />)}
           </datalist>
@@ -131,6 +140,24 @@ export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: Isia
           </select>
         </label>
       </div>
+
+      <fieldset className="space-y-1 text-sm">
+        <legend>Teks Arab di materi ini</legend>
+        {(
+          [
+            ["dalil", "Dalil (ayat & hadis)", "Semua teks Arab dijaga ketat: hanya yang ada di kotak Ayat & Hadis Terverifikasi. Untuk Qurdis, Fikih, Akidah Akhlak, SKI, dan mapel umum."],
+            ["bahasa", "Bahasa Arab", "Teks Arab adalah isi pelajaran: AI boleh menulis kosakata dan kalimat Arab. Ayat Al-Qur'an tetap dijaga (yang mirip ayat tapi tidak ada di kotak terverifikasi ditandai merah)."],
+          ] as const
+        ).map(([nilai, judul, ket]) => (
+          <label key={nilai} className="flex items-start gap-2">
+            <input type="radio" name="teks-arab" className="mt-1" checked={m.teksArab === nilai} onChange={() => ubah({ teksArab: nilai })} />
+            <span>
+              <span className="font-semibold">{judul}</span>
+              <span className="block text-xs text-pudar">{ket}</span>
+            </span>
+          </label>
+        ))}
+      </fieldset>
 
       <label className="block text-sm">
         Judul materi
@@ -153,8 +180,10 @@ export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: Isia
         Isi materi
         <textarea dir="auto" className={kotak} rows={12} placeholder="Tempel ringkasan materi di sini (dari buku, modul, atau PPT)." value={m.isi} onChange={(e) => ubah({ isi: e.target.value })} />
         <span className={`text-xs ${m.isi.length > BATAS_MATERI.isi ? "font-semibold text-bahaya" : "text-pudar"}`}>
-          {m.isi.length.toLocaleString("id-ID")}/{BATAS_MATERI.isi.toLocaleString("id-ID")} huruf. Teks Arab di sini hanya dipakai bila sama persis dengan
-          ayat/hadis di kotak bawah; selebihnya dibuang otomatis.
+          {m.isi.length.toLocaleString("id-ID")}/{BATAS_MATERI.isi.toLocaleString("id-ID")} huruf.{" "}
+          {m.teksArab === "bahasa"
+            ? "Teks Arab di sini dipakai sebagai isi pelajaran (jangan menempel ayat/hadis di sini; taruh di kotak bawah)."
+            : "Teks Arab di sini hanya dipakai bila sama persis dengan ayat/hadis di kotak bawah; selebihnya dibuang otomatis."}
         </span>
       </label>
 

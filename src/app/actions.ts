@@ -5,12 +5,16 @@ import { db } from "@/db";
 import { hasilSoal } from "@/db/schema";
 import { daftarModel, tanyaAI } from "@/lib/ai";
 import { bagiTahap, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatPermintaanKisi, buatSistem, rencanaGrup, TKA, type Pengaturan } from "@/lib/prompt";
-import { arabTakTerverifikasi, bersihkanTanggapan, korpusArab, LEVEL, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, terapkanBobot, type Bab, type BarisKisi, type Soal } from "@/lib/soal";
+import { bersihkanTanggapan, LEVEL, pemeriksaArab, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, terapkanBobot, type Bab, type BarisKisi, type Soal } from "@/lib/soal";
 import { babDariSet, babMilik, daftarBabMilik } from "@/lib/bab";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
+import { mushaf } from "@/lib/mushaf";
 
 const SESI_HABIS = "Sesi masuk sudah berakhir. Muat ulang halaman lalu masuk lagi.";
+// Materi mode "bahasa" (Bahasa Arab): teks Arab yang dikenali sebagai ayat tetap ditandai (aturan 5). Mushaf dimuat
+// hanya saat dipakai, yaitu untuk materi mode "bahasa".
+const cekAyat = (arab: string) => !!mushaf().cari(arab);
 // Aturan 4: batas pembuatan per guru per hari (admin tidak dibatasi per guru),
 // plus batas total seluruh web sebagai pengaman saldo AI. Set yang GAGAL tidak dihitung.
 const BATAS_PER_GURU = 10;
@@ -169,13 +173,13 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
 
   try {
     await simpan({ pesan: "Menyusun kisi-kisi" });
-    const { kisi, tanggapan } = await tanya("Kisi-kisi", buatPermintaanKisi(p), (d) => {
+    const { kisi, tanggapan } = await tanya("Kisi-kisi", buatPermintaanKisi(p, bab),(d) => {
       const isi = d as { kisi?: unknown; tanggapan?: unknown; wacana?: unknown };
       // Wacana soal grup hanya untuk Latihan TKA; jenis lain: semua soal tunggal.
       // Nomor grup dari rencana aplikasi (rencanaGrup), bukan dari AI; AI hanya menulis wacananya.
       const grup = p.tujuan === TKA ? rencanaGrup(p.jumlah) : [];
-      const kisi = pasangWacana(periksaKisi(isi?.kisi, p.jumlah, bab).map((k, i) => ({ ...k, grup: grup[i] ?? null })), p.tujuan === TKA ? isi?.wacana : null, bab);
-      return { kisi, tanggapan: p.catatan ? bersihkanTanggapan(isi?.tanggapan, bab) : "" };
+      const kisi = pasangWacana(periksaKisi(isi?.kisi, p.jumlah, bab, cekAyat).map((k, i) => ({ ...k, grup: grup[i] ?? null })), p.tujuan === TKA ? isi?.wacana : null, bab, cekAyat);
+      return { kisi, tanggapan: p.catatan ? bersihkanTanggapan(isi?.tanggapan, bab, cekAyat) : "" };
     });
     if (tanggapan) info.tanggapan = tanggapan;
     await simpan({ kisi });
@@ -191,7 +195,7 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
       const soal = await tanya(`Tahap ${i + 1}`, pengguna, (d) => ambilSoal(d, baris.length));
       semua.push(...soal.map((s, j) => samakanDenganKisi(s, baris[j])));
     }
-    const soal = periksaSoal(semua, bab);
+    const soal = periksaSoal(semua, bab, cekAyat);
     ratakanKunci(soal);
     if (p.bobot) terapkanBobot(soal, p.bobot);
     await simpan({ status: "selesai", soal, pesan: null, model: [...dipakai].join(" + ") });
@@ -223,7 +227,7 @@ export async function simpanSoal(id: number, no: number, isian: Soal) {
     if (typeof set === "string") return { ok: false as const, pesan: set };
     const lama = set.soal[no];
     // Nomor grup tetap dari server (bukan dari browser); hanya teks wacananya yang boleh diedit guru.
-    const [soal] = periksaSoal([rapikanSoal({ ...isian, grup: lama.grup }, lama.bentuk)], set.bab);
+    const [soal] = periksaSoal([rapikanSoal({ ...isian, grup: lama.grup }, lama.bentuk)], set.bab, cekAyat);
     set.soal[no] = soal;
     // TP/level yang diubah guru ikut ke baris kisi-kisinya, supaya kisi-kisi tetap cocok dengan soal.
     const kisi = set.h.kisi as BarisKisi[] | null;
@@ -281,7 +285,7 @@ export async function gantiSatuSoal(id: number, no: number, instruksiMentah?: st
     void _g;
     void _w;
     const hasilUbah = { ...isiBaru, ...grupLama, bentuk: lama.bentuk, level: LEVEL.includes(baru.level) ? baru.level : lama.level, tp: bab.tp.some((t) => t.kode === baru.tp) ? baru.tp : lama.tp };
-    const [soal] = periksaSoal([ubah ? hasilUbah : baris ? samakanDenganKisi(baru, baris) : { ...isiBaru, ...grupLama, bentuk: lama.bentuk }], bab);
+    const [soal] = periksaSoal([ubah ? hasilUbah : baris ? samakanDenganKisi(baru, baris) : { ...isiBaru, ...grupLama, bentuk: lama.bentuk }], bab, cekAyat);
     if (!ubah) ratakanKunci([soal]); // posisi kunci PG/PGK diacak (tidak saat "ubah", supaya guru tidak bingung)
     if (p.bobot) terapkanBobot([soal], p.bobot);
     set.soal[no] = soal;
@@ -289,7 +293,7 @@ export async function gantiSatuSoal(id: number, no: number, instruksiMentah?: st
     // (aturan 5: teks berisi Arab yang tidak terverifikasi tidak dipakai)
     const aman = (x: unknown) => {
       const t = String(x ?? "").trim();
-      return t && !arabTakTerverifikasi(t, korpusArab(bab)).length ? t : null;
+      return t && !pemeriksaArab(bab, cekAyat)(t).length ? t : null;
     };
     if (kisi && baris) {
       kisi[no] = { ...baris, stimulus: aman(stimulus) ?? baris.stimulus };

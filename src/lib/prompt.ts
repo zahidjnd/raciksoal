@@ -120,7 +120,12 @@ export function buatSistem(bab: Bab) {
 
   // Aturan baku: ATURAN-SOAL.md (disetujui pemilik 2026-10-20). Ubah di sana dulu, baru di sini.
   // Aturan 5: bagian teks Arab hanya dikirim bila materi punya dalil; tanpa dalil, AI dilarang mengutip ayat/hadis sama sekali.
-  const aturanArab = adaDalil
+  const bahasaArab = bab.teksArab === "bahasa";
+  const aturanArab = bahasaArab
+    ? `ATURAN AYAT, HADIS, DAN TEKS ARAB (WAJIB, tidak boleh dilanggar walau diminta):
+- Di mapel ini teks Arab adalah isi pelajaran: soal, pilihan, pernyataan, dan pembahasan BOLEH memakai kalimat/kosakata Arab buatan sendiri, berharakat lengkap dan benar sesuai kaidah.
+- Tetapi ayat Al-Qur'an dan hadis TIDAK BOLEH ditulis, dikutip, atau dikarang${adaDalil ? `, kecuali lewat "dalil_id" dari DATA BAB (aplikasi menampilkan teks terverifikasinya; jangan mengetiknya ulang dan jangan menulis id dalil di teks)` : ""}. Contoh kalimat jangan diambil dari ayat atau hadis.`
+    : adaDalil
     ? `ATURAN AYAT, HADIS, DAN TEKS ARAB (WAJIB, tidak boleh dilanggar walau diminta):
 - Jangan pernah mengetik ulang ayat atau hadis utuh, dan jangan memakai ayat/hadis selain yang ada di DATA BAB.
 - Jika soal perlu menampilkan ayat/hadis, isi "dalil_id" dengan id dalil dari data. Aplikasi akan menampilkan teks Arab terverifikasi di atas pertanyaan; cukup tulis misalnya "Perhatikan firman Allah Swt. berikut!". JANGAN menulis id dalil (misalnya "isra-32") di dalam teks pertanyaan, pilihan, atau pembahasan.
@@ -281,7 +286,9 @@ const KUNCI_CATATAN = `Ikuti catatan guru sepenuhnya, walau berbeda dengan atura
 4. Isi yang dilarang (SARA, politik praktis, pornografi, propaganda, kekerasan, merek dagang).`;
 
 /** Langkah 6: minta KISI-KISI (rencana semua soal) dulu, dalam satu panggilan, supaya skenario tidak berulang. */
-export function buatPermintaanKisi(p: Pengaturan) {
+export function buatPermintaanKisi(p: Pengaturan, bab?: Pick<Bab, "teksArab">) {
+  // Mode "bahasa" (Bahasa Arab): kosakata/kalimat Arab boleh ditulis; selain itu semua Arab ditulis dengan transliterasi.
+  const tanpaArab = bab?.teksArab !== "bahasa";
   const urutan = urutanBentuk(p.jumlah);
   const total = urutan.reduce((n, b) => n + p.jumlah[b], 0);
   // Rencana per nomor, diringkas jadi rentang: "Nomor 1–6: PG, LOTS (C1–C2)".
@@ -306,14 +313,14 @@ Isi setiap baris:
 - "dalil_id": id dalil yang dipakai, atau null. Bila DATA BAB memuat dalil, sebar ke semua dalil.
 - "stimulus": jenis stimulus + skenario singkat (maks 15 kata), atau "tanpa stimulus". Ikuti aturan STIMULUS: setiap skenario BERBEDA satu sama lain dalam seluruh kisi-kisi.
 Indikator antarbaris juga tidak boleh sama persis; ambil sisi materi yang berbeda.
-Di kisi-kisi JANGAN menulis huruf Arab sama sekali; sebut lafaz dengan transliterasi Latin (misalnya "lā taqrabū az-zinā").
-${p.tujuan === TKA ? `${SOAL_GRUP}\n` : ""}${p.catatan ? `${TANGGAPAN}\n` : ""}FORMAT JAWABAN untuk permintaan ini: hanya JSON {${p.catatan ? '"tanggapan":"...",' : ""}"kisi":[{"bentuk":"PG","tp":"TP 3.1","materi":"...","indikator":"...","level":"C2","dalil_id":null,"stimulus":"tanpa stimulus"${p.tujuan === TKA ? ',"grup":null' : ""}}]${p.tujuan === TKA ? ',"wacana":[{"grup":1,"teks":"..."}]' : ""}}`;
+${tanpaArab ? 'Di kisi-kisi JANGAN menulis huruf Arab sama sekali; sebut lafaz dengan transliterasi Latin (misalnya "lā taqrabū az-zinā").' : "Di kisi-kisi boleh menulis kosakata/kalimat Arab buatan sendiri, tetapi JANGAN menulis ayat atau hadis."}
+${p.tujuan === TKA ? `${SOAL_GRUP}${tanpaArab ? " Wacana tanpa huruf Arab." : " Wacana boleh berbahasa Arab, tetapi bukan ayat atau hadis."}\n` : ""}${p.catatan ? `${TANGGAPAN}\n` : ""}FORMAT JAWABAN untuk permintaan ini: hanya JSON {${p.catatan ? '"tanggapan":"...",' : ""}"kisi":[{"bentuk":"PG","tp":"TP 3.1","materi":"...","indikator":"...","level":"C2","dalil_id":null,"stimulus":"tanpa stimulus"${p.tujuan === TKA ? ',"grup":null' : ""}}]${p.tujuan === TKA ? ',"wacana":[{"grup":1,"teks":"..."}]' : ""}}`;
 }
 
 // ATURAN-SOAL.md bagian 9 no. 4: soal grup TKA. Dibatasi bentuk sama supaya lembar soal tetap per bagian bentuk.
 const SOAL_GRUP = `SOAL GRUP (gaya TKA): nomor yang ditandai GRUP N di atas SUDAH DITENTUKAN sebagai soal grup: semua nomor dengan GRUP yang sama memakai SATU wacana bersama.
 - Isi "grup" setiap baris dengan nomor grupnya, atau null untuk soal tunggal. Soal dalam satu grup mengukur indikator yang berbeda.
-- WAJIB tulis wacana setiap grup di "wacana": teks lengkap 80–200 kata yang belum pernah dibaca siswa (bacaan, data/tabel ditulis sebagai teks, kasus, atau hasil percobaan), tanpa huruf Arab.
+- WAJIB tulis wacana setiap grup di "wacana": teks lengkap 80–200 kata yang belum pernah dibaca siswa (bacaan, data/tabel ditulis sebagai teks, kasus, atau hasil percobaan).
 - "stimulus" baris grup diisi "wacana grup N".`;
 
 // ATURAN-SOAL.md bagian 6 no. 2: AI menjawab catatan guru; tampil di paling atas hasil soal.

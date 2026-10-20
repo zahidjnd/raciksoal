@@ -14,6 +14,7 @@ export const DAFTAR_MAPEL = [
 export type IsianMateri = {
   mapel: string;
   kelas: string; // "X" | "XI" | "XII"
+  teksArab: "dalil" | "bahasa"; // Tahap F: "bahasa" untuk mapel yang teks Arabnya isi pelajaran (Bahasa Arab)
   judul: string;
   tp: string; // satu TP per baris, boleh diawali kode, mis. "TP 1.2: ..."
   isi: string;
@@ -63,9 +64,12 @@ export function rapikanMateri(x: Partial<IsianMateri>, id: string, cariAyat?: Ca
   const dalil = dalilMentah.map(({ mushaf, ...d }, i) => ({ id: `dalil-${i + 1}`, ...d, mufradat: [], ...(mushaf && { mushaf }) }));
 
   // Buang teks Arab yang tidak berasal dari kotak ayat/hadis terverifikasi.
+  // Mode "bahasa" (Bahasa Arab): teks Arab materi adalah isi pelajaran, jadi dipertahankan; ayat tetap dijaga saat soal dibuat.
+  const bahasa = x?.teksArab === "bahasa";
   const korpus = korpusArab({ id: "", judul: "", tp: [], materi: [], dalil });
   const dihapus: string[] = [];
   const bersihkan = (t: string) => {
+    if (bahasa) return t;
     const asing = new Set(arabTakTerverifikasi(t, korpus));
     dihapus.push(...asing);
     return asing.size ? t.replace(new RegExp(POLA_ARAB, "g"), (p) => (asing.has(p) ? "" : p)).replace(/[ \t]{2,}/g, " ").trim() : t;
@@ -85,13 +89,14 @@ export function rapikanMateri(x: Partial<IsianMateri>, id: string, cariAyat?: Ca
   if (isi.length > B.isi) return `Isi materi terlalu panjang (maksimal ${B.isi.toLocaleString("id-ID")} huruf, sekarang ${isi.length.toLocaleString("id-ID")}).`;
   const materi = isi.split("\n").map((b) => bersihkan(b.trim())).filter(Boolean);
 
-  return { bab: { id, mapel: bersihkan(mapel), kelas, judul: bersihkan(judul), tp, dalil, materi }, dihapus };
+  return { bab: { id, mapel: bersihkan(mapel), kelas, ...(bahasa && { teksArab: "bahasa" as const }), judul: bersihkan(judul), tp, dalil, materi }, dihapus };
 }
 
 /** Kebalikan rapikanMateri: data bab tersimpan → isian form (untuk mengedit). Materi lama tanpa mapel → identitasBab. */
 export function keIsian(bab: Bab): IsianMateri {
   return {
     ...identitasBab(bab),
+    teksArab: bab.teksArab === "bahasa" ? "bahasa" : "dalil",
     judul: bab.judul,
     tp: bab.tp.map((t) => `${t.kode}: ${t.teks}`).join("\n"),
     isi: bab.materi.join("\n"),

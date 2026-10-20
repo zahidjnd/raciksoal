@@ -338,6 +338,22 @@ test("Latihan TKA: tanpa uraian, kisi-kisi meminta soal grup + wacana; grup sah 
   assert.equal(rapikanSoal({ ...s, grup: undefined }, "PG").wacana, undefined);
 });
 
+test("mode Bahasa Arab: kalimat Arab buatan boleh, yang dikenali sebagai ayat tetap ditandai; materi tidak dibuang Arabnya", () => {
+  const babArab: Bab = { id: "materi-9", mapel: "Bahasa Arab", kelas: "X", teksArab: "bahasa", judul: "Al-Madrasah", tp: [{ kode: "TP 1", teks: "t" }], dalil: [], materi: ["ذَهَبَ الطَّالِبُ إِلَى الْمَدْرَسَةِ"] };
+  const ayat = bab.dalil[0].arab; // dianggap ayat oleh pemeriksa palsu di bawah
+  const cekAyat = (a: string) => ayat.includes(a) || a.includes(ayat.slice(0, 20));
+  const s: Soal = { bentuk: "PG", dalil_id: null, pertanyaan: "مَا مَعْنَى كَلِمَةِ الْكِتَابُ؟", pilihan: ["a", "b", "c", "d", "e"], kunci: "A", pembahasan: "", level: "C1", tp: "TP 1", skor: 2 };
+  assert.deepEqual(periksaSoal([s], babArab, cekAyat)[0].peringatan, []);
+  assert.equal(periksaSoal([{ ...s, pembahasan: ayat }], babArab, cekAyat)[0].peringatan!.length, 1);
+  assert.equal(periksaSoal([s], { ...babArab, teksArab: undefined }, cekAyat)[0].peringatan!.length, 1); // mode dalil: semua Arab dijaga
+  assert.ok(buatSistem(babArab).includes("BOLEH memakai kalimat/kosakata Arab") && buatSistem(babArab).includes("TIDAK BOLEH ditulis"));
+  assert.ok(!buatPermintaanKisi({ babId: "x", tujuan: "PAS", kesulitan: "Sedang", jumlah: { PG: 1, PGK: 0, BS: 0, URAIAN: 0 }, level: { LOTS: 30, MOTS: 40, HOTS: 30 } }, babArab).includes("JANGAN menulis huruf Arab sama sekali"));
+  const isian = { mapel: "Bahasa Arab", kelas: "X", teksArab: "bahasa" as const, judul: "Al-Madrasah", tp: "Peserta didik mampu membaca", isi: `ذَهَبَ الطَّالِبُ إِلَى الْمَدْرَسَةِ ${"latihan membaca. ".repeat(10)}`, dalil: [], diverifikasi: false };
+  const r = rapikanMateri(isian, "x");
+  assert.ok(typeof r !== "string" && r.bab.materi[0].includes("الطَّالِبُ") && r.bab.teksArab === "bahasa" && r.dihapus.length === 0);
+  assert.equal(keIsian((r as { bab: Bab }).bab).teksArab, "bahasa");
+});
+
 test("ratakanKunci tidak mengubah soal yang kuncinya tidak valid", () => {
   const s: Soal = { bentuk: "PGK", dalil_id: null, pertanyaan: "x", kunci: ["A"], pilihan: ["a", "b", "c", "d", "e"], pembahasan: "", level: "C1", tp: "TP 3.1", skor: 1 };
   ratakanKunci([s]);
