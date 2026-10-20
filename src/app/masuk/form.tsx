@@ -12,14 +12,19 @@ function KataSandi({ label, ...props }: { label: string } & React.InputHTMLAttri
     <label className="block text-sm">
       {label}
       <span className="relative mt-1 block">
-        <input {...props} type={lihat ? "text" : "password"} required className="w-full rounded-lg border p-2 pr-24" />
+        <input {...props} type={lihat ? "text" : "password"} required className="w-full rounded-lg border p-2 pr-11" />
         <button
           type="button"
           onClick={() => setLihat(!lihat)}
-          aria-pressed={lihat}
-          className="absolute inset-y-0 right-0 px-3 text-xs font-semibold text-hijau-teks"
+          aria-label={lihat ? "Sembunyikan kata sandi" : "Lihat kata sandi"}
+          title={lihat ? "Sembunyikan kata sandi" : "Lihat kata sandi"}
+          className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-pudar hover:text-tinta"
         >
-          {lihat ? "Sembunyikan" : "Lihat"}
+          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+            <circle cx="12" cy="12" r="3" />
+            {lihat && <path d="M3 3l18 18" />}
+          </svg>
         </button>
       </span>
     </label>

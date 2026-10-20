@@ -111,6 +111,10 @@ body {
 
 /* Sidebar diam di kiri (16rem sampai 1279px, 18rem di laptop >= 1280px seperti claude.ai), jadi tulisan sumber Tanzil di kaki
    halaman ikut digeser ke area isi. Samakan dengan md:w-64 / xl:w-72 di laci-sidebar.tsx & md:pl-64 / xl:pl-72 di kepala.tsx. */
+/* Halaman masuk dibuat bersih (pilihan pemilik): tidak menampilkan teks Al-Qur'an, jadi catatan Tanzil tidak perlu di sini. */
+body:has(#halaman-masuk) > footer {
+  display: none;
+}
 @media (min-width: 768px) {
   body:has(aside[aria-label="Menu"]) > footer {
     padding-left: 16rem;
