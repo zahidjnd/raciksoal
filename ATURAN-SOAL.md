@@ -1,0 +1,217 @@
+# Aturan Penyusunan Soal — Madrasah Aliyah, semua mapel
+
+**Status: DISETUJUI pemilik (2026-10-20), termasuk semua usulan, yang ditunda, bagian TKA (bagian 9),
+dan 3 aturan tambahan dari contoh try out (bagian 10).** Isi file ini menjadi aturan baku
+yang diberikan ke AI setiap kali membuat soal.
+
+Tanda di dokumen ini:
+- ✅ = sudah dijalankan aplikasi sekarang
+- 🆕 = aturan baru yang diusulkan masuk ke aplikasi
+- ⚠️ = sumbernya tidak seragam / perlu keputusan pemilik
+
+> Catatan sumber: dokumen resmi Kemenag tentang penulisan butir soal **tidak ditemukan utuh di internet**.
+> Isi di bawah dirangkum dari panduan penyusunan soal Asesmen Madrasah yang beredar, kaidah Puspendik,
+> taksonomi Bloom revisi, dan panduan Kurikulum Berbasis Cinta (Kemenag 2025). Daftar sumber ada di bagian akhir.
+
+---
+
+## 1. Taksonomi Bloom revisi (Anderson & Krathwohl)
+
+### 1a. Enam level proses berpikir
+| Level | Nama | Siswa diminta... | Contoh kata kerja |
+|---|---|---|---|
+| C1 | Mengingat | mengenali / menyebut kembali | menyebutkan, mendefinisikan, mengidentifikasi |
+| C2 | Memahami | menjelaskan makna dengan kata sendiri | menjelaskan, mencontohkan, menyimpulkan, membandingkan |
+| C3 | Menerapkan | memakai konsep/prosedur pada situasi baru | menerapkan, menghitung, menentukan, mendemonstrasikan |
+| C4 | Menganalisis | memecah informasi, mencari hubungan, sebab-akibat | menganalisis, membedakan, menghubungkan, menelaah |
+| C5 | Mengevaluasi | menilai dengan alasan/kriteria | menilai, mengkritik, membuktikan, memutuskan |
+| C6 | Mencipta | menyusun gagasan/rencana/solusi baru | merancang, merumuskan, menyusun, mengusulkan |
+
+### 1b. Pengelompokan level (dipakai di madrasah)
+| Kelompok | Level Bloom | Level Puspendik | Ciri |
+|---|---|---|---|
+| LOTS | C1–C2 | L1 Pengetahuan & pemahaman | bisa dijawab dengan hafalan/pemahaman langsung |
+| MOTS | C3 | L2 Aplikasi | menerapkan konsep ke situasi yang mirip pelajaran |
+| HOTS | C4–C6 | L3 Penalaran | butuh menalar; tidak cukup hafalan |
+
+✅ Pembagian ini sudah dipakai aplikasi. ⚠️ Ada sumber yang memasukkan C3 ke LOTS (hanya 2 kelompok);
+aplikasi tetap memakai 3 kelompok karena umum di kisi-kisi madrasah.
+
+### 1c. Aturan penting tentang level (sering keliru)
+1. 🆕 **Kata kerja di soal BUKAN penentu level.** Yang menentukan adalah proses berpikir yang dibutuhkan siswa.
+   Soal "Analisislah ..." yang jawabannya bisa dihafal tetap C1.
+2. 🆕 **HOTS ≠ sulit.** HOTS = menalar. Soal hafalan yang rumit tetap LOTS; soal HOTS bisa saja mudah.
+   (Di aplikasi, "Tingkat kesulitan" dan "Level" adalah dua pengaturan yang berbeda.)
+3. ✅ **Soal HOTS wajib memakai stimulus** yang belum pernah dibaca siswa (kasus, data, teks, fenomena),
+   dan jawabannya harus diperoleh dengan mengolah stimulus itu.
+4. 🆕 **Soal C1–C2 tidak perlu stimulus panjang.** Pokok soal langsung lebih baik.
+
+### 1d. Dimensi pengetahuan (opsional)
+Bloom revisi juga membagi jenis pengetahuan: faktual, konseptual, prosedural, metakognitif.
+⚠️ Belum dipakai di aplikasi. Usul: **tidak ditambahkan dulu** (kisi-kisi madrasah umumnya hanya mencantumkan level C1–C6).
+
+---
+
+## 2. Kaidah umum penulisan soal (semua mapel, semua bentuk)
+
+### 2a. Materi
+1. ✅ Soal sesuai indikator di kisi-kisi.
+2. ✅ Konsep benar; jawaban benar berdasar materi bab.
+3. 🆕 Pengetahuan umum boleh dipakai untuk **cerita/stimulus**, tetapi **kunci jawaban harus berdasar materi bab**.
+4. 🆕 Tidak memuat SARA, politik praktis, pornografi, propaganda, kekerasan, atau merek dagang;
+   tidak bertentangan dengan Pancasila, UUD 1945, NKRI, Bhinneka Tunggal Ika, dan nilai agama.
+5. 🆕 Tidak menyalin kalimat buku/materi mentah-mentah (mendorong hafalan); gunakan redaksi baru.
+
+### 2b. Konstruksi
+1. ✅ Pokok soal jelas, tegas, tidak bermakna ganda.
+2. ✅ Pokok soal tidak memberi petunjuk ke jawaban benar.
+3. 🆕 Tidak ada **negatif ganda** (contoh salah: "Berikut ini yang tidak benar, kecuali ...").
+4. 🆕 Kata negatif di pokok soal (BUKAN, KECUALI, TIDAK) ditulis **huruf kapital** supaya tidak terlewat.
+5. ✅ Pokok soal dan pilihan hanya memuat yang perlu.
+6. ✅ Tidak memakai pilihan "semua benar" / "semua salah".
+7. ✅ Panjang pilihan relatif sama.
+8. 🆕 **Pilihan berupa angka/tahun/urutan disusun berurutan** (kecil → besar, lama → baru), dan **tidak diacak**.
+9. 🆕 Soal tidak bergantung pada jawaban soal lain.
+10. ✅ Soal dalam satu set tidak saling mirip; sebar ke semua TP dan materi.
+
+### 2c. Bahasa
+1. 🆕 Bahasa Indonesia baku, efektif, komunikatif, sesuai usia siswa MA.
+2. 🆕 Tidak memakai bahasa daerah atau bahasa gaul (kecuali kutipan dalam stimulus yang memang perlu).
+3. 🆕 Mapel bahasa (Bahasa Arab, Bahasa Inggris): soal boleh ditulis dalam bahasa tersebut.
+4. ✅ Tidak memakai frasa yang merujuk ke sumber data ("menurut materi", "teks di atas", dsb.);
+   bila perlu sumber, sebut sumber aslinya.
+
+---
+
+## 3. Aturan per bentuk soal (jenjang MA, kelas 10–12)
+
+| Bentuk | Aturan | Di aplikasi sekarang |
+|---|---|---|
+| **Pilihan Ganda (PG)** | 5 pilihan (A–E), tepat 1 benar; pengecoh homogen & masuk akal | ✅ sesuai |
+| **PG Kompleks — jawaban ganda (MCMA)** | 5 pilihan, lebih dari satu benar tapi tidak semua | 🆕 **2 atau 3 benar**, sesuai soal. Petunjuk: **"(Pilih semua jawaban yang tepat)"**, tanpa menyebut jumlah (sama dengan TKA) |
+| **PG Kompleks — Kategori (dulu "Benar/Salah")** | satu stimulus + **4 pernyataan**, tiap pernyataan dinilai dengan sepasang label | 🆕 label: Benar/Salah, Fakta/Opini, Sesuai/Tidak Sesuai, Tepat/Tidak Tepat, atau Didukung/Tidak Didukung |
+| **Menjodohkan** | 5 premis; jawaban di lajur kanan lebih banyak dari premis | belum ada. Usul: **ditunda** |
+| **Isian / jawaban singkat** | jawaban berupa kata, frasa, angka, atau simbol | belum ada. Usul: **ditunda** |
+| **Uraian** | menuntut jawaban terurai; wajib ada **pedoman penskoran (rubrik)** | ✅ sesuai |
+
+Penskoran resmi: PG, PGK, menjodohkan, isian = 1/0 per butir. ✅ Aplikasi memakai **bobot dari form**
+(bawaan AFTS: PG 2, PGK 5, B/S 3, Uraian 8), dan itu tetap dipertahankan karena sesuai format madrasah.
+
+---
+
+## 4. Stimulus
+
+1. ✅ Stimulus kontekstual: dekat dengan kehidupan siswa MA (madrasah, pesantren, keluarga, masyarakat, media sosial).
+2. 🆕 Ragam stimulus diperluas untuk semua mapel: kasus/cerita, berita, data/tabel, grafik (dideskripsikan dengan kata),
+   teks bacaan, percakapan, kutipan tokoh, hasil percobaan, peta/denah (dideskripsikan), potongan dokumen sejarah.
+3. 🆕 **Satu stimulus boleh dipakai untuk beberapa soal berurutan** ("soal grup"), umum di asesmen madrasah dan inti TKA.
+   Dipakai di jenis **Latihan TKA** (bagian 9).
+4. ✅ Satu skenario hanya dipakai sekali per set; pola "dua orang berbeda pendapat" maks 2 kali.
+5. 🆕 Gambar belum bisa dibuat aplikasi → AI **dilarang** menulis "perhatikan gambar berikut" kecuali gambarnya dideskripsikan dengan kata.
+
+### 4a. Nilai Kurikulum Berbasis Cinta (Kemenag 2025)
+Panduan KBC (Kepdirjen Pendis 6077/2025) memuat **Panca Cinta**: Cinta Allah dan Rasul-Nya, Cinta Ilmu,
+Cinta Lingkungan, Cinta Diri dan Sesama, Cinta Tanah Air.
+🆕 Usul: **stimulus boleh menyisipkan nilai-nilai ini secara wajar** (tokoh yang peduli lingkungan, santri yang tekun
+belajar, dsb.), **tanpa menggurui** dan **tanpa mengubah kunci jawaban**. Tidak wajib di setiap soal.
+
+---
+
+## 5. Aturan khusus yang AKTIF sesuai isi materi
+
+| Kondisi materi | Aturan |
+|---|---|
+| Ada **dalil** (ayat/hadis) di kotak terverifikasi | ✅ AI **tidak boleh mengetik ayat/hadis**; cukup menyebut kode dalil, teks Arab ditempel aplikasi dari data terverifikasi; dijaga penjaga ayat (aturan keras no. 5 CLAUDE.md) |
+| **Tidak ada dalil** | 🆕 aturan dalil tidak dikirim ke AI sama sekali |
+| Materi **hitungan** (Matematika, Fisika, Kimia, Ekonomi, Faraid, dsb.) | 🆕 pembahasan wajib memuat **langkah hitung**; pilihan angka diurutkan, tidak diacak; peringatan tambahan: "periksa hitungan" |
+| Mapel **Bahasa Arab** | ⚠️ teks Arab adalah isi pelajaran, bukan dalil. Usul: pilihan di Materi Saya "Teks Arab: **dalil** (dijaga ketat) / **bahasa** (bebas)" |
+
+---
+
+## 6. Catatan guru untuk AI (kolom prompt)
+
+1. 🆕 Catatan guru **diikuti sepenuhnya** dan mengalahkan semua aturan di bagian 2–5, **kecuali 3 kunci**:
+   - **Kunci 1:** ayat dan hadis tidak boleh dikarang/ditambah dari luar data terverifikasi
+     (guru boleh minta *lebih sedikit* atau *tanpa* teks Arab).
+   - **Kunci 2:** jumlah dan bentuk soal mengikuti form.
+   - **Kunci 3:** format jawaban (JSON) — teknis, tidak terlihat guru.
+   Selain itu, aturan bagian 2a no. 4 (SARA, pornografi, dsb.) juga tetap berlaku.
+2. 🆕 AI wajib menulis **tanggapan singkat** atas catatan guru: apa yang dituruti, apa yang tidak, dan alasannya.
+   Tanggapan tampil di **paling atas hasil soal**.
+3. Batas 500 huruf tetap. Placeholder diganti agar umum untuk semua mapel.
+
+---
+
+## 7. Yang selalu ada di setiap hasil (tidak berubah)
+
+- ✅ Peringatan: "Soal dibuat AI, wajib diperiksa guru sebelum dipakai."
+- ✅ Kisi-kisi disusun dulu, baru soal.
+- ✅ Komposisi level per nomor ditentukan aplikasi, bukan AI.
+- ✅ Prompt dan nama model disimpan di setiap hasil.
+
+---
+
+## 8. Ringkasan perubahan yang diusulkan ke aplikasi
+
+| No | Perubahan | Ukuran kerja |
+|---|---|---|
+| 1 | Instruksi AI dibuat umum: "guru ahli {mapel} kelas {kelas}"; kolom Mapel & Kelas di Materi Saya | sedang |
+| 2 | Aturan dalil hanya dikirim bila materi punya dalil | kecil |
+| 3 | Tambah kaidah baru: negatif ganda, kata negatif kapital, SARA/politik/pornografi, tidak menyalin buku, bahasa baku | kecil |
+| 4 | Penjelasan level: kata kerja bukan penentu, HOTS ≠ sulit, C1–C2 tanpa stimulus panjang | kecil |
+| 5 | Pilihan angka diurutkan, tidak diacak | kecil |
+| 6 | PG kompleks: 2 atau 3 jawaban benar, petunjuk "Pilih semua jawaban yang tepat" | sedang (pengacak kunci & Word ikut) |
+| 7 | B/S jadi Kategori: 1 stimulus + 4 pernyataan, label bervariasi | besar (tampilan, Word, skor ikut berubah) |
+| 8 | Materi hitungan: langkah hitung di pembahasan | kecil |
+| 9 | Pilihan "Teks Arab: dalil / bahasa" untuk Bahasa Arab | sedang |
+| 10 | Catatan guru jadi prioritas + kotak tanggapan AI di atas hasil | sedang |
+| 11 | Nilai Panca Cinta boleh disisipkan di stimulus | kecil |
+| 12 | Kartu jenis **Latihan TKA** + soal grup (bagian 9) | besar |
+| 13 | Tiga aturan dari contoh try out (bagian 10) | kecil |
+| — | Ditunda: menjodohkan, isian, dimensi pengetahuan | — |
+
+---
+
+## 9. Gaya TKA (Tes Kemampuan Akademik, SMA/MA)
+
+Dasar: Peraturan Kepala BSKAP No. 045/H/AN/2025 tentang Kerangka Asesmen TKA (dirangkum dari artikel yang mengutipnya;
+dokumen resmi Pusmendik tidak bisa dibuka dari sini).
+
+1. Mata uji: wajib Bahasa Indonesia, Matematika, Bahasa Inggris; pilihan 2 dari 19 (Fisika, Kimia, Biologi, Ekonomi,
+   Sejarah, PPKn, Geografi, Sosiologi, **Bahasa Arab**, dll.). **Tidak ada mapel agama** di TKA.
+2. Hanya 3 bentuk: **PG sederhana**, **PG kompleks MCMA**, **PG kompleks Kategori**. Tidak ada uraian.
+3. Level kognitif: **Pemahaman / Penerapan / Penalaran** (= LOTS / MOTS / HOTS di aplikasi ini).
+4. Jenis soal: **soal tunggal** dan **soal grup** (satu stimulus untuk ±2–4 soal berurutan; bentuk dalam satu grup
+   boleh campur, kompetensi yang diukur berbeda).
+5. Stimulus: bacaan, grafik/tabel (dideskripsikan dengan kata), data percobaan, kasus nyata.
+6. 🆕 Di aplikasi: kartu jenis **"Latihan TKA"** = bentuk PG / PGK / Kategori saja, bawaan 25 soal,
+   label level memakai nama TKA, soal grup aktif.
+
+## 10. Aturan tambahan dari contoh try out TKA Biologi (disetujui 2026-10-20)
+
+1. 🆕 Pernyataan salah pada MCMA dan Kategori dibuat dengan **mengubah satu konsep kunci** dari pernyataan benar
+   (sebab-akibat dibalik, istilah tertukar, naik/turun, terbesar/terkecil). Jebakan harus pada konsep,
+   bukan permainan kata yang menyesatkan.
+2. 🆕 **Pembahasan menjelaskan kunci DAN alasan setiap pengecoh salah** (semua bentuk PG).
+3. 🆕 Soal penalaran (terutama IPA/IPS) boleh memakai data: tabel hasil percobaan, perbandingan dua kondisi
+   (wilayah X vs Y), kelompok kontrol.
+
+---
+
+## Sumber
+- Panduan pembuatan soal asesmen sumatif — komunitasbelajar.id (2024): https://www.komunitasbelajar.id/2024/02/panduan-pembuatan-soal-asesmen-sumatif.html
+- Panduan penyusunan soal Asesmen Madrasah — hanapibani.com: https://www.hanapibani.com/2023/04/panduan-penyusunan-soal-asesmen-madrasah.html
+- Pedoman penyusunan soal Asesmen Madrasah 2024–2025 — ainamulyana.com: https://www.ainamulyana.com/2024/02/pedoman-atau-panduan-pembuatan-soal.html
+- Kaidah penulisan soal (pelatihan Dit. PSMP & Puspendik) — komunitasbelajar.id: https://www.komunitasbelajar.id/2017/01/pedoman-atau-kaidah-penulisan-soal.html
+- Panduan lengkap penyusunan soal Asesmen Madrasah 2025 — SlideShare: https://www.slideshare.net/slideshow/panduan-lengkap-penyusunan-soal-asesmen-madrasah-tahun-2025/288244988
+- Taksonomi Bloom revisi — Univ. Atma Jaya Yogyakarta: https://dpm.uajy.ac.id/wp-content/uploads/2011/08/taksonomi_Bloom_revisi.pdf
+- Penyusunan soal HOTS (level L1–L3) — IKIP Siliwangi: https://dosen.ikipsiliwangi.ac.id/wp-content/uploads/sites/6/2022/04/penyusunan-soal-HOTS.pdf
+- Kriteria dan ciri asesmen kontekstual — komunitasbelajar.id: https://www.komunitasbelajar.id/2024/02/kriteria-dan-ciri-asesmen-kontekstual.html
+- Panduan Kurikulum Berbasis Cinta, Kepdirjen Pendis 6077/2025 — Kemenag: https://cdn.kemenag.go.id/storage/archives/panduan-kurikulum-berbasis-cinta.pdf
+- KMA 1503/2025 tentang pedoman kurikulum madrasah — ayomadrasah.id: https://www.ayomadrasah.id/2025/11/kma-1503-tahun-2025-kurikulum-ra-madrasah.html
+- Juknis Penilaian Hasil Belajar MA, Kepdirjen Pendis 3751/2018: https://man2acehbesar.wordpress.com/wp-content/uploads/2019/04/sk-dirjen-juknis-penilaian-hasil-belajar-pada-ma.pdf
+- Kerangka Asesmen TKA (Perka BSKAP 045/H/AN/2025) — Pusmendik: https://pusmendik.kemendikdasmen.go.id/pdf/file-175
+- Kajian kerangka asesmen TKA SMA — yunandra.com: https://yunandra.com/kajian-peraturan-kerangka-asesmen-tka-sma-ma-smk-mak-pada-sk-bskap-no-045-tahun-2025/
+- 3 jenis soal TKA SMA — detikEdu: https://www.detik.com/edu/detikpedia/d-8083189/3-jenis-soal-tka-jenjang-sma-dan-sederajat-2025-panduan-belajar-nih
+- Contoh soal TKA SMA 2026 — blog ITERA: https://blog.itera.ac.id/25-contoh-soal-tka-sma-2026-dan-pembahasannya/
+- Pembahasan Try Out TKA Biologi 10/11 Oktober 2026 (Drive pemilik, lembaga try out)
