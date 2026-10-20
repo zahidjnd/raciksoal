@@ -2,14 +2,24 @@
 
 import { useEffect, useState } from "react";
 import { ambilDaftarBab, ambilDaftarModel, ambilJatah, cekHasil, mulaiBuatSoal } from "./actions";
+import { simpanMateri } from "./materi/actions";
 import { KartuSoal, Teks } from "./kartu-soal";
-import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_SOAL, NAMA_BENTUK, NAMA_LEVEL_TKA, TKA, TUJUAN, type Pengaturan } from "@/lib/prompt";
-import { pilihanAngka, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
-import { DAFTAR_BAB as SEMUA_BAB } from "@/data";
-import Link from "next/link";
+import { KotakMateri, type MateriLama } from "./kotak-materi";
+import { FormIdentitas } from "./form-identitas";
+import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_SOAL, NAMA_BENTUK, NAMA_LEVEL_TKA, semesterDari, TKA, TUJUAN, WAKTU_BAWAAN, type Pengaturan } from "@/lib/prompt";
+import { KELAS, pilihanAngka, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
+import { DAFTAR_MAPEL, type IsianMateri } from "@/lib/materi";
 import { useRouter } from "next/navigation";
 
-const BAB_BAWAAN = Object.values(SEMUA_BAB);
+// Mapel & kelas terakhir diingat per perangkat (kenyamanan saja; boleh hilang).
+const INGAT = "raciksoal-mapel";
+const bacaIngat = (): { mapel?: string; kelas?: string } => {
+  try {
+    return JSON.parse(localStorage.getItem(INGAT) ?? "{}");
+  } catch {
+    return {};
+  }
+};
 
 /** Kartu jenis soal di atas kotak ketik (DESIGN.md). Keterangan diringkas dari ATURAN_TUJUAN di src/lib/prompt.ts. */
 const ikon = (d: string) => (
@@ -84,10 +94,11 @@ function TabelKisi({ kisi }: { kisi: BarisKisi[] }) {
   );
 }
 
-export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null }) {
+export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: number | null; awalMateri: string[] }) {
   const router = useRouter();
   const [p, setP] = useState<Pengaturan>({
-    babId: BAB_BAWAAN[0].id,
+    babId: "",
+    identitas: { ...semesterDari(new Date()), waktu: WAKTU_BAWAAN },
     tujuan: TUJUAN[0],
     jumlah: JUMLAH_AWAL,
     level: ATURAN_TUJUAN[TUJUAN[0]].level,
@@ -96,14 +107,18 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
     modelSlot: 1,
   });
   const [daftarModel, setDaftarModel] = useState<{ slot: number; nama: string }[]>([]);
-  // Bab bawaan + materi sendiri milik guru (langkah 8); sebelum termuat, tampilkan bab bawaan saja.
-  const [daftarBab, setDaftarBab] = useState(BAB_BAWAAN.map((b) => ({ id: b.id, judul: b.judul, sendiri: false })));
+  const [mapel, setMapel] = useState("");
+  const [kelas, setKelas] = useState("");
+  const [daftarBab, setDaftarBab] = useState<MateriLama[]>([]); // materi milik guru (tersimpan otomatis)
+  const [pilihan, setPilihan] = useState<string[]>(awalMateri); // materi lama yang dipakai (?materi= dari "Pakai materi ini lagi")
+  const [draf, setDraf] = useState<IsianMateri | null>(null); // materi baru hasil analisa AI, tersimpan saat "Buat soal"
+  const [menyiapkan, setMenyiapkan] = useState(false);
   const [banding, setBanding] = useState<{ nama: string; id?: number; pesan?: string }[]>([]);
   const [id, setId] = useState<number | null>(awalId); // dari ?id= (dibaca server), mis. buka set dari riwayat
   const [hasil, setHasil] = useState<Hasil | null>(null);
   const [error, setError] = useState("");
   const [detik, setDetik] = useState(0);
-  const [buka, setBuka] = useState<"jumlah" | "lanjutan" | null>(null); // panel di bawah kotak ketik
+  const [buka, setBuka] = useState<"jumlah" | "lanjutan" | "identitas" | null>(null); // panel di bawah kotak ketik
   const [tab, setTab] = useState<"soal" | "kisi">("soal"); // halaman hasil
   const [semuaKunci, setSemuaKunci] = useState(false);
   const [jatah, setJatah] = useState<Awaited<ReturnType<typeof ambilJatah>>>(null);
@@ -120,9 +135,40 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
 
   useEffect(() => {
     ambilDaftarModel().then(setDaftarModel).catch(() => {});
-    ambilDaftarBab().then((d) => d.length && setDaftarBab(d)).catch(() => {});
+    ambilDaftarBab()
+      .then((d) => {
+        setDaftarBab(d);
+        // Mapel & kelas: dari materi yang dibuka lewat "Pakai materi ini lagi", atau pilihan terakhir di perangkat ini.
+        const dari = d.find((m) => m.id === awalMateri[0]) ?? bacaIngat();
+        if (dari.mapel) setMapel(dari.mapel);
+        if (dari.kelas) setKelas(dari.kelas);
+      })
+      .catch(() => {});
     muatJatah();
-  }, []);
+  }, [awalMateri]);
+
+  /** Ganti mapel/kelas: materi yang sudah dipilih (mapel lain) dilepas, pilihan diingat di perangkat ini. */
+  function pilihMapel(m: string, k: string) {
+    setMapel(m);
+    setKelas(k);
+    setPilihan([]);
+    setDraf(null);
+    try {
+      localStorage.setItem(INGAT, JSON.stringify({ mapel: m, kelas: k }));
+    } catch {}
+  }
+
+  /** Materi baru (draf) disimpan dulu, lalu semua id materi untuk set ini. Mengembalikan pesan kalau gagal. */
+  async function siapkanMateri(): Promise<string[] | string> {
+    if (!draf) return pilihan;
+    const r = await simpanMateri(null, { ...draf, mapel, kelas }).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
+    if (!r.ok) return r.pesan;
+    const id = `materi-${r.id}`;
+    setDraf(null);
+    setPilihan([...pilihan, id]); // supaya tidak tersimpan dua kali kalau pembuatan soal diulang
+    setDaftarBab([{ id, judul: r.isian.judul, mapel, kelas }, ...daftarBab]);
+    return [...pilihan, id];
+  }
 
   // Cek hasil tiap 3 detik selama AI masih bekerja.
   useEffect(() => {
@@ -158,15 +204,20 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
     setError("");
     setHasil(null);
     setBanding([]);
+    setMenyiapkan(true);
+    const babIds = await siapkanMateri();
+    setMenyiapkan(false);
+    if (typeof babIds === "string") return setError(babIds);
+    const isian = { ...p, babIds, babId: babIds[0] };
     if (p.modelSlot === 0) {
       // Bandingkan: pengaturan sama persis, satu set per model. Tiap hasil dibuka di tab sendiri.
       for (const m of daftarModel) {
-        const r = await mulaiBuatSoal({ ...p, modelSlot: m.slot, bandingkan: true }).catch(() => ({ ok: false as const, pesan: "Koneksi terputus." }));
+        const r = await mulaiBuatSoal({ ...isian, modelSlot: m.slot, bandingkan: true }).catch(() => ({ ok: false as const, pesan: "Koneksi terputus." }));
         setBanding((b) => [...b, r.ok ? { nama: m.nama, id: r.id } : { nama: m.nama, pesan: r.pesan }]);
       }
       return;
     }
-    const r = await mulaiBuatSoal(p);
+    const r = await mulaiBuatSoal(isian);
     if (!r.ok) return setError(r.pesan);
     // Buka halaman set baru dengan pemuatan penuh (sama seperti membuka dari riwayat): sidebar langsung memuat
     // set ini (⏳) dan pengecekan status dimulai dari ?id=. JANGAN router.replace / history.replaceState + router.refresh
@@ -174,7 +225,7 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
     location.assign(`/?id=${r.id}`);
   }
 
-  const bab = hasil?.bab ?? BAB_BAWAAN[0]; // salinan bab milik set (berisi ayat terverifikasi untuk tampilan & edit)
+  const bab = hasil?.bab; // salinan bab milik set (berisi ayat terverifikasi untuk tampilan & edit)
   const soal = hasil?.soal ?? [];
 
   /** Deret nomor: pindah ke tab Soal dulu (kartu belum tampil saat tab Kisi-kisi), lalu gulir ke soalnya. */
@@ -186,6 +237,8 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
   // Form tampil saat belum ada set yang dibuka, atau set gagal (supaya bisa langsung dicoba lagi).
   const tampilForm = id === null || hasil?.status === "gagal";
   const alasanTerkunci =
+    !mapel || !kelas ? "Pilih mata pelajaran dan kelas dulu." :
+    !pilihan.length && !draf ? "Masukkan materi dulu (tempel teks, lampirkan file, atau pakai materi sebelumnya)." :
     total < 1 ? "Isi jumlah soal dulu." :
     total > MAKS_SOAL ? `Jumlah soal maksimal ${MAKS_SOAL}.` :
     totalLevel !== 100 ? `Komposisi level harus 100% (sekarang ${totalLevel}%), buka Lanjutan.` :
@@ -202,11 +255,11 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
         <section className="mx-auto max-w-3xl space-y-3 pt-4 md:pt-12">
           <div className="pb-2 text-center">
             <h1 className="text-3xl md:text-4xl">Assalamu&apos;alaikum, {nama}</h1>
-            <p className="mt-1 text-sm text-pudar">
-              Pilih jenis soal, lalu atur bab dan jumlah soal di kotak bawah. Bab sendiri?{" "}
-              <Link href="/materi" className="text-hijau-teks underline">Tambahkan di Materi saya</Link>
-            </p>
+            <p className="mt-1 text-sm text-pudar">Pilih mapel dan kelas, masukkan materi, lalu pilih jenis soal.</p>
           </div>
+
+          <PilihMapel mapel={mapel} kelas={kelas} ubah={pilihMapel} />
+          <KotakMateri mapel={mapel} kelas={kelas} daftar={daftarBab} pilihan={pilihan} setPilihan={setPilihan} draf={draf} setDraf={setDraf} />
 
           {/* Kartu jenis soal: pilihan setara, jadi sengaja berbentuk sama. Memilih kartu ikut mengatur komposisi level. */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5" role="radiogroup" aria-label="Jenis soal">
@@ -254,16 +307,6 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
               onChange={(e) => setP({ ...p, catatan: e.target.value })}
             />
             <div className="flex flex-wrap items-center gap-2">
-              <select aria-label="Bab" className={`${chip} max-w-[11rem] truncate`} value={p.babId} onChange={(e) => setP({ ...p, babId: e.target.value })}>
-                <optgroup label="Bab bawaan">
-                  {daftarBab.filter((b) => !b.sendiri).map((b) => <option key={b.id} value={b.id}>{b.judul}</option>)}
-                </optgroup>
-                {daftarBab.some((b) => b.sendiri) && (
-                  <optgroup label="Materi saya">
-                    {daftarBab.filter((b) => b.sendiri).map((b) => <option key={b.id} value={b.id}>{b.judul}</option>)}
-                  </optgroup>
-                )}
-              </select>
               <select aria-label="Tingkat kesulitan" className={chip} value={p.kesulitan} onChange={(e) => setP({ ...p, kesulitan: e.target.value })}>
                 {KESULITAN.map((k) => <option key={k} value={k}>Kesulitan: {k}</option>)}
               </select>
@@ -273,12 +316,15 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
               <button className={chipPanel("lanjutan")} aria-expanded={buka === "lanjutan"} onClick={() => setBuka(buka === "lanjutan" ? null : "lanjutan")}>
                 Lanjutan ▾
               </button>
+              <button className={chipPanel("identitas")} aria-expanded={buka === "identitas"} onClick={() => setBuka(buka === "identitas" ? null : "identitas")}>
+                Identitas ▾
+              </button>
               <button
                 className="ml-auto h-10 rounded-lg bg-hijau px-4 font-semibold text-white hover:bg-hijau-tua disabled:opacity-40"
-                disabled={proses || jatahHabis || !!alasanTerkunci}
+                disabled={proses || menyiapkan || jatahHabis || !!alasanTerkunci}
                 onClick={buat}
               >
-                Buat soal
+                {menyiapkan ? "Menyimpan materi..." : "Buat soal"}
               </button>
             </div>
 
@@ -301,6 +347,12 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
                   {totalSkor !== 100 && " (bukan 100)"}
                 </p>
               </fieldset>
+            )}
+
+            {buka === "identitas" && (
+              <div className="mt-3 border-t pt-3">
+                <FormIdentitas nilai={p.identitas ?? {}} ubah={(identitas) => setP({ ...p, identitas })} />
+              </div>
             )}
 
             {buka === "lanjutan" && (
@@ -378,7 +430,7 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
 
       {hasil?.status === "gagal" && <p className="rounded-lg border border-bahaya-garis bg-bahaya-muda p-3 text-bahaya">Gagal membuat soal: {hasil.pesan}</p>}
 
-      {hasil?.status === "selesai" && (
+      {hasil?.status === "selesai" && bab && (
         <section className="space-y-5">
           <div className="space-y-1">
             <h1 className="text-2xl">{bab.judul}</h1>
@@ -480,6 +532,38 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
           </div>
         </section>
       )}
+    </div>
+  );
+}
+
+/** Mapel (daftar tetap + "Lainnya") dan kelas, di atas kotak materi. */
+function PilihMapel({ mapel, kelas, ubah }: { mapel: string; kelas: string; ubah: (mapel: string, kelas: string) => void }) {
+  const lain = !!mapel && !DAFTAR_MAPEL.includes(mapel);
+  const [ketik, setKetik] = useState(lain);
+  const kotak = "h-10 rounded-lg border bg-kartu px-3 text-sm max-md:min-h-11";
+  return (
+    <div className="flex flex-wrap gap-2">
+      <select
+        aria-label="Mata pelajaran"
+        className={`${kotak} min-w-0 flex-1`}
+        value={ketik || lain ? "lain" : mapel}
+        onChange={(e) => {
+          if (e.target.value === "lain") return setKetik(true);
+          setKetik(false);
+          ubah(e.target.value, kelas);
+        }}
+      >
+        <option value="">Pilih mata pelajaran</option>
+        {DAFTAR_MAPEL.map((m) => <option key={m}>{m}</option>)}
+        <option value="lain">Lainnya (ketik sendiri)</option>
+      </select>
+      {(ketik || lain) && (
+        <input aria-label="Nama mata pelajaran" className={`${kotak} min-w-0 flex-1`} maxLength={60} placeholder="Nama mata pelajaran" defaultValue={lain ? mapel : ""} onBlur={(e) => e.target.value.trim() && ubah(e.target.value.trim(), kelas)} />
+      )}
+      <select aria-label="Kelas" className={`${kotak} w-32`} value={kelas} onChange={(e) => ubah(mapel, e.target.value)}>
+        <option value="">Kelas</option>
+        {KELAS.map((k) => <option key={k} value={k}>Kelas {k}</option>)}
+      </select>
     </div>
   );
 }

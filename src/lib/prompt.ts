@@ -1,4 +1,4 @@
-import { identitasBab, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal.ts";
+import { identitasBab, MAKS_GABUNG, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal.ts";
 
 export const TUJUAN = ["Ulangan Harian", "PTS", "PAS", "Latihan", "Latihan TKA"] as const;
 /** ATURAN-SOAL.md bagian 9: TKA hanya PG, PG kompleks, Kategori (tanpa uraian), memakai soal grup. */
@@ -55,7 +55,33 @@ export type Pengaturan = {
   modelSlot?: number; // nomor model AI di .env (1 = AI_, 2 = AI2_, ...); set lama = 1
   bandingkan?: boolean; // mode "Bandingkan semua model": jangan pakai model cadangan
   catatan?: string; // catatan tambahan guru untuk AI (opsional)
+  babIds?: string[]; // beberapa materi dalam satu set (PTS/PAS); kosong pada set lama → [babId]
+  identitas?: Identitas; // identitas ujian untuk kop Word; boleh diubah setelah soal jadi
 };
+
+/** Identitas ujian di kop Word. Kosong → dihitung dari tanggal pembuatan (semester, tahun pelajaran) / bawaan. */
+export type Identitas = { semester?: string; tahun?: string; tanggal?: string; waktu?: number };
+export const WAKTU_BAWAAN = 90; // menit (pilihan pemilik, sama untuk semua jenis ujian)
+
+/** Semester & tahun pelajaran dari sebuah tanggal: Juli–Desember = Ganjil. */
+export function semesterDari(tanggal: Date) {
+  const bulan = tanggal.getMonth() + 1;
+  const tahun = tanggal.getFullYear();
+  return bulan >= 7 ? { semester: "Ganjil", tahun: `${tahun}/${tahun + 1}` } : { semester: "Genap", tahun: `${tahun - 1}/${tahun}` };
+}
+
+/** Rapikan identitas dari browser; isian tidak sah dibuang (kembali ke bawaan). */
+export function bersihkanIdentitas(x: unknown): Identitas {
+  const i = (x ?? {}) as Record<string, unknown>;
+  const s = (v: unknown) => String(v ?? "").trim();
+  const waktu = Math.round(Number(i.waktu));
+  return {
+    ...(["Ganjil", "Genap"].includes(s(i.semester)) && { semester: s(i.semester) }),
+    ...(/^\d{4}\/\d{4}$/.test(s(i.tahun)) && { tahun: s(i.tahun) }),
+    ...(/^\d{4}-\d{2}-\d{2}$/.test(s(i.tanggal)) && { tanggal: s(i.tanggal) }),
+    ...(waktu >= 1 && waktu <= 600 && { waktu }),
+  };
+}
 
 export const MAKS_CATATAN = 500;
 export const MAKS_INSTRUKSI = 300;
@@ -80,7 +106,11 @@ export function bersihkanPengaturan(p: Pengaturan): Pengaturan | string {
   const bobot = { PG: bobotDari("PG"), PGK: bobotDari("PGK"), BS: bobotDari("BS"), URAIAN: bobotDari("URAIAN") };
   const modelSlot = Math.max(1, Math.min(9, Math.round(Number(p?.modelSlot) || 1)));
   const catatan = bersihkanKutipan(p?.catatan, MAKS_CATATAN);
-  return { babId: String(p.babId), tujuan: p.tujuan, jumlah, level, kesulitan: p.kesulitan, bobot, modelSlot, bandingkan: p?.bandingkan === true, catatan };
+  // Materi: hanya id materi milik guru ("materi-12"), maks 5, tanpa dobel. Kepemilikan dicek di mulaiBuatSoal.
+  const babIds = [...new Set((Array.isArray(p?.babIds) ? p.babIds : [p?.babId]).map((x) => String(x ?? "")))].filter((x) => /^materi-\d+$/.test(x));
+  if (!babIds.length) return "Masukkan materi dulu.";
+  if (babIds.length > MAKS_GABUNG) return `Maksimal ${MAKS_GABUNG} materi dalam satu set.`;
+  return { babId: babIds[0], babIds, tujuan: p.tujuan, jumlah, level, kesulitan: p.kesulitan, bobot, modelSlot, bandingkan: p?.bandingkan === true, catatan, identitas: bersihkanIdentitas(p?.identitas) };
 }
 
 /**
@@ -190,9 +220,32 @@ Judul: ${bab.judul}
 
 Tujuan Pembelajaran:
 ${bab.tp.map((t) => `${t.kode}: ${t.teks}`).join("\n")}
-${adaDalil ? `\nDalil:\n${dalil}\n` : ""}
+${adaDalil ? `\nDalil:\n${dalil}\n` : ""}${bab.pokok?.length ? `\nPokok materi (sebar soal ke semua pokok ini):\n${bab.pokok.map((p) => `- ${p}`).join("\n")}\n` : ""}
 Materi:
 ${bab.materi.join("\n")}`;
+}
+
+/**
+ * Analisa materi baru dari halaman utama: judul, usulan TP, pokok materi, dan sumber/terjemah dalil yang tertulis
+ * di teks. Hasil dicek lagi oleh terapkanAnalisa (src/lib/materi.ts): yang tidak tertulis di teks guru dibuang.
+ */
+export function buatAnalisaMateri(mapel: string, kelas: string, teks: string, bahasaArab: boolean) {
+  const sistem = `Anda membantu guru ${mapel} kelas ${kelas} madrasah aliyah (kurikulum Kemenag) menyiapkan materi untuk menyusun soal.
+Bekerja HANYA dari TEKS MATERI yang diberikan guru. Jangan menambah fakta dari luar teks.
+${bahasaArab ? "Kosakata/kalimat Arab dari teks boleh disebut, tetapi jangan menulis ayat Al-Qur'an atau hadis." : "Jangan menulis huruf Arab, ayat, atau hadis sama sekali; sebut lafaz dengan transliterasi Latin bila perlu."}
+Balas hanya JSON.`;
+  const pengguna = `TEKS MATERI (paragraf bertanda [DALIL n] adalah ayat/hadis):
+"""
+${teks.replace(/"{3,}/g, '"')}
+"""
+
+Balas JSON {"judul":"...","tp":["..."],"pokok":["..."],"dalil":[{"no":1,"sumber":"...","terjemah":"..."}],"catatan":"..."}:
+- "judul": judul bab/materi singkat (maks 10 kata); pakai judul yang tertulis di teks bila ada.
+- "tp": 3–6 Tujuan Pembelajaran gaya Kemenag, diawali "Peserta didik mampu ...", kata kerja operasional, sesuai isi teks, urut dari mudah ke sulit. Bila teks memuat TP/ATP, salin TP itu.
+- "pokok": 4–10 pokok materi yang bisa diuji (maks 15 kata per poin).
+- "dalil": untuk setiap [DALIL n]: "sumber" (mis. "HR. Bukhari dan Muslim") dan "terjemah" HANYA bila tertulis di teks di dekat dalil itu, disalin PERSIS kata per kata; kalau tidak tertulis, isi "". Jangan menerjemahkan sendiri.
+- "catatan": satu kalimat bila teks terlalu sedikit atau kurang jelas untuk dibuat soal; selain itu "".`;
+  return { sistem, pengguna };
 }
 
 const BENTUK_SOAL = `BENTUK SOAL:

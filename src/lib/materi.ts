@@ -1,7 +1,8 @@
 // "Materi sendiri" milik guru (langkah 8). Tanpa import "@/..." supaya bisa dites langsung: npm test
-import { arabTakTerverifikasi, identitasBab, KELAS, korpusArab, POLA_ARAB, type Bab } from "./soal.ts";
+import { arabTakTerverifikasi, identitasBab, KELAS, korpusArab, paragrafArab, POLA_ARAB, type Bab } from "./soal.ts";
 
-export const BATAS_MATERI = { judul: 150, mapel: 60, tp: 15, teksTp: 500, isiMin: 100, isi: 30000, dalil: 20, teksDalil: 3000, perGuru: 50 };
+// perGuru 300: materi kini tersimpan otomatis setiap kali guru memasukkan materi baru di halaman utama.
+export const BATAS_MATERI = { judul: 150, mapel: 60, tp: 15, teksTp: 500, isiMin: 100, isi: 30000, dalil: 20, teksDalil: 3000, perGuru: 300 };
 
 /** Saran isian kolom Mapel (boleh diketik lain). */
 export const DAFTAR_MAPEL = [
@@ -22,6 +23,7 @@ export type IsianMateri = {
   // server selalu mencocokkan ulang ke mushaf)
   dalil: { sumber: string; arab: string; terjemah: string; usulan?: boolean; mushaf?: boolean }[];
   diverifikasi: boolean; // centang: guru sudah memeriksa teks hadis / teks Arab yang tidak ada di mushaf
+  pokok?: string[]; // pokok materi hasil analisa AI (opsional)
 };
 
 /** Pencari ayat di mushaf (mushaf().cari); disuntikkan supaya file ini tetap bisa dites tanpa membaca mushaf. */
@@ -55,7 +57,8 @@ export function rapikanMateri(x: Partial<IsianMateri>, id: string, cariAyat?: Ca
     });
   if (dalilMentah.length > B.dalil) return `Ayat/hadis maksimal ${B.dalil}.`;
   for (const [i, d] of dalilMentah.entries()) {
-    if (!d.sumber || !d.arab || !d.terjemah) return `Ayat/hadis ke-${i + 1}: sumber, teks Arab, dan terjemah wajib diisi.`;
+    // Terjemah boleh kosong (guru dibuat mudah); sumber wajib supaya soal bisa menyebut asal dalil.
+    if (!d.sumber || !d.arab) return `Ayat/hadis ke-${i + 1}: sumber dan teks Arab wajib diisi.`;
     if (!new RegExp(POLA_ARAB).test(d.arab)) return `Ayat/hadis ke-${i + 1}: kolom teks Arab tidak berisi huruf Arab.`;
     if ([d.sumber, d.arab, d.terjemah].some((t) => t.length > B.teksDalil)) return `Ayat/hadis ke-${i + 1}: teks terlalu panjang (maks ${B.teksDalil} huruf).`;
   }
@@ -89,7 +92,90 @@ export function rapikanMateri(x: Partial<IsianMateri>, id: string, cariAyat?: Ca
   if (isi.length > B.isi) return `Isi materi terlalu panjang (maksimal ${B.isi.toLocaleString("id-ID")} huruf, sekarang ${isi.length.toLocaleString("id-ID")}).`;
   const materi = isi.split("\n").map((b) => bersihkan(b.trim())).filter(Boolean);
 
-  return { bab: { id, mapel: bersihkan(mapel), kelas, ...(bahasa && { teksArab: "bahasa" as const }), judul: bersihkan(judul), tp, dalil, materi }, dihapus };
+  const pokok = (Array.isArray(x?.pokok) ? x.pokok : []).map((p) => bersihkan(teks(p)).slice(0, 300)).filter(Boolean).slice(0, 15);
+  return { bab: { id, mapel: bersihkan(mapel), kelas, ...(bahasa && { teksArab: "bahasa" as const }), judul: bersihkan(judul), tp, dalil, materi, ...(pokok.length && { pokok }) }, dihapus };
+}
+
+/** Mapel yang teks Arabnya isi pelajaran (Tahap F). */
+export const modeArab = (mapel: string): IsianMateri["teksArab"] => (/bahasa\s+arab/i.test(mapel) ? "bahasa" : "dalil");
+
+/**
+ * Materi dari halaman utama (tempel teks / file, urut seperti aslinya) → draf isian + teks untuk dianalisa AI.
+ * Paragraf Arab: ayat (ditemukan di mushaf) → kotak dalil dengan teks resmi; basmalah dibuang; lainnya → usulan hadis
+ * yang wajib dicentang guru (aturan 5), kecuali mapel Bahasa Arab (tetap di isi). Di teks untuk AI, setiap dalil
+ * ditandai [DALIL n] supaya AI bisa menunjuk sumber & terjemah yang tertulis di dekatnya.
+ */
+export function susunDraf(
+  x: { mapel: string; kelas: string; paragraf: string[] },
+  cariAyat: CariAyat,
+  basmalah: (arab: string) => boolean,
+): { isian: IsianMateri; untukAi: string } {
+  const teksArab = modeArab(teks(x.mapel));
+  const isi: string[] = [];
+  const untukAi: string[] = [];
+  const dalil: IsianMateri["dalil"] = [];
+  for (const p of x.paragraf.map(teks).filter(Boolean)) {
+    if (!paragrafArab(p)) {
+      isi.push(p);
+      untukAi.push(p);
+      continue;
+    }
+    if (basmalah(p)) continue;
+    const ayat = cariAyat(p, "");
+    if (!ayat && teksArab === "bahasa") {
+      isi.push(p);
+      untukAi.push(p);
+      continue;
+    }
+    const d = ayat ? { ...ayat, terjemah: "", mushaf: true } : { sumber: "", arab: p, terjemah: "", usulan: true };
+    let n = dalil.findIndex((y) => y.arab === d.arab);
+    if (n < 0 && dalil.length < BATAS_MATERI.dalil) n = dalil.push(d) - 1;
+    untukAi.push(n < 0 ? p : `[DALIL ${n + 1}${d.sumber ? `, ${d.sumber}` : ""}] ${p}`);
+  }
+  return {
+    isian: { mapel: teks(x.mapel), kelas: teks(x.kelas), teksArab, judul: "", tp: "", isi: isi.join("\n"), dalil, diverifikasi: false },
+    untukAi: untukAi.join("\n"),
+  };
+}
+
+/** Huruf & angka saja, huruf kecil: untuk memeriksa bahwa sesuatu benar-benar tertulis di teks guru. */
+const kerangka = (t: string) => t.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+
+/**
+ * Pasang hasil analisa AI ke draf: judul, usulan TP, pokok materi, serta sumber/terjemah dalil. Sumber & terjemah
+ * HANYA dipakai bila memang tertulis di teks guru (AI tidak boleh mengarang, aturan 5). Teks Arab dari AI di
+ * judul/TP/pokok dibuang (kecuali mapel Bahasa Arab).
+ */
+export function terapkanAnalisa(ai: unknown, draf: IsianMateri, teksGuru: string): { isian: IsianMateri; catatan: string } {
+  const a = (ai ?? {}) as { judul?: unknown; tp?: unknown; pokok?: unknown; dalil?: unknown; catatan?: unknown };
+  const asal = ` ${kerangka(teksGuru)} `;
+  const tertulis = (t: string, min: number) => t.length >= min && asal.includes(` ${kerangka(t)} `);
+  const tanpaArab = (t: string) =>
+    draf.teksArab === "bahasa" ? t : t.replace(new RegExp(POLA_ARAB, "g"), "").replace(/[ \t]{2,}/g, " ").replace(/\(\s*\)/g, "").trim();
+  const daftar = (x: unknown, maks: number) =>
+    (Array.isArray(x) ? x : []).map((t) => tanpaArab(teks(t)).replace(/^TP\s*[\d.]*\s*[:.\-–]?\s*/i, "").slice(0, 300)).filter(Boolean).slice(0, maks);
+
+  const tp = daftar(a.tp, 8);
+  const dalil = draf.dalil.map((d, i) => {
+    const usul = (Array.isArray(a.dalil) ? a.dalil : []).find((x) => Number((x as { no?: unknown })?.no) === i + 1) as { sumber?: unknown; terjemah?: unknown } | undefined;
+    const terjemah = teks(usul?.terjemah);
+    const sumber = teks(usul?.sumber);
+    return {
+      ...d,
+      terjemah: d.terjemah || (tertulis(terjemah, 10) ? terjemah : ""),
+      sumber: d.sumber || (tertulis(sumber, 4) ? sumber.slice(0, 200) : ""),
+    };
+  });
+  return {
+    isian: {
+      ...draf,
+      judul: tanpaArab(teks(a.judul)).slice(0, BATAS_MATERI.judul) || draf.judul,
+      tp: tp.map((t, i) => `TP ${i + 1}: ${t}`).join("\n") || draf.tp,
+      pokok: daftar(a.pokok, 10),
+      dalil,
+    },
+    catatan: tanpaArab(teks(a.catatan)).slice(0, 300),
+  };
 }
 
 /** Kebalikan rapikanMateri: data bab tersimpan → isian form (untuk mengedit). Materi lama tanpa mapel → identitasBab. */
@@ -102,5 +188,6 @@ export function keIsian(bab: Bab): IsianMateri {
     isi: bab.materi.join("\n"),
     dalil: bab.dalil.map(({ sumber, arab, terjemah, mushaf }) => ({ sumber, arab, terjemah, ...(mushaf && { mushaf }) })),
     diverifikasi: bab.dalil.some((d) => !d.mushaf),
+    ...(bab.pokok?.length && { pokok: bab.pokok }),
   };
 }

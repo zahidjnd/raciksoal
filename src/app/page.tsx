@@ -2,14 +2,17 @@ import { wajibMasuk } from "@/lib/sesi";
 import { BuatSoal } from "./buat-soal";
 import { Kerangka } from "./kepala";
 
-export default async function Home({ searchParams }: { searchParams: Promise<{ id?: string }> }) {
+export default async function Home({ searchParams }: { searchParams: Promise<{ id?: string; materi?: string }> }) {
   const p = await wajibMasuk();
+  const q = await searchParams;
   // Nomor set dari alamat (?id=) dikirim sejak awal, supaya form kosong tidak sempat tampil saat membuka set.
   // Pemeriksaan pemilik tetap di server (`cekHasil` → `bolehAkses`).
-  const id = Number((await searchParams).id) || null;
+  const id = Number(q.id) || null;
+  // "Pakai materi ini lagi": ?materi=materi-3,materi-5 (kepemilikan dicek lagi di mulaiBuatSoal).
+  const materi = String(q.materi ?? "").split(",").filter((m) => /^materi-\d+$/.test(m)).slice(0, 5);
   return (
     <Kerangka p={p}>
-      <BuatSoal nama={p.nama} awalId={id} />
+      <BuatSoal nama={p.nama} awalId={id} awalMateri={materi} />
     </Kerangka>
   );
 }

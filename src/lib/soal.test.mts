@@ -1,10 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { arabTakTerverifikasi, bersihkanTanggapan, identitasBab, korpusArab, pasangWacana, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, terapkanBobot, type Bab, type Soal } from "./soal.ts";
-import { bagiTahap, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, buatSistem, hitungLevel, rencanaGrup, MAKS_CATATAN, MAKS_INSTRUKSI, rencanaLevel, type Pengaturan } from "./prompt.ts";
+import { arabTakTerverifikasi, bersihkanTanggapan, gabungBab, identitasBab, korpusArab, pasangWacana, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, terapkanBobot, type Bab, type Soal } from "./soal.ts";
+import { bagiTahap, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, semesterDari, MAKS_CATATAN, MAKS_INSTRUKSI, rencanaLevel, type Pengaturan } from "./prompt.ts";
 import { bolehAkses, rapikanUsername } from "./akses.ts";
-import { keIsian, rapikanMateri } from "./materi.ts";
+import { keIsian, rapikanMateri, susunDraf, terapkanAnalisa } from "./materi.ts";
 import { bacaFileOffice } from "./office.ts";
 
 test("aturan 3: guru hanya boleh membuka set miliknya, admin boleh semua", () => {
@@ -28,7 +28,7 @@ test("nama pengguna dirapikan dan dibatasi karakternya", () => {
 
 test("catatan guru dirapikan, dibatasi panjangnya, dan masuk ke permintaan AI", () => {
   const isian = {
-    babId: "qurdis11-bab3", tujuan: "Latihan", kesulitan: "Sedang",
+    babId: "materi-1", tujuan: "Latihan", kesulitan: "Sedang",
     jumlah: { PG: 2, PGK: 0, BS: 0, URAIAN: 0 }, level: { LOTS: 40, MOTS: 40, HOTS: 20 },
     catatan: `  fokus pada QS. An-Nur ayat 2 ${"x".repeat(1000)}`,
   } as Pengaturan;
@@ -352,6 +352,68 @@ test("mode Bahasa Arab: kalimat Arab buatan boleh, yang dikenali sebagai ayat te
   const r = rapikanMateri(isian, "x");
   assert.ok(typeof r !== "string" && r.bab.materi[0].includes("الطَّالِبُ") && r.bab.teksArab === "bahasa" && r.dihapus.length === 0);
   assert.equal(keIsian((r as { bab: Bab }).bab).teksArab, "bahasa");
+});
+
+test("materi di halaman utama: ayat dari mushaf, hadis jadi usulan, basmalah dibuang, Bahasa Arab tetap di isi", () => {
+  const ayat = bab.dalil[0].arab;
+  const hadis = "مَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الْآخِرِ فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ";
+  const basmalah = "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ";
+  const cari = (a: string) => (a === ayat ? { sumber: "QS. Al-Isrā' [17]: 32", arab: ayat } : null);
+  const paragraf = [basmalah, "Bab 1 Menjaga Diri", ayat, "Artinya: Dan janganlah kamu mendekati zina.", hadis, "HR. Bukhari", "x".repeat(120)];
+  const { isian, untukAi } = susunDraf({ mapel: "Al-Qur'an Hadis", kelas: "XI", paragraf }, cari, (a) => a === basmalah);
+  assert.deepEqual(isian.dalil.map((d) => [d.sumber, !!d.mushaf, !!d.usulan]), [["QS. Al-Isrā' [17]: 32", true, false], ["", false, true]]);
+  assert.ok(!isian.isi.includes(basmalah) && !isian.isi.includes(hadis) && isian.isi.includes("Menjaga Diri"));
+  assert.ok(untukAi.includes("[DALIL 1, QS. Al-Isrā' [17]: 32]") && untukAi.includes("[DALIL 2]"));
+  assert.equal(isian.teksArab, "dalil");
+  const arab = susunDraf({ mapel: "Bahasa Arab", kelas: "X", paragraf: ["ذَهَبَ الطَّالِبُ إِلَى الْمَدْرَسَةِ", "x".repeat(120)] }, cari, () => false);
+  assert.equal(arab.isian.teksArab, "bahasa");
+  assert.equal(arab.isian.dalil.length, 0);
+  assert.ok(arab.isian.isi.includes("الطَّالِبُ"));
+
+  // AI: judul/TP/pokok dipakai; terjemah & sumber hanya bila tertulis di teks guru; Arab karangan dibuang
+  const { isian: hasil } = terapkanAnalisa(
+    {
+      judul: "Menjaga Diri قَالَ",
+      tp: ["TP 1: Peserta didik mampu menjelaskan larangan zina", "Peserta didik mampu menganalisis hikmahnya"],
+      pokok: ["Larangan mendekati zina"],
+      dalil: [{ no: 1, terjemah: "Dan janganlah kamu mendekati zina." }, { no: 2, sumber: "HR. Bukhari", terjemah: "Siapa beriman hendaklah berkata baik (karangan)" }],
+    },
+    isian,
+    untukAi,
+  );
+  assert.equal(hasil.judul, "Menjaga Diri");
+  assert.equal(hasil.tp, "TP 1: Peserta didik mampu menjelaskan larangan zina\nTP 2: Peserta didik mampu menganalisis hikmahnya");
+  assert.equal(hasil.dalil[0].terjemah, "Dan janganlah kamu mendekati zina.");
+  assert.equal(hasil.dalil[0].sumber, "QS. Al-Isrā' [17]: 32"); // sumber mushaf tidak ditimpa AI
+  assert.equal(hasil.dalil[1].sumber, "HR. Bukhari");
+  assert.equal(hasil.dalil[1].terjemah, ""); // tidak tertulis di teks guru → dibuang
+  // tersimpan lewat rapikanMateri: hadis tetap wajib dicentang; terjemah boleh kosong
+  assert.match(String(rapikanMateri(hasil, "x")), /Centang/);
+  const r = rapikanMateri({ ...hasil, diverifikasi: true }, "x");
+  assert.ok(typeof r !== "string" && r.bab.pokok?.[0] === "Larangan mendekati zina" && r.bab.dalil[1].terjemah === "");
+});
+
+test("beberapa materi digabung untuk satu set: TP & dalil dinomori ulang; pengaturan hanya menerima materi-N", () => {
+  const a: Bab = { ...bab, id: "materi-1", judul: "Bab 1", tp: [{ kode: "TP 1", teks: "a" }], dalil: [{ ...bab.dalil[0], id: "dalil-1" }], materi: ["isi a"] };
+  const b: Bab = { ...bab, id: "materi-2", judul: "Bab 2", tp: [{ kode: "TP 1", teks: "b" }], dalil: [{ ...bab.dalil[1], id: "dalil-1" }], materi: ["isi b"] };
+  const g = gabungBab([a, b]);
+  assert.equal(g.id, "materi-1,materi-2");
+  assert.deepEqual(g.tp.map((t) => `${t.kode} ${t.teks}`), ["TP 1 a", "TP 2 b"]);
+  assert.deepEqual(g.dalil.map((d) => d.id), ["dalil-1", "dalil-2"]);
+  assert.deepEqual(g.materi, ["MATERI: Bab 1", "isi a", "MATERI: Bab 2", "isi b"]);
+  assert.equal(gabungBab([a]), a);
+
+  const dasar = { tujuan: "PAS", kesulitan: "Sedang", jumlah: { PG: 1, PGK: 0, BS: 0, URAIAN: 0 }, level: { LOTS: 30, MOTS: 40, HOTS: 30 } } as Pengaturan;
+  assert.deepEqual((bersihkanPengaturan({ ...dasar, babIds: ["materi-2", "materi-2", "qurdis11-bab3", "materi-5"] }) as Pengaturan).babIds, ["materi-2", "materi-5"]);
+  assert.match(String(bersihkanPengaturan({ ...dasar, babId: "qurdis11-bab3" })), /Masukkan materi/); // bab bawaan tidak bisa dipilih lagi
+  assert.match(String(bersihkanPengaturan({ ...dasar, babIds: Array.from({ length: 6 }, (_, i) => `materi-${i}`) })), /Maksimal 5/);
+});
+
+test("identitas ujian: semester otomatis dari tanggal, isian tidak sah dibuang", () => {
+  assert.deepEqual(semesterDari(new Date("2026-10-20")), { semester: "Ganjil", tahun: "2026/2027" });
+  assert.deepEqual(semesterDari(new Date("2027-03-01")), { semester: "Genap", tahun: "2026/2027" });
+  assert.deepEqual(bersihkanIdentitas({ semester: "Genap", tahun: "2026/2027", tanggal: "2026-12-07", waktu: "120" }), { semester: "Genap", tahun: "2026/2027", tanggal: "2026-12-07", waktu: 120 });
+  assert.deepEqual(bersihkanIdentitas({ semester: "x", tahun: "2026", tanggal: "besok", waktu: 0 }), {});
 });
 
 test("ratakanKunci tidak mengubah soal yang kuncinya tidak valid", () => {

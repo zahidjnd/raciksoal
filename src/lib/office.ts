@@ -1,7 +1,9 @@
 // Ambil teks dari file Word (.docx) atau PowerPoint (.pptx) untuk "materi sendiri" (langkah 8b).
 // Dipakai di BROWSER guru (file tidak diunggah ke hosting). Tanpa import "@/..." supaya bisa dites: npm test
 import JSZip from "jszip";
-import { POLA_ARAB } from "./soal.ts";
+import { paragrafArab } from "./soal.ts";
+
+export { paragrafArab };
 
 const ENTITAS: Record<string, string> = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
 const dekode = (t: string) =>
@@ -23,21 +25,11 @@ function paragraf(xml: string, p: string, t: string): string[] {
     .filter(Boolean);
 }
 
-const HURUF_ARAB = new RegExp(POLA_ARAB, "g");
-const HURUF_LATIN = /[A-Za-zÀ-ɏḀ-ỿ]/g;
-
-/** Paragraf yang hampir seluruhnya huruf Arab (ayat/hadis), bukan kalimat Latin yang menyelipkan lafaz. */
-export function paragrafArab(t: string) {
-  const arab = (t.match(HURUF_ARAB) ?? []).join("").replace(/\s/g, "").length;
-  const latin = (t.match(HURUF_LATIN) ?? []).length;
-  return arab > 0 && arab >= latin * 4;
-}
-
 /**
  * Baca .docx / .pptx: `teks` = paragraf Latin (untuk kotak Isi materi), `arab` = paragraf Arab (USULAN ayat/hadis,
  * wajib diperiksa guru sebelum dipercaya, aturan 5). Melempar Error berbahasa Indonesia kalau file tidak didukung.
  */
-export async function bacaFileOffice(data: ArrayBuffer | Uint8Array, nama: string): Promise<{ teks: string[]; arab: string[] }> {
+export async function bacaFileOffice(data: ArrayBuffer | Uint8Array, nama: string): Promise<{ teks: string[]; arab: string[]; semua: string[] }> {
   const akhiran = nama.toLowerCase().split(".").pop();
   if (akhiran === "pdf") throw new Error("File PDF tidak didukung karena teks Arabnya rusak saat diambil. Gunakan Word atau PowerPoint.");
   if (akhiran === "doc" || akhiran === "ppt") throw new Error("Format lama (.doc/.ppt) tidak didukung. Simpan ulang sebagai .docx/.pptx (File → Save As).");
@@ -66,5 +58,6 @@ export async function bacaFileOffice(data: ArrayBuffer | Uint8Array, nama: strin
   return {
     teks: teks.filter((t) => !paragrafArab(t)),
     arab: [...new Set(teks.filter(paragrafArab))],
+    semua: teks, // urut seperti di file (untuk analisa materi: terjemah biasanya tepat setelah ayatnya)
   };
 }

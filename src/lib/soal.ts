@@ -38,7 +38,31 @@ export type Bab = {
   // mushaf: teks Arab diambil/dicocokkan dari data mushaf (langkah 9), bukan ketikan guru
   dalil: { id: string; sumber: string; arab: string; terjemah: string; mufradat: { arab: string; arti: string }[]; mushaf?: boolean }[];
   materi: string[];
+  pokok?: string[]; // pokok-pokok materi hasil analisa AI (ringkasan untuk guru & sebaran soal)
 };
+
+/** Maksimal materi yang digabung dalam satu set (PTS/PAS). */
+export const MAKS_GABUNG = 5;
+
+/**
+ * Beberapa materi → satu bab untuk satu set (PTS/PAS). Kode TP dan id dalil dinomori ulang supaya tidak bentrok
+ * (TP 1.. dan dalil-1..); isi tiap materi diberi judul bagian. Satu materi dikembalikan apa adanya.
+ */
+export function gabungBab(babs: Bab[]): Bab {
+  if (babs.length === 1) return babs[0];
+  const [awal] = babs;
+  return {
+    id: babs.map((b) => b.id).join(","),
+    mapel: awal.mapel,
+    kelas: awal.kelas,
+    ...(awal.teksArab && { teksArab: awal.teksArab }),
+    judul: babs.map((b) => b.judul).join(" + ").slice(0, 300),
+    tp: babs.flatMap((b) => b.tp.map((t) => t.teks)).map((teks, i) => ({ kode: `TP ${i + 1}`, teks })),
+    dalil: babs.flatMap((b) => b.dalil).map((d, i) => ({ ...d, id: `dalil-${i + 1}` })),
+    materi: babs.flatMap((b) => [`MATERI: ${b.judul}`, ...b.materi]),
+    pokok: babs.flatMap((b) => b.pokok ?? []),
+  };
+}
 
 /** Satu baris kisi-kisi = rencana satu soal (langkah 6). Disusun AI dulu, lalu soal ditulis mengikuti barisnya. */
 export type BarisKisi = {
@@ -188,6 +212,13 @@ const rapikan = (s: string) => s.replace(/\s+/g, " ").normalize("NFC");
 
 /** Semua teks Arab terverifikasi milik bab (ayat, hadis, mufradat, materi) dalam satu teks. */
 export const korpusArab = (bab: Bab) => rapikan(JSON.stringify(bab));
+
+/** Paragraf yang hampir seluruhnya huruf Arab (ayat/hadis), bukan kalimat Latin yang menyelipkan lafaz. */
+export function paragrafArab(t: string) {
+  const arab = (t.match(new RegExp(POLA_ARAB, "g")) ?? []).join("").replace(/\s/g, "").length;
+  const latin = (t.match(/[A-Za-zÀ-ɏḀ-ỿ]/g) ?? []).length;
+  return arab > 0 && arab >= latin * 4;
+}
 
 /** Potongan teks Arab yang TIDAK ada persis (huruf + harakat) di data terverifikasi. Harus kosong. */
 export function arabTakTerverifikasi(teks: string, korpus: string): string[] {

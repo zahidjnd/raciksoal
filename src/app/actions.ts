@@ -4,8 +4,9 @@ import { and, eq, gte, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { hasilSoal } from "@/db/schema";
 import { daftarModel, tanyaAI } from "@/lib/ai";
-import { bagiTahap, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatPermintaanKisi, buatSistem, rencanaGrup, TKA, type Pengaturan } from "@/lib/prompt";
-import { bersihkanTanggapan, LEVEL, pemeriksaArab, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, terapkanBobot, type Bab, type BarisKisi, type Soal } from "@/lib/soal";
+import { bagiTahap, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatPermintaanKisi, buatSistem, buatAnalisaMateri, bersihkanIdentitas, rencanaGrup, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
+import { BATAS_MATERI, susunDraf, terapkanAnalisa } from "@/lib/materi";
+import { bersihkanTanggapan, gabungBab, identitasBab, KELAS, LEVEL, pemeriksaArab, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, terapkanBobot, type Bab, type BarisKisi, type Soal } from "@/lib/soal";
 import { babDariSet, babMilik, daftarBabMilik } from "@/lib/bab";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
@@ -109,9 +110,13 @@ export async function mulaiBuatSoal(input: Pengaturan) {
     if (typeof isian === "string") return { ok: false as const, pesan: isian };
     // Guru tidak boleh memilih model atau mode bandingkan, walau dikirim dari browser: paksa model utama.
     const p = saya.peran === "admin" ? isian : { ...isian, modelSlot: daftarModel()[0]?.slot ?? 1, bandingkan: false };
-    // Materi sendiri hanya milik guru yang sedang masuk (aturan 3).
-    const bab = await babMilik(p.babId, saya.id);
-    if (!bab) return { ok: false as const, pesan: "Bab atau materi tidak ditemukan." };
+    // Materi hanya milik guru yang sedang masuk (aturan 3). Beberapa materi (PTS/PAS) digabung jadi satu bab.
+    const babs = await Promise.all(p.babIds!.map((b) => babMilik(b, saya.id)));
+    if (babs.some((b) => !b)) return { ok: false as const, pesan: "Materi tidak ditemukan." };
+    const id0 = identitasBab(babs[0]!);
+    if (babs.some((b) => identitasBab(b!).mapel.toLowerCase() !== id0.mapel.toLowerCase() || identitasBab(b!).kelas !== id0.kelas))
+      return { ok: false as const, pesan: "Materi yang digabung harus satu mapel dan satu kelas." };
+    const bab = gabungBab(babs as Bab[]);
     const model = daftarModel().find((m) => m.slot === p.modelSlot);
     if (!model) return { ok: false as const, pesan: "Model AI tidak dikenal." };
 
@@ -124,7 +129,7 @@ export async function mulaiBuatSoal(input: Pengaturan) {
 
     const [baris] = await db
       .insert(hasilSoal)
-      .values({ status: "proses", guruId: saya.id, babId: bab.id, bab, pengaturan: p, model: model.nama, pesan: "Menyiapkan..." })
+      .values({ status: "proses", guruId: saya.id, babId: p.babIds!.join(","), bab, pengaturan: p, model: model.nama, pesan: "Menyiapkan..." })
       .returning({ id: hasilSoal.id });
 
     void kerjakan(baris.id, bab, p); // sengaja tidak ditunggu, supaya koneksi browser tidak putus
@@ -305,6 +310,60 @@ export async function gantiSatuSoal(id: number, no: number, instruksiMentah?: st
     const admin = (await penggunaSaatIni().catch(() => null))?.peran === "admin";
     return { ok: false as const, pesan: admin ? `Gagal ${ubah ? "mengubah" : "mengganti"}: ${pesanError(e)}` : ubah ? `Gagal mengubah soal, ${SARAN_GURU}` : PESAN_GAGAL_GURU };
   }
+}
+
+// Batas analisa materi per guru per hari (biaya AI), di memori: hilang saat server dinyalakan ulang.
+// ponytail: penghitung di memori, pindah ke tabel bila perlu tepat atau server lebih dari satu.
+const BATAS_ANALISA = 30;
+const analisaHariIni = new Map<string, { hari: string; n: number }>();
+const hariWib = () => new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10);
+
+/**
+ * Materi baru dari halaman utama (tempel teks / file Word-PowerPoint, paragraf urut): ayat dicocokkan ke mushaf,
+ * lalu AI mengusulkan judul, TP, pokok materi, serta sumber/terjemah dalil yang tertulis di teks. Belum disimpan:
+ * guru memeriksa kartu materinya dulu; materi tersimpan otomatis saat "Buat soal".
+ */
+export async function analisaMateri(input: { mapel: string; kelas: string; paragraf: string[] }) {
+  const saya = await penggunaSaatIni();
+  if (!saya) return { ok: false as const, pesan: SESI_HABIS };
+  const mapel = String(input?.mapel ?? "").trim().slice(0, 60);
+  const kelas = String(input?.kelas ?? "").trim();
+  if (!mapel || !KELAS.includes(kelas)) return { ok: false as const, pesan: "Pilih mata pelajaran dan kelas dulu." };
+  const paragraf = (Array.isArray(input?.paragraf) ? input.paragraf : []).map((p) => String(p ?? "").slice(0, 5000)).slice(0, 3000);
+  if (paragraf.join("\n").length > 40_000) return { ok: false as const, pesan: "Materi terlalu panjang (maks ±30.000 huruf). Pecah menjadi beberapa materi." };
+
+  const m = mushaf();
+  const { isian, untukAi } = susunDraf({ mapel, kelas, paragraf }, m.cari, m.basmalah);
+  if (isian.isi.length < BATAS_MATERI.isiMin) return { ok: false as const, pesan: `Materi terlalu pendek (minimal ${BATAS_MATERI.isiMin} huruf teks).` };
+
+  if (saya.peran !== "admin") {
+    const hari = hariWib();
+    const c = analisaHariIni.get(saya.id);
+    const n = c?.hari === hari ? c.n : 0;
+    if (n >= BATAS_ANALISA) return { ok: false as const, pesan: `Batas ${BATAS_ANALISA} analisa materi hari ini sudah habis. Pakai materi yang sudah ada, atau lanjutkan besok.` };
+    analisaHariIni.set(saya.id, { hari, n: n + 1 });
+  }
+
+  const { sistem, pengguna } = buatAnalisaMateri(mapel, kelas, untukAi, isian.teksArab === "bahasa");
+  try {
+    const r = await tanyaDenganCadangan(sistem, pengguna, daftarModel()[0]?.slot ?? 1, true, (d) => d);
+    return { ok: true as const, ...terapkanAnalisa(r.hasil, isian, untukAi) };
+  } catch (e) {
+    console.error("[analisa materi gagal]", pesanError(e));
+    // AI gagal: materi tetap bisa dipakai, guru mengisi judul & TP sendiri di kartu materi.
+    return { ok: true as const, isian, catatan: "AI gagal menganalisa materi. Isi judul dan TP sendiri, atau coba analisa lagi." };
+  }
+}
+
+/** Ubah identitas ujian (kop Word) setelah set jadi: tanpa AI, hanya pemilik/admin (aturan 3). */
+export async function ubahIdentitas(id: number, identitas: Identitas) {
+  const saya = await penggunaSaatIni();
+  if (!saya) return { ok: false as const, pesan: SESI_HABIS };
+  const [h] = await db.select({ guruId: hasilSoal.guruId, pengaturan: hasilSoal.pengaturan }).from(hasilSoal).where(eq(hasilSoal.id, Number(id)));
+  if (!h || !bolehAkses(h.guruId, saya)) return { ok: false as const, pesan: "Set soal tidak ditemukan." };
+  const baru = bersihkanIdentitas(identitas);
+  await db.update(hasilSoal).set({ pengaturan: { ...(h.pengaturan as Pengaturan), identitas: baru } }).where(eq(hasilSoal.id, Number(id)));
+  return { ok: true as const, identitas: baru };
 }
 
 /** Status + isi satu set, hanya untuk pemiliknya atau admin (aturan 3). Set orang lain dijawab "tidak ada". */

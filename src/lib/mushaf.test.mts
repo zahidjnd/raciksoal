@@ -99,7 +99,9 @@ test("aturan 5: ayat dari mushaf tidak perlu centang, hadis tetap wajib dicentan
   const hadis = { sumber: "HR. Bukhari", arab: dalil("hadis-iman").arab, terjemah: "t" };
   assert.match(String(rapikanMateri({ ...isian, dalil: [...isian.dalil, hadis] }, "x", m.cari)), /Centang/);
   assert.ok(typeof rapikanMateri({ ...isian, dalil: [...isian.dalil, hadis], diverifikasi: true }, "x", m.cari) !== "string");
-  assert.match(String(rapikanMateri({ ...isian, dalil: [{ ...isian.dalil[0], terjemah: "" }] }, "x", m.cari)), /terjemah wajib/);
+  // terjemah boleh kosong (2026-10-20, guru dibuat mudah); sumber tetap wajib untuk teks yang bukan dari mushaf
+  assert.ok(typeof rapikanMateri({ ...isian, dalil: [{ ...isian.dalil[0], terjemah: "" }] }, "x", m.cari) !== "string");
+  assert.match(String(rapikanMateri({ ...isian, dalil: [{ ...hadis, sumber: "" }], diverifikasi: true }, "x", m.cari)), /sumber dan teks Arab wajib/);
 });
 
 test("mode Bahasa Arab: kalimat Arab sehari-hari tidak dianggap ayat, ayat (beda harakat/ejaan) dikenali", () => {
