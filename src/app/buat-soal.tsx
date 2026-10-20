@@ -118,7 +118,7 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
   const [hasil, setHasil] = useState<Hasil | null>(null);
   const [error, setError] = useState("");
   const [detik, setDetik] = useState(0);
-  const [buka, setBuka] = useState<"jumlah" | "lanjutan" | "identitas" | null>(null); // panel di bawah kotak ketik
+  const [buka, setBuka] = useState<"jumlah" | "lanjutan" | null>(null); // panel di bawah kotak ketik
   const [tab, setTab] = useState<"soal" | "kisi">("soal"); // halaman hasil
   const [semuaKunci, setSemuaKunci] = useState(false);
   const [jatah, setJatah] = useState<Awaited<ReturnType<typeof ambilJatah>>>(null);
@@ -259,6 +259,8 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
           </div>
 
           <PilihMapel mapel={mapel} kelas={kelas} ubah={pilihMapel} />
+          {/* Identitas ujian (kop Word) selalu tampil di bawah mapel & kelas (pilihan pemilik), terisi otomatis. */}
+          <FormIdentitas nilai={p.identitas ?? {}} ubah={(identitas) => setP({ ...p, identitas })} />
           <KotakMateri mapel={mapel} kelas={kelas} daftar={daftarBab} pilihan={pilihan} setPilihan={setPilihan} draf={draf} setDraf={setDraf} />
 
           {/* Kartu jenis soal: pilihan setara, jadi sengaja berbentuk sama. Memilih kartu ikut mengatur komposisi level. */}
@@ -316,9 +318,6 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
               <button className={chipPanel("lanjutan")} aria-expanded={buka === "lanjutan"} onClick={() => setBuka(buka === "lanjutan" ? null : "lanjutan")}>
                 Lanjutan ▾
               </button>
-              <button className={chipPanel("identitas")} aria-expanded={buka === "identitas"} onClick={() => setBuka(buka === "identitas" ? null : "identitas")}>
-                Identitas ▾
-              </button>
               <button
                 className="ml-auto h-10 rounded-lg bg-hijau px-4 font-semibold text-white hover:bg-hijau-tua disabled:opacity-40"
                 disabled={proses || menyiapkan || jatahHabis || !!alasanTerkunci}
@@ -347,12 +346,6 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
                   {totalSkor !== 100 && " (bukan 100)"}
                 </p>
               </fieldset>
-            )}
-
-            {buka === "identitas" && (
-              <div className="mt-3 border-t pt-3">
-                <FormIdentitas nilai={p.identitas ?? {}} ubah={(identitas) => setP({ ...p, identitas })} />
-              </div>
             )}
 
             {buka === "lanjutan" && (
