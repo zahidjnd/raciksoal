@@ -182,7 +182,7 @@ ${bab.materi.join("\n")}`;
 
 const BENTUK_SOAL = `BENTUK SOAL:
 - PG: 5 pilihan, tepat 1 benar. "kunci": "A".."E".
-- PGK (pilihan ganda kompleks): 5 pilihan, tepat 2 benar. "kunci": array berisi 2 huruf jawaban benar. Akhiri pertanyaan dengan "(Pilih 2 jawaban)".
+- PGK (pilihan ganda kompleks, model jawaban ganda/MCMA): 5 pilihan, 2 ATAU 3 benar (tidak semua), sesuai isi soal; ragamkan jumlahnya dalam satu set. "kunci": array berisi 2 atau 3 huruf jawaban benar. Akhiri pertanyaan dengan "(Pilih semua jawaban yang tepat)" tanpa menyebut jumlah jawaban benar.
 - BS: satu pernyataan. "kunci": "Benar" atau "Salah". Tanpa "pilihan".
 - URAIAN: "kunci" berisi jawaban ideal; "rubrik" berisi kriteria penilaian dan skornya; "skor" = jumlah skor rubrik.`;
 

@@ -196,14 +196,37 @@ export function periksaSoal(soal: Soal[], bab: Bab): Soal[] {
     if (arabAsing.length) peringatan.push(`Teks Arab tidak cocok dengan data terverifikasi: ${arabAsing.join(" | ")}`);
     if (s.dalil_id && !dalilAda.has(s.dalil_id)) peringatan.push(`Dalil "${s.dalil_id}" tidak ada di data bab.`);
     if ((s.bentuk === "PG" || s.bentuk === "PGK") && s.pilihan?.length !== 5) peringatan.push("Jumlah pilihan bukan 5.");
-    if (s.bentuk === "PGK" && (!Array.isArray(s.kunci) || s.kunci.length !== 2)) peringatan.push("Kunci PG kompleks bukan 2 jawaban.");
+    if (s.bentuk === "PGK" && !KUNCI_PGK.includes(new Set([s.kunci].flat()).size)) peringatan.push("Kunci PG kompleks harus 2 atau 3 jawaban.");
     return { ...s, peringatan };
   });
 }
 
 const HURUF = "ABCDE";
-// 10 kemungkinan pasangan kunci PG kompleks: [0,1]=AB, [0,2]=AC, ... [3,4]=DE
-const PASANGAN = [0, 1, 2, 3].flatMap((a) => [1, 2, 3, 4].filter((b) => b > a).map((b) => [a, b]));
+/** PG kompleks (MCMA, ATURAN-SOAL.md bagian 3): 2 atau 3 jawaban benar dari 5. */
+export const KUNCI_PGK = [2, 3];
+// Semua gabungan k posisi dari 5: k=2 → AB, AC, ... DE (10); k=3 → ABC, ... CDE (10)
+const gabungan = (k: number, mulai = 0): number[][] =>
+  k === 0 ? [[]] : [0, 1, 2, 3, 4].filter((i) => i >= mulai).flatMap((i) => gabungan(k - 1, i + 1).map((g) => [i, ...g]));
+
+/**
+ * Nilai angka sebuah pilihan ("12", "-3,5 m/s", "Rp 1.500.000", "1945 M"), atau null kalau bukan diawali angka.
+ * Format Indonesia: titik = ribuan, koma = desimal.
+ */
+function nilaiAngka(t: string): number | null {
+  const m = /^\s*(?:Rp\.?\s*)?([-+−]?\d{1,3}(?:\.\d{3})+(?:,\d+)?|[-+−]?\d+(?:,\d+)?)(?!\d)/i.exec(String(t ?? ""));
+  return m ? Number(m[1].replace("−", "-").replace(/\./g, "").replace(",", ".")) : null;
+}
+
+/** Pilihan PG/PGK yang semuanya angka (ATURAN-SOAL.md 2b no. 8: harus urut kecil → besar dan tidak diacak). */
+export const pilihanAngka = (s: Pick<Soal, "pilihan">) => !!s.pilihan?.length && s.pilihan.every((p) => nilaiAngka(p) !== null);
+
+/** Urutkan pilihan angka kecil → besar; huruf kunci ikut menyesuaikan. */
+function urutkanAngka(s: Soal) {
+  const lama = [s.kunci].flat().map((h) => s.pilihan![HURUF.indexOf(String(h).trim().toUpperCase())]);
+  s.pilihan = [...s.pilihan!].sort((a, b) => nilaiAngka(a)! - nilaiAngka(b)!);
+  const kunci = lama.map((isi) => HURUF[s.pilihan!.indexOf(isi)]).filter(Boolean).sort();
+  s.kunci = s.bentuk === "PG" ? (kunci[0] ?? s.kunci) : kunci;
+}
 
 function kocok<T>(arr: T[], acak: () => number): T[] {
   for (let i = arr.length - 1; i > 0; i--) {
@@ -224,9 +247,9 @@ function targetMerata<T>(semua: T[], n: number, acak: () => number): T[] {
 function indeksKunci(s: Soal): number[] | null {
   if (s.pilihan?.length !== 5) return null;
   const kunci = [s.kunci].flat();
-  const jumlahBenar = s.bentuk === "PG" ? 1 : s.bentuk === "PGK" ? 2 : 0;
+  const boleh = s.bentuk === "PG" ? [1] : s.bentuk === "PGK" ? KUNCI_PGK : [];
   const idx = [...new Set(kunci.map((h) => HURUF.indexOf(String(h).trim().toUpperCase())))];
-  return jumlahBenar && idx.length === jumlahBenar && kunci.length === jumlahBenar && !idx.includes(-1) ? idx : null;
+  return boleh.includes(idx.length) && kunci.length === idx.length && !idx.includes(-1) ? idx : null;
 }
 
 /** Pindahkan jawaban benar ke posisi target, pengecoh mengisi sisanya secara acak. */
@@ -241,13 +264,18 @@ function susunUlang(s: Soal, benar: number[], posisi: number[], acak: () => numb
 
 /**
  * Sebar kunci merata karena AI cenderung menaruh jawaban benar di A/B.
- * PG: setiap huruf A–E jadi kunci bergiliran. PGK: 10 pasangan (AB..DE) bergiliran, jadi tiap huruf seimbang.
+ * PG: setiap huruf A–E jadi kunci bergiliran. PGK: gabungan 2 (AB..DE) atau 3 (ABC..CDE) kunci bergiliran,
+ * jadi tiap huruf seimbang. Pilihan berupa angka tidak diacak, melainkan diurutkan kecil → besar.
  */
 export function ratakanKunci(soal: Soal[], acak = Math.random): void {
-  for (const bentuk of ["PG", "PGK"] as const) {
-    const daftar = soal.filter((s) => s.bentuk === bentuk && indeksKunci(s));
-    const semuaTarget = bentuk === "PG" ? [0, 1, 2, 3, 4].map((i) => [i]) : PASANGAN;
-    const target = targetMerata(semuaTarget, daftar.length, acak);
+  for (const s of soal) if ((s.bentuk === "PG" || s.bentuk === "PGK") && pilihanAngka(s) && indeksKunci(s)) urutkanAngka(s);
+  const kelompok = [
+    { bentuk: "PG", k: 1 },
+    ...KUNCI_PGK.map((k) => ({ bentuk: "PGK", k })),
+  ];
+  for (const { bentuk, k } of kelompok) {
+    const daftar = soal.filter((s) => s.bentuk === bentuk && !pilihanAngka(s) && indeksKunci(s)?.length === k);
+    const target = targetMerata(gabungan(k), daftar.length, acak);
     daftar.forEach((s, i) => susunUlang(s, indeksKunci(s)!, target[i], acak));
   }
 }

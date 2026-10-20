@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { ambilDaftarBab, ambilDaftarModel, ambilJatah, cekHasil, mulaiBuatSoal } from "./actions";
 import { KartuSoal, Teks } from "./kartu-soal";
 import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_SOAL, NAMA_BENTUK, TUJUAN, type Pengaturan } from "@/lib/prompt";
-import type { BarisKisi, Bentuk } from "@/lib/soal";
+import { pilihanAngka, type BarisKisi, type Bentuk } from "@/lib/soal";
 import { DAFTAR_BAB as SEMUA_BAB } from "@/data";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -369,6 +369,7 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
           </div>
           <p className="rounded-lg border border-peringatan-garis bg-peringatan-muda p-3 font-semibold text-peringatan">
             ⚠️ Soal dibuat AI, wajib diperiksa guru sebelum dipakai.
+            {soal.some(pilihanAngka) && <span className="block text-sm font-normal">Ada soal dengan pilihan angka: periksa ulang hitungannya, AI bisa salah hitung.</span>}
           </p>
           {hasil.catatan && (
             <div className="space-y-1 rounded-lg border bg-kartu p-3 text-sm">

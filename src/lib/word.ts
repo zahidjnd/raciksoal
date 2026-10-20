@@ -49,7 +49,7 @@ const NAMA_BAGIAN: Record<Bentuk, string> = {
 };
 const PETUNJUK: Record<Bentuk, string> = {
   PG: "Pilihlah salah satu jawaban yang paling tepat (A, B, C, D, atau E)!",
-  PGK: "Pilihlah dua jawaban yang benar dari pilihan A, B, C, D, atau E!",
+  PGK: "Pilihlah semua jawaban yang tepat dari pilihan A, B, C, D, atau E (jawaban benar lebih dari satu)!",
   BS: "Pilihlah jawaban A jika pernyataan bernilai BENAR, atau jawaban B jika SALAH!",
   URAIAN: "Jawablah pertanyaan berikut dengan singkat, jelas, dan tepat!",
 };
@@ -159,7 +159,8 @@ export function buatWordKunci(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Da
     isi.push(par([new TextRun({ text: `${HURUF[k]}. KUNCI BAGIAN ${ROMAWI[k]}: ${NAMA_BENTUK[bentuk].toUpperCase()} (${butir.length} soal, skor ${skor})`, bold: true })], { spacing: { before: 200, after: 80 } }));
     if (bentuk === "PGK") {
       const penuh = Number(butir[0].s.skor) || 0;
-      isi.push(par([r(`Penskoran per soal: benar kedua opsi = ${penuh} poin, benar 1 opsi = ${penuh / 2} poin, salah = 0 poin.`, { italics: true })]));
+      // ATURAN-SOAL.md bagian 3: penskoran resmi PG kompleks 1/0 per butir (seperti TKA).
+      isi.push(par([r(`Penskoran per soal: memilih SEMUA jawaban benar tanpa pilihan salah = ${penuh} poin; selain itu = 0 poin.`, { italics: true })]));
     }
 
     for (const { s, no } of butir) {

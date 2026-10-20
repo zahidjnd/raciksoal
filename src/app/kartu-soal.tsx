@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { gantiSatuSoal, simpanSoal } from "./actions";
-import { LEVEL, POLA_ARAB, type Bab, type Soal } from "@/lib/soal";
+import { KUNCI_PGK, LEVEL, POLA_ARAB, type Bab, type Soal } from "@/lib/soal";
 import { MAKS_INSTRUKSI } from "@/lib/prompt";
 
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
@@ -141,7 +141,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan }: FormProps) {
   const kunciPgk = [s.kunci].flat();
 
   async function simpan() {
-    if (s.bentuk === "PGK" && kunciPgk.length !== 2) return setError("Pilih tepat 2 kunci jawaban.");
+    if (s.bentuk === "PGK" && !KUNCI_PGK.includes(kunciPgk.length)) return setError("Pilih 2 atau 3 kunci jawaban.");
     setMenyimpan(true);
     setError((await onSimpan(s)) ?? "");
     setMenyimpan(false);
@@ -166,7 +166,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan }: FormProps) {
 
       {s.pilihan && (
         <fieldset className="space-y-1">
-          <legend>Pilihan jawaban (centang kunci{s.bentuk === "PGK" ? ", tepat 2" : ""})</legend>
+          <legend>Pilihan jawaban (centang kunci{s.bentuk === "PGK" ? ", 2 atau 3" : ""})</legend>
           {s.pilihan.map((o, i) => (
             <div key={i} className="flex items-center gap-2">
               <input

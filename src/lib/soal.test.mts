@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { arabTakTerverifikasi, bersihkanTanggapan, identitasBab, korpusArab, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, terapkanBobot, type Bab, type Soal } from "./soal.ts";
+import { arabTakTerverifikasi, bersihkanTanggapan, identitasBab, korpusArab, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, terapkanBobot, type Bab, type Soal } from "./soal.ts";
 import { bagiTahap, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, buatSistem, hitungLevel, MAKS_CATATAN, MAKS_INSTRUKSI, rencanaLevel, type Pengaturan } from "./prompt.ts";
 import { bolehAkses, rapikanUsername } from "./akses.ts";
 import { keIsian, rapikanMateri } from "./materi.ts";
@@ -241,6 +241,33 @@ test("ratakanKunci menyebar pasangan kunci PG kompleks merata tanpa mengubah jaw
     assert.deepEqual(isiKunci, [`benar1 ${i}`, `benar2 ${i}`]);
     assert.equal(s.pilihan!.length, 5);
   });
+});
+
+test("ratakanKunci: PG kompleks 3 kunci disebar ke gabungan ABC..CDE; kunci 2/3 valid, 1/4 ditandai", () => {
+  const soal: Soal[] = Array.from({ length: 10 }, (_, i) => ({
+    bentuk: "PGK", dalil_id: null, pertanyaan: `soal ${i}`, kunci: ["A", "B", "C"],
+    pilihan: [`b1 ${i}`, `b2 ${i}`, `b3 ${i}`, "x", "y"], pembahasan: "", level: "C2", tp: "TP 3.1", skor: 1,
+  }));
+  ratakanKunci(soal);
+  assert.equal(new Set(soal.map((s) => (s.kunci as string[]).join(""))).size, 10);
+  soal.forEach((s, i) => assert.deepEqual((s.kunci as string[]).map((h) => s.pilihan!["ABCDE".indexOf(h)]), [`b1 ${i}`, `b2 ${i}`, `b3 ${i}`]));
+  const dasar = { ...soal[0], kunci: ["A", "B", "C"] };
+  assert.deepEqual(periksaSoal([dasar], bab)[0].peringatan, []);
+  assert.equal(periksaSoal([{ ...dasar, kunci: ["A"] }], bab)[0].peringatan!.length, 1);
+  assert.equal(periksaSoal([{ ...dasar, kunci: ["A", "B", "C", "D"] }], bab)[0].peringatan!.length, 1);
+});
+
+test("pilihan angka diurutkan kecil → besar (format Indonesia), tidak diacak, kunci ikut", () => {
+  const s: Soal = { bentuk: "PG", dalil_id: null, pertanyaan: "Berapa?", kunci: "A", pilihan: ["Rp 1.500.000", "Rp 250.000", "Rp 12,5", "Rp 2.000", "Rp 300"], pembahasan: "", level: "C3", tp: "TP 1", skor: 2 };
+  assert.ok(pilihanAngka(s));
+  ratakanKunci([s]);
+  assert.deepEqual(s.pilihan, ["Rp 12,5", "Rp 300", "Rp 2.000", "Rp 250.000", "Rp 1.500.000"]);
+  assert.equal(s.kunci, "E");
+  const tahun: Soal = { ...s, bentuk: "PGK", kunci: ["B", "C"], pilihan: ["1945 M", "622 M", "1928 M", "-3", "1908 M"] };
+  ratakanKunci([tahun]);
+  assert.deepEqual(tahun.pilihan, ["-3", "622 M", "1908 M", "1928 M", "1945 M"]);
+  assert.deepEqual(tahun.kunci, ["B", "D"]); // 622 M dan 1928 M
+  assert.ok(!pilihanAngka({ pilihan: ["5 kali", "Tiga kali", "1", "2", "3"] }));
 });
 
 test("ratakanKunci tidak mengubah soal yang kuncinya tidak valid", () => {
