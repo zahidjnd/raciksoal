@@ -37,8 +37,6 @@ const JENIS: { tujuan: (typeof TUJUAN)[number]; ket: string; ikon: React.ReactNo
 /** Latihan TKA: bentuk PG / PGK / Kategori saja, bawaan 25 soal (ATURAN-SOAL.md bagian 9). */
 const JUMLAH_TKA = { PG: 15, PGK: 5, BS: 5, URAIAN: 0 };
 const JUMLAH_AWAL = { PG: 10, PGK: 5, BS: 5, URAIAN: 5 };
-/** Contoh catatan untuk AI: sekali klik mengisi kotak catatan (umum, berlaku untuk bab mana pun). */
-const CONTOH_CATATAN = ["Pakai nama santri putri", "Soal cerita kehidupan pesantren", "Tanpa teks Arab", "Bahasa sederhana"];
 const BENTUK = Object.keys(NAMA_BENTUK) as Bentuk[];
 
 type Hasil = NonNullable<Awaited<ReturnType<typeof cekHasil>>>;
@@ -252,7 +250,7 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
     <div className="space-y-6">
 
       {tampilForm && (
-        <section className="mx-auto max-w-3xl space-y-3 pt-4 md:pt-12">
+        <section className="space-y-3 pt-4 md:pt-12">
           <div className="pb-2 text-center">
             <h1 className="text-3xl md:text-4xl">Assalamu&apos;alaikum, {nama}</h1>
             <p className="mt-1 text-sm text-pudar">Pilih mapel dan kelas, masukkan materi, lalu pilih jenis soal.</p>
@@ -291,12 +289,6 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
             })}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 pt-2">
-            <span className="text-xs text-pudar">Contoh catatan:</span>
-            {CONTOH_CATATAN.map((c) => (
-              <button key={c} className={chip} onClick={() => setP({ ...p, catatan: c })}>{c}</button>
-            ))}
-          </div>
 
           <div className="rounded-2xl border bg-kartu p-3 shadow-sm focus-within:border-hijau focus-within:ring-2 focus-within:ring-hijau">
             <textarea

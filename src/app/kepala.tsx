@@ -103,7 +103,8 @@ const tautan = "block shrink-0 truncate rounded-lg px-3 py-3 text-tinta hover:bg
  * Kerangka setiap halaman setelah masuk (gaya claude.ai, DESIGN.md): sidebar tiga bagian (atas & bawah diam,
  * menu + riwayat di tengah digulir); di HP menjadi laci dari kiri (LaciSidebar). Isi halaman di sebelah kanan.
  */
-export async function Kerangka({ p, children }: { p: Pengguna; children: React.ReactNode }) {
+// lebar: halaman Buat Soal & hasil memakai 1024px (pilihan pemilik 2026-10-20, layar lebar terlihat kosong); halaman lain 768px.
+export async function Kerangka({ p, lebar = false, children }: { p: Pengguna; lebar?: boolean; children: React.ReactNode }) {
   const admin = p.peran === "admin";
   const riwayat = await ambilRiwayat(p.id, BATAS_SIDEBAR);
   const tema = (await cookies()).get("tema")?.value === "gelap" ? "gelap" : "terang";
@@ -168,7 +169,7 @@ export async function Kerangka({ p, children }: { p: Pengguna; children: React.R
           </form>
         </div>
       </LaciSidebar>
-      <main className="mx-auto w-full max-w-3xl min-w-0 space-y-6 p-4 md:p-8">
+      <main className={`mx-auto w-full ${lebar ? "max-w-5xl" : "max-w-3xl"} min-w-0 space-y-6 p-4 md:p-8`}>
         {admin && <PeringatanAdmin />}
         {admin && <PeringatanBackup />}
         {children}
