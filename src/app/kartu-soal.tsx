@@ -53,9 +53,10 @@ function TabelKategori({ s, kunci }: { s: Soal; kunci: boolean }) {
   );
 }
 
-type Props = { hasilId: number; no: number; s: Soal; bab: Bab; semuaKunci: boolean; onUbah: (s: Soal) => void };
+// nomorGrup: diisi ("4–6") hanya untuk soal pertama sebuah soal grup → wacana bersama tampil di atasnya.
+type Props = { hasilId: number; no: number; s: Soal; bab: Bab; semuaKunci: boolean; nomorGrup?: string | null; onUbah: (s: Soal) => void };
 
-export function KartuSoal({ hasilId, no, s, bab, semuaKunci, onUbah }: Props) {
+export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah }: Props) {
   const [edit, setEdit] = useState(false);
   const [lihatKunci, setLihatKunci] = useState(false); // kunci & pembahasan dilipat, dibuka per soal atau semua sekaligus
   const tampilKunci = semuaKunci || lihatKunci;
@@ -97,6 +98,13 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, onUbah }: Props) {
 
   const dalil = bab.dalil.find((d) => d.id === s.dalil_id);
   return (
+    <>
+    {nomorGrup && s.wacana && (
+      <section className="space-y-1 rounded-xl border border-hijau/40 bg-hijau-muda/40 p-4 text-sm" aria-label={`Wacana soal nomor ${nomorGrup}`}>
+        <p className="font-semibold">Bacalah teks berikut untuk menjawab soal nomor {nomorGrup}!</p>
+        <p className="whitespace-pre-line"><Teks teks={s.wacana} /></p>
+      </section>
+    )}
     <article id={`soal-${no}`} className={`scroll-mt-4 space-y-2 rounded-xl border p-4 ${s.peringatan?.length ? "border-bahaya-garis bg-bahaya-muda" : "bg-kartu"} ${mengganti ? "opacity-50" : ""}`}>
       {s.peringatan?.map((w, i) => (
         <p key={i} className="text-sm font-semibold text-bahaya">⚠️ {w}</p>
@@ -161,6 +169,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, onUbah }: Props) {
       </form>
       {error && <p className="text-sm text-bahaya">{error}</p>}
     </article>
+    </>
   );
 }
 
@@ -184,6 +193,13 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan }: FormProps) {
   return (
     <article className="space-y-3 rounded-lg border-2 border-hijau p-4 text-sm">
       <p className="font-semibold">Edit soal nomor {no}</p>
+
+      {s.grup && s.wacana !== undefined && (
+        <label className="block">
+          Wacana grup (dipakai bersama semua soal di grup ini; perubahan ikut ke soal lain di grup)
+          <textarea dir="auto" rows={6} className={kotak} value={s.wacana} onChange={(e) => ubah({ wacana: e.target.value })} />
+        </label>
+      )}
 
       <label className="block">
         Pertanyaan

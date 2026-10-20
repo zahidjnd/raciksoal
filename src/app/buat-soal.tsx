@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { ambilDaftarBab, ambilDaftarModel, ambilJatah, cekHasil, mulaiBuatSoal } from "./actions";
 import { KartuSoal, Teks } from "./kartu-soal";
-import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_SOAL, NAMA_BENTUK, TUJUAN, type Pengaturan } from "@/lib/prompt";
-import { pilihanAngka, type BarisKisi, type Bentuk } from "@/lib/soal";
+import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_SOAL, NAMA_BENTUK, NAMA_LEVEL_TKA, TKA, TUJUAN, type Pengaturan } from "@/lib/prompt";
+import { pilihanAngka, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { DAFTAR_BAB as SEMUA_BAB } from "@/data";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -22,12 +22,25 @@ const JENIS: { tujuan: (typeof TUJUAN)[number]; ket: string; ikon: React.ReactNo
   { tujuan: "PTS", ket: "Gaya ujian resmi tengah semester, merata ke semua TP.", ikon: ikon("M6 5h12a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zM4 10h16M9 3v4M15 3v4") },
   { tujuan: "PAS", ket: "Gaya ujian resmi akhir semester, merata ke semua materi.", ikon: ikon("M5 21V4h11l-2 4 2 4H5") },
   { tujuan: "Latihan", ket: "Pembahasan panjang agar siswa bisa belajar mandiri.", ikon: ikon("M4 20h4L19 9l-4-4L4 16z") },
+  { tujuan: "Latihan TKA", ket: "Gaya TKA pusat: soal grup, tanpa uraian.", ikon: ikon("M12 3l9 5-9 5-9-5 9-5zM5 10.5V16l7 4 7-4v-5.5") },
 ];
+/** Latihan TKA: bentuk PG / PGK / Kategori saja, bawaan 25 soal (ATURAN-SOAL.md bagian 9). */
+const JUMLAH_TKA = { PG: 15, PGK: 5, BS: 5, URAIAN: 0 };
+const JUMLAH_AWAL = { PG: 10, PGK: 5, BS: 5, URAIAN: 5 };
 /** Contoh catatan untuk AI: sekali klik mengisi kotak catatan (umum, berlaku untuk bab mana pun). */
 const CONTOH_CATATAN = ["Pakai nama santri putri", "Soal cerita kehidupan pesantren", "Tanpa teks Arab", "Bahasa sederhana"];
 const BENTUK = Object.keys(NAMA_BENTUK) as Bentuk[];
 
 type Hasil = NonNullable<Awaited<ReturnType<typeof cekHasil>>>;
+
+/** Soal grup: "4–6" bila soal ke-i adalah soal pertama grupnya (wacana tampil di atasnya), selain itu null. */
+function nomorGrup(soal: Soal[], i: number) {
+  const g = soal[i].grup;
+  if (!g || !soal[i].wacana || soal[i - 1]?.grup === g) return null;
+  let j = i;
+  while (soal[j + 1]?.grup === g) j++;
+  return j > i ? `${i + 1}–${j + 1}` : `${i + 1}`;
+}
 
 function Angka({ label, nilai, ubah }: { label: string; nilai: number; ubah: (n: number) => void }) {
   return (
@@ -76,7 +89,7 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
   const [p, setP] = useState<Pengaturan>({
     babId: BAB_BAWAAN[0].id,
     tujuan: TUJUAN[0],
-    jumlah: { PG: 10, PGK: 5, BS: 5, URAIAN: 5 },
+    jumlah: JUMLAH_AWAL,
     level: ATURAN_TUJUAN[TUJUAN[0]].level,
     kesulitan: "Sedang",
     bobot: BOBOT_BAWAAN,
@@ -97,6 +110,7 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
   const muatJatah = () => ambilJatah().then(setJatah).catch(() => {});
   const jatahHabis = !!jatah?.batas && jatah.terpakai >= jatah.batas;
 
+  const tka = p.tujuan === TKA;
   const total = BENTUK.reduce((s, b) => s + p.jumlah[b], 0);
   const bobot = p.bobot ?? BOBOT_BAWAAN;
   const totalSkor = BENTUK.reduce((s, b) => s + p.jumlah[b] * bobot[b], 0);
@@ -174,7 +188,8 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
   const alasanTerkunci =
     total < 1 ? "Isi jumlah soal dulu." :
     total > MAKS_SOAL ? `Jumlah soal maksimal ${MAKS_SOAL}.` :
-    totalLevel !== 100 ? `Komposisi level harus 100% (sekarang ${totalLevel}%), buka Lanjutan.` : "";
+    totalLevel !== 100 ? `Komposisi level harus 100% (sekarang ${totalLevel}%), buka Lanjutan.` :
+    tka && p.jumlah.URAIAN ? "Latihan TKA tidak memakai soal uraian." : "";
   // Pilihan dan aksi sama-sama kotak bersudut lembut seperti claude.ai (DESIGN.md).
   const chip = "inline-flex items-center rounded-lg border bg-kartu h-8 px-3 text-sm hover:bg-krem max-md:min-h-11";
   const aksi2 = "inline-flex items-center rounded-lg border bg-kartu h-8 px-3 text-sm hover:bg-krem max-md:min-h-11";
@@ -194,7 +209,7 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
           </div>
 
           {/* Kartu jenis soal: pilihan setara, jadi sengaja berbentuk sama. Memilih kartu ikut mengatur komposisi level. */}
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4" role="radiogroup" aria-label="Jenis soal">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5" role="radiogroup" aria-label="Jenis soal">
             {JENIS.map((j) => {
               const pilih = p.tujuan === j.tujuan;
               return (
@@ -202,7 +217,15 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
                   key={j.tujuan}
                   role="radio"
                   aria-checked={pilih}
-                  onClick={() => setP({ ...p, tujuan: j.tujuan, level: ATURAN_TUJUAN[j.tujuan].level })}
+                  onClick={() =>
+                    setP({
+                      ...p,
+                      tujuan: j.tujuan,
+                      level: ATURAN_TUJUAN[j.tujuan].level,
+                      // masuk TKA: komposisi bentuk gaya TKA; keluar dari TKA: kembali ke komposisi bawaan
+                      ...(j.tujuan === TKA ? { jumlah: JUMLAH_TKA } : p.tujuan === TKA ? { jumlah: JUMLAH_AWAL } : {}),
+                    })
+                  }
                   className={`rounded-xl border bg-kartu p-3 text-left hover:border-pudar/40 ${pilih ? "border-hijau bg-hijau-muda/50 ring-1 ring-hijau" : ""}`}
                 >
                   <span className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-hijau-muda text-hijau-teks">{j.ikon}</span>
@@ -263,7 +286,7 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
               <fieldset className="mt-3 space-y-2 border-t pt-3">
                 <legend className="sr-only">Jumlah soal × skor per soal</legend>
                 <p className="text-xs text-pudar">Jumlah soal × skor per soal</p>
-                {BENTUK.map((b) => (
+                {BENTUK.filter((b) => !(tka && b === "URAIAN")).map((b) => (
                   <div key={b} className="flex items-center justify-between gap-2 text-sm">
                     {NAMA_BENTUK[b]}
                     <span className="flex items-center gap-1 whitespace-nowrap">
@@ -285,9 +308,9 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
                 <fieldset className="space-y-2">
                   <legend className="mb-1 text-sm font-semibold">Komposisi level (total {totalLevel}%)</legend>
                   <p className="text-xs text-pudar">Terisi otomatis sesuai tujuan soal, boleh diubah.</p>
-                  <Angka label="LOTS (C1–C2) %" nilai={p.level.LOTS} ubah={(n) => setP({ ...p, level: { ...p.level, LOTS: n } })} />
-                  <Angka label="MOTS (C3) %" nilai={p.level.MOTS} ubah={(n) => setP({ ...p, level: { ...p.level, MOTS: n } })} />
-                  <Angka label="HOTS (C4–C6) %" nilai={p.level.HOTS} ubah={(n) => setP({ ...p, level: { ...p.level, HOTS: n } })} />
+                  <Angka label={`${tka ? `${NAMA_LEVEL_TKA.LOTS} / ` : ""}LOTS (C1–C2) %`} nilai={p.level.LOTS} ubah={(n) => setP({ ...p, level: { ...p.level, LOTS: n } })} />
+                  <Angka label={`${tka ? `${NAMA_LEVEL_TKA.MOTS} / ` : ""}MOTS (C3) %`} nilai={p.level.MOTS} ubah={(n) => setP({ ...p, level: { ...p.level, MOTS: n } })} />
+                  <Angka label={`${tka ? `${NAMA_LEVEL_TKA.HOTS} / ` : ""}HOTS (C4–C6) %`} nilai={p.level.HOTS} ubah={(n) => setP({ ...p, level: { ...p.level, HOTS: n } })} />
                 </fieldset>
                 {/* Daftar model hanya dikirim server untuk admin; guru tidak melihat pilihan ini. */}
                 {daftarModel.length > 0 && (
@@ -434,6 +457,7 @@ export function BuatSoal({ nama, awalId }: { nama: string; awalId: number | null
                         s={s}
                         bab={bab}
                         semuaKunci={semuaKunci}
+                        nomorGrup={nomorGrup(soal, i)}
                         onUbah={(baru) => {
                           setHasil({ ...hasil, soal: soal.map((x, j) => (j === i ? baru : x)) });
                           cekHasil(id!).then((h) => h && setHasil(h)).catch(() => {}); // kisi-kisi ikut berubah di server

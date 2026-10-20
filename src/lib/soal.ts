@@ -20,6 +20,10 @@ export type Soal = {
   peringatan?: string[]; // diisi aplikasi, bukan AI
   stimulus?: string; // hanya pada jawaban "ganti satu soal": ringkasan skenario baru untuk kisi-kisi
   indikator?: string; // hanya pada jawaban "minta perubahan": indikator baru untuk kisi-kisi
+  // Soal grup (Latihan TKA, Tahap E): soal berurutan berbentuk sama dengan nomor grup sama memakai satu wacana,
+  // yang disalin ke setiap soal grup itu (tampil sekali, sebelum soal pertamanya). Diisi aplikasi dari kisi-kisi.
+  grup?: number;
+  wacana?: string;
 };
 
 export type Bab = {
@@ -44,6 +48,8 @@ export type BarisKisi = {
   dalil_id: string | null;
   stimulus: string; // jenis + skenario singkat, supaya skenario tidak berulang dalam satu set
   peringatan?: string[]; // diisi aplikasi (aturan 5: teks Arab tak terverifikasi)
+  grup?: number | null; // soal grup (Latihan TKA): nomor grup, atau null untuk soal tunggal
+  wacana?: string; // teks wacana bersama grup itu (disusun AI bersama kisi-kisi)
 };
 
 const URUTAN_BENTUK: Bentuk[] = ["PG", "PGK", "BS", "URAIAN"];
@@ -122,15 +128,53 @@ export function periksaKisi(data: unknown, jumlah: Record<Bentuk, number>, bab: 
         level: teks(k.level).toUpperCase(),
         dalil_id: k.dalil_id && dalilAda.has(teks(k.dalil_id)) ? teks(k.dalil_id) : null,
         peringatan: arabAsing.length ? [`Teks Arab tidak cocok dengan data terverifikasi: ${arabAsing.join(" | ")}`] : [],
+        // nomor grup usulan AI; disahkan/dinomori ulang oleh pasangWacana
+        grup: k.grup !== null && k.grup !== undefined && Number.isInteger(Number(k.grup)) ? Number(k.grup) : null,
       };
     });
   });
   return hasil.map((k, i) => ({ ...k, no: i + 1 }));
 }
 
+/**
+ * Soal grup (Latihan TKA): pasang wacana dari AI ke baris kisi-kisi. Grup sah = minimal 2 nomor BERURUTAN dengan
+ * bentuk sama dan nomor grup sama, dan wacananya ada. Selebihnya jadi soal tunggal. Grup dinomori ulang 1, 2, ...
+ * `kisi[i].grup` = nomor grup usulan AI (dari periksaKisi). Teks Arab di wacana dicek (aturan 5).
+ */
+export function pasangWacana(kisi: BarisKisi[], wacana: unknown, bab: Bab): BarisKisi[] {
+  const teksWacana = new Map<number, string>();
+  for (const w of Array.isArray(wacana) ? wacana : []) {
+    const t = String((w as { teks?: unknown })?.teks ?? "").trim().slice(0, 3000);
+    const g = Number((w as { grup?: unknown })?.grup);
+    if (t && Number.isInteger(g)) teksWacana.set(g, t);
+  }
+  const g = kisi.map((k) => k.grup ?? NaN);
+  const korpus = korpusArab(bab);
+  const hasil = kisi.map((k) => ({ ...k, grup: null as number | null, wacana: undefined as string | undefined }));
+  let nomor = 0;
+  for (let i = 0; i < hasil.length; ) {
+    let j = i;
+    while (j + 1 < hasil.length && Number.isInteger(g[i]) && g[j + 1] === g[i] && hasil[j + 1].bentuk === hasil[i].bentuk) j++;
+    const teks = teksWacana.get(g[i]);
+    if (j > i && teks) {
+      nomor++;
+      const arab = arabTakTerverifikasi(teks, korpus);
+      for (let x = i; x <= j; x++) {
+        hasil[x] = { ...hasil[x], grup: nomor, wacana: teks };
+        if (arab.length) hasil[x].peringatan = [...(hasil[x].peringatan ?? []), `Teks Arab di wacana tidak cocok dengan data terverifikasi: ${arab.join(" | ")}`];
+      }
+    }
+    i = j + 1;
+  }
+  return hasil;
+}
+
 /** Samakan bentuk, TP, dan level soal dengan baris kisi-kisinya (kisi-kisi = rencana yang dipegang). */
 export function samakanDenganKisi(soal: Soal, k: BarisKisi): Soal {
-  const s = { ...soal, bentuk: k.bentuk, tp: k.tp || soal.tp, level: LEVEL.includes(k.level) ? k.level : soal.level };
+  const { grup, wacana, ...isi } = soal; // grup & wacana hanya dari kisi-kisi, bukan dari jawaban AI
+  void grup;
+  void wacana;
+  const s: Soal = { ...isi, bentuk: k.bentuk, tp: k.tp || soal.tp, level: LEVEL.includes(k.level) ? k.level : soal.level, ...(k.grup && k.wacana ? { grup: k.grup, wacana: k.wacana } : {}) };
   // Soal BS baru wajib model Kategori; kalau AI memberi B/S satu pernyataan, pernyataan kosong → ditandai periksaSoal.
   return s.bentuk === "BS" && !Array.isArray(s.pernyataan) ? { ...s, pernyataan: [] } : s;
 }
@@ -169,6 +213,7 @@ export function rapikanSoal(s: Partial<Soal>, bentuk: Bentuk): Soal {
       : {}),
     kunci: bentuk === "PGK" ? kunci : kategori ? [s.kunci].flat().slice(0, JUMLAH_PERNYATAAN).map(teks) : (kunci[0] ?? ""),
     ...(bentuk === "URAIAN" ? { rubrik } : {}),
+    ...(Number.isInteger(s.grup) && s.grup! > 0 && teks(s.wacana) ? { grup: s.grup, wacana: teks(s.wacana).slice(0, 3000) } : {}),
     pembahasan: teks(s.pembahasan),
     level: teks(s.level),
     tp: teks(s.tp),
@@ -236,7 +281,7 @@ export function periksaSoal(soal: Soal[], bab: Bab): Soal[] {
     });
     if (!s.dalil_id && ditemukan) s.dalil_id = ditemukan;
     const peringatan: string[] = [];
-    const semuaTeks = [s.pertanyaan, ...(s.pilihan ?? []), ...(s.pernyataan ?? []), ...[s.kunci].flat(), s.pembahasan, ...(s.rubrik ?? []).map((r) => r.kriteria)];
+    const semuaTeks = [s.wacana ?? "", s.pertanyaan, ...(s.pilihan ?? []), ...(s.pernyataan ?? []), ...[s.kunci].flat(), s.pembahasan, ...(s.rubrik ?? []).map((r) => r.kriteria)];
     const arabAsing = semuaTeks.flatMap((t) => arabTakTerverifikasi(String(t ?? ""), korpus));
     if (arabAsing.length) peringatan.push(`Teks Arab tidak cocok dengan data terverifikasi: ${arabAsing.join(" | ")}`);
     if (s.dalil_id && !dalilAda.has(s.dalil_id)) peringatan.push(`Dalil "${s.dalil_id}" tidak ada di data bab.`);

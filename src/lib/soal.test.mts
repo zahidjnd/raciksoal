@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { arabTakTerverifikasi, bersihkanTanggapan, identitasBab, korpusArab, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, terapkanBobot, type Bab, type Soal } from "./soal.ts";
-import { bagiTahap, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, buatSistem, hitungLevel, MAKS_CATATAN, MAKS_INSTRUKSI, rencanaLevel, type Pengaturan } from "./prompt.ts";
+import { arabTakTerverifikasi, bersihkanTanggapan, identitasBab, korpusArab, pasangWacana, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, terapkanBobot, type Bab, type Soal } from "./soal.ts";
+import { bagiTahap, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, buatSistem, hitungLevel, rencanaGrup, MAKS_CATATAN, MAKS_INSTRUKSI, rencanaLevel, type Pengaturan } from "./prompt.ts";
 import { bolehAkses, rapikanUsername } from "./akses.ts";
 import { keIsian, rapikanMateri } from "./materi.ts";
 import { bacaFileOffice } from "./office.ts";
@@ -295,6 +295,47 @@ test("soal Kategori: 4 pernyataan, label resmi, kunci per pernyataan; B/S lama t
   assert.deepEqual(edit.pernyataan, ["a", "b", "c", "d"]);
   assert.equal((edit.kunci as string[]).length, 4);
   assert.equal(rapikanSoal(lamaGaya, "BS").kunci, "Benar");
+});
+
+test("Latihan TKA: tanpa uraian, kisi-kisi meminta soal grup + wacana; grup sah hanya nomor berurutan berbentuk sama", () => {
+  const p = { babId: "x", tujuan: "Latihan TKA", kesulitan: "Sedang", jumlah: { PG: 3, PGK: 1, BS: 0, URAIAN: 0 }, level: { LOTS: 20, MOTS: 40, HOTS: 40 } } as Pengaturan;
+  assert.match(String(bersihkanPengaturan({ ...p, jumlah: { ...p.jumlah, URAIAN: 1 } })), /tidak memakai soal uraian/);
+  assert.ok(buatPermintaanKisi(p).includes("SOAL GRUP") && buatPermintaanKisi(p).includes('"wacana"'));
+  assert.ok(!buatPermintaanKisi({ ...p, tujuan: "PAS" }).includes("SOAL GRUP"));
+  // grup ditentukan aplikasi: separuh nomor di akhir tiap bentuk, grup 2–3 soal
+  assert.deepEqual(rencanaGrup({ PG: 4, PGK: 1, BS: 1, URAIAN: 0 }), [null, null, 1, 1, null, null]);
+  const r25 = rencanaGrup({ PG: 15, PGK: 5, BS: 5, URAIAN: 0 });
+  assert.deepEqual(r25.slice(0, 15), [...Array(8).fill(null), 1, 1, 1, 2, 2, 3, 3]);
+  assert.deepEqual(r25.slice(15), [null, null, null, 4, 4, null, null, null, 5, 5]);
+  assert.ok(buatPermintaanKisi({ ...p, jumlah: { PG: 4, PGK: 0, BS: 0, URAIAN: 0 } }).match(/Nomor 3: PG, \w+ \([^)]+\), GRUP 1\n- Nomor 4: PG, \w+ \([^)]+\), GRUP 1/));
+  assert.ok(!buatPermintaanKisi(p).includes("GRUP 1")); // 3 PG: separuhnya 1 soal, tidak cukup untuk grup
+
+  const baris = (bentuk: string, grup: unknown) => ({ bentuk, tp: "TP 3.1", materi: "m", indikator: `i${Math.random()}`, level: "C4", dalil_id: null, stimulus: "s", grup });
+  // AI: nomor 1-2 grup 7, nomor 3 grup 7 juga tapi PG → ikut; nomor 4 PGK grup 7 (beda bentuk) → tunggal; grup 9 tanpa wacana → tunggal
+  const kisi = pasangWacana(
+    periksaKisi([baris("PG", 7), baris("PG", 7), baris("PG", 7), baris("PGK", 7)], p.jumlah, bab),
+    [{ grup: 7, teks: "Wacana tentang remaja." }, { grup: 9, teks: "x" }],
+    bab,
+  );
+  assert.deepEqual(kisi.map((k) => k.grup), [1, 1, 1, null]);
+  assert.equal(kisi[0].wacana, "Wacana tentang remaja.");
+  const tunggal = pasangWacana(periksaKisi([baris("PG", 1), baris("PG", 2), baris("PG", null)], { PG: 3, PGK: 0, BS: 0, URAIAN: 0 }, bab), [{ grup: 1, teks: "a" }, { grup: 2, teks: "b" }], bab);
+  assert.deepEqual(tunggal.map((k) => k.grup), [null, null, null]); // grup berisi 1 soal tidak sah
+  // wacana berisi Arab karangan → baris grup ditandai (aturan 5)
+  const arab = pasangWacana(periksaKisi([baris("PG", 1), baris("PG", 1)], { PG: 2, PGK: 0, BS: 0, URAIAN: 0 }, bab), [{ grup: 1, teks: "قَالَ رَسُولُ اللَّهِ" }], bab);
+  assert.equal(arab[0].peringatan!.length, 1);
+
+  // soal mengambil grup & wacana dari kisi-kisi, bukan dari AI; permintaan soal memuat wacananya sekali
+  const s = samakanDenganKisi({ bentuk: "PG", dalil_id: null, pertanyaan: "?", kunci: "A", pembahasan: "", level: "C1", tp: "TP 3.1", skor: 2, grup: 99, wacana: "karangan" }, kisi[0]);
+  assert.equal(s.grup, 1);
+  assert.equal(s.wacana, "Wacana tentang remaja.");
+  assert.equal(samakanDenganKisi(s, kisi[3]).grup, undefined);
+  const permintaan = buatPengguna(p, p.jumlah, [], "", kisi);
+  assert.equal(permintaan.split("Wacana tentang remaja.").length, 2);
+  assert.ok(permintaan.includes("WACANA GRUP 1 (untuk nomor 1, 2, 3)"));
+  // editan guru menyimpan grup & wacana
+  assert.equal(rapikanSoal({ ...s, wacana: " baru " }, "PG").wacana, "baru");
+  assert.equal(rapikanSoal({ ...s, grup: undefined }, "PG").wacana, undefined);
 });
 
 test("ratakanKunci tidak mengubah soal yang kuncinya tidak valid", () => {

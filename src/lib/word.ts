@@ -40,6 +40,7 @@ const JUDUL: Record<string, string> = {
   PTS: "ASESMEN FORMATIF TENGAH SEMESTER",
   PAS: "ASESMEN SUMATIF AKHIR SEMESTER",
   Latihan: "LATIHAN SOAL",
+  "Latihan TKA": "LATIHAN TES KEMAMPUAN AKADEMIK (TKA)",
 };
 const NAMA_BAGIAN: Record<Bentuk, string> = {
   PG: "PILIHAN GANDA (PG)",
@@ -107,7 +108,15 @@ export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tangga
     const kategori = bentuk === "BS" && butir.some((x) => kategoriBaru(x.s));
     isi.push(par([r(`${ROMAWI[k]}. ${kategori ? "PILIHAN GANDA KOMPLEKS KATEGORI" : NAMA_BAGIAN[bentuk]}`, { bold: true })], { spacing: { before: k ? 200 : 0, after: 40 } }));
     isi.push(par([r(kategori ? PETUNJUK_KATEGORI : PETUNJUK[bentuk], { italics: true })], { spacing: { after: 120 } }));
-    for (const { s, no } of butir) {
+    for (const [j, { s, no }] of butir.entries()) {
+      // Soal grup: wacana bersama sekali, sebelum soal pertama grupnya.
+      if (s.grup && s.wacana && butir[j - 1]?.s.grup !== s.grup) {
+        const akhir = butir.slice(j).findLast((x) => x.s.grup === s.grup)!.no;
+        isi.push(par([r(`Bacalah teks berikut untuk menjawab soal nomor ${no}${akhir > no ? `–${akhir}` : ""}!`, { bold: true, italics: true })], { keepNext: true, spacing: { before: 60, after: 40 } }));
+        for (const baris of s.wacana.split("\n").filter((x) => x.trim()))
+          isi.push(par(teks(baris), { alignment: AlignmentType.JUSTIFIED, indent: { left: 200 }, keepNext: true, spacing: { after: 40 } }));
+        isi.push(par([], { spacing: { after: 40 } }));
+      }
       isi.push(bernomor(`${no}.`, teks(s.pertanyaan), 400, { keepNext: true }));
       const dalil = bab.dalil.find((d) => d.id === s.dalil_id);
       if (dalil) {

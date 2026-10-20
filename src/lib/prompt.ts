@@ -1,6 +1,9 @@
 import { identitasBab, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal.ts";
 
-export const TUJUAN = ["Ulangan Harian", "PTS", "PAS", "Latihan"] as const;
+export const TUJUAN = ["Ulangan Harian", "PTS", "PAS", "Latihan", "Latihan TKA"] as const;
+/** ATURAN-SOAL.md bagian 9: TKA hanya PG, PG kompleks, Kategori (tanpa uraian), memakai soal grup. */
+export const TKA = "Latihan TKA";
+export const NAMA_LEVEL_TKA = { LOTS: "Pemahaman", MOTS: "Penerapan", HOTS: "Penalaran" } as const;
 export const KESULITAN = ["Mudah", "Sedang", "Sulit"] as const;
 
 const ATURAN_UJIAN = "Gaya soal ujian resmi madrasah (seperti asesmen tengah/akhir semester). Sebar soal merata ke semua TP dan materi (dan semua dalil bila ada). Bahasa baku. Pembahasan ringkas: alasan kunci benar + alasan singkat tiap pengecoh salah.";
@@ -17,6 +20,11 @@ export const ATURAN_TUJUAN: Record<(typeof TUJUAN)[number], { aturan: string; le
   },
   PTS: { aturan: ATURAN_UJIAN, level: { LOTS: 30, MOTS: 40, HOTS: 30 } },
   PAS: { aturan: ATURAN_UJIAN, level: { LOTS: 30, MOTS: 40, HOTS: 30 } },
+  "Latihan TKA": {
+    aturan:
+      "Gaya Tes Kemampuan Akademik (TKA) SMA/MA dari pusat: level kognitif disebut Pemahaman (= LOTS), Penerapan (= MOTS), dan Penalaran (= HOTS); hampir semua soal berbasis stimulus (bacaan, data/tabel, kasus, hasil percobaan) yang harus diolah, bukan hafalan. Sebagian soal berupa SOAL GRUP (beberapa soal memakai satu wacana bersama). Pembahasan mendidik: alasan kunci benar + alasan tiap pengecoh salah.",
+    level: { LOTS: 20, MOTS: 40, HOTS: 40 },
+  },
 };
 
 export const ATURAN_KESULITAN: Record<(typeof KESULITAN)[number], string> = {
@@ -66,6 +74,7 @@ export function bersihkanPengaturan(p: Pengaturan): Pengaturan | string {
   if (total < 1 || total > MAKS_SOAL) return `Jumlah soal harus 1 sampai ${MAKS_SOAL}.`;
   if (level.LOTS + level.MOTS + level.HOTS !== 100) return "Komposisi LOTS + MOTS + HOTS harus 100%.";
   if (!(TUJUAN as readonly string[]).includes(p?.tujuan)) return "Tujuan soal tidak dikenal.";
+  if (p.tujuan === TKA && jumlah.URAIAN) return "Latihan TKA tidak memakai soal uraian. Kosongkan jumlah uraian.";
   if (!(KESULITAN as readonly string[]).includes(p?.kesulitan)) return "Tingkat kesulitan tidak dikenal.";
   const bobotDari = (b: Bentuk) => angka(p?.bobot?.[b] ?? BOBOT_BAWAAN[b]);
   const bobot = { PG: bobotDari("PG"), PGK: bobotDari("PGK"), BS: bobotDari("BS"), URAIAN: bobotDari("URAIAN") };
@@ -225,6 +234,31 @@ export function rencanaLevel(jumlah: Record<Bentuk, number>, level: Pengaturan["
   });
 }
 
+/**
+ * Soal grup Latihan TKA, ditentukan APLIKASI (AI mengabaikan "kira-kira separuh"). Per bentuk (tanpa uraian),
+ * separuh nomor (dibulatkan ke bawah) di AKHIR bagian bentuk itu (level lebih tinggi, cocok untuk wacana)
+ * dijadikan grup berisi 3 atau 2 soal. Hasil: nomor grup per nomor soal (urut kisi-kisi), atau null.
+ */
+export function rencanaGrup(jumlah: Record<Bentuk, number>): (number | null)[] {
+  const hasil: (number | null)[] = [];
+  let nomor = 0;
+  for (const b of urutanBentuk(jumlah)) {
+    const n = jumlah[b];
+    let sisa = b === "URAIAN" ? 0 : Math.floor(n / 2);
+    if (sisa < 2) sisa = 0;
+    const ukuran: number[] = [];
+    while (sisa > 0) {
+      const u = sisa === 4 || sisa === 2 ? 2 : 3;
+      ukuran.push(u);
+      sisa -= u;
+    }
+    const tunggal = n - ukuran.reduce((a, c) => a + c, 0);
+    hasil.push(...Array<null>(tunggal).fill(null));
+    for (const u of ukuran) hasil.push(...Array<number>(u).fill(++nomor));
+  }
+  return hasil;
+}
+
 const urutanBentuk = (jumlah: Record<Bentuk, number>) => (Object.keys(NAMA_BENTUK) as Bentuk[]).filter((b) => jumlah[b] > 0);
 
 /** Tujuan, kesulitan, dan catatan guru: sama untuk permintaan kisi-kisi dan soal. */
@@ -253,11 +287,12 @@ export function buatPermintaanKisi(p: Pengaturan) {
   // Rencana per nomor, diringkas jadi rentang: "Nomor 1–6: PG, LOTS (C1–C2)".
   const bentukNo = urutan.flatMap((b) => Array<Bentuk>(p.jumlah[b]).fill(b));
   const kategori = rencanaLevel(p.jumlah, p.level);
+  const grup = p.tujuan === TKA ? rencanaGrup(p.jumlah) : [];
   const rentang: string[] = [];
   for (let i = 0; i < total; ) {
     let j = i;
-    while (j + 1 < total && bentukNo[j + 1] === bentukNo[i] && kategori[j + 1] === kategori[i]) j++;
-    rentang.push(`- Nomor ${i === j ? i + 1 : `${i + 1}–${j + 1}`}: ${bentukNo[i]}, ${kategori[i]} (${RENTANG[kategori[i]]})`);
+    while (j + 1 < total && bentukNo[j + 1] === bentukNo[i] && kategori[j + 1] === kategori[i] && (grup[j + 1] ?? null) === (grup[i] ?? null)) j++;
+    rentang.push(`- Nomor ${i === j ? i + 1 : `${i + 1}–${j + 1}`}: ${bentukNo[i]}, ${kategori[i]} (${RENTANG[kategori[i]]})${grup[i] ? `, GRUP ${grup[i]}` : ""}`);
     i = j + 1;
   }
   return `Susun KISI-KISI untuk satu set ${total} soal. Belum menulis soal; setiap baris kisi-kisi = rencana satu soal.
@@ -272,15 +307,35 @@ Isi setiap baris:
 - "stimulus": jenis stimulus + skenario singkat (maks 15 kata), atau "tanpa stimulus". Ikuti aturan STIMULUS: setiap skenario BERBEDA satu sama lain dalam seluruh kisi-kisi.
 Indikator antarbaris juga tidak boleh sama persis; ambil sisi materi yang berbeda.
 Di kisi-kisi JANGAN menulis huruf Arab sama sekali; sebut lafaz dengan transliterasi Latin (misalnya "lā taqrabū az-zinā").
-${p.catatan ? `${TANGGAPAN}\n` : ""}FORMAT JAWABAN untuk permintaan ini: hanya JSON {${p.catatan ? '"tanggapan":"...",' : ""}"kisi":[{"bentuk":"PG","tp":"TP 3.1","materi":"...","indikator":"...","level":"C2","dalil_id":null,"stimulus":"tanpa stimulus"}]}`;
+${p.tujuan === TKA ? `${SOAL_GRUP}\n` : ""}${p.catatan ? `${TANGGAPAN}\n` : ""}FORMAT JAWABAN untuk permintaan ini: hanya JSON {${p.catatan ? '"tanggapan":"...",' : ""}"kisi":[{"bentuk":"PG","tp":"TP 3.1","materi":"...","indikator":"...","level":"C2","dalil_id":null,"stimulus":"tanpa stimulus"${p.tujuan === TKA ? ',"grup":null' : ""}}]${p.tujuan === TKA ? ',"wacana":[{"grup":1,"teks":"..."}]' : ""}}`;
 }
+
+// ATURAN-SOAL.md bagian 9 no. 4: soal grup TKA. Dibatasi bentuk sama supaya lembar soal tetap per bagian bentuk.
+const SOAL_GRUP = `SOAL GRUP (gaya TKA): nomor yang ditandai GRUP N di atas SUDAH DITENTUKAN sebagai soal grup: semua nomor dengan GRUP yang sama memakai SATU wacana bersama.
+- Isi "grup" setiap baris dengan nomor grupnya, atau null untuk soal tunggal. Soal dalam satu grup mengukur indikator yang berbeda.
+- WAJIB tulis wacana setiap grup di "wacana": teks lengkap 80–200 kata yang belum pernah dibaca siswa (bacaan, data/tabel ditulis sebagai teks, kasus, atau hasil percobaan), tanpa huruf Arab.
+- "stimulus" baris grup diisi "wacana grup N".`;
 
 // ATURAN-SOAL.md bagian 6 no. 2: AI menjawab catatan guru; tampil di paling atas hasil soal.
 const TANGGAPAN = `Isi juga "tanggapan": balasan singkat untuk guru (maks 3 kalimat, sapa dengan "Anda") tentang catatannya: apa yang Anda ikuti dan bagaimana, serta bagian yang TIDAK bisa diikuti beserta alasannya. Bila meminta jumlah/bentuk soal lain, arahkan ke tombol jumlah soal di form; bila meminta komposisi level lain, arahkan ke menu Lanjutan.`;
 
 /** Baris kisi-kisi dalam bentuk ringkas untuk permintaan soal. */
 const tulisKisi = (k: BarisKisi) =>
-  `- Nomor ${k.no} | ${k.bentuk} | ${k.tp} | ${k.level} | dalil_id: ${k.dalil_id ?? "null"} | Indikator: ${k.indikator} | Stimulus: ${k.stimulus}`;
+  `- Nomor ${k.no} | ${k.bentuk} | ${k.tp} | ${k.level} | dalil_id: ${k.dalil_id ?? "null"} | Indikator: ${k.indikator} | Stimulus: ${k.grup && k.wacana ? `WACANA GRUP ${k.grup}` : k.stimulus}`;
+
+/** Wacana soal grup yang dipakai baris-baris ini (sekali per grup), untuk permintaan soal. */
+function tulisWacana(kisi: { grup?: number | null; wacana?: string; no?: number }[]) {
+  const grup = new Map<number, { teks: string; no: number[] }>();
+  kisi.forEach((k, i) => {
+    if (!k.grup || !k.wacana) return;
+    const g = grup.get(k.grup) ?? { teks: k.wacana, no: [] };
+    g.no.push(k.no ?? i + 1);
+    grup.set(k.grup, g);
+  });
+  if (!grup.size) return "";
+  return `\n${[...grup].map(([n, g]) => `WACANA GRUP ${n} (untuk nomor ${g.no.join(", ")}):\n${g.teks}`).join("\n\n")}
+Soal grup memakai wacana grupnya sebagai stimulus. JANGAN menulis ulang wacana di "pertanyaan" (aplikasi menampilkannya sekali di atas soal pertama grup); langsung tulis pokok soal, misalnya "Berdasarkan teks tersebut, ...". Untuk soal grup, merujuk "teks tersebut" diperbolehkan.\n`;
+}
 
 /**
  * Permintaan untuk satu tahap. `sudah` = pertanyaan dari tahap sebelumnya, supaya AI tidak membuat soal yang mirip.
@@ -292,7 +347,7 @@ export function buatPengguna(p: Pengaturan, jumlah: Record<Bentuk, number>, suda
     ? `\nSoal berikut SUDAH dibuat dalam set ini. Jangan membuat soal yang sama atau mirip (pokok bahasan maupun redaksinya), jangan memakai lagi skenario/kasus yang sama, dan hitung pola "berdebat/berbeda pendapat" yang sudah ada di daftar ini terhadap batas 2 kali. Ambil sisi materi, dalil, atau TP yang lain:\n${sudah.map((s) => `- ${s.slice(0, 160)}`).join("\n")}\n`
     : "";
   const rencana = kisi.length
-    ? `Tulis tepat ${kisi.length} soal sesuai KISI-KISI berikut, satu soal per baris, urut sesuai nomor. Setiap soal WAJIB memakai bentuk, tp, level, dan dalil_id barisnya, mengukur indikatornya, dan memakai stimulus/skenario yang tertulis (jangan diganti skenario lain):\n${kisi.map(tulisKisi).join("\n")}`
+    ? `Tulis tepat ${kisi.length} soal sesuai KISI-KISI berikut, satu soal per baris, urut sesuai nomor. Setiap soal WAJIB memakai bentuk, tp, level, dan dalil_id barisnya, mengukur indikatornya, dan memakai stimulus/skenario yang tertulis (jangan diganti skenario lain):\n${kisi.map(tulisKisi).join("\n")}${tulisWacana(kisi)}`
     : `Jumlah: ${urutan.map((b) => `${b} ${jumlah[b]}`).join(", ")}. Urutkan per bentuk: ${urutan.join(", ")}.
 Komposisi level: LOTS ${p.level.LOTS}%, MOTS ${p.level.MOTS}%, HOTS ${p.level.HOTS}%.`;
   return `Buat soal. ${kepalaPermintaan(p)}${rencana}
@@ -307,21 +362,23 @@ export function buatPenggantiPengguna(p: Pengaturan, lama: Soal, semua: Soal[], 
   const jumlah = { PG: 0, PGK: 0, BS: 0, URAIAN: 0, [lama.bentuk]: 1 };
   if (instruksi) {
     // "Minta perubahan": soal yang sama ditulis ulang sesuai instruksi guru. Instruksi tidak boleh mengalahkan aturan sistem.
-    const { peringatan, stimulus, ...isiLama } = lama;
+    const { peringatan, stimulus, grup, wacana, ...isiLama } = lama;
     void peringatan;
     void stimulus;
     const tambahan = `\nIni permintaan MENGUBAH satu soal sesuai instruksi guru. Soal saat ini (JSON):
 ${JSON.stringify(isiLama)}
-${kisi ? `Kisi-kisinya: indikator "${kisi.indikator}", stimulus "${kisi.stimulus}".\n` : ""}Instruksi guru (ikuti selama tidak bertentangan dengan aturan di instruksi sistem: jangan mengetik ayat/hadis, jangan memakai dalil atau fakta di luar data bab, tetap bentuk ${lama.bentuk}):
+${kisi ? `Kisi-kisinya: indikator "${kisi.indikator}", stimulus "${kisi.stimulus}".\n` : ""}${tulisWacana([{ grup, wacana }])}Instruksi guru (ikuti selama tidak bertentangan dengan aturan di instruksi sistem: jangan mengetik ayat/hadis, jangan memakai dalil atau fakta di luar data bab, tetap bentuk ${lama.bentuk}):
 """${bersihkanInstruksi(instruksi)}"""
 Kembalikan tepat 1 soal hasil perubahan. Bagian yang tidak diminta untuk diubah biarkan sama. "level" dan "tp" boleh berubah bila instruksi menuntutnya.
 Tambahkan field "indikator" (indikator soal gaya Kemenag yang sesuai dengan soal hasil perubahan) dan "stimulus" (jenis + skenario, maks 15 kata, atau "tanpa stimulus").\n`;
     return buatPengguna(p, jumlah, semua.filter((s) => s !== lama).map((s) => s.pertanyaan), tambahan);
   }
-  const sasaran = kisi
+  const sasaran = kisi?.grup && lama.wacana
+    ? `dengan bentuk ${kisi.bentuk}, ${kisi.tp}, level ${kisi.level}, tetap mengukur indikator: "${kisi.indikator}", dan tetap memakai WACANA GRUP ${lama.grup} di bawah (soal grup), dengan pokok soal yang berbeda dari soal yang diganti`
+    : kisi
     ? `dengan bentuk ${kisi.bentuk}, ${kisi.tp}, level ${kisi.level}, tetap mengukur indikator: "${kisi.indikator}". Skenario lama ("${kisi.stimulus}") JANGAN dipakai lagi; pilih skenario baru yang belum ada di set ini. Tambahkan field "stimulus" pada soal berisi jenis + skenario baru (maks 15 kata) atau "tanpa stimulus"`
     : `${lama.bentuk} pengganti dengan level ${lama.level} dan ${lama.tp} (abaikan komposisi level di atas)`;
   const tambahan = `\nIni permintaan MENGGANTI soal berikut (guru tidak memakainya): "${lama.pertanyaan.slice(0, 300)}"
-Buat tepat 1 soal ${sasaran}. Gunakan skenario, sudut pandang, dan redaksi yang berbeda dari soal yang diganti maupun soal lain di daftar.\n`;
+Buat tepat 1 soal ${sasaran}. Gunakan ${kisi?.grup && lama.wacana ? "" : "skenario, "}sudut pandang dan redaksi yang berbeda dari soal yang diganti maupun soal lain di daftar.\n${kisi?.grup ? tulisWacana([lama]) : ""}`;
   return buatPengguna(p, jumlah, semua.map((s) => s.pertanyaan), tambahan);
 }

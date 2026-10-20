@@ -4,8 +4,8 @@ import { and, eq, gte, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { hasilSoal } from "@/db/schema";
 import { daftarModel, tanyaAI } from "@/lib/ai";
-import { bagiTahap, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatPermintaanKisi, buatSistem, type Pengaturan } from "@/lib/prompt";
-import { arabTakTerverifikasi, bersihkanTanggapan, korpusArab, LEVEL, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, terapkanBobot, type Bab, type BarisKisi, type Soal } from "@/lib/soal";
+import { bagiTahap, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatPermintaanKisi, buatSistem, rencanaGrup, TKA, type Pengaturan } from "@/lib/prompt";
+import { arabTakTerverifikasi, bersihkanTanggapan, korpusArab, LEVEL, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, terapkanBobot, type Bab, type BarisKisi, type Soal } from "@/lib/soal";
 import { babDariSet, babMilik, daftarBabMilik } from "@/lib/bab";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
@@ -170,8 +170,12 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
   try {
     await simpan({ pesan: "Menyusun kisi-kisi" });
     const { kisi, tanggapan } = await tanya("Kisi-kisi", buatPermintaanKisi(p), (d) => {
-      const isi = d as { kisi?: unknown; tanggapan?: unknown };
-      return { kisi: periksaKisi(isi?.kisi, p.jumlah, bab), tanggapan: p.catatan ? bersihkanTanggapan(isi?.tanggapan, bab) : "" };
+      const isi = d as { kisi?: unknown; tanggapan?: unknown; wacana?: unknown };
+      // Wacana soal grup hanya untuk Latihan TKA; jenis lain: semua soal tunggal.
+      // Nomor grup dari rencana aplikasi (rencanaGrup), bukan dari AI; AI hanya menulis wacananya.
+      const grup = p.tujuan === TKA ? rencanaGrup(p.jumlah) : [];
+      const kisi = pasangWacana(periksaKisi(isi?.kisi, p.jumlah, bab).map((k, i) => ({ ...k, grup: grup[i] ?? null })), p.tujuan === TKA ? isi?.wacana : null, bab);
+      return { kisi, tanggapan: p.catatan ? bersihkanTanggapan(isi?.tanggapan, bab) : "" };
     });
     if (tanggapan) info.tanggapan = tanggapan;
     await simpan({ kisi });
@@ -217,11 +221,21 @@ export async function simpanSoal(id: number, no: number, isian: Soal) {
   try {
     const set = await ambilSet(id, no);
     if (typeof set === "string") return { ok: false as const, pesan: set };
-    const [soal] = periksaSoal([rapikanSoal(isian, set.soal[no].bentuk)], set.bab);
+    const lama = set.soal[no];
+    // Nomor grup tetap dari server (bukan dari browser); hanya teks wacananya yang boleh diedit guru.
+    const [soal] = periksaSoal([rapikanSoal({ ...isian, grup: lama.grup }, lama.bentuk)], set.bab);
     set.soal[no] = soal;
     // TP/level yang diubah guru ikut ke baris kisi-kisinya, supaya kisi-kisi tetap cocok dengan soal.
     const kisi = set.h.kisi as BarisKisi[] | null;
     if (kisi?.[no]) kisi[no] = { ...kisi[no], tp: soal.tp, level: soal.level };
+    // Wacana soal grup dipakai bersama: editan guru ikut ke semua soal & baris kisi-kisi grup itu.
+    if (soal.grup && soal.wacana) {
+      set.soal.forEach((s, i) => {
+        if (s.grup !== soal.grup) return;
+        set.soal[i] = { ...s, wacana: soal.wacana };
+        if (kisi?.[i]) kisi[i] = { ...kisi[i], wacana: soal.wacana };
+      });
+    }
     await db.update(hasilSoal).set({ soal: set.soal, kisi }).where(eq(hasilSoal.id, set.h.id));
     return { ok: true as const, soal };
   } catch (e) {
@@ -261,8 +275,13 @@ export async function gantiSatuSoal(id: number, no: number, instruksiMentah?: st
     };
     const { stimulus, indikator, ...baru } = r.hasil[0];
     // Ubah: level/TP dari AI dipakai hanya kalau valid. Ganti: disamakan dengan kisi-kisi.
-    const hasilUbah = { ...baru, bentuk: lama.bentuk, level: LEVEL.includes(baru.level) ? baru.level : lama.level, tp: bab.tp.some((t) => t.kode === baru.tp) ? baru.tp : lama.tp };
-    const [soal] = periksaSoal([ubah ? hasilUbah : baris ? samakanDenganKisi(baru, baris) : { ...baru, bentuk: lama.bentuk }], bab);
+    // Grup & wacana tidak diambil dari jawaban AI: tetap milik soal lama (soal grup tetap di grupnya).
+    const grupLama = lama.grup && lama.wacana ? { grup: lama.grup, wacana: lama.wacana } : {};
+    const { grup: _g, wacana: _w, ...isiBaru } = baru;
+    void _g;
+    void _w;
+    const hasilUbah = { ...isiBaru, ...grupLama, bentuk: lama.bentuk, level: LEVEL.includes(baru.level) ? baru.level : lama.level, tp: bab.tp.some((t) => t.kode === baru.tp) ? baru.tp : lama.tp };
+    const [soal] = periksaSoal([ubah ? hasilUbah : baris ? samakanDenganKisi(baru, baris) : { ...isiBaru, ...grupLama, bentuk: lama.bentuk }], bab);
     if (!ubah) ratakanKunci([soal]); // posisi kunci PG/PGK diacak (tidak saat "ubah", supaya guru tidak bingung)
     if (p.bobot) terapkanBobot([soal], p.bobot);
     set.soal[no] = soal;
