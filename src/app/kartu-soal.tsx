@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { gantiSatuSoal, simpanSoal } from "./actions";
-import { KUNCI_PGK, LEVEL, POLA_ARAB, type Bab, type Soal } from "@/lib/soal";
+import { kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, POLA_ARAB, type Bab, type Soal } from "@/lib/soal";
 import { MAKS_INSTRUKSI } from "@/lib/prompt";
 
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
@@ -18,6 +18,38 @@ export function Teks({ teks }: { teks: string }) {
         .split(PECAH_ARAB)
         .map((b, i) => (i % 2 ? <bdi key={i} dir="rtl" lang="ar" className="font-arab text-xl">{b}</bdi> : b))}
     </>
+  );
+}
+
+/** Soal Kategori: tabel pernyataan × dua label; saat kunci dibuka, label yang benar ditandai ✓. */
+function TabelKategori({ s, kunci }: { s: Soal; kunci: boolean }) {
+  const label = s.label?.length === 2 ? s.label : ["?", "?"];
+  const k = [s.kunci].flat();
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse text-sm">
+        <thead>
+          <tr className="bg-krem-sorot">
+            <th className="w-8 border p-2">No</th>
+            <th className="border p-2 text-left">Pernyataan</th>
+            {label.map((l) => <th key={l} className="w-24 border p-2">{l}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {(s.pernyataan ?? []).map((p, i) => (
+            <tr key={i} className="align-top">
+              <td className="border p-2 text-center">{i + 1}</td>
+              <td className="border p-2"><Teks teks={p} /></td>
+              {label.map((l) => (
+                <td key={l} className={`border p-2 text-center ${kunci && k[i] === l ? "bg-hijau-muda font-semibold text-hijau-teks" : ""}`}>
+                  {kunci && k[i] === l ? "✓" : ""}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -40,7 +72,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, onUbah }: Props) {
     const r = await gantiSatuSoal(hasilId, no - 1, jenis === "ubah" ? instruksi : undefined).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
     setProses("");
     if (!r.ok) return setError(r.pesan);
-    const isi = (x: Soal) => JSON.stringify([x.pertanyaan, x.pilihan, x.kunci, x.pembahasan, x.dalil_id]);
+    const isi = (x: Soal) => JSON.stringify([x.pertanyaan, x.pilihan, x.pernyataan, x.kunci, x.pembahasan, x.dalil_id]);
     if (jenis === "ubah" && isi(r.soal) === isi(s))
       setError("AI tidak mengubah soal ini. Mungkin instruksinya bertentangan dengan aturan (mis. meminta ayat/hadis di luar data bab). Coba tulis instruksi lain.");
     onUbah(r.soal);
@@ -83,9 +115,10 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, onUbah }: Props) {
           {s.pilihan.map((o, i) => <li key={i}><Teks teks={o} /></li>)}
         </ol>
       )}
+      {kategoriBaru(s) && <TabelKategori s={s} kunci={tampilKunci} />}
       {tampilKunci && (
       <div className="space-y-1 rounded bg-hijau-muda p-3 text-sm">
-        <p><span className="font-semibold">Kunci:</span> <Teks teks={[s.kunci].flat().join(", ")} /></p>
+        {!kategoriBaru(s) && <p><span className="font-semibold">Kunci:</span> <Teks teks={[s.kunci].flat().join(", ")} /></p>}
         {s.rubrik && (
           <ul className="list-disc pl-5">
             {s.rubrik.map((r, i) => <li key={i}><Teks teks={r.kriteria} /> ({r.skor})</li>)}
@@ -142,6 +175,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan }: FormProps) {
 
   async function simpan() {
     if (s.bentuk === "PGK" && !KUNCI_PGK.includes(kunciPgk.length)) return setError("Pilih 2 atau 3 kunci jawaban.");
+    if (kategoriBaru(s) && (s.pernyataan ?? []).some((_, i) => !s.label?.includes(kunciPgk[i]))) return setError("Pilih kunci untuk setiap pernyataan.");
     setMenyimpan(true);
     setError((await onSimpan(s)) ?? "");
     setMenyimpan(false);
@@ -187,7 +221,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan }: FormProps) {
         </fieldset>
       )}
 
-      {s.bentuk === "BS" && (
+      {s.bentuk === "BS" && !kategoriBaru(s) && (
         <label className="block">
           Kunci
           <select className={kotak} value={String(s.kunci)} onChange={(e) => ubah({ kunci: e.target.value })}>
@@ -195,6 +229,43 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan }: FormProps) {
             <option>Salah</option>
           </select>
         </label>
+      )}
+
+      {kategoriBaru(s) && (
+        <fieldset className="space-y-2">
+          <legend>Pernyataan dan kuncinya</legend>
+          <label className="block">
+            Pasangan label
+            <select
+              className={kotak}
+              value={(s.label ?? []).join("|")}
+              onChange={(e) => {
+                const baru = e.target.value.split("|");
+                const lama = s.label ?? [];
+                // kunci ikut pindah ke label baru pada posisi yang sama (Benar→Fakta, Salah→Opini, ...)
+                ubah({ label: baru, kunci: [s.kunci].flat().map((k) => baru[lama.indexOf(k)] ?? baru[0]) });
+              }}
+            >
+              {!LABEL_KATEGORI.some((l) => l.join("|") === (s.label ?? []).join("|")) && <option value={(s.label ?? []).join("|")}>(pilih)</option>}
+              {LABEL_KATEGORI.map((l) => <option key={l[0]} value={l.join("|")}>{l.join(" / ")}</option>)}
+            </select>
+          </label>
+          {(s.pernyataan ?? []).map((p, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <span className="w-4 font-semibold">{i + 1}</span>
+              <input dir="auto" className={kotak} aria-label={`Pernyataan ${i + 1}`} value={p} onChange={(e) => ubah({ pernyataan: s.pernyataan!.map((x, j) => (j === i ? e.target.value : x)) })} />
+              <select
+                className="w-36 rounded-lg border p-2"
+                aria-label={`Kunci pernyataan ${i + 1}`}
+                value={[s.kunci].flat()[i] ?? ""}
+                onChange={(e) => ubah({ kunci: (s.pernyataan ?? []).map((_, j) => (j === i ? e.target.value : ([s.kunci].flat()[j] ?? ""))) })}
+              >
+                <option value="">(kunci)</option>
+                {(s.label ?? []).map((l) => <option key={l}>{l}</option>)}
+              </select>
+            </div>
+          ))}
+        </fieldset>
       )}
 
       {s.bentuk === "URAIAN" && (

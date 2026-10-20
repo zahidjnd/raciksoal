@@ -21,7 +21,7 @@ import {
   type ParagraphChild,
 } from "docx";
 import { NAMA_BENTUK, type Pengaturan } from "./prompt";
-import { identitasBab, POLA_ARAB, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
+import { identitasBab, kategoriBaru, POLA_ARAB, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
 
 const PERINGATAN = "Soal dibuat AI, wajib diperiksa guru sebelum dipakai.";
 
@@ -102,10 +102,11 @@ function kelompok(soal: Soal[]) {
 
 /** Lembar soal untuk siswa: kop asli format AFTS + soal 2 kolom (tanpa kunci). */
 export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Date) {
-  const isi: Paragraph[] = [];
+  const isi: (Paragraph | Table)[] = [];
   kelompok(soal).forEach(({ bentuk, butir }, k) => {
-    isi.push(par([r(`${ROMAWI[k]}. ${NAMA_BAGIAN[bentuk]}`, { bold: true })], { spacing: { before: k ? 200 : 0, after: 40 } }));
-    isi.push(par([r(PETUNJUK[bentuk], { italics: true })], { spacing: { after: 120 } }));
+    const kategori = bentuk === "BS" && butir.some((x) => kategoriBaru(x.s));
+    isi.push(par([r(`${ROMAWI[k]}. ${kategori ? "PILIHAN GANDA KOMPLEKS KATEGORI" : NAMA_BAGIAN[bentuk]}`, { bold: true })], { spacing: { before: k ? 200 : 0, after: 40 } }));
+    isi.push(par([r(kategori ? PETUNJUK_KATEGORI : PETUNJUK[bentuk], { italics: true })], { spacing: { after: 120 } }));
     for (const { s, no } of butir) {
       isi.push(bernomor(`${no}.`, teks(s.pertanyaan), 400, { keepNext: true }));
       const dalil = bab.dalil.find((d) => d.id === s.dalil_id);
@@ -114,7 +115,8 @@ export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tangga
         isi.push(par([r(`(${dalil.sumber})`, { italics: true, size: 18 })], { alignment: AlignmentType.RIGHT, keepNext: true }));
       }
       if (s.pilihan) s.pilihan.forEach((o, i) => isi.push(bernomor(`${HURUF[i]}.`, teks(o), 800, { spacing: { after: 0 }, keepNext: i < 4 })));
-      if (bentuk === "BS") isi.push(par([r("A.", { bold: true }), r(" Benar\t\t"), r("B.", { bold: true }), r(" Salah")], { indent: { left: 400 } }));
+      if (kategoriBaru(s)) isi.push(tabelKategori(s));
+      else if (bentuk === "BS") isi.push(par([r("A.", { bold: true }), r(" Benar\t\t"), r("B.", { bold: true }), r(" Salah")], { indent: { left: 400 } }));
       isi.push(par([], { spacing: { after: 80 } }));
     }
   });
@@ -137,6 +139,31 @@ export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tangga
 
 const sel = (anak: Paragraph[], lebar: number) =>
   new TableCell({ children: anak, width: { size: lebar, type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER });
+
+// Lembar soal 2 kolom: satu kolom ±4.900 twip, tabel diberi sedikit indentasi seperti pilihan jawaban.
+const KOLOM_KATEGORI = [400, 2500, 850, 850];
+const PETUNJUK_KATEGORI = "Berilah tanda centang (✓) pada kolom yang sesuai untuk setiap pernyataan!";
+
+/** Soal Kategori di lembar siswa: No | Pernyataan | label 1 | label 2 (kolom label dikosongkan untuk dicentang). */
+function tabelKategori(s: Soal) {
+  const label = s.label?.length === 2 ? s.label : ["", ""];
+  const kecil = (t: string, rata: (typeof AlignmentType)[keyof typeof AlignmentType] = AlignmentType.CENTER) =>
+    par([r(t, { bold: true, size: 18 })], { alignment: rata, spacing: { after: 0 } });
+  const baris = (isi: Paragraph[][], judul = false) =>
+    new TableRow({
+      tableHeader: judul,
+      cantSplit: true,
+      children: isi.map((anak, i) => new TableCell({ children: anak, width: { size: KOLOM_KATEGORI[i], type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER, margins: { left: 60, right: 60 } })),
+    });
+  return new Table({
+    width: { size: KOLOM_KATEGORI.reduce((a, b) => a + b, 0), type: WidthType.DXA },
+    indent: { size: 400, type: WidthType.DXA },
+    rows: [
+      baris([[kecil("No")], [kecil("Pernyataan", AlignmentType.LEFT)], [kecil(label[0])], [kecil(label[1])]], true),
+      ...(s.pernyataan ?? []).map((p, i) => baris([[par([r(String(i + 1))], { alignment: AlignmentType.CENTER, spacing: { after: 0 } })], [par(teks(p), { spacing: { after: 0 } })], [par([])], [par([])]])),
+    ],
+  });
+}
 
 /** Kunci jawaban, pembahasan, dan pedoman penskoran untuk guru. */
 export function buatWordKunci(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Date) {
@@ -162,6 +189,10 @@ export function buatWordKunci(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Da
       // ATURAN-SOAL.md bagian 3: penskoran resmi PG kompleks 1/0 per butir (seperti TKA).
       isi.push(par([r(`Penskoran per soal: memilih SEMUA jawaban benar tanpa pilihan salah = ${penuh} poin; selain itu = 0 poin.`, { italics: true })]));
     }
+    if (bentuk === "BS" && butir.some((x) => kategoriBaru(x.s))) {
+      const penuh = Number(butir[0].s.skor) || 0;
+      isi.push(par([r(`Penskoran per soal: SEMUA pernyataan dikategorikan dengan benar = ${penuh} poin; selain itu = 0 poin.`, { italics: true })]));
+    }
 
     for (const { s, no } of butir) {
       for (const w of s.peringatan ?? []) isi.push(par([new TextRun({ text: `⚠️ Soal ${no}: ${w}`, bold: true, color: "C00000" })]));
@@ -169,6 +200,8 @@ export function buatWordKunci(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Da
       if (bentuk === "PG" || bentuk === "PGK") {
         const isiKunci = kunci.map((h) => `${h} (${s.pilihan?.[HURUF.indexOf(h)] ?? "?"})`).join(" dan ");
         isi.push(bernomor(`${no}.`, [new TextRun({ text: "Kunci: ", bold: true }), ...teks(isiKunci)]));
+      } else if (kategoriBaru(s)) {
+        isi.push(bernomor(`${no}.`, [new TextRun({ text: "Kunci: ", bold: true }), ...teks((s.pernyataan ?? []).map((p, i) => `(${i + 1}) ${kunci[i] ?? "?"}`).join("; "))]));
       } else if (bentuk === "BS") {
         isi.push(bernomor(`${no}.`, [new TextRun({ text: "Kunci: ", bold: true }), new TextRun(kunci[0] === "Benar" ? "A (Benar)" : "B (Salah)")]));
       } else {

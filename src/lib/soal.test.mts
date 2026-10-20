@@ -270,6 +270,33 @@ test("pilihan angka diurutkan kecil → besar (format Indonesia), tidak diacak, 
   assert.ok(!pilihanAngka({ pilihan: ["5 kali", "Tiga kali", "1", "2", "3"] }));
 });
 
+test("soal Kategori: 4 pernyataan, label resmi, kunci per pernyataan; B/S lama tetap terbaca", () => {
+  const dasar: Soal = {
+    bentuk: "BS", dalil_id: null, pertanyaan: "Tentukan fakta atau opini!", pernyataan: ["a", "b", "c", "d"],
+    label: ["fakta", "OPINI"], kunci: ["Fakta", "opini", "Opini", "fakta"], pembahasan: "", level: "C4", tp: "TP 3.1", skor: 3,
+  };
+  const [s] = periksaSoal([dasar], bab);
+  assert.deepEqual(s.label, ["Fakta", "Opini"]); // ejaan disamakan dengan daftar resmi
+  assert.deepEqual(s.kunci, ["Fakta", "Opini", "Opini", "Fakta"]);
+  assert.deepEqual(s.peringatan, []);
+  assert.equal(periksaSoal([{ ...dasar, pernyataan: ["a", "b", "c"], kunci: ["Fakta", "Opini", "Opini"] }], bab)[0].peringatan!.length, 1);
+  assert.equal(periksaSoal([{ ...dasar, label: ["Ya", "Tidak"] }], bab)[0].peringatan!.length, 2); // label & kunci tak dikenal
+  assert.equal(periksaSoal([{ ...dasar, kunci: ["Fakta", "Opini", "Benar", "Fakta"] }], bab)[0].peringatan!.length, 1);
+  // teks Arab di pernyataan ikut dijaga (aturan 5)
+  assert.equal(periksaSoal([{ ...dasar, pernyataan: ["قَالَ رَسُولُ اللَّهِ", "b", "c", "d"] }], bab)[0].peringatan!.length, 1);
+  // set baru: AI memberi B/S satu pernyataan → dipaksa Kategori dan ditandai
+  const [k] = periksaKisi([{ bentuk: "BS", tp: "TP 3.1", materi: "m", indikator: "i", level: "C2", dalil_id: null, stimulus: "s" }], { PG: 0, PGK: 0, BS: 1, URAIAN: 0 }, bab);
+  const lamaGaya: Soal = { bentuk: "BS", dalil_id: null, pertanyaan: "Zina dosa besar.", kunci: "Benar", pembahasan: "", level: "C1", tp: "TP 3.1", skor: 3 };
+  assert.ok(periksaSoal([samakanDenganKisi(lamaGaya, k)], bab)[0].peringatan!.length > 0);
+  // set lama (tanpa kisi-kisi) tidak diubah dan tidak ditandai
+  assert.deepEqual(periksaSoal([lamaGaya], bab)[0].peringatan, []);
+  // editan guru
+  const edit = rapikanSoal({ ...dasar, pernyataan: [" a ", "b", "c", "d", "e"], kunci: ["Fakta", "Opini", "Opini", "Fakta", "Fakta"] }, "BS");
+  assert.deepEqual(edit.pernyataan, ["a", "b", "c", "d"]);
+  assert.equal((edit.kunci as string[]).length, 4);
+  assert.equal(rapikanSoal(lamaGaya, "BS").kunci, "Benar");
+});
+
 test("ratakanKunci tidak mengubah soal yang kuncinya tidak valid", () => {
   const s: Soal = { bentuk: "PGK", dalil_id: null, pertanyaan: "x", kunci: ["A"], pilihan: ["a", "b", "c", "d", "e"], pembahasan: "", level: "C1", tp: "TP 3.1", skor: 1 };
   ratakanKunci([s]);

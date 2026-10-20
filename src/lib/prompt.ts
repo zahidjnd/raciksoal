@@ -27,7 +27,7 @@ export const ATURAN_KESULITAN: Record<(typeof KESULITAN)[number], string> = {
 export const NAMA_BENTUK: Record<Bentuk, string> = {
   PG: "Pilihan Ganda",
   PGK: "Pilihan Ganda Kompleks",
-  BS: "Benar / Salah",
+  BS: "Kategori (Benar/Salah)", // kode "BS" dipertahankan agar set lama tetap terbaca
   URAIAN: "Uraian",
 };
 export const MAKS_SOAL = 40;
@@ -167,6 +167,7 @@ ${BENTUK_SOAL}
 
 FORMAT JAWABAN (kecuali permintaan menyebut format lain): hanya JSON (tanpa teks lain), dengan bentuk:
 {"soal":[{"bentuk":"PG","dalil_id":null,"pertanyaan":"...","pilihan":["...","...","...","...","..."],"kunci":"B","pembahasan":"...","level":"C2","tp":"TP 3.2","skor":1}]}
+Untuk BS: {"bentuk":"BS","dalil_id":null,"pertanyaan":"...","pernyataan":["...","...","...","..."],"label":["Fakta","Opini"],"kunci":["Fakta","Opini","Opini","Fakta"],"pembahasan":"...","level":"C4","tp":"TP 3.2","skor":1}
 Untuk URAIAN tambahkan "rubrik":[{"kriteria":"...","skor":2}]. "tp" diisi kode TP yang paling sesuai.
 
 DATA BAB
@@ -183,7 +184,7 @@ ${bab.materi.join("\n")}`;
 const BENTUK_SOAL = `BENTUK SOAL:
 - PG: 5 pilihan, tepat 1 benar. "kunci": "A".."E".
 - PGK (pilihan ganda kompleks, model jawaban ganda/MCMA): 5 pilihan, 2 ATAU 3 benar (tidak semua), sesuai isi soal; ragamkan jumlahnya dalam satu set. "kunci": array berisi 2 atau 3 huruf jawaban benar. Akhiri pertanyaan dengan "(Pilih semua jawaban yang tepat)" tanpa menyebut jumlah jawaban benar.
-- BS: satu pernyataan. "kunci": "Benar" atau "Salah". Tanpa "pilihan".
+- BS (pilihan ganda kompleks model Kategori): "pertanyaan" berisi stimulus/pokok soal + perintah, misalnya "Tentukan apakah setiap pernyataan berikut Benar atau Salah!". Lalu tepat 4 "pernyataan" yang masing-masing dinilai dengan sepasang "label", salah satu dari: ["Benar","Salah"], ["Fakta","Opini"], ["Sesuai","Tidak Sesuai"], ["Tepat","Tidak Tepat"], ["Didukung","Tidak Didukung"] (didukung/tidak oleh stimulus). Pilih pasangan label yang paling cocok dengan isi soal dan ragamkan dalam satu set. "kunci": array 4 label sesuai urutan pernyataan; jangan semua sama. Jangan menulis ulang keempat pernyataan di dalam "pertanyaan" (aplikasi menampilkannya sebagai tabel). Tanpa "pilihan".
 - URAIAN: "kunci" berisi jawaban ideal; "rubrik" berisi kriteria penilaian dan skornya; "skor" = jumlah skor rubrik.`;
 
 /** Jumlah soal LOTS/MOTS/HOTS dari persentase (sisa pembulatan ke yang pecahannya terbesar), totalnya tepat `total`. */

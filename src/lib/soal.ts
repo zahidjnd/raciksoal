@@ -7,6 +7,10 @@ export type Soal = {
   dalil_id: string | null;
   pertanyaan: string;
   pilihan?: string[];
+  // Bentuk BS = PG kompleks Kategori (Tahap D): 4 pernyataan, masing-masing dinilai dengan sepasang label,
+  // kunci = array label sesuai urutan pernyataan. Set lama: BS satu pernyataan, kunci "Benar"/"Salah", tanpa dua field ini.
+  pernyataan?: string[];
+  label?: string[];
   kunci: string | string[];
   rubrik?: { kriteria: string; skor: number }[];
   pembahasan: string;
@@ -45,6 +49,37 @@ export type BarisKisi = {
 const URUTAN_BENTUK: Bentuk[] = ["PG", "PGK", "BS", "URAIAN"];
 
 export const KELAS = ["X", "XI", "XII"];
+
+/** Pasangan label soal Kategori (ATURAN-SOAL.md bagian 3 & 9) dan jumlah pernyataannya (MA kelas 10–12: 4). */
+export const LABEL_KATEGORI = [
+  ["Benar", "Salah"],
+  ["Fakta", "Opini"],
+  ["Sesuai", "Tidak Sesuai"],
+  ["Tepat", "Tidak Tepat"],
+  ["Didukung", "Tidak Didukung"],
+];
+export const JUMLAH_PERNYATAAN = 4;
+/** Soal Kategori model baru (bukan B/S satu pernyataan dari set lama). */
+export const kategoriBaru = (s: Pick<Soal, "bentuk" | "pernyataan">) => s.bentuk === "BS" && Array.isArray(s.pernyataan);
+
+/** Label resmi yang cocok (abaikan besar-kecil huruf), atau null. */
+function cariLabel(label: unknown): string[] | null {
+  const kecil = (x: unknown) => String(x ?? "").trim().toLowerCase();
+  const l = Array.isArray(label) ? label.map(kecil) : [];
+  return LABEL_KATEGORI.find((p) => p.every((x, i) => x.toLowerCase() === l[i])) ?? null;
+}
+
+/**
+ * Rapikan bagian Kategori (pernyataan, label, kunci) dari AI atau editan guru: label disamakan ejaannya dengan
+ * daftar resmi, kunci tiap pernyataan disamakan dengan salah satu label. Yang tidak cocok dibiarkan (ditandai periksaSoal).
+ */
+function rapikanKategori(s: Soal): Soal {
+  if (!kategoriBaru(s)) return s;
+  const teks = (x: unknown) => String(x ?? "").trim();
+  const label = cariLabel(s.label) ?? (Array.isArray(s.label) ? s.label.map(teks) : []);
+  const kunci = [s.kunci].flat().map((k) => label.find((l) => l.toLowerCase() === teks(k).toLowerCase()) ?? teks(k));
+  return { ...s, pernyataan: s.pernyataan!.map(teks), label, kunci };
+}
 
 /** Mapel & kelas sebuah bab. Data lama tanpa keduanya = Al-Qur'an Hadis kelas XI (satu-satunya mapel waktu itu). */
 export function identitasBab(bab: Pick<Bab, "mapel" | "kelas">) {
@@ -95,7 +130,9 @@ export function periksaKisi(data: unknown, jumlah: Record<Bentuk, number>, bab: 
 
 /** Samakan bentuk, TP, dan level soal dengan baris kisi-kisinya (kisi-kisi = rencana yang dipegang). */
 export function samakanDenganKisi(soal: Soal, k: BarisKisi): Soal {
-  return { ...soal, bentuk: k.bentuk, tp: k.tp || soal.tp, level: LEVEL.includes(k.level) ? k.level : soal.level };
+  const s = { ...soal, bentuk: k.bentuk, tp: k.tp || soal.tp, level: LEVEL.includes(k.level) ? k.level : soal.level };
+  // Soal BS baru wajib model Kategori; kalau AI memberi B/S satu pernyataan, pernyataan kosong → ditandai periksaSoal.
+  return s.bentuk === "BS" && !Array.isArray(s.pernyataan) ? { ...s, pernyataan: [] } : s;
 }
 
 const HURUF_ARAB ="؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿";
@@ -118,12 +155,19 @@ export function rapikanSoal(s: Partial<Soal>, bentuk: Bentuk): Soal {
   const teks = (x: unknown) => String(x ?? "").trim();
   const kunci = [s.kunci].flat().map(teks).filter(Boolean);
   const rubrik = (s.rubrik ?? []).map((r) => ({ kriteria: teks(r?.kriteria), skor: Math.max(0, Number(r?.skor) || 0) })).filter((r) => r.kriteria);
+  const kategori = bentuk === "BS" && Array.isArray(s.pernyataan);
   return {
     bentuk,
     dalil_id: s.dalil_id ? teks(s.dalil_id) : null,
     pertanyaan: teks(s.pertanyaan),
     ...(bentuk === "PG" || bentuk === "PGK" ? { pilihan: [0, 1, 2, 3, 4].map((i) => teks(s.pilihan?.[i])) } : {}),
-    kunci: bentuk === "PGK" ? kunci : (kunci[0] ?? ""),
+    ...(kategori
+      ? {
+          pernyataan: s.pernyataan!.slice(0, JUMLAH_PERNYATAAN).map(teks),
+          label: (Array.isArray(s.label) ? s.label : []).slice(0, 2).map(teks),
+        }
+      : {}),
+    kunci: bentuk === "PGK" ? kunci : kategori ? [s.kunci].flat().slice(0, JUMLAH_PERNYATAAN).map(teks) : (kunci[0] ?? ""),
     ...(bentuk === "URAIAN" ? { rubrik } : {}),
     pembahasan: teks(s.pembahasan),
     level: teks(s.level),
@@ -183,20 +227,27 @@ export function periksaSoal(soal: Soal[], bab: Bab): Soal[] {
       ditemukan ??= r.ditemukan;
       return r.bersih;
     };
-    const s: Soal = {
+    const s: Soal = rapikanKategori({
       ...asli,
       pertanyaan: bersih(asli.pertanyaan),
       pembahasan: bersih(asli.pembahasan),
       ...(asli.pilihan ? { pilihan: asli.pilihan.map(bersih) } : {}),
-    };
+      ...(Array.isArray(asli.pernyataan) ? { pernyataan: asli.pernyataan.map(bersih) } : {}),
+    });
     if (!s.dalil_id && ditemukan) s.dalil_id = ditemukan;
     const peringatan: string[] = [];
-    const semuaTeks = [s.pertanyaan, ...(s.pilihan ?? []), ...[s.kunci].flat(), s.pembahasan, ...(s.rubrik ?? []).map((r) => r.kriteria)];
+    const semuaTeks = [s.pertanyaan, ...(s.pilihan ?? []), ...(s.pernyataan ?? []), ...[s.kunci].flat(), s.pembahasan, ...(s.rubrik ?? []).map((r) => r.kriteria)];
     const arabAsing = semuaTeks.flatMap((t) => arabTakTerverifikasi(String(t ?? ""), korpus));
     if (arabAsing.length) peringatan.push(`Teks Arab tidak cocok dengan data terverifikasi: ${arabAsing.join(" | ")}`);
     if (s.dalil_id && !dalilAda.has(s.dalil_id)) peringatan.push(`Dalil "${s.dalil_id}" tidak ada di data bab.`);
     if ((s.bentuk === "PG" || s.bentuk === "PGK") && s.pilihan?.length !== 5) peringatan.push("Jumlah pilihan bukan 5.");
     if (s.bentuk === "PGK" && !KUNCI_PGK.includes(new Set([s.kunci].flat()).size)) peringatan.push("Kunci PG kompleks harus 2 atau 3 jawaban.");
+    if (kategoriBaru(s)) {
+      if (s.pernyataan!.length !== JUMLAH_PERNYATAAN || s.pernyataan!.some((p) => !p)) peringatan.push(`Soal kategori harus berisi ${JUMLAH_PERNYATAAN} pernyataan.`);
+      if (!cariLabel(s.label)) peringatan.push(`Label kategori tidak dikenal: ${(s.label ?? []).join(" / ") || "(kosong)"}.`);
+      const kunci = [s.kunci].flat();
+      if (kunci.length !== s.pernyataan!.length || kunci.some((k) => !s.label?.includes(k))) peringatan.push("Kunci kategori harus satu label untuk setiap pernyataan.");
+    }
     return { ...s, peringatan };
   });
 }
