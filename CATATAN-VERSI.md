@@ -10,11 +10,11 @@ Rencana:
 - **1.0.0** — dipakai resmi.
 
 ## Persiapan menuju 0.9.0 (siap uji coba guru)
-- [ ] Cek semua fitur baru langsung di hosting.
-- [ ] Buktikan pemisahan data antar guru lewat login dua akun guru (guru B tidak bisa membuka soal guru A).
-- [ ] Coba satu set untuk tiap jenis (Ulangan Harian, AFTS, ASAS, Latihan, Latihan TKA) di hosting + unduh Word-nya.
-- [ ] Buat akun guru uji coba di Kelola guru.
-- [ ] Hitung kesiapan saldo AI untuk 15–20 guru.
+- [x] Cek semua fitur baru langsung di hosting.
+- [x] Buktikan pemisahan data antar guru lewat login dua akun guru (guru B tidak bisa membuka soal guru A).
+- [x] Coba satu set untuk tiap jenis (Ulangan Harian, AFTS, ASAS, Latihan, Latihan TKA) di hosting + unduh Word-nya.
+- [x] Buat akun guru uji coba di Kelola guru.
+- [x] Hitung kesiapan saldo AI untuk 15–20 guru.
 - [ ] Panduan singkat untuk guru (opsional).
 
 Keterbatasan yang sudah diketahui (tidak menghalangi uji coba): dari file PDF hanya teks Latin dan ayat yang
