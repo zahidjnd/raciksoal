@@ -23,6 +23,12 @@ hadis karangan dalam mode Bahasa Arab belum bisa dideteksi otomatis (hanya diceg
 
 ---
 
+## 0.9.2 — 23 Oktober 2026
+- Perbaikan: baris yang hampir seluruhnya Arab (mis. ucapan dalam hiwar) kini tampil **dari kanan ke kiri dan rata kanan**,
+  di layar maupun di file Word. Titik dua, nomor rumpang "(1)", dan angka tidak lagi lompat ke tempat yang salah.
+- Jarak kosong berlebih antar baris dialog dirapatkan; AI diminta tidak menyisipkan baris kosong di antara ucapan.
+- Soal lama ikut membaik tanpa perlu dibuat ulang.
+
 ## 0.9.1 — 22 Oktober 2026
 - Perbaikan: percakapan (hiwar/dialog), daftar, dan puisi kini tampil **satu bagian per baris**, di layar maupun di
   file Word (sebelumnya menyambung jadi satu paragraf panjang).

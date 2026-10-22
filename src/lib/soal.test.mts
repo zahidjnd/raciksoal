@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { arabTakTerverifikasi, bersihkanTanggapan, gabungBab, identitasBab, korpusArab, pasangWacana, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, terapkanBobot, type Bab, type Soal } from "./soal.ts";
+import { arabTakTerverifikasi, bersihkanTanggapan, gabungBab, identitasBab, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, terapkanBobot, type Bab, type Soal } from "./soal.ts";
 import { bagiTahap, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, semesterDari, MAKS_CATATAN, MAKS_INSTRUKSI, rencanaLevel, type Pengaturan } from "./prompt.ts";
 import { bolehAkses, rapikanUsername } from "./akses.ts";
 import { keIsian, rapikanMateri, susunDraf, terapkanAnalisa } from "./materi.ts";
@@ -507,4 +507,12 @@ test("baris baru (dialog/hiwar) tidak hilang saat soal dirapikan dan diperiksa, 
   const [h] = periksaSoal([s], { ...bab, teksArab: "bahasa" });
   assert.equal(h.pertanyaan.split("\n").length, 3);
   assert.ok(buatSistem(bab).includes("SATU PENUTUR PER BARIS"));
+});
+
+test("pecahBaris: baris kosong dibuang dan baris Arab terdeteksi (untuk blok kanan-ke-kiri)", () => {
+  const b = pecahBaris("Perhatikan hiwar berikut!\n\nعمر: (1) ... اسمك؟\n  \nعلي: أسكن في شارع مرديكا رقم 7.\nMatching: هي merujuk pada Salma");
+  assert.deepEqual(b.map((x) => x.arab), [false, true, true, false]);
+  assert.equal(b.length, 4);
+  assert.equal(b[1].teks, "عمر: (1) ... اسمك؟");
+  assert.deepEqual(pecahBaris(""), []);
 });

@@ -220,6 +220,18 @@ export function paragrafArab(t: string) {
   return arab > 0 && arab >= latin * 4;
 }
 
+/**
+ * Pecah teks soal menjadi baris (baris kosong dibuang). `arab` = baris hampir seluruhnya huruf Arab (mis. satu ucapan
+ * hiwar): ditampilkan sebagai satu blok kanan-ke-kiri, supaya titik dua, angka, dan tanda baca ikut urutan yang benar.
+ */
+export function pecahBaris(t: string): { teks: string; arab: boolean }[] {
+  return String(t ?? "")
+    .split(/\r?\n/)
+    .map((b) => b.trim())
+    .filter(Boolean)
+    .map((b) => ({ teks: b, arab: paragrafArab(b) }));
+}
+
 /** Potongan teks Arab yang TIDAK ada persis (huruf + harakat) di data terverifikasi. Harus kosong. */
 export function arabTakTerverifikasi(teks: string, korpus: string): string[] {
   return (teks.match(new RegExp(POLA_ARAB, "g")) ?? []).filter((p) => !korpus.includes(rapikan(p)));

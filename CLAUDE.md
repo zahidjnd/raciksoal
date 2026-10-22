@@ -352,3 +352,11 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   `word.ts` (kini export) memecah per "\n" jadi `TextRun({break:1})` (library docx TIDAK mengubah \n sendiri).
   Set lama tidak berubah (teksnya sudah satu baris): pakai "Ubah soal" ("tulis hiwar per baris") atau Edit. Tabel
   sungguhan belum ada (daftar fitur nanti, bersama rumus). Uji laptop: set 51 soal 1 (diedit jadi 4 baris), docx contoh.
+- 2026-10-23 BARIS ARAB RTL (0.9.2, temuan pemilik: hiwar Arab acak urutannya, harus dari kanan): sebab = potongan Arab
+  di paragraf LTR (titik dua, nomor, angka terlempar). Kini `pecahBaris` (soal.ts; baris kosong dibuang, `arab` =
+  `paragrafArab`) dipakai web (`TeksBaris` di kartu-soal.tsx: baris pertama sebaris dengan nomor, baris Arab berikutnya
+  blok `dir="rtl"` rata kanan font Amiri) dan Word (`butirBaris`/`parBaris` di word.ts: tiap baris satu paragraf,
+  baris Arab `bidirectional` + `AlignmentType.START` + run RTL utuh). Berlaku untuk pertanyaan, pilihan, wacana,
+  pernyataan (web), pembahasan (web). Baris campur Latin+Arab (hampir semua Latin) tetap LTR dengan potongan `bdi`.
+  Set lama ikut membaik (perbaikan ada di tampilan). Kendala diketahui: kunci/rubrik/pernyataan di Word masih memakai
+  `teks()` (pindah baris dalam satu paragraf, belum RTL). Uji laptop: set 51 soal 1 + docx contoh (4 paragraf bidi).

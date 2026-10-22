@@ -21,7 +21,7 @@ import {
   type ParagraphChild,
 } from "docx";
 import { NAMA_BENTUK, semesterDari, WAKTU_BAWAAN, type Pengaturan } from "./prompt";
-import { identitasBab, kategoriBaru, POLA_ARAB, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
+import { identitasBab, kategoriBaru, pecahBaris, POLA_ARAB, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
 
 const PERINGATAN = "Soal dibuat AI, wajib diperiksa guru sebelum dipakai.";
 
@@ -94,6 +94,28 @@ const bernomor = (label: string, isi: ParagraphChild[], kiri = 400, opsi = {}) =
     ...opsi,
   });
 
+const barisArab = (t: string) => new TextRun({ text: t, font: FONT_ARAB, size: UKURAN_ARAB, rightToLeft: true, language: { bidirectional: "ar-SA" } });
+
+/** Satu baris teks soal: baris Arab = paragraf kanan-ke-kiri rata kanan (satu run utuh), selain itu paragraf biasa. */
+const parBaris = (b: { teks: string; arab: boolean }, kiri: number, opsi: Partial<ConstructorParameters<typeof Paragraph>[0] & object> = {}) =>
+  b.arab
+    ? par([barisArab(b.teks)], { bidirectional: true, alignment: AlignmentType.START, indent: { right: 400 }, ...opsi })
+    : par(teks(b.teks), { alignment: AlignmentType.JUSTIFIED, indent: { left: kiri }, ...opsi });
+
+/**
+ * Butir bernomor dengan teks berbaris (dialog/hiwar): baris pertama sebaris dengan nomor, tiap baris berikutnya
+ * satu paragraf (Arab → kanan-ke-kiri). Teks satu baris tetap satu paragraf seperti sebelumnya.
+ */
+function butirBaris(label: string, isi: string, kiri = 400, opsi: Partial<ConstructorParameters<typeof Paragraph>[0] & object> = {}): Paragraph[] {
+  const baris = pecahBaris(isi);
+  if (baris.length <= 1) return [bernomor(label, teks(isi), kiri, opsi)];
+  const dalam = { ...opsi, spacing: { after: 0 }, keepNext: true }; // semua paragraf kecuali yang terakhir
+  return [
+    bernomor(label, teks(baris[0].teks), kiri, dalam),
+    ...baris.slice(1).map((b, i) => parBaris(b, kiri, i === baris.length - 2 ? opsi : dalam)),
+  ];
+}
+
 /** Judul ujian & tahun pelajaran: dari identitas ujian (diisi guru), selain itu dari tanggal pembuatan set. */
 function judulAsesmen(p: Pengaturan, tanggal: Date) {
   const awal = semesterDari(tanggal);
@@ -125,17 +147,16 @@ export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tangga
       if (s.grup && s.wacana && butir[j - 1]?.s.grup !== s.grup) {
         const akhir = butir.slice(j).findLast((x) => x.s.grup === s.grup)!.no;
         isi.push(par([r(`Bacalah teks berikut untuk menjawab soal nomor ${no}${akhir > no ? `–${akhir}` : ""}!`, { bold: true, italics: true })], { keepNext: true, spacing: { before: 60, after: 40 } }));
-        for (const baris of s.wacana.split("\n").filter((x) => x.trim()))
-          isi.push(par(teks(baris), { alignment: AlignmentType.JUSTIFIED, indent: { left: 200 }, keepNext: true, spacing: { after: 40 } }));
+        for (const baris of pecahBaris(s.wacana)) isi.push(parBaris(baris, 200, { keepNext: true, spacing: { after: 40 } }));
         isi.push(par([], { spacing: { after: 40 } }));
       }
-      isi.push(bernomor(`${no}.`, teks(s.pertanyaan), 400, { keepNext: true }));
+      isi.push(...butirBaris(`${no}.`, s.pertanyaan, 400, { keepNext: true }));
       const dalil = bab.dalil.find((d) => d.id === s.dalil_id);
       if (dalil) {
         isi.push(par(teks(dalil.arab), { bidirectional: true, alignment: AlignmentType.START, indent: { right: 400 }, keepNext: true, spacing: { after: 0 } }));
         isi.push(par([r(`(${dalil.sumber})`, { italics: true, size: 18 })], { alignment: AlignmentType.RIGHT, keepNext: true }));
       }
-      if (s.pilihan) s.pilihan.forEach((o, i) => isi.push(bernomor(`${HURUF[i]}.`, teks(o), 800, { spacing: { after: 0 }, keepNext: i < 4 })));
+      if (s.pilihan) s.pilihan.forEach((o, i) => isi.push(...butirBaris(`${HURUF[i]}.`, o, 800, { spacing: { after: 0 }, keepNext: i < 4 })));
       if (kategoriBaru(s)) isi.push(tabelKategori(s));
       else if (bentuk === "BS") isi.push(par([r("A.", { bold: true }), r(" Benar\t\t"), r("B.", { bold: true }), r(" Salah")], { indent: { left: 400 } }));
       isi.push(par([], { spacing: { after: 80 } }));

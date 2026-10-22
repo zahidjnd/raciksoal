@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { gantiSatuSoal, simpanSoal } from "./actions";
-import { kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, POLA_ARAB, type Bab, type Soal } from "@/lib/soal";
+import { kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, pecahBaris, POLA_ARAB, type Bab, type Soal } from "@/lib/soal";
 import { MAKS_INSTRUKSI } from "@/lib/prompt";
 
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
@@ -17,6 +17,28 @@ export function Teks({ teks }: { teks: string }) {
       {String(teks ?? "")
         .split(PECAH_ARAB)
         .map((b, i) => (i % 2 ? <bdi key={i} dir="rtl" lang="ar" className="font-arab text-xl">{b}</bdi> : b))}
+    </>
+  );
+}
+
+/**
+ * Teks soal berbaris (dialog/hiwar, daftar, puisi). Satu baris: sama seperti `Teks`. Beberapa baris: baris pertama
+ * tetap sebaris dengan nomor soal; baris berikutnya masing-masing satu blok, dan baris yang hampir seluruhnya Arab
+ * menjadi blok kanan-ke-kiri rata kanan (supaya titik dua, nomor rumpang, dan angka urut benar).
+ */
+export function TeksBaris({ teks, jarak }: { teks: string; jarak?: boolean }) {
+  const baris = pecahBaris(teks);
+  if (baris.length <= 1) return <Teks teks={baris[0]?.teks ?? ""} />;
+  return (
+    <>
+      <span><Teks teks={baris[0].teks} /></span>
+      {baris.slice(1).map((b, i) =>
+        b.arab ? (
+          <span key={i} dir="rtl" lang="ar" className={`block text-right font-arab text-xl ${jarak ? "mt-2" : ""}`}>{b.teks}</span>
+        ) : (
+          <span key={i} className={`block ${jarak ? "mt-2" : ""}`}><Teks teks={b.teks} /></span>
+        ),
+      )}
     </>
   );
 }
@@ -39,7 +61,7 @@ function TabelKategori({ s, kunci }: { s: Soal; kunci: boolean }) {
           {(s.pernyataan ?? []).map((p, i) => (
             <tr key={i} className="align-top">
               <td className="border p-2 text-center">{i + 1}</td>
-              <td className="border p-2 whitespace-pre-line"><Teks teks={p} /></td>
+              <td className="border p-2"><TeksBaris teks={p} /></td>
               {label.map((l) => (
                 <td key={l} className={`border p-2 text-center ${kunci && k[i] === l ? "bg-hijau-muda font-semibold text-hijau-teks" : ""}`}>
                   {kunci && k[i] === l ? "✓" : ""}
@@ -104,15 +126,15 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
     {nomorGrup && s.wacana && (
       <section className="space-y-1 rounded-xl border border-hijau/40 bg-hijau-muda/40 p-4 text-sm" aria-label={`Wacana soal nomor ${nomorGrup}`}>
         <p className="font-semibold">Bacalah teks berikut untuk menjawab soal nomor {nomorGrup}!</p>
-        <p className="whitespace-pre-line"><Teks teks={s.wacana} /></p>
+        <p><TeksBaris teks={s.wacana} jarak /></p>
       </section>
     )}
     <article id={`soal-${no}`} className={`scroll-mt-4 space-y-2 rounded-xl border p-4 ${s.peringatan?.length ? "border-bahaya-garis bg-bahaya-muda" : "bg-kartu"} ${mengganti ? "opacity-50" : ""}`}>
       {s.peringatan?.map((w, i) => (
         <p key={i} className="text-sm font-semibold text-bahaya">⚠️ {w}</p>
       ))}
-      <p className="whitespace-pre-line">
-        <span className="font-semibold">{no}.</span> <Teks teks={s.pertanyaan} />
+      <p>
+        <span className="font-semibold">{no}.</span> <TeksBaris teks={s.pertanyaan} />
       </p>
       {dalil && (
         <figure className="rounded bg-krem p-3">
@@ -122,7 +144,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
       )}
       {s.pilihan && (
         <ol className="list-[upper-alpha] space-y-1 pl-6">
-          {s.pilihan.map((o, i) => <li key={i} className="whitespace-pre-line"><Teks teks={o} /></li>)}
+          {s.pilihan.map((o, i) => <li key={i}><TeksBaris teks={o} /></li>)}
         </ol>
       )}
       {kategoriBaru(s) && <TabelKategori s={s} kunci={tampilKunci} />}
@@ -134,7 +156,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
             {s.rubrik.map((r, i) => <li key={i}><Teks teks={r.kriteria} /> ({r.skor})</li>)}
           </ul>
         )}
-        <p className="whitespace-pre-line"><span className="font-semibold">Pembahasan:</span> <Teks teks={s.pembahasan} /></p>
+        <p><span className="font-semibold">Pembahasan:</span> <TeksBaris teks={s.pembahasan} /></p>
         <p className="text-pudar">{s.level} · {s.tp} · skor {s.skor}</p>
       </div>
       )}
