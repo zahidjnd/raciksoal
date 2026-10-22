@@ -23,6 +23,12 @@ hadis karangan dalam mode Bahasa Arab belum bisa dideteksi otomatis (hanya diceg
 
 ---
 
+## 0.8.1 — 22 Oktober 2026
+- Kotak Materi di halaman utama kini menerima file **PDF** (selain Word dan PowerPoint). File dibaca di perangkat guru.
+- Teks Latin dari PDF masuk ke Isi materi. Teks Arab dari PDF tidak dipakai langsung: aplikasi mencari ayat yang sama
+  di data mushaf; kalau ketemu, yang dipakai teks mushaf (kotak hijau), kalau tidak, dibuang dan guru diberi tahu.
+- PDF hasil scan (gambar) atau yang dikunci kata sandi ditolak dengan pesan yang jelas.
+
 ## 0.8.0 — 20 Oktober 2026
 Versi pertama yang diberi nomor. Isi aplikasi sampai saat ini:
 
