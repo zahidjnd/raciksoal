@@ -17,8 +17,9 @@ Rencana:
 - [ ] Hitung kesiapan saldo AI untuk 15–20 guru.
 - [ ] Panduan singkat untuk guru (opsional).
 
-Keterbatasan yang sudah diketahui (tidak menghalangi uji coba): file PDF belum bisa dibaca; hadis karangan dalam
-mode Bahasa Arab belum bisa dideteksi otomatis (hanya dicegah lewat instruksi ke AI).
+Keterbatasan yang sudah diketahui (tidak menghalangi uji coba): dari file PDF hanya teks Latin dan ayat yang
+dikenali mushaf yang dipakai (teks Arab PDF lain, termasuk hadis, dibuang; buku PDF Kemenag teks Arabnya rusak semua);
+hadis karangan dalam mode Bahasa Arab belum bisa dideteksi otomatis (hanya dicegah lewat instruksi ke AI).
 
 ---
 

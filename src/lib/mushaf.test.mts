@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { bacaRujukan, cariSurah, NAMA_SURAH } from "./surah.ts";
 import { mushaf, normalArab } from "./mushaf.ts";
-import { keIsian, rapikanMateri } from "./materi.ts";
+import { ayatDariPdf, keIsian, rapikanMateri, susunDraf, TANDA_PDF } from "./materi.ts";
+import { paragrafPdf } from "./office.ts";
 import type { Bab } from "./soal.ts";
 
 const bab: Bab = JSON.parse(readFileSync(new URL("../data/qurdis11-bab3.json", import.meta.url), "utf8"));
@@ -109,4 +110,32 @@ test("mode Bahasa Arab: kalimat Arab sehari-hari tidak dianggap ayat, ayat (beda
   for (const kalimat of ["ذَهَبَ الطَّالِبُ إِلَى الْمَدْرَسَةِ", "هَذَا كِتَابٌ جَدِيْدٌ", "أَيْنَ تَسْكُنُ يَا أَحْمَدُ؟", "أَنَا أُحِبُّ اللُّغَةَ الْعَرَبِيَّةَ"])
     assert.equal(m.cari(kalimat), null, kalimat);
   assert.ok(m.cari("ولا تقربوا الزنى انه كان فاحشة")); // QS Al-Isra: 32 tanpa harakat
+});
+
+test("PDF: baris dikelompokkan, Arab kanan→kiri; ayat diganti teks mushaf, teks Arab tak dikenal dibuang", () => {
+  const m = mushaf();
+  const it = (str: string, x: number, y: number, width = 100) => ({ str, transform: [1, 0, 0, 1, x, y], width, height: 12 });
+  const an30 = m.ambil("24:30") as { arab: string };
+  const kata = an30.arab.replace("اللَّهَ", "ّللا").split(" "); // lafaz Allah dari Word keluar terbalik "ّللا"
+  const p = paragrafPdf([
+    it("Allah berfirman", 50, 700), it("dalam", 160, 700, 30), // satu baris, celah → spasi
+    it("surah An-", 50, 686, 60), it("Nur:", 110, 686, 30), // baris dekat → paragraf yang sama; "An-" + "Nur" menyatu
+    it(kata.slice(0, 8).join(" "), 300, 650, 200), it(kata.slice(8).join(" "), 100, 650, 190), // item kanan dulu dibaca
+    it("ُ", 520, 653, 5), // harakat lepas sedikit di atas baris ikut barisnya
+    it("حَسَّثَىَا ِأَبُى ِوُػ َُْمٍ ِنَا َُ ِحَسَّثَىَا ِمِؼْػَطٌ", 100, 630, 300), // "hadis" rusak dari buku PDF
+    it("Artinya: Katakanlah", 50, 600),
+  ]);
+  assert.equal(p[0], "Allah berfirman dalam surah An-Nur:");
+  assert.ok(p[1].startsWith(TANDA_PDF));
+  assert.equal(p[2], "Artinya: Katakanlah");
+
+  const d = susunDraf({ mapel: "Al-Qur'an Hadis", kelas: "XI", paragraf: p }, m.cari, m.basmalah);
+  assert.deepEqual(d.isian.dalil.map((x) => [x.sumber, x.arab, x.mushaf]), [[(m.cari(an30.arab) as { sumber: string }).sumber, an30.arab, true]]);
+  assert.equal(d.dibuangPdf, 1);
+  assert.ok(!d.isian.isi.includes("حَسَّثَىَا") && !d.untukAi.includes("حَسَّثَىَا"));
+
+  // Arab tersimpan terbalik (kiri→kanan) tetap dikenali; basmalah dibuang tanpa dihitung.
+  const balik = [...an30.arab].reverse().join("");
+  assert.equal(ayatDariPdf(`${balik}\nبِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ`, m.cari, m.basmalah).ayat[0].arab, an30.arab);
+  assert.equal(ayatDariPdf("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ", m.cari, m.basmalah).dibuang, 0);
 });

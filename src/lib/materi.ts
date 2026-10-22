@@ -26,6 +26,13 @@ export type IsianMateri = {
   pokok?: string[]; // pokok materi hasil analisa AI (opsional)
 };
 
+/**
+ * Penanda paragraf Arab dari PDF (dibuat `paragrafPdf`, office.ts). Teks Arab hasil ekstrak PDF sering rusak (huruf
+ * tertukar, harakat lepas), jadi TIDAK PERNAH dipakai apa adanya: hanya untuk mencari ayat di mushaf (`susunDraf`),
+ * yang tidak ketemu dibuang. Baris-baris satu blok dipisah "\n".
+ */
+export const TANDA_PDF = "[[PDF]]";
+
 /** Pencari ayat di mushaf (mushaf().cari); disuntikkan supaya file ini tetap bisa dites tanpa membaca mushaf. */
 export type CariAyat = (arab: string, petunjuk: string) => { sumber: string; arab: string } | null;
 
@@ -109,12 +116,24 @@ export function susunDraf(
   x: { mapel: string; kelas: string; paragraf: string[] },
   cariAyat: CariAyat,
   basmalah: (arab: string) => boolean,
-): { isian: IsianMateri; untukAi: string } {
+): { isian: IsianMateri; untukAi: string; dibuangPdf: number } {
   const teksArab = modeArab(teks(x.mapel));
   const isi: string[] = [];
   const untukAi: string[] = [];
   const dalil: IsianMateri["dalil"] = [];
+  let dibuangPdf = 0;
   for (const p of x.paragraf.map(teks).filter(Boolean)) {
+    if (p.startsWith(TANDA_PDF)) {
+      // Teks Arab PDF tidak dipercaya (aturan 5): hanya penunjuk ayat; yang dipakai teks mushaf, sisanya dibuang.
+      const { ayat, dibuang } = ayatDariPdf(p.slice(TANDA_PDF.length), cariAyat, basmalah);
+      dibuangPdf += dibuang;
+      for (const a of ayat) {
+        let n = dalil.findIndex((y) => y.arab === a.arab);
+        if (n < 0 && dalil.length < BATAS_MATERI.dalil) n = dalil.push({ ...a, terjemah: "", mushaf: true }) - 1;
+        if (n >= 0) untukAi.push(`[DALIL ${n + 1}, ${a.sumber}] ${a.arab}`);
+      }
+      continue;
+    }
     if (!paragrafArab(p)) {
       isi.push(p);
       untukAi.push(p);
@@ -135,7 +154,30 @@ export function susunDraf(
   return {
     isian: { mapel: teks(x.mapel), kelas: teks(x.kelas), teksArab, judul: "", tp: "", isi: isi.join("\n"), dalil, diverifikasi: false },
     untukAi: untukAi.join("\n"),
+    dibuangPdf,
   };
+}
+
+/**
+ * Blok Arab dari PDF (baris dipisah "\n") → ayat-ayat mushaf. Dicoba seluruh blok dulu (satu dalil utuh), lalu per
+ * baris; tiap kali juga versi huruf terbalik (sebagian PDF menyimpan Arab dari kiri ke kanan). `dibuang` = baris
+ * berhuruf cukup yang tidak dikenali (hadis, atau teks yang terlalu rusak).
+ * ponytail: potongan ayat per baris tidak digabung jadi satu dalil; gabungkan bila guru sering mendapat potongan.
+ */
+export function ayatDariPdf(blok: string, cariAyat: CariAyat, basmalah: (arab: string) => boolean) {
+  const balik = (t: string) => [...t].reverse().join("");
+  const coba = (baris: string[]) => cariAyat(baris.join(" "), "") ?? cariAyat(baris.map(balik).join(" "), "");
+  const baris = blok.split("\n").filter((b) => !basmalah(b) && !basmalah(balik(b)));
+  const utuh = baris.length > 1 ? coba(baris) : null;
+  if (utuh) return { ayat: [utuh], dibuang: 0 };
+  const ayat: NonNullable<ReturnType<CariAyat>>[] = [];
+  let dibuang = 0;
+  for (const b of baris) {
+    const a = coba([b]);
+    if (a) ayat.push(a);
+    else if ((b.match(/[ب-ي]/g) ?? []).length >= 10) dibuang++;
+  }
+  return { ayat, dibuang };
 }
 
 /** Huruf & angka saja, huruf kecil: untuk memeriksa bahwa sesuatu benar-benar tertulis di teks guru. */

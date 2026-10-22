@@ -470,7 +470,7 @@ test("materi sendiri: TP diberi kode, teks Arab hanya dipercaya dari kotak ayat 
   assert.ok(typeof r !== "string" && keIsian(r.bab).tp.startsWith("TP 1.1: "));
 });
 
-test("bacaFileOffice: paragraf Latin ke isi, paragraf Arab jadi usulan ayat; slide urut; PDF ditolak", async () => {
+test("bacaFileOffice: paragraf Latin ke isi, paragraf Arab jadi usulan ayat; slide urut; PDF rusak ditolak", async () => {
   const ayat = bab.dalil[0].arab;
   const { Document, Packer, Paragraph, TextRun } = await import("docx");
   const docx = await Packer.toBuffer(
@@ -495,7 +495,7 @@ test("bacaFileOffice: paragraf Latin ke isi, paragraf Arab jadi usulan ayat; sli
   const pptx = await zip.generateAsync({ type: "uint8array" });
   assert.deepEqual((await bacaFileOffice(pptx, "x.pptx")).teks, ["Slide dua", "Slide sepuluh"]);
 
-  await assert.rejects(bacaFileOffice(pptx, "materi.pdf"), /PDF tidak didukung/);
+  await assert.rejects(bacaFileOffice(pptx, "materi.pdf"), /bukan PDF/);
   await assert.rejects(bacaFileOffice(pptx, "lama.doc"), /Format lama/);
   await assert.rejects(bacaFileOffice(new Uint8Array([1, 2, 3]), "rusak.docx"), /tidak bisa dibaca/);
 });

@@ -21,7 +21,7 @@ const kotak = "w-full rounded-lg border p-2 text-sm";
 const BATAS_FILE = 30 * 1024 * 1024;
 
 /**
- * Materi di halaman utama (pengganti menu Materi saya): tempel teks atau lampirkan Word/PowerPoint → AI menganalisa
+ * Materi di halaman utama (pengganti menu Materi saya): tempel teks atau lampirkan Word/PowerPoint/PDF → AI menganalisa
  * (judul, usulan TP, pokok materi, sumber/terjemah dalil yang tertulis) → kartu materi yang bisa diedit guru.
  * Bisa digabung dengan materi sebelumnya (PTS/PAS). Ayat diambil dari mushaf; hadis wajib dicentang (aturan 5).
  */
@@ -107,15 +107,15 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
               rows={4}
               className={kotak}
               aria-label="Tempel materi"
-              placeholder={siap ? "Tempel materi di sini (ringkasan bab, modul, atau isi PPT), atau lampirkan file Word/PowerPoint." : "Pilih mata pelajaran dan kelas dulu."}
+              placeholder={siap ? "Tempel materi di sini (ringkasan bab, modul, atau isi PPT), atau lampirkan file Word/PowerPoint/PDF." : "Pilih mata pelajaran dan kelas dulu."}
               disabled={!siap || !!proses}
               value={teks}
               onChange={(e) => setTeks(e.target.value)}
             />
             <div className="flex flex-wrap items-center gap-2">
               <label className={`inline-flex h-8 cursor-pointer items-center rounded-lg border bg-kartu px-3 text-sm hover:bg-krem max-md:min-h-11 focus-within:ring-2 focus-within:ring-hijau ${!siap || proses ? "pointer-events-none opacity-50" : ""}`}>
-                Lampirkan Word/PowerPoint
-                <input type="file" multiple accept=".docx,.pptx" className="sr-only" disabled={!siap || !!proses} onChange={lampirkan} />
+                Lampirkan Word/PowerPoint/PDF
+                <input type="file" multiple accept=".docx,.pptx,.pdf" className="sr-only" disabled={!siap || !!proses} onChange={lampirkan} />
               </label>
               <button className="h-8 rounded-lg bg-hijau px-3 text-sm font-semibold text-white disabled:opacity-40 max-md:min-h-11" disabled={!siap || !!proses || !teks.trim()} onClick={() => analisa()}>
                 Analisa materi

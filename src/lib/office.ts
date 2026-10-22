@@ -1,6 +1,7 @@
-// Ambil teks dari file Word (.docx) atau PowerPoint (.pptx) untuk "materi sendiri" (langkah 8b).
+// Ambil teks dari file Word (.docx), PowerPoint (.pptx), atau PDF untuk "materi sendiri" (langkah 8b).
 // Dipakai di BROWSER guru (file tidak diunggah ke hosting). Tanpa import "@/..." supaya bisa dites: npm test
 import JSZip from "jszip";
+import { TANDA_PDF } from "./materi.ts";
 import { paragrafArab } from "./soal.ts";
 
 export { paragrafArab };
@@ -25,15 +26,100 @@ function paragraf(xml: string, p: string, t: string): string[] {
     .filter(Boolean);
 }
 
+/** Satu potongan teks PDF (bentuk `TextItem` pdf.js): x = transform[4], y = transform[5]. */
+export type ItemPdf = { str: string; transform: number[]; width: number; height: number };
+
 /**
- * Baca .docx / .pptx: `teks` = paragraf Latin (untuk kotak Isi materi), `arab` = paragraf Arab (USULAN ayat/hadis,
+ * Item teks satu halaman PDF → paragraf urut. Item dikelompokkan per baris (y berdekatan; harakat yang tercetak
+ * sedikit di atas hurufnya ikut barisnya), baris Arab diurutkan kanan→kiri. Baris Latin yang berdekatan digabung jadi
+ * satu paragraf; baris Arab berurutan jadi satu blok bertanda TANDA_PDF.
+ */
+export function paragrafPdf(items: ItemPdf[]): string[] {
+  const baris: { y: number; tinggi: number; item: ItemPdf[] }[] = [];
+  for (const it of [...items].filter((i) => i.str.trim()).sort((a, b) => b.transform[5] - a.transform[5])) {
+    const b = baris.at(-1);
+    const tinggi = Math.max(it.height, 1);
+    if (b && b.y - it.transform[5] < 0.6 * Math.max(b.tinggi, tinggi)) {
+      b.item.push(it);
+      b.tinggi = Math.max(b.tinggi, tinggi);
+    } else baris.push({ y: it.transform[5], tinggi, item: [it] });
+  }
+
+  const hasil: string[] = [];
+  let blokArab: string[] = [];
+  let latin = "";
+  let yLatin = 0;
+  const tutup = () => {
+    if (latin) hasil.push(latin);
+    if (blokArab.length) hasil.push(TANDA_PDF + blokArab.join("\n"));
+    latin = "";
+    blokArab = [];
+  };
+  for (const b of baris) {
+    const arab = paragrafArab(b.item.map((i) => i.str).join(" "));
+    const x = (i: ItemPdf) => i.transform[4];
+    b.item.sort((p, q) => (arab ? x(q) - x(p) : x(p) - x(q)));
+    let t = "";
+    b.item.forEach((it, n) => {
+      const sebelum = b.item[n - 1];
+      // Spasi hanya bila ada celah: kata yang terpotong jadi beberapa item ("a" + "ku") tetap menyatu.
+      const celah = !sebelum ? 0 : arab ? x(sebelum) - (x(it) + it.width) : x(it) - (x(sebelum) + sebelum.width);
+      t += (celah > 0.15 * b.tinggi ? " " : "") + it.str;
+    });
+    // Bentuk sambung (FB50–FEFF) → huruf biasa; lafaz Allah dari Word keluar terbalik "ّللا".
+    t = t.normalize("NFKC").replace(/ّللا/g, "الله").replace(/\s+/g, " ").trim();
+    if (arab) {
+      if (latin) tutup();
+      blokArab.push(t);
+    } else {
+      if (blokArab.length || (latin && yLatin - b.y > 1.8 * b.tinggi)) tutup();
+      latin = latin ? `${latin} ${t}` : t;
+      yLatin = b.y;
+    }
+  }
+  tutup();
+  return hasil;
+}
+
+/** PDF dibaca dengan pdf.js (dimuat hanya saat guru memilih PDF). */
+async function bacaPdf(data: ArrayBuffer | Uint8Array): Promise<string[]> {
+  const diBrowser = typeof window !== "undefined";
+  // Versi "legacy" hanya untuk npm test (Node); di browser guru dipakai versi biasa + worker.
+  const pdfjs = diBrowser ? await import("pdfjs-dist") : await import("pdfjs-dist/legacy/build/pdf.mjs");
+  if (diBrowser) pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
+  const tugas = pdfjs.getDocument({ data: new Uint8Array(data), verbosity: 0 });
+  let doc;
+  try {
+    doc = await tugas.promise;
+  } catch (e) {
+    if ((e as Error)?.name === "PasswordException") throw new Error("PDF ini dikunci kata sandi. Buka kuncinya dulu.");
+    throw new Error("File PDF tidak bisa dibaca (rusak atau bukan PDF).");
+  }
+  if (doc.numPages > 300) throw new Error("PDF terlalu banyak halamannya (maks 300). Ambil bab yang diperlukan saja.");
+  const semua: string[] = [];
+  for (let n = 1; n <= doc.numPages; n++) {
+    const isi = await (await doc.getPage(n)).getTextContent();
+    semua.push(...paragrafPdf(isi.items.filter((i): i is ItemPdf & typeof i => "str" in i)));
+  }
+  await tugas.destroy();
+  if (!semua.join("").replace(/\s/g, "")) throw new Error("PDF ini berupa gambar (hasil scan), tidak ada teks yang bisa diambil. Ketik atau tempel materinya.");
+  return semua;
+}
+
+/**
+ * Baca .docx / .pptx / .pdf: `teks` = paragraf Latin (untuk kotak Isi materi), `arab` = paragraf Arab (USULAN ayat/hadis,
  * wajib diperiksa guru sebelum dipercaya, aturan 5). Melempar Error berbahasa Indonesia kalau file tidak didukung.
+ * Paragraf Arab dari PDF bertanda TANDA_PDF (lihat di atas).
  */
 export async function bacaFileOffice(data: ArrayBuffer | Uint8Array, nama: string): Promise<{ teks: string[]; arab: string[]; semua: string[] }> {
   const akhiran = nama.toLowerCase().split(".").pop();
-  if (akhiran === "pdf") throw new Error("File PDF tidak didukung karena teks Arabnya rusak saat diambil. Gunakan Word atau PowerPoint.");
   if (akhiran === "doc" || akhiran === "ppt") throw new Error("Format lama (.doc/.ppt) tidak didukung. Simpan ulang sebagai .docx/.pptx (File → Save As).");
-  if (akhiran !== "docx" && akhiran !== "pptx") throw new Error("Pilih file Word (.docx) atau PowerPoint (.pptx).");
+  if (akhiran === "pdf") {
+    const semua = await bacaPdf(data);
+    // `arab` sengaja kosong: teks Arab PDF tidak boleh jadi usulan ayat/hadis, hanya dicocokkan ke mushaf di server.
+    return { teks: semua.filter((t) => !t.startsWith(TANDA_PDF)), arab: [], semua };
+  }
+  if (akhiran !== "docx" && akhiran !== "pptx") throw new Error("Pilih file Word (.docx), PowerPoint (.pptx), atau PDF.");
 
   let zip: JSZip;
   try {

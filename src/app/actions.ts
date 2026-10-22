@@ -333,7 +333,10 @@ export async function analisaMateri(input: { mapel: string; kelas: string; parag
   if (paragraf.join("\n").length > 40_000) return { ok: false as const, pesan: "Materi terlalu panjang (maks ±30.000 huruf). Pecah menjadi beberapa materi." };
 
   const m = mushaf();
-  const { isian, untukAi } = susunDraf({ mapel, kelas, paragraf }, m.cari, m.basmalah);
+  const { isian, untukAi, dibuangPdf } = susunDraf({ mapel, kelas, paragraf }, m.cari, m.basmalah);
+  const pesanPdf = dibuangPdf
+    ? `${dibuangPdf} baris teks Arab dari PDF tidak dikenali sebagai ayat dan dibuang (teks Arab PDF sering rusak). Ayat: pakai "Ambil ayat"; hadis: tempel sendiri dari sumber terpercaya.`
+    : "";
   if (isian.isi.length < BATAS_MATERI.isiMin) return { ok: false as const, pesan: `Materi terlalu pendek (minimal ${BATAS_MATERI.isiMin} huruf teks).` };
 
   if (saya.peran !== "admin") {
@@ -347,11 +350,12 @@ export async function analisaMateri(input: { mapel: string; kelas: string; parag
   const { sistem, pengguna } = buatAnalisaMateri(mapel, kelas, untukAi, isian.teksArab === "bahasa");
   try {
     const r = await tanyaDenganCadangan(sistem, pengguna, daftarModel()[0]?.slot ?? 1, true, (d) => d);
-    return { ok: true as const, ...terapkanAnalisa(r.hasil, isian, untukAi) };
+    const a = terapkanAnalisa(r.hasil, isian, untukAi);
+    return { ok: true as const, isian: a.isian, catatan: [pesanPdf, a.catatan].filter(Boolean).join(" ") };
   } catch (e) {
     console.error("[analisa materi gagal]", pesanError(e));
     // AI gagal: materi tetap bisa dipakai, guru mengisi judul & TP sendiri di kartu materi.
-    return { ok: true as const, isian, catatan: "AI gagal menganalisa materi. Isi judul dan TP sendiri, atau coba analisa lagi." };
+    return { ok: true as const, isian, catatan: `${pesanPdf} AI gagal menganalisa materi. Isi judul dan TP sendiri, atau coba analisa lagi.`.trim() };
   }
 }
 

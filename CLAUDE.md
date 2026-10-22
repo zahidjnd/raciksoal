@@ -329,3 +329,10 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   madrasah: /admin/pengaturan (tabel `pengaturan_web`, migrasi 0007; bawaan "MADRASAH ALIYAH AL-FATAH"). Kop Word
   kini punya penanda {{sekolah}} {{hari}} {{waktu}} (skrip `--mapel-kelas` juga menambahkannya). Logo & alamat tetap.
   Uji laptop: materi-4 Fikih "Bab 2: Thaharah" (set 49), set 50 = gabungan materi-1 + materi-5.
+- 2026-10-22 PDF DI KOTAK MATERI (persetujuan pemilik, library baru `pdfjs-dist` 6.4.299, dimuat hanya saat PDF dipilih,
+  dibaca di browser; `legacy` build hanya untuk npm test). `paragrafPdf` (office.ts): item per baris, Arab kanan→kiri,
+  NFKC (bentuk sambung), lafaz Allah Word "ّللا"→الله; baris Latin berdekatan digabung; blok Arab bertanda `TANDA_PDF`.
+  Server (`susunDraf` → `ayatDariPdf`, materi.ts): blok utuh lalu per baris, juga versi terbalik, dicocokkan `mushaf().cari`;
+  cocok → teks MUSHAF, tidak cocok → DIBUANG (+ pesan jumlah baris). Teks Arab PDF tidak pernah dipakai apa adanya
+  (bukan usulan hadis). Hasil uji: PDF dari Word → QS An-Nur 30–31 utuh; 4 buku PDF Qurdis Kemenag (X, XI, 11, 12) teks
+  Arabnya rusak semua (huruf tertukar) → 0 ayat, teks Latin terbaca. Form lama /materi tetap .docx/.pptx saja.
