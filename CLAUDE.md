@@ -336,3 +336,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   cocok → teks MUSHAF, tidak cocok → DIBUANG (+ pesan jumlah baris). Teks Arab PDF tidak pernah dipakai apa adanya
   (bukan usulan hadis). Hasil uji: PDF dari Word → QS An-Nur 30–31 utuh; 4 buku PDF Qurdis Kemenag (X, XI, 11, 12) teks
   Arabnya rusak semua (huruf tertukar) → 0 ayat, teks Latin terbaca. Form lama /materi tetap .docx/.pptx saja.
+- 2026-10-22 SET MACET: `kerjakan` jalan di dalam proses server, jadi server restart (deploy, RAM, crash) membuat set
+  tertahan "proses" selamanya. Saat server menyala (`src/instrumentation-node.ts`, setelah migrasi) SEMUA set "proses"
+  ditandai "gagal" ("Terhenti karena server dinyalakan ulang...") → guru melihat pesan coba lagi, jatah kembali, admin
+  dapat pita merah. Aman karena hanya ada satu proses server. Uji laptop: set 52 (palsu, salinan set terakhir) → gagal.
