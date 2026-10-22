@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { arabTakTerverifikasi, bersihkanTanggapan, gabungBab, identitasBab, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, terapkanBobot, type Bab, type Soal } from "./soal.ts";
 import { bagiTahap, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, semesterDari, MAKS_CATATAN, MAKS_INSTRUKSI, rencanaLevel, type Pengaturan } from "./prompt.ts";
 import { bolehAkses, rapikanUsername } from "./akses.ts";
+import { headerUnduh } from "./nama-file.ts";
 import { keIsian, rapikanMateri, susunDraf, terapkanAnalisa } from "./materi.ts";
 import { bacaFileOffice } from "./office.ts";
 
@@ -515,4 +516,15 @@ test("pecahBaris: baris kosong dibuang dan baris Arab terdeteksi (untuk blok kan
   assert.equal(b.length, 4);
   assert.equal(b[1].teks, "عمر: (1) ... اسمك؟");
   assert.deepEqual(pecahBaris(""), []);
+});
+
+test("nama file unduhan: judul berhuruf Arab tidak merusak header HTTP (bug 500 di hosting)", () => {
+  const h = headerUnduh("Soal Ulangan Harian مائر وأدوات الاستفهام (set 30).docx");
+  assert.doesNotThrow(() => new Headers({ "Content-Disposition": h })); // dulu: ByteString error → HTTP 500
+  assert.ok(/^attachment; filename="[\x20-\x7e]+"; filename\*=UTF-8''[A-Za-z0-9%._-]+$/.test(h));
+  assert.ok(h.includes('filename="Soal Ulangan Harian (set 30).docx"'));
+  assert.equal(decodeURIComponent(h.split("UTF-8''")[1]), "Soal Ulangan Harian مائر وأدوات الاستفهام (set 30).docx");
+  // judul seluruhnya Arab, tanda kutip, dan baris baru tidak boleh lolos ke header
+  assert.doesNotThrow(() => new Headers({ "Content-Disposition": headerUnduh('الاستفهام "x"\r\nSet-Cookie: a=b.docx') }));
+  assert.ok(!headerUnduh('a"b\r\nc.docx').includes("\n"));
 });

@@ -23,6 +23,11 @@ hadis karangan dalam mode Bahasa Arab belum bisa dideteksi otomatis (hanya diceg
 
 ---
 
+## 0.9.3 — 23 Oktober 2026
+- Perbaikan: unduh Word gagal ("HTTP ERROR 500") untuk bab yang judulnya berhuruf Arab (mis. set Bahasa Arab "…أدوات الاستفهام").
+  Penyebabnya nama file diambil dari judul bab, dan huruf Arab tidak boleh langsung masuk header unduhan.
+  Kini unduhan berhasil; nama file di komputer memakai judul aslinya (termasuk huruf Arab).
+
 ## 0.9.2 — 23 Oktober 2026
 - Perbaikan: baris yang hampir seluruhnya Arab (mis. ucapan dalam hiwar) kini tampil **dari kanan ke kiri dan rata kanan**,
   di layar maupun di file Word. Titik dua, nomor rumpang "(1)", dan angka tidak lagi lompat ke tempat yang salah.

@@ -8,6 +8,7 @@ import { ambilNamaMadrasah } from "@/lib/sekolah";
 import { namaTujuan, type Pengaturan } from "@/lib/prompt";
 import type { BarisKisi, Soal } from "@/lib/soal";
 import { buatWordKisi, buatWordKunci, buatWordSoal } from "@/lib/word";
+import { headerUnduh } from "@/lib/nama-file";
 
 const NAMA_FILE = { soal: "Soal", kunci: "Kunci", kisi: "Kisi-kisi" } as const;
 
@@ -41,7 +42,7 @@ export async function GET(req: Request) {
   return new Response(new Uint8Array(isi), {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "Content-Disposition": `attachment; filename="${nama}"`,
+      "Content-Disposition": headerUnduh(nama), // judul bab bisa berhuruf Arab: tidak boleh langsung masuk header
       "Cache-Control": "no-store", // hosting punya cache depan; selalu ambil versi terbaru
     },
   });

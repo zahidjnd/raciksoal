@@ -360,3 +360,8 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   pernyataan (web), pembahasan (web). Baris campur Latin+Arab (hampir semua Latin) tetap LTR dengan potongan `bdi`.
   Set lama ikut membaik (perbaikan ada di tampilan). Kendala diketahui: kunci/rubrik/pernyataan di Word masih memakai
   `teks()` (pindah baris dalam satu paragraf, belum RTL). Uji laptop: set 51 soal 1 + docx contoh (4 paragraf bidi).
+- 2026-10-23 UNDUH WORD ERROR 500 (0.9.3, bug LAMA, terlihat di hosting set 30 judul berhuruf Arab; log: "Cannot convert
+  argument to a ByteString ... 1575"): nama file dari `bab.judul` masuk header Content-Disposition mentah. Kini
+  `headerUnduh` (src/lib/nama-file.ts, dites) mengirim `filename` ASCII + `filename*=UTF-8''...` (nama asli).
+  CARA LIHAT LOG HOSTING tanpa SSH: `~/raciksoal-app/app.log` (lewat konektor cPanel `read_file`). Uji laptop: judul set 51
+  diubah sementara jadi Arab → soal/kunci/kisi 200; judul dikembalikan.
