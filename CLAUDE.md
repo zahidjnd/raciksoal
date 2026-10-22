@@ -346,3 +346,9 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   server memang menolak edit & Word sebelum "selesai"). `cekHasil(id, denganBab)`: bab dikirim sekali saja selama
   proses, browser mempertahankannya. Uji laptop set 53 (25 soal): kisi 10 dtk, draf 10 soal 23 dtk, 20 soal 39 dtk,
   selesai 49 dtk. Belum dicek tampilan HP (panel browser tidak tampil saat uji).
+- 2026-10-22 BARIS BARU (0.9.1, temuan pemilik di soal Bahasa Arab: hiwar menyambung): tiga sebab → (1) `prompt.ts` kini
+  menyuruh AI menulis dialog/hiwar, daftar, puisi, langkah SATU BAGIAN PER BARIS ("\n" di JSON); (2) web memakai
+  `whitespace-pre-line` pada pertanyaan, pilihan, pernyataan, pembahasan (`kartu-soal.tsx`); (3) Word: `teks()` di
+  `word.ts` (kini export) memecah per "\n" jadi `TextRun({break:1})` (library docx TIDAK mengubah \n sendiri).
+  Set lama tidak berubah (teksnya sudah satu baris): pakai "Ubah soal" ("tulis hiwar per baris") atau Edit. Tabel
+  sungguhan belum ada (daftar fitur nanti, bersama rumus). Uji laptop: set 51 soal 1 (diedit jadi 4 baris), docx contoh.

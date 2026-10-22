@@ -65,13 +65,21 @@ type Gaya = { bold?: boolean; italics?: boolean; color?: string; size?: number }
 /** Teks Latin dengan huruf tetap Times New Roman (cetakan bawaan memakai Calibri). */
 const r = (text: string, gaya: Gaya = {}) => new TextRun({ font: FONT, size: UKURAN, ...gaya, text });
 
-/** Teks campuran Latin + Arab: bagian Arab memakai font Arab dan arah kanan-ke-kiri. */
-function teks(isi: string, gaya: Gaya = {}): TextRun[] {
+/**
+ * Teks campuran Latin + Arab: bagian Arab memakai font Arab dan arah kanan-ke-kiri.
+ * Baris baru ("\n", mis. dialog/hiwar satu penutur per baris) menjadi pindah baris di paragraf yang sama.
+ */
+export function teks(isi: string, gaya: Gaya = {}): TextRun[] {
   return String(isi ?? "")
-    .split(PECAH_ARAB)
-    .flatMap((b, i) =>
-      !b ? [] : i % 2 ? new TextRun({ ...gaya, text: b, font: FONT_ARAB, size: UKURAN_ARAB, rightToLeft: true, language: { bidirectional: "ar-SA" } }) : r(b, gaya),
-    );
+    .split(/\r?\n/)
+    .flatMap((baris, n) => [
+      ...(n ? [new TextRun({ break: 1 })] : []),
+      ...baris
+        .split(PECAH_ARAB)
+        .flatMap((b, i) =>
+          !b ? [] : i % 2 ? new TextRun({ ...gaya, text: b, font: FONT_ARAB, size: UKURAN_ARAB, rightToLeft: true, language: { bidirectional: "ar-SA" } }) : r(b, gaya),
+        ),
+    ]);
 }
 
 const par = (anak: ParagraphChild[], opsi: Partial<ConstructorParameters<typeof Paragraph>[0] & object> = {}) =>

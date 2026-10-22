@@ -23,6 +23,12 @@ hadis karangan dalam mode Bahasa Arab belum bisa dideteksi otomatis (hanya diceg
 
 ---
 
+## 0.9.1 — 22 Oktober 2026
+- Perbaikan: percakapan (hiwar/dialog), daftar, dan puisi kini tampil **satu bagian per baris**, di layar maupun di
+  file Word (sebelumnya menyambung jadi satu paragraf panjang).
+- AI diminta menulis dialog satu penutur per baris ("Nama: ucapan"). Soal lama tidak berubah; untuk memperbaikinya
+  pakai "Ubah soal" (mis. "tulis hiwar per baris, satu penutur per baris") atau Edit.
+
 ## 0.9.0 — 22 Oktober 2026
 **Siap uji coba guru.** Tidak ada perubahan fitur dari 0.8.3; semua persiapan sudah beres:
 - Semua fitur baru sudah dicek langsung di hosting, termasuk satu set untuk tiap jenis soal dan unduhan Word-nya.

@@ -39,7 +39,7 @@ function TabelKategori({ s, kunci }: { s: Soal; kunci: boolean }) {
           {(s.pernyataan ?? []).map((p, i) => (
             <tr key={i} className="align-top">
               <td className="border p-2 text-center">{i + 1}</td>
-              <td className="border p-2"><Teks teks={p} /></td>
+              <td className="border p-2 whitespace-pre-line"><Teks teks={p} /></td>
               {label.map((l) => (
                 <td key={l} className={`border p-2 text-center ${kunci && k[i] === l ? "bg-hijau-muda font-semibold text-hijau-teks" : ""}`}>
                   {kunci && k[i] === l ? "✓" : ""}
@@ -111,7 +111,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
       {s.peringatan?.map((w, i) => (
         <p key={i} className="text-sm font-semibold text-bahaya">⚠️ {w}</p>
       ))}
-      <p>
+      <p className="whitespace-pre-line">
         <span className="font-semibold">{no}.</span> <Teks teks={s.pertanyaan} />
       </p>
       {dalil && (
@@ -122,7 +122,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
       )}
       {s.pilihan && (
         <ol className="list-[upper-alpha] space-y-1 pl-6">
-          {s.pilihan.map((o, i) => <li key={i}><Teks teks={o} /></li>)}
+          {s.pilihan.map((o, i) => <li key={i} className="whitespace-pre-line"><Teks teks={o} /></li>)}
         </ol>
       )}
       {kategoriBaru(s) && <TabelKategori s={s} kunci={tampilKunci} />}
@@ -134,7 +134,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
             {s.rubrik.map((r, i) => <li key={i}><Teks teks={r.kriteria} /> ({r.skor})</li>)}
           </ul>
         )}
-        <p><span className="font-semibold">Pembahasan:</span> <Teks teks={s.pembahasan} /></p>
+        <p className="whitespace-pre-line"><span className="font-semibold">Pembahasan:</span> <Teks teks={s.pembahasan} /></p>
         <p className="text-pudar">{s.level} · {s.tp} · skor {s.skor}</p>
       </div>
       )}

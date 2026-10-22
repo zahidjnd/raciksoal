@@ -499,3 +499,12 @@ test("bacaFileOffice: paragraf Latin ke isi, paragraf Arab jadi usulan ayat; sli
   await assert.rejects(bacaFileOffice(pptx, "lama.doc"), /Format lama/);
   await assert.rejects(bacaFileOffice(new Uint8Array([1, 2, 3]), "rusak.docx"), /tidak bisa dibaca/);
 });
+
+test("baris baru (dialog/hiwar) tidak hilang saat soal dirapikan dan diperiksa, dan aturannya dikirim ke AI", () => {
+  const hiwar = "Perhatikan percakapan berikut!\nعلي: السلام عليكم\nعمر: وعليكم السلام";
+  const s = rapikanSoal({ pertanyaan: hiwar, pilihan: ["a", "b", "c", "d", "e"], kunci: "A", pembahasan: "x", level: "C1", tp: "TP 1", skor: 1 }, "PG");
+  assert.equal(s.pertanyaan, hiwar);
+  const [h] = periksaSoal([s], { ...bab, teksArab: "bahasa" });
+  assert.equal(h.pertanyaan.split("\n").length, 3);
+  assert.ok(buatSistem(bab).includes("SATU PENUTUR PER BARIS"));
+});
