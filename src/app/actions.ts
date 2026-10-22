@@ -199,6 +199,9 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
       const pengguna = buatPengguna(p, jumlah, semua.map((s) => s.pertanyaan), "", baris);
       const soal = await tanya(`Tahap ${i + 1}`, pengguna, (d) => ambilSoal(d, baris.length));
       semua.push(...soal.map((s, j) => samakanDenganKisi(s, baris[j])));
+      // Draf untuk tampilan bertahap (status tetap "proses"): sudah lewat penjaga ayat, tetapi kunci belum
+      // diratakan dan skor belum diisi; keduanya baru di akhir untuk seluruh set.
+      await simpan({ soal: periksaSoal(semua, bab, cekAyat) });
     }
     const soal = periksaSoal(semua, bab, cekAyat);
     ratakanKunci(soal);
@@ -370,8 +373,11 @@ export async function ubahIdentitas(id: number, identitas: Identitas) {
   return { ok: true as const, identitas: baru };
 }
 
-/** Status + isi satu set, hanya untuk pemiliknya atau admin (aturan 3). Set orang lain dijawab "tidak ada". */
-export async function cekHasil(id: number) {
+/**
+ * Status + isi satu set, hanya untuk pemiliknya atau admin (aturan 3). Set orang lain dijawab "tidak ada".
+ * denganBab=false: selama proses, data bab (bisa ratusan ribu huruf) tidak dikirim ulang di setiap pengecekan.
+ */
+export async function cekHasil(id: number, denganBab = true) {
   const saya = await penggunaSaatIni();
   if (!saya) return null;
   const [h] = await db
@@ -387,8 +393,8 @@ export async function cekHasil(id: number) {
   const catatan = (pengaturan as Pengaturan).catatan || null;
   const tanggapan = (h.info as { tanggapan?: string } | null)?.tanggapan || null;
   const identitas = (pengaturan as Pengaturan).identitas ?? {}; // kop Word, bisa diubah di halaman hasil
-  // Data bab (untuk menampilkan ayat & form edit) cukup dikirim saat selesai, tidak di setiap pengecekan.
-  const bab = h.status === "selesai" ? (babDariSet(h) ?? null) : null;
+  // Data bab (untuk menampilkan ayat & form edit): saat selesai, dan sekali saja selama proses (untuk draf soal).
+  const bab = h.status === "selesai" || (h.status === "proses" && denganBab) ? (babDariSet(h) ?? null) : null;
   if (saya.peran !== "admin") {
     // Guru tidak menerima info teknis (model, waktu, token, catatan cadangan) maupun rincian error penyedia AI.
     // (halaman sudah menambahkan awalan "Gagal membuat soal:")

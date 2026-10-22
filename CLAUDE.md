@@ -340,3 +340,9 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   tertahan "proses" selamanya. Saat server menyala (`src/instrumentation-node.ts`, setelah migrasi) SEMUA set "proses"
   ditandai "gagal" ("Terhenti karena server dinyalakan ulang...") → guru melihat pesan coba lagi, jatah kembali, admin
   dapat pita merah. Aman karena hanya ada satu proses server. Uji laptop: set 52 (palsu, salinan set terakhir) → gagal.
+- 2026-10-22 SOAL TAMPIL BERTAHAP (ide dari Teachy, disetujui pemilik): `kerjakan` menyimpan draf `soal`
+  (`periksaSoal`, TANPA `ratakanKunci`/`terapkanBobot`) setelah tiap tahap, status tetap "proses". Selama proses halaman
+  menampilkan kisi-kisi (`<details>`, terbuka sampai draf pertama ada) + `KartuSoal draf` (tanpa kunci/edit/ganti/ubah;
+  server memang menolak edit & Word sebelum "selesai"). `cekHasil(id, denganBab)`: bab dikirim sekali saja selama
+  proses, browser mempertahankannya. Uji laptop set 53 (25 soal): kisi 10 dtk, draf 10 soal 23 dtk, 20 soal 39 dtk,
+  selesai 49 dtk. Belum dicek tampilan HP (panel browser tidak tampil saat uji).

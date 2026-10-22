@@ -173,17 +173,19 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
     if (id === null) return;
     let berhenti = false;
     let sempatProses = false;
+    let adaBab = false; // bab cukup diambil sekali selama proses (untuk draf soal), lalu dipertahankan
     const mulai = Date.now();
     const cek = async () => {
       if (berhenti) return;
       setDetik(Math.round((Date.now() - mulai) / 1000));
-      const h = await cekHasil(id).catch(() => null);
+      const h = await cekHasil(id, !adaBab).catch(() => null);
       if (berhenti) return;
       if (!h) {
         setId(null);
         return setError("Hasil tidak ditemukan.");
       }
-      setHasil(h);
+      if (h.bab) adaBab = true;
+      setHasil((lama) => (h.bab ? h : { ...h, bab: lama?.bab ?? null }));
       if (h.status === "proses") {
         sempatProses = true;
         setTimeout(cek, 3000);
@@ -412,6 +414,27 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
           </div>
         </div>
       )}
+
+      {/* Tampil bertahap: kisi-kisi begitu jadi, lalu soal per tahap sebagai draf (hanya dibaca). */}
+      {proses && hasil?.kisi?.length ? (
+        <section className="space-y-4">
+          <details open={!soal.length} className="rounded-xl border bg-kartu">
+            <summary className="cursor-pointer p-3 font-semibold">Kisi-kisi ({hasil.kisi.length} soal)</summary>
+            <TabelKisi kisi={hasil.kisi} />
+          </details>
+          {!!soal.length && bab && (
+            <>
+              <p className="rounded-lg border border-peringatan-garis bg-peringatan-muda p-3 text-sm">
+                <b>Draf: {soal.length} dari {hasil.kisi.length} soal sudah jadi.</b> Kunci, urutan pilihan, dan skor ditetapkan
+                setelah semua selesai; edit dan unduh Word tersedia setelah itu.
+              </p>
+              {soal.map((s, i) => (
+                <KartuSoal key={i} draf hasilId={id!} no={i + 1} s={s} bab={bab} semuaKunci={false} nomorGrup={nomorGrup(soal, i)} onUbah={() => {}} />
+              ))}
+            </>
+          )}
+        </section>
+      ) : null}
 
       {hasil?.status === "gagal" && <p className="rounded-lg border border-bahaya-garis bg-bahaya-muda p-3 text-bahaya">Gagal membuat soal: {hasil.pesan}</p>}
 

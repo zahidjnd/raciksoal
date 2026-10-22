@@ -54,12 +54,14 @@ function TabelKategori({ s, kunci }: { s: Soal; kunci: boolean }) {
 }
 
 // nomorGrup: diisi ("4–6") hanya untuk soal pertama sebuah soal grup → wacana bersama tampil di atasnya.
-type Props = { hasilId: number; no: number; s: Soal; bab: Bab; semuaKunci: boolean; nomorGrup?: string | null; onUbah: (s: Soal) => void };
+// draf: soal yang sudah jadi selama set masih diproses; hanya dibaca (kunci & urutan pilihan belum final, server
+// juga menolak edit/ganti sebelum selesai).
+type Props = { hasilId: number; no: number; s: Soal; bab: Bab; semuaKunci: boolean; nomorGrup?: string | null; onUbah: (s: Soal) => void; draf?: boolean };
 
-export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah }: Props) {
+export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, draf }: Props) {
   const [edit, setEdit] = useState(false);
   const [lihatKunci, setLihatKunci] = useState(false); // kunci & pembahasan dilipat, dibuka per soal atau semua sekaligus
-  const tampilKunci = semuaKunci || lihatKunci;
+  const tampilKunci = !draf && (semuaKunci || lihatKunci);
   const [proses, setProses] = useState<"" | "ganti" | "ubah">("");
   const mengganti = proses !== "";
   const [instruksi, setInstruksi] = useState("");
@@ -136,6 +138,8 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah }
         <p className="text-pudar">{s.level} · {s.tp} · skor {s.skor}</p>
       </div>
       )}
+      {!draf && (
+      <>
       <div className="flex flex-wrap gap-2">
         {!semuaKunci && (
           <button className={tombol} aria-expanded={lihatKunci} onClick={() => setLihatKunci(!lihatKunci)}>
@@ -167,6 +171,8 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah }
           {proses === "ubah" ? "Sedang mengubah soal..." : "Ubah soal"}
         </button>
       </form>
+      </>
+      )}
       {error && <p className="text-sm text-bahaya">{error}</p>}
     </article>
     </>
