@@ -34,7 +34,7 @@ export function TeksBaris({ teks, jarak }: { teks: string; jarak?: boolean }) {
       <span><Teks teks={baris[0].teks} /></span>
       {baris.slice(1).map((b, i) =>
         b.arab ? (
-          <span key={i} dir="rtl" lang="ar" className={`block text-right font-arab text-xl ${jarak ? "mt-2" : ""}`}>{b.teks}</span>
+          <span key={i} dir="rtl" className={`block text-right ${jarak ? "mt-2" : ""}`}><Teks teks={b.teks} /></span>
         ) : (
           <span key={i} className={`block ${jarak ? "mt-2" : ""}`}><Teks teks={b.teks} /></span>
         ),

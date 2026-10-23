@@ -94,12 +94,15 @@ const bernomor = (label: string, isi: ParagraphChild[], kiri = 400, opsi = {}) =
     ...opsi,
   });
 
-const barisArab = (t: string) => new TextRun({ text: t, font: FONT_ARAB, size: UKURAN_ARAB, rightToLeft: true, language: { bidirectional: "ar-SA" } });
-
-/** Satu baris teks soal: baris Arab = paragraf kanan-ke-kiri rata kanan (satu run utuh), selain itu paragraf biasa. */
+/**
+ * Satu baris teks soal: baris Arab = paragraf kanan-ke-kiri rata kanan, selain itu paragraf biasa.
+ * Isi baris tetap dipecah oleh `teks()`: potongan Arab berfont Arab 16 pt, sedangkan angka, kata Latin, dan titik dua
+ * tetap Times New Roman 11 pt (satu run Arab utuh membuat "(1)" dan "Teks 1" ikut berukuran besar). Urutan tampilan
+ * ditentukan arah paragraf, bukan run.
+ */
 const parBaris = (b: { teks: string; arab: boolean }, kiri: number, opsi: Partial<ConstructorParameters<typeof Paragraph>[0] & object> = {}) =>
   b.arab
-    ? par([barisArab(b.teks)], { bidirectional: true, alignment: AlignmentType.START, indent: { right: 400 }, ...opsi })
+    ? par(teks(b.teks), { bidirectional: true, alignment: AlignmentType.START, indent: { right: 400 }, ...opsi })
     : par(teks(b.teks), { alignment: AlignmentType.JUSTIFIED, indent: { left: kiri }, ...opsi });
 
 /**
@@ -140,8 +143,8 @@ export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tangga
   const isi: (Paragraph | Table)[] = [];
   kelompok(soal).forEach(({ bentuk, butir }, k) => {
     const kategori = bentuk === "BS" && butir.some((x) => kategoriBaru(x.s));
-    isi.push(par([r(`${ROMAWI[k]}. ${kategori ? "PILIHAN GANDA KOMPLEKS KATEGORI" : NAMA_BAGIAN[bentuk]}`, { bold: true })], { spacing: { before: k ? 200 : 0, after: 40 } }));
-    isi.push(par([r(kategori ? PETUNJUK_KATEGORI : PETUNJUK[bentuk], { italics: true })], { spacing: { after: 120 } }));
+    isi.push(par([r(`${ROMAWI[k]}. ${kategori ? "PILIHAN GANDA KOMPLEKS KATEGORI" : NAMA_BAGIAN[bentuk]}`, { bold: true })], { keepNext: true, spacing: { before: k ? 200 : 0, after: 40 } }));
+    isi.push(par([r(kategori ? PETUNJUK_KATEGORI : PETUNJUK[bentuk], { italics: true })], { keepNext: true, spacing: { after: 120 } }));
     for (const [j, { s, no }] of butir.entries()) {
       // Soal grup: wacana bersama sekali, sebelum soal pertama grupnya.
       if (s.grup && s.wacana && butir[j - 1]?.s.grup !== s.grup) {

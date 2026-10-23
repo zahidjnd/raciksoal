@@ -23,6 +23,13 @@ hadis karangan dalam mode Bahasa Arab belum bisa dideteksi otomatis (hanya diceg
 
 ---
 
+## 0.9.5 — 23 Oktober 2026
+- Perbaikan: pada baris Arab di Word dan di layar, **angka dan kata Latin** (misalnya "(1)" atau "Teks 1:") tidak lagi
+  ikut berukuran besar seperti huruf Arab. Huruf Arab tetap Traditional Arabic 16 pt, angka dan kata Latin kembali
+  ke ukuran teks biasa; arah tulisan dan rata kanan tidak berubah.
+- Perbaikan: judul bagian di lembar Word ("II. PILIHAN GANDA KOMPLEKS…", "III. … KATEGORI") dan petunjuknya tidak
+  lagi tertinggal sendirian di dasar kolom; selalu ikut ke kolom soal pertamanya.
+
 ## 0.9.4 — 23 Oktober 2026
 - Tampilan kartu soal lebih lega: tombol **Ganti soal** dan kotak **Ubah soal** dipindah ke tombol **Lainnya**.
   Kunci & pembahasan dan Edit tetap terlihat.

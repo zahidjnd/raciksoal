@@ -363,5 +363,11 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
 - 2026-10-23 UNDUH WORD ERROR 500 (0.9.3, bug LAMA, terlihat di hosting set 30 judul berhuruf Arab; log: "Cannot convert
   argument to a ByteString ... 1575"): nama file dari `bab.judul` masuk header Content-Disposition mentah. Kini
   `headerUnduh` (src/lib/nama-file.ts, dites) mengirim `filename` ASCII + `filename*=UTF-8''...` (nama asli).
+  0.9.5: baris Arab di Word TIDAK lagi satu run utuh (itu membuat "(1)"/"Teks 1" berfont Arab 16 pt): `parBaris`
+  memakai `teks()` (potongan Arab 16 pt + sisanya Times 11 pt) di dalam paragraf `bidirectional`; web: blok RTL
+  berisi `<Teks>`. Judul bagian Word + petunjuknya `keepNext` (tidak tertinggal di dasar kolom). Aturan menahan
+  soal (`keepNext` per soal) SENGAJA tidak diubah: Word tidak bisa "boleh pindah kolom tapi jangan pindah halaman".
+  CATATAN UJI: Word COM (`ExportAsFixedFormat`) macet bila Word pemilik sedang terbuka; proses WINWORD buatan skrip
+  harus dimatikan satu per satu (jangan sentuh dokumen pemilik).
   CARA LIHAT LOG HOSTING tanpa SSH: `~/raciksoal-app/app.log` (lewat konektor cPanel `read_file`). Uji laptop: judul set 51
   diubah sementara jadi Arab → soal/kunci/kisi 200; judul dikembalikan.
