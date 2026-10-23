@@ -23,6 +23,14 @@ hadis karangan dalam mode Bahasa Arab belum bisa dideteksi otomatis (hanya diceg
 
 ---
 
+## 0.9.6 — 23 Oktober 2026
+- Lembar soal Word: aturan "soal jangan terpotong" dilonggarkan supaya kolom terisi lebih penuh dan guru tidak perlu
+  merapikan banyak. Teks soal + pilihan A dan B tetap satu rombongan, pilihan D dan E tetap berdua, sedangkan
+  pilihan C dan sisanya boleh pindah kolom atau halaman. Wacana soal grup boleh terpotong; tiga baris terakhirnya
+  tetap ikut soal pertama.
+- Karena Word tidak membedakan pindah kolom dan pindah halaman, sesekali soal bisa terbelah di dasar halaman;
+  geser sendiri di Word bila perlu. Berlaku juga untuk set lama (perubahan ada di pembuatan file Word).
+
 ## 0.9.5 — 23 Oktober 2026
 - Perbaikan: pada baris Arab di Word dan di layar, **angka dan kata Latin** (misalnya "(1)" atau "Teks 1:") tidak lagi
   ikut berukuran besar seperti huruf Arab. Huruf Arab tetap Traditional Arabic 16 pt, angka dan kata Latin kembali

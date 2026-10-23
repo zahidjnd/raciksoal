@@ -138,6 +138,13 @@ function kelompok(soal: Soal[]) {
     .filter((k) => k.butir.length);
 }
 
+/**
+ * Aturan tahan-bersama (keepNext) yang DILONGGARKAN supaya kolom terisi penuh (0.9.6): teks soal + pilihan A + B tetap
+ * satu rombongan, pilihan D + E tetap berdua (tidak ada pilihan sendirian di kolom berikutnya), sisanya boleh pindah
+ * kolom/halaman. Word tidak membedakan pindah kolom dan pindah halaman, jadi soal bisa terbelah di dasar halaman.
+ */
+const TAHAN_WACANA = 3;
+
 /** Lembar soal untuk siswa: kop asli format AFTS + soal 2 kolom (tanpa kunci). */
 export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Date, sekolah = "MADRASAH ALIYAH AL-FATAH") {
   const isi: (Paragraph | Table)[] = [];
@@ -150,8 +157,10 @@ export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tangga
       if (s.grup && s.wacana && butir[j - 1]?.s.grup !== s.grup) {
         const akhir = butir.slice(j).findLast((x) => x.s.grup === s.grup)!.no;
         isi.push(par([r(`Bacalah teks berikut untuk menjawab soal nomor ${no}${akhir > no ? `–${akhir}` : ""}!`, { bold: true, italics: true })], { keepNext: true, spacing: { before: 60, after: 40 } }));
-        for (const baris of pecahBaris(s.wacana)) isi.push(parBaris(baris, 200, { keepNext: true, spacing: { after: 40 } }));
-        isi.push(par([], { spacing: { after: 40 } }));
+        // Wacana boleh terpotong di tengah; hanya TIGA baris terakhirnya (+ jarak) ditahan bersama soal pertama grup.
+        const barisWacana = pecahBaris(s.wacana);
+        barisWacana.forEach((baris, n) => isi.push(parBaris(baris, 200, { keepNext: n >= barisWacana.length - TAHAN_WACANA, spacing: { after: 40 } })));
+        isi.push(par([], { keepNext: true, spacing: { after: 40 } }));
       }
       isi.push(...butirBaris(`${no}.`, s.pertanyaan, 400, { keepNext: true }));
       const dalil = bab.dalil.find((d) => d.id === s.dalil_id);
@@ -159,7 +168,7 @@ export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tangga
         isi.push(par(teks(dalil.arab), { bidirectional: true, alignment: AlignmentType.START, indent: { right: 400 }, keepNext: true, spacing: { after: 0 } }));
         isi.push(par([r(`(${dalil.sumber})`, { italics: true, size: 18 })], { alignment: AlignmentType.RIGHT, keepNext: true }));
       }
-      if (s.pilihan) s.pilihan.forEach((o, i) => isi.push(...butirBaris(`${HURUF[i]}.`, o, 800, { spacing: { after: 0 }, keepNext: i < 4 })));
+      if (s.pilihan) s.pilihan.forEach((o, i) => isi.push(...butirBaris(`${HURUF[i]}.`, o, 800, { spacing: { after: 0 }, keepNext: i === 0 || i === 3 })));
       if (kategoriBaru(s)) isi.push(tabelKategori(s));
       else if (bentuk === "BS") isi.push(par([r("A.", { bold: true }), r(" Benar\t\t"), r("B.", { bold: true }), r(" Salah")], { indent: { left: 400 } }));
       isi.push(par([], { spacing: { after: 80 } }));

@@ -367,6 +367,10 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   memakai `teks()` (potongan Arab 16 pt + sisanya Times 11 pt) di dalam paragraf `bidirectional`; web: blok RTL
   berisi `<Teks>`. Judul bagian Word + petunjuknya `keepNext` (tidak tertinggal di dasar kolom). Aturan menahan
   soal (`keepNext` per soal) SENGAJA tidak diubah: Word tidak bisa "boleh pindah kolom tapi jangan pindah halaman".
+  0.9.6: pemilik minta DILONGGARKAN (susah merapikan manual): `keepNext` hanya stem→A, A→B, D→E; wacana soal grup
+  hanya `TAHAN_WACANA`=3 baris terakhir + jarak ikut soal (header→baris 1). Akibat: soal bisa terbelah di antara B
+  dan C, juga di dasar halaman (Word tak membedakan kolom/halaman). Cek keepNext di XML: library docx menulis
+  `<w:keepNext w:val="false"/>` untuk false, jadi periksa nilainya, jangan hanya adanya tag.
   CATATAN UJI: Word COM (`ExportAsFixedFormat`) macet bila Word pemilik sedang terbuka; proses WINWORD buatan skrip
   harus dimatikan satu per satu (jangan sentuh dokumen pemilik).
   CARA LIHAT LOG HOSTING tanpa SSH: `~/raciksoal-app/app.log` (lewat konektor cPanel `read_file`). Uji laptop: judul set 51
