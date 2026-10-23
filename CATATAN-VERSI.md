@@ -23,6 +23,12 @@ hadis karangan dalam mode Bahasa Arab belum bisa dideteksi otomatis (hanya diceg
 
 ---
 
+## 0.9.4 — 23 Oktober 2026
+- Tampilan kartu soal lebih lega: tombol **Ganti soal** dan kotak **Ubah soal** dipindah ke tombol **Lainnya**.
+  Kunci & pembahasan dan Edit tetap terlihat.
+- Saat soal sedang dibuat dan draf sudah muncul, kotak tunggu besar diganti satu baris status ringkas
+  ("Masih meracik: 10 dari 25 soal sudah jadi").
+
 ## 0.9.3 — 23 Oktober 2026
 - Perbaikan: unduh Word gagal ("HTTP ERROR 500") untuk bab yang judulnya berhuruf Arab (mis. set Bahasa Arab "…أدوات الاستفهام").
   Penyebabnya nama file diambil dari judul bab, dan huruf Arab tidak boleh langsung masuk header unduhan.

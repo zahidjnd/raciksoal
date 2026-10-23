@@ -401,7 +401,14 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
         </p>
       )}
 
-      {proses && (
+      {proses && !!soal.length && (
+        <div className="flex items-center gap-2 rounded-lg border border-hijau/25 bg-hijau-muda px-3 py-2 text-sm text-hijau-teks" role="status">
+          <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-hijau/25 border-t-hijau" aria-hidden />
+          <span>Masih meracik: {soal.length} dari {hasil?.kisi?.length ?? "?"} soal sudah jadi · {detik} detik</span>
+        </div>
+      )}
+
+      {proses && !soal.length && (
         <div className="mx-auto flex max-w-2xl items-center gap-4 rounded-2xl border border-hijau/25 bg-hijau-muda p-5 text-hijau-teks md:mt-16" role="status">
           <span className="h-8 w-8 shrink-0 animate-spin rounded-full border-4 border-hijau/25 border-t-hijau" aria-hidden />
           <div>

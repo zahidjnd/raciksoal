@@ -87,6 +87,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
   const [proses, setProses] = useState<"" | "ganti" | "ubah">("");
   const mengganti = proses !== "";
   const [instruksi, setInstruksi] = useState("");
+  const [lainnya, setLainnya] = useState(false); // Ganti & Ubah dilipat supaya kartu lebih lega
   const [error, setError] = useState("");
 
   async function ganti(jenis: "ganti" | "ubah") {
@@ -169,10 +170,15 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
           </button>
         )}
         <button className={tombol} disabled={mengganti} onClick={() => setEdit(true)}>Edit</button>
-        <button className={tombol} disabled={mengganti} onClick={() => ganti("ganti")}>
-          {proses === "ganti" ? "Sedang membuat soal pengganti..." : "Ganti soal ini"}
+        <button className={tombol} aria-expanded={lainnya} disabled={mengganti} onClick={() => setLainnya(!lainnya)}>
+          {mengganti ? "Sedang memproses..." : lainnya ? "Tutup" : "Lainnya"}
         </button>
       </div>
+      {lainnya && (
+      <div className="space-y-2 rounded-lg border bg-krem p-3">
+      <button className={tombol} disabled={mengganti} onClick={() => ganti("ganti")}>
+        {proses === "ganti" ? "Sedang membuat soal pengganti..." : "Ganti soal ini"}
+      </button>
       <form
         className="flex gap-2"
         onSubmit={(e) => {
@@ -193,6 +199,8 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
           {proses === "ubah" ? "Sedang mengubah soal..." : "Ubah soal"}
         </button>
       </form>
+      </div>
+      )}
       </>
       )}
       {error && <p className="text-sm text-bahaya">{error}</p>}
