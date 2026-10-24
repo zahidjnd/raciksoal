@@ -31,8 +31,8 @@ const FONT = "Times New Roman";
 const FONT_ARAB = "Traditional Arabic";
 const UKURAN = 22; // setengah poin: 22 = 11 pt
 const UKURAN_ARAB = 32; // 16 pt
-const HURUF = ["A", "B", "C", "D", "E"];
-const ROMAWI = ["I", "II", "III", "IV"];
+const HURUF = ["A", "B", "C", "D", "E", "F"]; // A–E pilihan soal; A–F juga huruf bagian dan jawaban Menjodohkan
+const ROMAWI = ["I", "II", "III", "IV", "V", "VI"];
 const LEBAR = 10206; // lebar isi A4 (twip) dengan margin kiri-kanan 850
 
 const JUDUL: Record<string, string> = {
@@ -46,12 +46,14 @@ const NAMA_BAGIAN: Record<Bentuk, string> = {
   PG: "PILIHAN GANDA (PG)",
   PGK: "PILIHAN GANDA KOMPLEKS (PGK)",
   BS: "BENAR / SALAH (B / S)",
+  ISIAN: "ISIAN SINGKAT",
   URAIAN: "URAIAN / ESAI",
 };
 const PETUNJUK: Record<Bentuk, string> = {
   PG: "Pilihlah salah satu jawaban yang paling tepat (A, B, C, D, atau E)!",
   PGK: "Pilihlah semua jawaban yang tepat dari pilihan A, B, C, D, atau E (jawaban benar lebih dari satu)!",
   BS: "Pilihlah jawaban A jika pernyataan bernilai BENAR, atau jawaban B jika SALAH!",
+  ISIAN: "Isilah titik-titik berikut dengan jawaban yang singkat dan tepat!",
   URAIAN: "Jawablah pertanyaan berikut dengan singkat, jelas, dan tepat!",
 };
 
@@ -246,6 +248,10 @@ export function buatWordKunci(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Da
       // ATURAN-SOAL.md bagian 3: penskoran resmi PG kompleks 1/0 per butir (seperti TKA).
       isi.push(par([r(`Penskoran per soal: memilih SEMUA jawaban benar tanpa pilihan salah = ${penuh} poin; selain itu = 0 poin.`, { italics: true })]));
     }
+    if (bentuk === "ISIAN") {
+      const penuh = Number(butir[0].s.skor) || 0;
+      isi.push(par([r(`Penskoran per soal: jawaban tepat = ${penuh} poin; selain itu = 0 poin.`, { italics: true })]));
+    }
     if (bentuk === "BS" && butir.some((x) => kategoriBaru(x.s))) {
       const penuh = Number(butir[0].s.skor) || 0;
       isi.push(par([r(`Penskoran per soal: SEMUA pernyataan dikategorikan dengan benar = ${penuh} poin; selain itu = 0 poin.`, { italics: true })]));
@@ -261,6 +267,9 @@ export function buatWordKunci(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Da
         isi.push(bernomor(`${no}.`, [new TextRun({ text: "Kunci: ", bold: true }), ...teks((s.pernyataan ?? []).map((p, i) => `(${i + 1}) ${kunci[i] ?? "?"}`).join("; "))]));
       } else if (bentuk === "BS") {
         isi.push(bernomor(`${no}.`, [new TextRun({ text: "Kunci: ", bold: true }), new TextRun(kunci[0] === "Benar" ? "A (Benar)" : "B (Salah)")]));
+      } else if (bentuk === "ISIAN") {
+        isi.push(bernomor(`${no}.`, [new TextRun({ text: "Kunci: ", bold: true }), ...teks(kunci[0] ?? "")]));
+        if (s.kunciAlt?.length) isi.push(par([r("Jawaban lain yang diterima: ", { italics: true }), ...teks(s.kunciAlt.join("; "))], { indent: { left: 400 }, spacing: { after: 0 } }));
       } else {
         isi.push(bernomor(`${no}.`, [new TextRun({ text: "Jawaban ideal: ", bold: true }), ...teks(kunci[0])]));
         if (s.rubrik?.length)

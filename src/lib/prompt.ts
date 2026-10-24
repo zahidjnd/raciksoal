@@ -40,6 +40,7 @@ export const NAMA_BENTUK: Record<Bentuk, string> = {
   PG: "Pilihan Ganda",
   PGK: "Pilihan Ganda Kompleks",
   BS: "Kategori (Benar/Salah)", // kode "BS" dipertahankan agar set lama tetap terbaca
+  ISIAN: "Isian Singkat",
   URAIAN: "Uraian",
 };
 export const MAKS_SOAL = 40;
@@ -47,7 +48,7 @@ export const MAKS_SOAL = 40;
 export const MAKS_PER_TAHAP = 10;
 
 // Skor per soal seperti format AFTS madrasah (10 PG + 5 PGK + 5 B/S + 5 uraian = 100).
-export const BOBOT_BAWAAN: Record<Bentuk, number> = { PG: 2, PGK: 5, BS: 3, URAIAN: 8 };
+export const BOBOT_BAWAAN: Record<Bentuk, number> = { PG: 2, PGK: 5, BS: 3, ISIAN: 3, URAIAN: 8 };
 
 export type Pengaturan = {
   babId: string;
@@ -98,16 +99,16 @@ export const bersihkanInstruksi = (s: unknown) => bersihkanKutipan(s, MAKS_INSTR
 /** Rapikan isian form dari browser (tidak dipercaya begitu saja). Mengembalikan pesan kalau tidak valid. */
 export function bersihkanPengaturan(p: Pengaturan): Pengaturan | string {
   const angka = (n: unknown) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
-  const jumlah = { PG: angka(p?.jumlah?.PG), PGK: angka(p?.jumlah?.PGK), BS: angka(p?.jumlah?.BS), URAIAN: angka(p?.jumlah?.URAIAN) };
+  const jumlah = { PG: angka(p?.jumlah?.PG), PGK: angka(p?.jumlah?.PGK), BS: angka(p?.jumlah?.BS), ISIAN: angka(p?.jumlah?.ISIAN), URAIAN: angka(p?.jumlah?.URAIAN) };
   const level = { LOTS: angka(p?.level?.LOTS), MOTS: angka(p?.level?.MOTS), HOTS: angka(p?.level?.HOTS) };
-  const total = jumlah.PG + jumlah.PGK + jumlah.BS + jumlah.URAIAN;
+  const total = jumlah.PG + jumlah.PGK + jumlah.BS + jumlah.ISIAN + jumlah.URAIAN;
   if (total < 1 || total > MAKS_SOAL) return `Jumlah soal harus 1 sampai ${MAKS_SOAL}.`;
   if (level.LOTS + level.MOTS + level.HOTS !== 100) return "Komposisi LOTS + MOTS + HOTS harus 100%.";
   if (!(TUJUAN as readonly string[]).includes(p?.tujuan)) return "Tujuan soal tidak dikenal.";
-  if (p.tujuan === TKA && jumlah.URAIAN) return "Latihan TKA tidak memakai soal uraian. Kosongkan jumlah uraian.";
+  if (p.tujuan === TKA && (jumlah.URAIAN || jumlah.ISIAN)) return "Latihan TKA hanya memakai pilihan ganda, pilihan ganda kompleks, dan kategori. Kosongkan jumlah isian dan uraian.";
   if (!(KESULITAN as readonly string[]).includes(p?.kesulitan)) return "Tingkat kesulitan tidak dikenal.";
   const bobotDari = (b: Bentuk) => angka(p?.bobot?.[b] ?? BOBOT_BAWAAN[b]);
-  const bobot = { PG: bobotDari("PG"), PGK: bobotDari("PGK"), BS: bobotDari("BS"), URAIAN: bobotDari("URAIAN") };
+  const bobot = { PG: bobotDari("PG"), PGK: bobotDari("PGK"), BS: bobotDari("BS"), ISIAN: bobotDari("ISIAN"), URAIAN: bobotDari("URAIAN") };
   const modelSlot = Math.max(1, Math.min(9, Math.round(Number(p?.modelSlot) || 1)));
   const catatan = bersihkanKutipan(p?.catatan, MAKS_CATATAN);
   // Materi: hanya id materi milik guru ("materi-12"), maks 5, tanpa dobel. Kepemilikan dicek di mulaiBuatSoal.
@@ -119,7 +120,7 @@ export function bersihkanPengaturan(p: Pengaturan): Pengaturan | string {
 
 /**
  * Bagi jumlah soal menjadi beberapa tahap (maks MAKS_PER_TAHAP soal per panggilan AI),
- * urut PG → PGK → BS → URAIAN, supaya jawaban AI tidak terpotong.
+ * urut PG → PGK → BS → ISIAN → URAIAN, supaya jawaban AI tidak terpotong.
  */
 export function bagiTahap(jumlah: Record<Bentuk, number>, maks = MAKS_PER_TAHAP) {
   const tahap: Record<Bentuk, number>[] = [];
@@ -128,7 +129,7 @@ export function bagiTahap(jumlah: Record<Bentuk, number>, maks = MAKS_PER_TAHAP)
     let sisa = jumlah[b];
     while (sisa > 0) {
       if (!tahap.length || isi === maks) {
-        tahap.push({ PG: 0, PGK: 0, BS: 0, URAIAN: 0 });
+        tahap.push({ PG: 0, PGK: 0, BS: 0, ISIAN: 0, URAIAN: 0 });
         isi = 0;
       }
       const ambil = Math.min(sisa, maks - isi);
@@ -217,6 +218,7 @@ ${BENTUK_SOAL}
 FORMAT JAWABAN (kecuali permintaan menyebut format lain): hanya JSON (tanpa teks lain), dengan bentuk:
 {"soal":[{"bentuk":"PG","dalil_id":null,"pertanyaan":"...","pilihan":["...","...","...","...","..."],"kunci":"B","pembahasan":"...","level":"C2","tp":"TP 3.2","skor":1}]}
 Untuk BS: {"bentuk":"BS","dalil_id":null,"pertanyaan":"...","pernyataan":["...","...","...","..."],"label":["Fakta","Opini"],"kunci":["Fakta","Opini","Opini","Fakta"],"pembahasan":"...","level":"C4","tp":"TP 3.2","skor":1}
+Untuk ISIAN: {"bentuk":"ISIAN","dalil_id":null,"pertanyaan":"Kata yang menunjukkan tempat adalah ....","kunci":"mahall","kunciAlt":[],"pembahasan":"...","level":"C1","tp":"TP 3.2","skor":1}
 Untuk URAIAN tambahkan "rubrik":[{"kriteria":"...","skor":2}]. "tp" diisi kode TP yang paling sesuai.
 
 DATA BAB
@@ -257,6 +259,7 @@ const BENTUK_SOAL = `BENTUK SOAL:
 - PG: 5 pilihan, tepat 1 benar. "kunci": "A".."E".
 - PGK (pilihan ganda kompleks, model jawaban ganda/MCMA): 5 pilihan, 2 ATAU 3 benar (tidak semua), sesuai isi soal; ragamkan jumlahnya dalam satu set. "kunci": array berisi 2 atau 3 huruf jawaban benar. Akhiri pertanyaan dengan "(Pilih semua jawaban yang tepat)" tanpa menyebut jumlah jawaban benar.
 - BS (pilihan ganda kompleks model Kategori): "pertanyaan" berisi stimulus/pokok soal + perintah, misalnya "Tentukan apakah setiap pernyataan berikut Benar atau Salah!". Lalu tepat 4 "pernyataan" yang masing-masing dinilai dengan sepasang "label", salah satu dari: ["Benar","Salah"], ["Fakta","Opini"], ["Sesuai","Tidak Sesuai"], ["Tepat","Tidak Tepat"], ["Didukung","Tidak Didukung"] (didukung/tidak oleh stimulus). Pilih pasangan label yang paling cocok dengan isi soal dan ragamkan dalam satu set. "kunci": array 4 label sesuai urutan pernyataan; jangan semua sama. Jangan menulis ulang keempat pernyataan di dalam "pertanyaan" (aplikasi menampilkannya sebagai tabel). Tanpa "pilihan".
+- ISIAN (isian singkat): "pertanyaan" berisi kalimat atau pertanyaan dengan SATU bagian kosong yang ditulis "...." (empat titik). "kunci": jawaban singkat yang pas mengisi bagian kosong (satu kata, istilah, angka, atau frasa maksimal 5 kata). "kunciAlt": array 0–3 penulisan lain yang juga benar (sinonim atau ejaan lain), atau []. Hanya SATU jawaban yang mungkin benar, jadi kalimat harus cukup spesifik; jawaban TIDAK BOLEH muncul di kalimat soal. Tanpa "pilihan". Berlaku juga untuk bahasa asing (kosakata, dhamir, kata tanya, terjemah).
 - URAIAN: "kunci" berisi jawaban ideal; "rubrik" berisi kriteria penilaian dan skornya; "skor" = jumlah skor rubrik.`;
 
 /** Jumlah soal LOTS/MOTS/HOTS dari persentase (sisa pembulatan ke yang pecahannya terbesar), totalnya tepat `total`. */
@@ -425,7 +428,7 @@ ${daftarSudah}${tambahan}Balas hanya dengan JSON sesuai format.`;
  * yang sama bila ada), tapi skenario berbeda dari semua soal di set.
  */
 export function buatPenggantiPengguna(p: Pengaturan, lama: Soal, semua: Soal[], kisi?: BarisKisi, instruksi = "") {
-  const jumlah = { PG: 0, PGK: 0, BS: 0, URAIAN: 0, [lama.bentuk]: 1 };
+  const jumlah = { PG: 0, PGK: 0, BS: 0, ISIAN: 0, URAIAN: 0, [lama.bentuk]: 1 };
   if (instruksi) {
     // "Minta perubahan": soal yang sama ditulis ulang sesuai instruksi guru. Instruksi tidak boleh mengalahkan aturan sistem.
     const { peringatan, stimulus, grup, wacana, ...isiLama } = lama;

@@ -35,9 +35,11 @@ const JENIS: { tujuan: (typeof TUJUAN)[number]; ket: string; ikon: React.ReactNo
   { tujuan: "Latihan TKA", ket: "Gaya TKA pusat: soal grup, tanpa uraian.", ikon: ikon("M12 3l9 5-9 5-9-5 9-5zM5 10.5V16l7 4 7-4v-5.5") },
 ];
 /** Latihan TKA: bentuk PG / PGK / Kategori saja, bawaan 25 soal (ATURAN-SOAL.md bagian 9). */
-const JUMLAH_TKA = { PG: 15, PGK: 5, BS: 5, URAIAN: 0 };
-const JUMLAH_AWAL = { PG: 10, PGK: 5, BS: 5, URAIAN: 5 };
+const JUMLAH_TKA = { PG: 15, PGK: 5, BS: 5, ISIAN: 0, URAIAN: 0 };
+const JUMLAH_AWAL = { PG: 10, PGK: 5, BS: 5, ISIAN: 0, URAIAN: 5 };
 const BENTUK = Object.keys(NAMA_BENTUK) as Bentuk[];
+/** Bentuk yang tidak dipakai Latihan TKA (TKA hanya PG, PGK, Kategori). */
+const TANPA_TKA: Bentuk[] = ["ISIAN", "URAIAN"];
 
 type Hasil = NonNullable<Awaited<ReturnType<typeof cekHasil>>>;
 
@@ -242,7 +244,7 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
     total < 1 ? "Isi jumlah soal dulu." :
     total > MAKS_SOAL ? `Jumlah soal maksimal ${MAKS_SOAL}.` :
     totalLevel !== 100 ? `Komposisi level harus 100% (sekarang ${totalLevel}%), buka Lanjutan.` :
-    tka && p.jumlah.URAIAN ? "Latihan TKA tidak memakai soal uraian." : "";
+    tka && TANPA_TKA.some((b) => p.jumlah[b]) ? "Latihan TKA hanya memakai PG, PG kompleks, dan Kategori." : "";
   // Pilihan dan aksi sama-sama kotak bersudut lembut seperti claude.ai (DESIGN.md).
   const chip = "inline-flex items-center rounded-lg border bg-kartu h-8 px-3 text-sm hover:bg-krem max-md:min-h-11";
   const aksi2 = "inline-flex items-center rounded-lg border bg-kartu h-8 px-3 text-sm hover:bg-krem max-md:min-h-11";
@@ -325,7 +327,7 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
               <fieldset className="mt-3 space-y-2 border-t pt-3">
                 <legend className="sr-only">Jumlah soal × skor per soal</legend>
                 <p className="text-xs text-pudar">Jumlah soal × skor per soal</p>
-                {BENTUK.filter((b) => !(tka && b === "URAIAN")).map((b) => (
+                {BENTUK.filter((b) => !(tka && TANPA_TKA.includes(b))).map((b) => (
                   <div key={b} className="flex items-center justify-between gap-2 text-sm">
                     {NAMA_BENTUK[b]}
                     <span className="flex items-center gap-1 whitespace-nowrap">

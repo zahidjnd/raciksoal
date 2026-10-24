@@ -152,6 +152,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
       {tampilKunci && (
       <div className="space-y-1 rounded bg-hijau-muda p-3 text-sm">
         {!kategoriBaru(s) && <p><span className="font-semibold">Kunci:</span> <Teks teks={[s.kunci].flat().join(", ")} /></p>}
+        {!!s.kunciAlt?.length && <p><span className="font-semibold">Jawaban lain yang diterima:</span> <Teks teks={s.kunciAlt.join("; ")} /></p>}
         {s.rubrik && (
           <ul className="list-disc pl-5">
             {s.rubrik.map((r, i) => <li key={i}><Teks teks={r.kriteria} /> ({r.skor})</li>)}
@@ -318,6 +319,19 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan }: FormProps) {
             </div>
           ))}
         </fieldset>
+      )}
+
+      {s.bentuk === "ISIAN" && (
+        <>
+          <label className="block">
+            Kunci jawaban (singkat)
+            <input dir="auto" className={kotak} value={String(s.kunci)} onChange={(e) => ubah({ kunci: e.target.value })} />
+          </label>
+          <label className="block">
+            Jawaban lain yang diterima (satu per baris, boleh kosong)
+            <textarea dir="auto" rows={2} className={kotak} value={(s.kunciAlt ?? []).join("\n")} onChange={(e) => ubah({ kunciAlt: e.target.value.split("\n") })} />
+          </label>
+        </>
       )}
 
       {s.bentuk === "URAIAN" && (

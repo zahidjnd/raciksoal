@@ -1,6 +1,6 @@
 // Pemeriksaan hasil AI. Tanpa import "@/..." supaya bisa dites langsung: npm test
 
-export type Bentuk = "PG" | "PGK" | "BS" | "URAIAN";
+export type Bentuk = "PG" | "PGK" | "BS" | "ISIAN" | "URAIAN";
 
 export type Soal = {
   bentuk: Bentuk;
@@ -12,6 +12,9 @@ export type Soal = {
   pernyataan?: string[];
   label?: string[];
   kunci: string | string[];
+  // Bentuk ISIAN (0.10.0): pertanyaan memuat bagian kosong "....", kunci = jawaban singkat, kunciAlt = penulisan lain yang
+  // juga benar (hanya pegangan guru di lembar kunci; koreksi tetap manual).
+  kunciAlt?: string[];
   rubrik?: { kriteria: string; skor: number }[];
   pembahasan: string;
   level: string;
@@ -79,7 +82,7 @@ export type BarisKisi = {
   wacana?: string; // teks wacana bersama grup itu (disusun AI bersama kisi-kisi)
 };
 
-const URUTAN_BENTUK: Bentuk[] = ["PG", "PGK", "BS", "URAIAN"];
+const URUTAN_BENTUK: Bentuk[] = ["PG", "PGK", "BS", "ISIAN", "URAIAN"]; // harus sama dengan urutan NAMA_BENTUK (prompt.ts)
 
 export const KELAS = ["X", "XI", "XII"];
 
@@ -259,6 +262,7 @@ export function rapikanSoal(s: Partial<Soal>, bentuk: Bentuk): Soal {
   const kunci = [s.kunci].flat().map(teks).filter(Boolean);
   const rubrik = (s.rubrik ?? []).map((r) => ({ kriteria: teks(r?.kriteria), skor: Math.max(0, Number(r?.skor) || 0) })).filter((r) => r.kriteria);
   const kategori = bentuk === "BS" && Array.isArray(s.pernyataan);
+  const alt = (Array.isArray(s.kunciAlt) ? s.kunciAlt : []).map(teks).filter((x) => x && x !== kunci[0]).slice(0, 5);
   return {
     bentuk,
     dalil_id: s.dalil_id ? teks(s.dalil_id) : null,
@@ -272,6 +276,7 @@ export function rapikanSoal(s: Partial<Soal>, bentuk: Bentuk): Soal {
       : {}),
     kunci: bentuk === "PGK" ? kunci : kategori ? [s.kunci].flat().slice(0, JUMLAH_PERNYATAAN).map(teks) : (kunci[0] ?? ""),
     ...(bentuk === "URAIAN" ? { rubrik } : {}),
+    ...(bentuk === "ISIAN" ? { kunciAlt: alt } : {}),
     ...(Number.isInteger(s.grup) && s.grup! > 0 && teks(s.wacana) ? { grup: s.grup, wacana: teks(s.wacana).slice(0, 3000) } : {}),
     pembahasan: teks(s.pembahasan),
     level: teks(s.level),
@@ -319,6 +324,23 @@ export function bersihkanKodeDalil(teks: string, idDalil: Set<string>) {
   };
 }
 
+/** Bagian kosong soal isian: "....", "…", atau "____". */
+const TITIK_ISIAN = /\.{3,}|…|_{3,}/;
+const MAKS_KATA_ISIAN = 6;
+
+/** Peringatan khusus soal Isian: bagian kosong ada, jawaban singkat, dan jawaban tidak bocor di soal. */
+function periksaIsian(s: Soal): string[] {
+  const w: string[] = [];
+  const kunci = String([s.kunci].flat()[0] ?? "").trim();
+  if (!TITIK_ISIAN.test(s.pertanyaan)) w.push("Soal isian harus punya bagian kosong (....).");
+  if (!kunci) w.push("Kunci isian kosong.");
+  else {
+    if (kunci.split(/\s+/).length > MAKS_KATA_ISIAN || kunci.length > 60) w.push(`Jawaban isian terlalu panjang (maksimal ${MAKS_KATA_ISIAN} kata).`);
+    if (kunci.length >= 3 && s.pertanyaan.toLowerCase().includes(kunci.toLowerCase())) w.push("Jawaban isian muncul di dalam soal.");
+  }
+  return w;
+}
+
 /** Beri peringatan pada soal yang bermasalah. Aturan 5: teks Arab hanya boleh dari data terverifikasi. */
 export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
   const arabAsingDi = pemeriksaArab(bab, cekAyat);
@@ -340,13 +362,14 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
     });
     if (!s.dalil_id && ditemukan) s.dalil_id = ditemukan;
     const peringatan: string[] = [];
-    const semuaTeks = [s.wacana ?? "", s.pertanyaan, ...(s.pilihan ?? []), ...(s.pernyataan ?? []), ...[s.kunci].flat(), s.pembahasan, ...(s.rubrik ?? []).map((r) => r.kriteria)];
+    const semuaTeks = [s.wacana ?? "", s.pertanyaan, ...(s.pilihan ?? []), ...(s.pernyataan ?? []), ...[s.kunci].flat(), ...(s.kunciAlt ?? []), s.pembahasan, ...(s.rubrik ?? []).map((r) => r.kriteria)];
     const arabAsing = semuaTeks.flatMap((t) => arabAsingDi(String(t ?? "")));
     if (arabAsing.length)
       peringatan.push(`${bab.teksArab === "bahasa" ? "Teks Arab mirip ayat Al-Qur'an tetapi" : "Teks Arab"} tidak cocok dengan data terverifikasi: ${arabAsing.join(" | ")}`);
     if (s.dalil_id && !dalilAda.has(s.dalil_id)) peringatan.push(`Dalil "${s.dalil_id}" tidak ada di data bab.`);
     if ((s.bentuk === "PG" || s.bentuk === "PGK") && s.pilihan?.length !== 5) peringatan.push("Jumlah pilihan bukan 5.");
     if (s.bentuk === "PGK" && !KUNCI_PGK.includes(new Set([s.kunci].flat()).size)) peringatan.push("Kunci PG kompleks harus 2 atau 3 jawaban.");
+    if (s.bentuk === "ISIAN") peringatan.push(...periksaIsian(s));
     if (kategoriBaru(s)) {
       if (s.pernyataan!.length !== JUMLAH_PERNYATAAN || s.pernyataan!.some((p) => !p)) peringatan.push(`Soal kategori harus berisi ${JUMLAH_PERNYATAAN} pernyataan.`);
       if (!cariLabel(s.label)) peringatan.push(`Label kategori tidak dikenal: ${(s.label ?? []).join(" / ") || "(kosong)"}.`);

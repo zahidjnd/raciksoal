@@ -73,18 +73,18 @@ test("identitasBab: data lama tanpa mapel = Al-Qur'an Hadis XI; tanggapan AI dib
 });
 
 test("bagiTahap membagi soal maks 10 per tahap dengan urutan bentuk tetap", () => {
-  const nol = { PG: 0, PGK: 0, BS: 0, URAIAN: 0 };
-  assert.deepEqual(bagiTahap({ PG: 10, PGK: 5, BS: 5, URAIAN: 5 }), [
+  const nol = { PG: 0, PGK: 0, BS: 0, ISIAN: 0, URAIAN: 0 };
+  assert.deepEqual(bagiTahap({ PG: 10, PGK: 5, BS: 5, ISIAN: 0, URAIAN: 5 }), [
     { ...nol, PG: 10 },
     { ...nol, PGK: 5, BS: 5 },
     { ...nol, URAIAN: 5 },
   ]);
-  assert.deepEqual(bagiTahap({ PG: 25, PGK: 0, BS: 0, URAIAN: 3 }), [
+  assert.deepEqual(bagiTahap({ PG: 25, PGK: 0, BS: 0, ISIAN: 0, URAIAN: 3 }), [
     { ...nol, PG: 10 },
     { ...nol, PG: 10 },
     { ...nol, PG: 5, URAIAN: 3 },
   ]);
-  assert.deepEqual(bagiTahap({ PG: 4, PGK: 0, BS: 0, URAIAN: 0 }), [{ ...nol, PG: 4 }]);
+  assert.deepEqual(bagiTahap({ PG: 4, PGK: 0, BS: 0, ISIAN: 0, URAIAN: 0 }), [{ ...nol, PG: 4 }]);
 });
 
 const bab: Bab = JSON.parse(readFileSync(new URL("../data/qurdis11-bab3.json", import.meta.url), "utf8"));
@@ -300,7 +300,8 @@ test("soal Kategori: 4 pernyataan, label resmi, kunci per pernyataan; B/S lama t
 
 test("Latihan TKA: tanpa uraian, kisi-kisi meminta soal grup + wacana; grup sah hanya nomor berurutan berbentuk sama", () => {
   const p = { babId: "x", tujuan: "Latihan TKA", kesulitan: "Sedang", jumlah: { PG: 3, PGK: 1, BS: 0, URAIAN: 0 }, level: { LOTS: 20, MOTS: 40, HOTS: 40 } } as Pengaturan;
-  assert.match(String(bersihkanPengaturan({ ...p, jumlah: { ...p.jumlah, URAIAN: 1 } })), /tidak memakai soal uraian/);
+  assert.match(String(bersihkanPengaturan({ ...p, jumlah: { ...p.jumlah, URAIAN: 1 } })), /hanya memakai pilihan ganda/);
+  assert.match(String(bersihkanPengaturan({ ...p, jumlah: { ...p.jumlah, ISIAN: 1 } })), /hanya memakai pilihan ganda/);
   assert.ok(buatPermintaanKisi(p).includes("SOAL GRUP") && buatPermintaanKisi(p).includes('"wacana"'));
   assert.ok(!buatPermintaanKisi({ ...p, tujuan: "PAS" }).includes("SOAL GRUP"));
   // grup ditentukan aplikasi: separuh nomor di akhir tiap bentuk, grup 2–3 soal
@@ -527,4 +528,19 @@ test("nama file unduhan: judul berhuruf Arab tidak merusak header HTTP (bug 500 
   // judul seluruhnya Arab, tanda kutip, dan baris baru tidak boleh lolos ke header
   assert.doesNotThrow(() => new Headers({ "Content-Disposition": headerUnduh('الاستفهام "x"\r\nSet-Cookie: a=b.docx') }));
   assert.ok(!headerUnduh('a"b\r\nc.docx').includes("\n"));
+});
+
+test("soal Isian: kunci tunggal + alternatif, bagian kosong wajib, jawaban singkat dan tidak bocor di soal", () => {
+  const dasar = { bentuk: "ISIAN" as const, dalil_id: null, pertanyaan: "Kata yang menunjukkan tempat adalah ....", kunci: "mahall", pembahasan: "x", level: "C1", tp: "TP 1", skor: 3 };
+  assert.deepEqual(periksaSoal([dasar], bab)[0].peringatan, []);
+  const peringatan = (s: Partial<Soal>) => periksaSoal([{ ...dasar, ...s }], bab)[0].peringatan!.join(" | ");
+  assert.match(peringatan({ pertanyaan: "Kata yang menunjukkan tempat adalah" }), /bagian kosong/);
+  assert.match(peringatan({ kunci: "" }), /Kunci isian kosong/);
+  assert.match(peringatan({ kunci: "satu dua tiga empat lima enam tujuh" }), /terlalu panjang/);
+  assert.match(peringatan({ pertanyaan: "Kata mahall berarti tempat, yaitu ...." }), /muncul di dalam soal/);
+  const r = rapikanSoal({ ...dasar, kunci: ["  mahall ", "x"], kunciAlt: [" maqam ", "mahall", "", "tempat"], pilihan: ["a", "b", "c", "d", "e"] }, "ISIAN");
+  assert.equal(r.kunci, "mahall");
+  assert.deepEqual(r.kunciAlt, ["maqam", "tempat"]);
+  assert.equal(r.pilihan, undefined);
+  assert.match(buatSistem(bab), /ISIAN \(isian singkat\)/);
 });
