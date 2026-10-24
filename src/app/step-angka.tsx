@@ -51,7 +51,7 @@ export function StepAngka({ nilai, ubah, min = 0, max, label, lebar = "w-12" }: 
         value={nilai}
         onFocus={(e) => e.target.select()}
         onChange={(e) => ubah(Math.min(max, Math.max(min, Number(e.target.value.replace(/\D/g, "")) || 0)))}
-        className={`${lebar} rounded-lg border px-1 text-center`}
+        className={`${lebar} rounded-lg border px-1 text-center text-base text-tinta`}
       />
       <button type="button" aria-label={`Tambah ${label}`} disabled={nilai >= max} className={tombol} {...pegang(1)}>+</button>
     </span>

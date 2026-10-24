@@ -23,6 +23,16 @@ hadis karangan dalam mode Bahasa Arab belum bisa dideteksi otomatis (hanya diceg
 
 ---
 
+## 0.10.2 — 24 Oktober 2026
+- **Skor per soal otomatis.** Guru cukup mengatur jumlah soal per jenis; aplikasi menghitung skor tiap soal (bilangan
+  bulat) mengikuti perbandingan bawaan AFTS supaya total **100**, dan memperbaruinya setiap jumlah berubah. Skor yang
+  dipakai tampil kecil di tiap baris ("2 poin/soal"). Jenis yang jumlahnya 0 tampil pudar.
+- Tombol **Atur skor** membuka stepper skor per soal bila guru mau mengatur sendiri; tombol **Pas-kan 100** menyesuaikan
+  skor buatan guru ke 100 tanpa mengubah perbandingannya; kembali dengan **Skor otomatis**.
+- Keterbatasan: karena skor harus bulat, ada jumlah yang tidak bisa pas 100 (mis. 30 PG saja = 3,33 per soal; dipakai
+  terdekat, 90, dan ada pesan penjelasan). Solusi: ubah jumlah soal atau campur dengan jenis lain.
+- Panel jumlah soal dirapikan: satu baris per jenis dengan garis tipis, satu kalimat ringkasan di bawah.
+
 ## 0.10.1 — 24 Oktober 2026
 - Kotak angka (jumlah soal, skor per soal, persen level, waktu ujian, skor di formulir Edit) kini memakai tombol
   **−** dan **+** yang besar (44 px di HP) menggantikan panah kecil bawaan browser. Ditahan = naik/turun terus,

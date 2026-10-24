@@ -7,6 +7,7 @@ import { KartuSoal, Teks } from "./kartu-soal";
 import { KotakMateri, type MateriLama } from "./kotak-materi";
 import { FormIdentitas } from "./form-identitas";
 import { StepAngka } from "./step-angka";
+import { skorOtomatis } from "@/lib/skor";
 import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_SOAL, NAMA_BENTUK, NAMA_LEVEL_TKA, namaTujuan, semesterDari, TKA, TUJUAN, WAKTU_BAWAAN, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { KELAS, pilihanAngka, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { DAFTAR_MAPEL, type IsianMateri } from "@/lib/materi";
@@ -128,7 +129,10 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
 
   const tka = p.tujuan === TKA;
   const total = BENTUK.reduce((s, b) => s + p.jumlah[b], 0);
-  const bobot = p.bobot ?? BOBOT_BAWAAN;
+  // Skor per soal: otomatis (bulat, total 100) kecuali guru membuka "Atur skor".
+  const [aturSkor, setAturSkor] = useState(false);
+  const otomatis = skorOtomatis(p.jumlah);
+  const bobot = aturSkor ? p.bobot ?? BOBOT_BAWAAN : otomatis.bobot;
   const totalSkor = BENTUK.reduce((s, b) => s + p.jumlah[b] * bobot[b], 0);
   const totalLevel = p.level.LOTS + p.level.MOTS + p.level.HOTS;
   const memuat = id !== null && !hasil; // set dibuka, data belum terbaca (bisa set lama yang sudah selesai)
@@ -211,7 +215,7 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
     const babIds = await siapkanMateri();
     setMenyiapkan(false);
     if (typeof babIds === "string") return setError(babIds);
-    const isian = { ...p, babIds, babId: babIds[0] };
+    const isian = { ...p, bobot, babIds, babId: babIds[0] };
     if (p.modelSlot === 0) {
       // Bandingkan: pengaturan sama persis, satu set per model. Tiap hasil dibuka di tab sendiri.
       for (const m of daftarModel) {
@@ -325,23 +329,45 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
             </div>
 
             {buka === "jumlah" && (
-              <fieldset className="mt-3 space-y-2 border-t pt-3">
-                <legend className="sr-only">Jumlah soal × skor per soal</legend>
-                <p className="text-xs text-pudar">Jumlah soal × skor per soal</p>
-                {BENTUK.filter((b) => !(tka && TANPA_TKA.includes(b))).map((b) => (
-                  <div key={b} className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-                    {NAMA_BENTUK[b]}
-                    <span className="flex items-center gap-1 whitespace-nowrap">
-                      <StepAngka label={`Jumlah ${NAMA_BENTUK[b]}`} nilai={p.jumlah[b]} ubah={(n) => setP({ ...p, jumlah: { ...p.jumlah, [b]: n } })} max={MAKS_SOAL} />
-                      ×
-                      <StepAngka label={`Skor per soal ${NAMA_BENTUK[b]}`} nilai={bobot[b]} ubah={(n) => setP({ ...p, bobot: { ...bobot, [b]: n } })} max={100} />
-                    </span>
-                  </div>
-                ))}
-                <p className={`text-sm ${totalSkor === 100 ? "text-pudar" : "text-peringatan"}`}>
-                  Total: {total} soal (maks {MAKS_SOAL}), skor {totalSkor}
-                  {totalSkor !== 100 && " (bukan 100)"}
-                </p>
+              <fieldset className="mt-3 border-t pt-3">
+                <legend className="sr-only">Jumlah soal dan skor per soal</legend>
+                <p className="pb-1 text-xs text-pudar">Jumlah soal per jenis</p>
+                <div className="divide-y text-sm">
+                  {BENTUK.filter((b) => !(tka && TANPA_TKA.includes(b))).map((b) => {
+                    const n = p.jumlah[b];
+                    return (
+                      <div key={b} className="flex flex-col gap-1 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                        <span className={n ? "" : "text-pudar"}>
+                          {NAMA_BENTUK[b]}
+                          {!aturSkor && n > 0 && <span className="ml-2 text-xs text-pudar">{bobot[b]} poin/soal</span>}
+                        </span>
+                        <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                          {aturSkor && n > 0 && (
+                            <span className="flex items-center gap-1 text-xs text-pudar">
+                              poin
+                              <StepAngka label={`Skor per soal ${NAMA_BENTUK[b]}`} nilai={bobot[b]} ubah={(v) => setP({ ...p, bobot: { ...bobot, [b]: v } })} max={100} />
+                            </span>
+                          )}
+                          <StepAngka label={`Jumlah ${NAMA_BENTUK[b]}`} nilai={n} ubah={(v) => setP({ ...p, jumlah: { ...p.jumlah, [b]: v } })} max={MAKS_SOAL} />
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-sm">
+                  <p className={totalSkor === 100 ? "text-hijau-teks" : "text-peringatan"}>
+                    {total} soal (maks {MAKS_SOAL}) · skor {totalSkor}
+                    {totalSkor === 100 && " ✓"}
+                    {totalSkor !== 100 && aturSkor && ` (${totalSkor < 100 ? "kurang" : "lebih"} ${Math.abs(100 - totalSkor)})`}
+                    {totalSkor !== 100 && !aturSkor && total > 0 && ": dengan jumlah ini skor bulat tidak bisa pas 100. Ubah jumlah soal atau atur skor sendiri."}
+                  </p>
+                  <span className="flex gap-2">
+                    {aturSkor && totalSkor !== 100 && <button type="button" className={aksi2} onClick={() => setP({ ...p, bobot: skorOtomatis(p.jumlah, bobot).bobot })}>Pas-kan 100</button>}
+                    <button type="button" className={aksi2} onClick={() => { if (!aturSkor) setP({ ...p, bobot: otomatis.bobot }); setAturSkor(!aturSkor); }}>
+                      {aturSkor ? "Skor otomatis" : "Atur skor ▾"}
+                    </button>
+                  </span>
+                </div>
               </fieldset>
             )}
 
