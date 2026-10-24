@@ -1,5 +1,6 @@
 "use client";
 
+import { StepAngka } from "./step-angka";
 import { semesterDari, WAKTU_BAWAAN, type Identitas } from "@/lib/prompt";
 
 /**
@@ -28,7 +29,7 @@ export function FormIdentitas({ nilai, ubah }: { nilai: Identitas; ubah: (i: Ide
       </label>
       <label className="block">
         Waktu (menit)
-        <input type="number" min={1} max={600} className={kotak} value={nilai.waktu ?? WAKTU_BAWAAN} onChange={(e) => ubah({ ...nilai, waktu: Number(e.target.value) })} />
+        <span className="mt-1 block"><StepAngka label="Waktu (menit)" min={1} max={600} lebar="w-14" nilai={nilai.waktu ?? WAKTU_BAWAAN} ubah={(n) => ubah({ ...nilai, waktu: n })} /></span>
       </label>
     </div>
   );

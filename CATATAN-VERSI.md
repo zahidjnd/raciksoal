@@ -23,6 +23,12 @@ hadis karangan dalam mode Bahasa Arab belum bisa dideteksi otomatis (hanya diceg
 
 ---
 
+## 0.10.1 — 24 Oktober 2026
+- Kotak angka (jumlah soal, skor per soal, persen level, waktu ujian, skor di formulir Edit) kini memakai tombol
+  **−** dan **+** yang besar (44 px di HP) menggantikan panah kecil bawaan browser. Ditahan = naik/turun terus,
+  angkanya tetap bisa diketik langsung, tombol mati di batas (0 dan maksimal). Di HP, kotak jumlah dan skor tiap
+  bentuk soal ditaruh di bawah namanya supaya muat.
+
 ## 0.10.0 — 24 Oktober 2026
 Dua bentuk soal baru, cocok untuk kosakata Bahasa Arab/Inggris, istilah, dan tokoh–peristiwa:
 - **Isian singkat**: kalimat dengan bagian kosong ("...."), jawaban singkat, plus daftar jawaban lain yang diterima

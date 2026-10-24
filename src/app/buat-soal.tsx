@@ -6,6 +6,7 @@ import { simpanMateri } from "./materi/actions";
 import { KartuSoal, Teks } from "./kartu-soal";
 import { KotakMateri, type MateriLama } from "./kotak-materi";
 import { FormIdentitas } from "./form-identitas";
+import { StepAngka } from "./step-angka";
 import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_SOAL, NAMA_BENTUK, NAMA_LEVEL_TKA, namaTujuan, semesterDari, TKA, TUJUAN, WAKTU_BAWAAN, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { KELAS, pilihanAngka, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { DAFTAR_MAPEL, type IsianMateri } from "@/lib/materi";
@@ -56,7 +57,7 @@ function Angka({ label, nilai, ubah }: { label: string; nilai: number; ubah: (n:
   return (
     <label className="flex items-center justify-between gap-2 text-sm">
       {label}
-      <input type="number" min={0} max={MAKS_SOAL} value={nilai} onChange={(e) => ubah(Number(e.target.value))} className="w-20 rounded-lg border p-1 text-right" />
+      <StepAngka label={label} nilai={nilai} ubah={ubah} max={100} />
     </label>
   );
 }
@@ -328,12 +329,12 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
                 <legend className="sr-only">Jumlah soal × skor per soal</legend>
                 <p className="text-xs text-pudar">Jumlah soal × skor per soal</p>
                 {BENTUK.filter((b) => !(tka && TANPA_TKA.includes(b))).map((b) => (
-                  <div key={b} className="flex items-center justify-between gap-2 text-sm">
+                  <div key={b} className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-2">
                     {NAMA_BENTUK[b]}
                     <span className="flex items-center gap-1 whitespace-nowrap">
-                      <input type="number" min={0} max={MAKS_SOAL} aria-label={`Jumlah ${NAMA_BENTUK[b]}`} value={p.jumlah[b]} onChange={(e) => setP({ ...p, jumlah: { ...p.jumlah, [b]: Number(e.target.value) } })} className="w-14 rounded-lg border p-1 text-right" />
+                      <StepAngka label={`Jumlah ${NAMA_BENTUK[b]}`} nilai={p.jumlah[b]} ubah={(n) => setP({ ...p, jumlah: { ...p.jumlah, [b]: n } })} max={MAKS_SOAL} />
                       ×
-                      <input type="number" min={0} max={100} aria-label={`Skor per soal ${NAMA_BENTUK[b]}`} value={bobot[b]} onChange={(e) => setP({ ...p, bobot: { ...bobot, [b]: Number(e.target.value) } })} className="w-14 rounded-lg border p-1 text-right" />
+                      <StepAngka label={`Skor per soal ${NAMA_BENTUK[b]}`} nilai={bobot[b]} ubah={(n) => setP({ ...p, bobot: { ...bobot, [b]: n } })} max={100} />
                     </span>
                   </div>
                 ))}

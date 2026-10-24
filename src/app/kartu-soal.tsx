@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { gantiSatuSoal, simpanSoal } from "./actions";
+import { StepAngka } from "./step-angka";
 import { kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, pecahBaris, POLA_ARAB, type Bab, type Soal } from "@/lib/soal";
 import { MAKS_INSTRUKSI } from "@/lib/prompt";
 
@@ -404,7 +405,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan }: FormProps) {
             {(s.rubrik ?? []).map((r, i) => (
               <div key={i} className="flex gap-2">
                 <input dir="auto" className={kotak} value={r.kriteria} onChange={(e) => ubah({ rubrik: s.rubrik!.map((x, j) => (j === i ? { ...x, kriteria: e.target.value } : x)) })} />
-                <input type="number" min={0} aria-label="Skor" className="w-16 rounded-lg border p-2 text-right" value={r.skor} onChange={(e) => ubah({ rubrik: s.rubrik!.map((x, j) => (j === i ? { ...x, skor: Number(e.target.value) } : x)) })} />
+                <StepAngka label="Skor" max={100} nilai={r.skor} ubah={(n) => ubah({ rubrik: s.rubrik!.map((x, j) => (j === i ? { ...x, skor: n } : x)) })} />
                 <button className="rounded-lg border px-2" aria-label="Hapus kriteria" onClick={() => ubah({ rubrik: s.rubrik!.filter((_, j) => j !== i) })}>✕</button>
               </div>
             ))}
@@ -434,7 +435,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan }: FormProps) {
         {s.bentuk !== "URAIAN" && (
           <label className="block">
             Skor
-            <input type="number" min={0} className={kotak} value={s.skor} onChange={(e) => ubah({ skor: Number(e.target.value) })} />
+            <span className="mt-1 block"><StepAngka label="Skor" max={100} nilai={s.skor} ubah={(n) => ubah({ skor: n })} /></span>
           </label>
         )}
       </div>
