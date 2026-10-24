@@ -90,8 +90,8 @@ Bloom revisi juga membagi jenis pengetahuan: faktual, konseptual, prosedural, me
 | **Pilihan Ganda (PG)** | 5 pilihan (A–E), tepat 1 benar; pengecoh homogen & masuk akal | ✅ sesuai |
 | **PG Kompleks — jawaban ganda (MCMA)** | 5 pilihan, lebih dari satu benar tapi tidak semua | 🆕 **2 atau 3 benar**, sesuai soal. Petunjuk: **"(Pilih semua jawaban yang tepat)"**, tanpa menyebut jumlah (sama dengan TKA) |
 | **PG Kompleks — Kategori (dulu "Benar/Salah")** | satu stimulus + **4 pernyataan**, tiap pernyataan dinilai dengan sepasang label | 🆕 label: Benar/Salah, Fakta/Opini, Sesuai/Tidak Sesuai, Tepat/Tidak Tepat, atau Didukung/Tidak Didukung |
-| **Menjodohkan** | 5 premis; jawaban di lajur kanan lebih banyak dari premis | belum ada. Usul: **ditunda** |
-| **Isian / jawaban singkat** | jawaban berupa kata, frasa, angka, atau simbol | belum ada. Usul: **ditunda** |
+| **Menjodohkan** | 5 premis; jawaban di lajur kanan lebih banyak dari premis | ✅ (0.10.0) 5 premis + 6 jawaban (1 pengecoh). AI hanya menulis 5 pasangan benar + 1 pengecoh; **aplikasi mengacak lajur kanan dan menyusun kunci hurufnya**. Skor **per pasangan** (bobot 5 = 1 poin/pasangan). Bukan untuk Latihan TKA |
+| **Isian / jawaban singkat** | jawaban berupa kata, frasa, angka, atau simbol | ✅ (0.10.0) kalimat dengan satu bagian kosong "....", kunci ≤ 6 kata + jawaban lain yang diterima (pegangan guru). Skor 1/0. Jawaban tidak boleh muncul di soal. Bukan untuk Latihan TKA |
 | **Uraian** | menuntut jawaban terurai; wajib ada **pedoman penskoran (rubrik)** | ✅ sesuai |
 
 Penskoran resmi: PG, PGK, menjodohkan, isian = 1/0 per butir. ✅ Aplikasi memakai **bobot dari form**
@@ -168,7 +168,7 @@ belajar, dsb.), **tanpa menggurui** dan **tanpa mengubah kunci jawaban**. Tidak 
 | 11 | Nilai Panca Cinta boleh disisipkan di stimulus | kecil |
 | 12 | Kartu jenis **Latihan TKA** + soal grup (bagian 9) | besar |
 | 13 | Tiga aturan dari contoh try out (bagian 10) | kecil |
-| — | Ditunda: menjodohkan, isian, dimensi pengetahuan | — |
+| — | Ditunda: dimensi pengetahuan (menjodohkan dan isian sudah aktif sejak 0.10.0) | — |
 
 ---
 

@@ -371,6 +371,17 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   hanya `TAHAN_WACANA`=3 baris terakhir + jarak ikut soal (header→baris 1). Akibat: soal bisa terbelah di antara B
   dan C, juga di dasar halaman (Word tak membedakan kolom/halaman). Cek keepNext di XML: library docx menulis
   `<w:keepNext w:val="false"/>` untuk false, jadi periksa nilainya, jangan hanya adanya tag.
+  0.10.0 BENTUK BARU Menjodohkan (`MJ`) dan Isian (`ISIAN`): urutan bentuk di SEMUA tempat = PG, PGK, BS, MJ, ISIAN,
+  URAIAN (`URUTAN_BENTUK` soal.ts, `NAMA_BENTUK` prompt.ts; Word/form mengikuti kunci NAMA_BENTUK). MJ: AI menulis
+  `pasangan` (5 benar) + `pengecoh` (1); `susunMenjodohkan` (soal.ts) mengacak lajur kanan (tidak boleh sejajar dengan
+  premis, ada cadangan geser) dan menyusun `premis`/`jawaban`/`kunci` huruf; dipanggil di `kerjakan` DAN `gantiSatuSoal`.
+  `keFormatAI` = kebalikannya untuk "Ubah soal". Skor MJ per pasangan (bobot/5; bawaan 5). ISIAN: `kunci` + `kunciAlt`
+  (hanya pegangan guru), `periksaIsian` (bagian kosong, ≤ 6 kata, jawaban tak bocor). MJ & ISIAN ditolak di Latihan TKA
+  (`TANPA_TKA` di buat-soal.tsx + bersihkanPengaturan). `bagiTahap`: MJ berbobot 2 (`BERAT_TAHAP`).
+  PELAJARAN: JANGAN menjumlah bentuk satu per satu (bug nyata: `PG+PGK+BS+URAIAN` di kerjakan membuat bentuk baru
+  terlewat → baris kisi kosong → set gagal "reading 'bentuk'"). Pakai `jumlahSoal()` (prompt.ts, dites). Skrip Python
+  lewat heredoc: `\n` menjadi baris baru sungguhan; pakai `chr(92)` atau alat Edit untuk teks ber-backslash.
+  Uji laptop: set 56 (Bahasa Arab, 2 MJ + 2 ISIAN: tampil, Edit, Ubah soal, 3 unduhan Word OK); set 55 gagal (bug di atas).
   CATATAN UJI: Word COM (`ExportAsFixedFormat`) macet bila Word pemilik sedang terbuka; proses WINWORD buatan skrip
   harus dimatikan satu per satu (jangan sentuh dokumen pemilik).
   CARA LIHAT LOG HOSTING tanpa SSH: `~/raciksoal-app/app.log` (lewat konektor cPanel `read_file`). Uji laptop: judul set 51

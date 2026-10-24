@@ -6,7 +6,7 @@ import { kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, pecahBaris, POLA_ARAB, 
 import { MAKS_INSTRUKSI } from "@/lib/prompt";
 
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
-const HURUF = ["A", "B", "C", "D", "E"];
+const HURUF = ["A", "B", "C", "D", "E", "F", "G"];
 const kotak = "w-full rounded-lg border p-2 text-sm";
 const tombol = "rounded-lg border bg-kartu h-8 px-3 text-sm hover:bg-krem disabled:opacity-50";
 
@@ -40,6 +40,36 @@ export function TeksBaris({ teks, jarak }: { teks: string; jarak?: boolean }) {
         ),
       )}
     </>
+  );
+}
+
+/**
+ * Soal Menjodohkan: premis bernomor di kiri, jawaban berhuruf di kanan. Saat kunci dibuka, huruf kunci tampil
+ * (lencana hijau) di samping nomor tiap premis.
+ */
+function TabelJodoh({ s, kunci }: { s: Soal; kunci: boolean }) {
+  const premis = s.premis ?? [];
+  const jawaban = s.jawaban ?? [];
+  const k = [s.kunci].flat().map((h) => String(h).toUpperCase());
+  return (
+    <div className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
+      <ol className="space-y-1">
+        {premis.map((p, i) => (
+          <li key={i} className="flex gap-2">
+            <span className="w-14 shrink-0 font-semibold">{i + 1}.{kunci && <span className="ml-1 rounded bg-hijau-muda px-1 text-hijau-teks">{k[i] ?? "?"}</span>}</span>
+            <span><TeksBaris teks={p} /></span>
+          </li>
+        ))}
+      </ol>
+      <ol className="space-y-1">
+        {jawaban.map((j, i) => (
+          <li key={i} className="flex gap-2">
+            <span className="w-5 shrink-0 font-semibold">{HURUF[i]}.</span>
+            <span><TeksBaris teks={j} /></span>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }
 
@@ -148,10 +178,11 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
           {s.pilihan.map((o, i) => <li key={i}><TeksBaris teks={o} /></li>)}
         </ol>
       )}
+      {s.bentuk === "MJ" && <TabelJodoh s={s} kunci={tampilKunci} />}
       {kategoriBaru(s) && <TabelKategori s={s} kunci={tampilKunci} />}
       {tampilKunci && (
       <div className="space-y-1 rounded bg-hijau-muda p-3 text-sm">
-        {!kategoriBaru(s) && <p><span className="font-semibold">Kunci:</span> <Teks teks={[s.kunci].flat().join(", ")} /></p>}
+        {!kategoriBaru(s) && <p><span className="font-semibold">Kunci:</span> <Teks teks={s.bentuk === "MJ" ? [s.kunci].flat().map((h, i) => `${i + 1}-${h}`).join(", ") : [s.kunci].flat().join(", ")} /></p>}
         {!!s.kunciAlt?.length && <p><span className="font-semibold">Jawaban lain yang diterima:</span> <Teks teks={s.kunciAlt.join("; ")} /></p>}
         {s.rubrik && (
           <ul className="list-disc pl-5">
@@ -316,6 +347,34 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan }: FormProps) {
                 <option value="">(kunci)</option>
                 {(s.label ?? []).map((l) => <option key={l}>{l}</option>)}
               </select>
+            </div>
+          ))}
+        </fieldset>
+      )}
+
+      {s.bentuk === "MJ" && (
+        <fieldset className="space-y-2">
+          <legend>Premis (lajur kiri) dan kunci hurufnya</legend>
+          {(s.premis ?? []).map((pm, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <span className="w-4 font-semibold">{i + 1}</span>
+              <input dir="auto" className={kotak} aria-label={`Premis ${i + 1}`} value={pm} onChange={(e) => ubah({ premis: s.premis!.map((x, j) => (j === i ? e.target.value : x)) })} />
+              <select
+                className="w-24 rounded-lg border p-2"
+                aria-label={`Kunci premis ${i + 1}`}
+                value={[s.kunci].flat()[i] ?? ""}
+                onChange={(e) => ubah({ kunci: s.premis!.map((_, j) => (j === i ? e.target.value : ([s.kunci].flat()[j] ?? ""))) })}
+              >
+                <option value="">(kunci)</option>
+                {(s.jawaban ?? []).map((_, j) => <option key={j}>{HURUF[j]}</option>)}
+              </select>
+            </div>
+          ))}
+          <p className="pt-1">Jawaban (lajur kanan, satu di antaranya pengecoh)</p>
+          {(s.jawaban ?? []).map((jw, j) => (
+            <div key={j} className="flex items-center gap-2">
+              <span className="w-4 font-semibold">{HURUF[j]}</span>
+              <input dir="auto" className={kotak} aria-label={`Jawaban ${HURUF[j]}`} value={jw} onChange={(e) => ubah({ jawaban: s.jawaban!.map((x, k) => (k === j ? e.target.value : x)) })} />
             </div>
           ))}
         </fieldset>

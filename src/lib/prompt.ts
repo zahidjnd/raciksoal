@@ -1,4 +1,4 @@
-import { identitasBab, MAKS_GABUNG, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal.ts";
+import { identitasBab, keFormatAI, MAKS_GABUNG, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal.ts";
 
 export const TUJUAN = ["Ulangan Harian", "PTS", "PAS", "Latihan", "Latihan TKA"] as const;
 /** Nama yang tampil (pilihan pemilik 2026-10-20: AFTS & ASAS sesuai istilah madrasah). Kode "PTS"/"PAS" tetap disimpan agar set lama terbaca. */
@@ -40,15 +40,22 @@ export const NAMA_BENTUK: Record<Bentuk, string> = {
   PG: "Pilihan Ganda",
   PGK: "Pilihan Ganda Kompleks",
   BS: "Kategori (Benar/Salah)", // kode "BS" dipertahankan agar set lama tetap terbaca
+  MJ: "Menjodohkan",
   ISIAN: "Isian Singkat",
   URAIAN: "Uraian",
 };
 export const MAKS_SOAL = 40;
 // Satu jawaban AI maks ±8.000 token. 10 soal Latihan+Sulit ≈ 14.000 huruf, aman di bawah batas.
 export const MAKS_PER_TAHAP = 10;
+/** Jumlah semua soal dari rincian per bentuk. SATU-SATUNYA penjumlah: jangan menyebut bentuk satu per satu (bentuk baru terlewat). */
+export const jumlahSoal = (j: Record<Bentuk, number>) => (Object.keys(NAMA_BENTUK) as Bentuk[]).reduce((n, b) => n + (j[b] ?? 0), 0);
+
+// Satu soal Menjodohkan memuat 12 potong teks (5 pasangan + pengecoh), jadi dihitung seberat 2 soal biasa per tahap.
+const BERAT_TAHAP: Partial<Record<Bentuk, number>> = { MJ: 2 };
 
 // Skor per soal seperti format AFTS madrasah (10 PG + 5 PGK + 5 B/S + 5 uraian = 100).
-export const BOBOT_BAWAAN: Record<Bentuk, number> = { PG: 2, PGK: 5, BS: 3, ISIAN: 3, URAIAN: 8 };
+// Menjodohkan: bobot = skor SATU soal (5 pasangan); tiap pasangan benar mendapat 1/5-nya (penskoran per pasangan).
+export const BOBOT_BAWAAN: Record<Bentuk, number> = { PG: 2, PGK: 5, BS: 3, MJ: 5, ISIAN: 3, URAIAN: 8 };
 
 export type Pengaturan = {
   babId: string;
@@ -99,16 +106,16 @@ export const bersihkanInstruksi = (s: unknown) => bersihkanKutipan(s, MAKS_INSTR
 /** Rapikan isian form dari browser (tidak dipercaya begitu saja). Mengembalikan pesan kalau tidak valid. */
 export function bersihkanPengaturan(p: Pengaturan): Pengaturan | string {
   const angka = (n: unknown) => Math.max(0, Math.min(100, Math.round(Number(n) || 0)));
-  const jumlah = { PG: angka(p?.jumlah?.PG), PGK: angka(p?.jumlah?.PGK), BS: angka(p?.jumlah?.BS), ISIAN: angka(p?.jumlah?.ISIAN), URAIAN: angka(p?.jumlah?.URAIAN) };
+  const jumlah = { PG: angka(p?.jumlah?.PG), PGK: angka(p?.jumlah?.PGK), BS: angka(p?.jumlah?.BS), MJ: angka(p?.jumlah?.MJ), ISIAN: angka(p?.jumlah?.ISIAN), URAIAN: angka(p?.jumlah?.URAIAN) };
   const level = { LOTS: angka(p?.level?.LOTS), MOTS: angka(p?.level?.MOTS), HOTS: angka(p?.level?.HOTS) };
-  const total = jumlah.PG + jumlah.PGK + jumlah.BS + jumlah.ISIAN + jumlah.URAIAN;
+  const total = jumlahSoal(jumlah);
   if (total < 1 || total > MAKS_SOAL) return `Jumlah soal harus 1 sampai ${MAKS_SOAL}.`;
   if (level.LOTS + level.MOTS + level.HOTS !== 100) return "Komposisi LOTS + MOTS + HOTS harus 100%.";
   if (!(TUJUAN as readonly string[]).includes(p?.tujuan)) return "Tujuan soal tidak dikenal.";
-  if (p.tujuan === TKA && (jumlah.URAIAN || jumlah.ISIAN)) return "Latihan TKA hanya memakai pilihan ganda, pilihan ganda kompleks, dan kategori. Kosongkan jumlah isian dan uraian.";
+  if (p.tujuan === TKA && (jumlah.URAIAN || jumlah.ISIAN || jumlah.MJ)) return "Latihan TKA hanya memakai pilihan ganda, pilihan ganda kompleks, dan kategori. Kosongkan jumlah menjodohkan, isian, dan uraian.";
   if (!(KESULITAN as readonly string[]).includes(p?.kesulitan)) return "Tingkat kesulitan tidak dikenal.";
   const bobotDari = (b: Bentuk) => angka(p?.bobot?.[b] ?? BOBOT_BAWAAN[b]);
-  const bobot = { PG: bobotDari("PG"), PGK: bobotDari("PGK"), BS: bobotDari("BS"), ISIAN: bobotDari("ISIAN"), URAIAN: bobotDari("URAIAN") };
+  const bobot = { PG: bobotDari("PG"), PGK: bobotDari("PGK"), BS: bobotDari("BS"), MJ: bobotDari("MJ"), ISIAN: bobotDari("ISIAN"), URAIAN: bobotDari("URAIAN") };
   const modelSlot = Math.max(1, Math.min(9, Math.round(Number(p?.modelSlot) || 1)));
   const catatan = bersihkanKutipan(p?.catatan, MAKS_CATATAN);
   // Materi: hanya id materi milik guru ("materi-12"), maks 5, tanpa dobel. Kepemilikan dicek di mulaiBuatSoal.
@@ -126,15 +133,16 @@ export function bagiTahap(jumlah: Record<Bentuk, number>, maks = MAKS_PER_TAHAP)
   const tahap: Record<Bentuk, number>[] = [];
   let isi = 0;
   for (const b of Object.keys(NAMA_BENTUK) as Bentuk[]) {
-    let sisa = jumlah[b];
+    const berat = BERAT_TAHAP[b] ?? 1;
+    let sisa = jumlah[b] ?? 0; // set lama tidak punya kunci bentuk baru
     while (sisa > 0) {
-      if (!tahap.length || isi === maks) {
-        tahap.push({ PG: 0, PGK: 0, BS: 0, ISIAN: 0, URAIAN: 0 });
+      if (!tahap.length || maks - isi < berat) {
+        tahap.push({ PG: 0, PGK: 0, BS: 0, MJ: 0, ISIAN: 0, URAIAN: 0 });
         isi = 0;
       }
-      const ambil = Math.min(sisa, maks - isi);
+      const ambil = Math.min(sisa, Math.floor((maks - isi) / berat));
       tahap[tahap.length - 1][b] += ambil;
-      isi += ambil;
+      isi += ambil * berat;
       sisa -= ambil;
     }
   }
@@ -218,6 +226,7 @@ ${BENTUK_SOAL}
 FORMAT JAWABAN (kecuali permintaan menyebut format lain): hanya JSON (tanpa teks lain), dengan bentuk:
 {"soal":[{"bentuk":"PG","dalil_id":null,"pertanyaan":"...","pilihan":["...","...","...","...","..."],"kunci":"B","pembahasan":"...","level":"C2","tp":"TP 3.2","skor":1}]}
 Untuk BS: {"bentuk":"BS","dalil_id":null,"pertanyaan":"...","pernyataan":["...","...","...","..."],"label":["Fakta","Opini"],"kunci":["Fakta","Opini","Opini","Fakta"],"pembahasan":"...","level":"C4","tp":"TP 3.2","skor":1}
+Untuk MJ: {"bentuk":"MJ","dalil_id":null,"pertanyaan":"Jodohkan setiap kata di lajur kiri dengan artinya di lajur kanan!","pasangan":[{"premis":"...","jawaban":"..."}],"pengecoh":["..."],"pembahasan":"...","level":"C1","tp":"TP 3.2","skor":1} ("pasangan" berisi TEPAT 5 objek)
 Untuk ISIAN: {"bentuk":"ISIAN","dalil_id":null,"pertanyaan":"Kata yang menunjukkan tempat adalah ....","kunci":"mahall","kunciAlt":[],"pembahasan":"...","level":"C1","tp":"TP 3.2","skor":1}
 Untuk URAIAN tambahkan "rubrik":[{"kriteria":"...","skor":2}]. "tp" diisi kode TP yang paling sesuai.
 
@@ -259,6 +268,7 @@ const BENTUK_SOAL = `BENTUK SOAL:
 - PG: 5 pilihan, tepat 1 benar. "kunci": "A".."E".
 - PGK (pilihan ganda kompleks, model jawaban ganda/MCMA): 5 pilihan, 2 ATAU 3 benar (tidak semua), sesuai isi soal; ragamkan jumlahnya dalam satu set. "kunci": array berisi 2 atau 3 huruf jawaban benar. Akhiri pertanyaan dengan "(Pilih semua jawaban yang tepat)" tanpa menyebut jumlah jawaban benar.
 - BS (pilihan ganda kompleks model Kategori): "pertanyaan" berisi stimulus/pokok soal + perintah, misalnya "Tentukan apakah setiap pernyataan berikut Benar atau Salah!". Lalu tepat 4 "pernyataan" yang masing-masing dinilai dengan sepasang "label", salah satu dari: ["Benar","Salah"], ["Fakta","Opini"], ["Sesuai","Tidak Sesuai"], ["Tepat","Tidak Tepat"], ["Didukung","Tidak Didukung"] (didukung/tidak oleh stimulus). Pilih pasangan label yang paling cocok dengan isi soal dan ragamkan dalam satu set. "kunci": array 4 label sesuai urutan pernyataan; jangan semua sama. Jangan menulis ulang keempat pernyataan di dalam "pertanyaan" (aplikasi menampilkannya sebagai tabel). Tanpa "pilihan".
+- MJ (menjodohkan): "pertanyaan" berisi perintah singkat saja, misalnya "Jodohkan setiap kata di lajur kiri dengan artinya di lajur kanan!"; JANGAN menulis pasangannya di dalam "pertanyaan". "pasangan": TEPAT 5 objek {"premis":"...","jawaban":"..."}; setiap premis punya TEPAT SATU jawaban yang benar, semua premis berbeda, semua jawaban berbeda, dan seluruh pasangan memiliki hubungan sejenis (kata–arti, tokoh–peristiwa, istilah–pengertian, rumus–nama, dan sebagainya). Premis dan jawaban singkat (maks 12 kata). "pengecoh": array berisi TEPAT 1 jawaban tambahan yang sejenis tetapi TIDAK cocok dengan premis mana pun. Aplikasi yang mengacak lajur kanan dan menyusun kunci hurufnya: JANGAN menulis huruf kunci, "pilihan", ataupun "kunci". "pembahasan": satu kalimat singkat per pasangan yang menjelaskan hubungannya (sebut isinya, bukan nomor atau hurufnya). Berlaku juga untuk bahasa asing (kosakata–arti, kata–lawan kata).
 - ISIAN (isian singkat): "pertanyaan" berisi kalimat atau pertanyaan dengan SATU bagian kosong yang ditulis "...." (empat titik). "kunci": jawaban singkat yang pas mengisi bagian kosong (satu kata, istilah, angka, atau frasa maksimal 5 kata). "kunciAlt": array 0–3 penulisan lain yang juga benar (sinonim atau ejaan lain), atau []. Hanya SATU jawaban yang mungkin benar, jadi kalimat harus cukup spesifik; jawaban TIDAK BOLEH muncul di kalimat soal. Tanpa "pilihan". Berlaku juga untuk bahasa asing (kosakata, dhamir, kata tanya, terjemah).
 - URAIAN: "kunci" berisi jawaban ideal; "rubrik" berisi kriteria penilaian dan skornya; "skor" = jumlah skor rubrik.`;
 
@@ -428,12 +438,13 @@ ${daftarSudah}${tambahan}Balas hanya dengan JSON sesuai format.`;
  * yang sama bila ada), tapi skenario berbeda dari semua soal di set.
  */
 export function buatPenggantiPengguna(p: Pengaturan, lama: Soal, semua: Soal[], kisi?: BarisKisi, instruksi = "") {
-  const jumlah = { PG: 0, PGK: 0, BS: 0, ISIAN: 0, URAIAN: 0, [lama.bentuk]: 1 };
+  const jumlah = { PG: 0, PGK: 0, BS: 0, MJ: 0, ISIAN: 0, URAIAN: 0, [lama.bentuk]: 1 };
   if (instruksi) {
     // "Minta perubahan": soal yang sama ditulis ulang sesuai instruksi guru. Instruksi tidak boleh mengalahkan aturan sistem.
-    const { peringatan, stimulus, grup, wacana, ...isiLama } = lama;
+    const { peringatan, stimulus, grup, wacana, ...isiAsli } = lama;
     void peringatan;
     void stimulus;
+    const isiLama = keFormatAI(isiAsli as Soal); // Menjodohkan: dikirim sebagai pasangan + pengecoh, sama dengan format jawaban
     const tambahan = `\nIni permintaan MENGUBAH satu soal sesuai instruksi guru. Soal saat ini (JSON):
 ${JSON.stringify(isiLama)}
 ${kisi ? `Kisi-kisinya: indikator "${kisi.indikator}", stimulus "${kisi.stimulus}".\n` : ""}${tulisWacana([{ grup, wacana }])}Instruksi guru (ikuti selama tidak bertentangan dengan aturan di instruksi sistem: jangan mengetik ayat/hadis, jangan memakai dalil atau fakta di luar data bab, tetap bentuk ${lama.bentuk}):

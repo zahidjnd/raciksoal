@@ -23,6 +23,19 @@ hadis karangan dalam mode Bahasa Arab belum bisa dideteksi otomatis (hanya diceg
 
 ---
 
+## 0.10.0 — 24 Oktober 2026
+Dua bentuk soal baru, cocok untuk kosakata Bahasa Arab/Inggris, istilah, dan tokoh–peristiwa:
+- **Isian singkat**: kalimat dengan bagian kosong ("...."), jawaban singkat, plus daftar jawaban lain yang diterima
+  (pegangan guru di lembar kunci). Skor bawaan 3 per soal.
+- **Menjodohkan**: 5 premis di lajur kiri dan 6 jawaban di lajur kanan (satu pengecoh). AI hanya menulis pasangan
+  yang benar; **aplikasi yang mengacak lajur kanan dan menyusun kuncinya**, jadi kunci selalu cocok. Skor dihitung
+  **per pasangan** (bobot bawaan 5 = 1 poin tiap pasangan benar).
+- Muncul di form (kotak jumlah dan skor), kartu soal web (tampilan dua lajur dan formulir Edit), serta Word: tabel
+  Menjodohkan di lembar siswa (premis Arab ditulis kanan-ke-kiri) dan kunci pasangan di lembar kunci.
+- "Ubah soal" dan "Ganti soal" juga berlaku untuk kedua bentuk. Latihan TKA tidak memakai bentuk ini.
+- Catatan: satu soal Menjodohkan dihitung seberat 2 soal biasa saat soal dibuat bertahap (lebih sedikit per tahap).
+  Pemeriksaan otomatis menandai merah bila premis/jawaban kurang, kembar, atau kunci tidak sah.
+
 ## 0.9.6 — 23 Oktober 2026
 - Lembar soal Word: aturan "soal jangan terpotong" dilonggarkan supaya kolom terisi lebih penuh dan guru tidak perlu
   merapikan banyak. Teks soal + pilihan A dan B tetap satu rombongan, pilihan D dan E tetap berdua, sedangkan

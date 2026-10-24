@@ -4,9 +4,9 @@ import { and, eq, gte, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { hasilSoal } from "@/db/schema";
 import { daftarModel, tanyaAI } from "@/lib/ai";
-import { bagiTahap, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatPermintaanKisi, buatSistem, buatAnalisaMateri, bersihkanIdentitas, rencanaGrup, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
+import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatPermintaanKisi, buatSistem, buatAnalisaMateri, bersihkanIdentitas, rencanaGrup, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { BATAS_MATERI, susunDraf, terapkanAnalisa } from "@/lib/materi";
-import { bersihkanTanggapan, gabungBab, identitasBab, KELAS, LEVEL, pemeriksaArab, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, terapkanBobot, type Bab, type BarisKisi, type Soal } from "@/lib/soal";
+import { bersihkanTanggapan, gabungBab, identitasBab, KELAS, LEVEL, pemeriksaArab, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, terapkanBobot, type Bab, type BarisKisi, type Soal } from "@/lib/soal";
 import { babDariSet, babMilik, daftarBabMilik } from "@/lib/bab";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
@@ -192,13 +192,13 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
     let awal = 0;
     for (const [i, jumlah] of tahap.entries()) {
       // Tahap diisi berurutan PG → PGK → BS → URAIAN, sama dengan urutan kisi-kisi.
-      const n = jumlah.PG + jumlah.PGK + jumlah.BS + jumlah.URAIAN;
+      const n = jumlahSoal(jumlah);
       const baris = kisi.slice(awal, awal + n);
       awal += n;
       await simpan({ pesan: `Tahap ${i + 1} dari ${tahap.length}` });
       const pengguna = buatPengguna(p, jumlah, semua.map((s) => s.pertanyaan), "", baris);
       const soal = await tanya(`Tahap ${i + 1}`, pengguna, (d) => ambilSoal(d, baris.length));
-      semua.push(...soal.map((s, j) => samakanDenganKisi(s, baris[j])));
+      semua.push(...soal.map((s, j) => susunMenjodohkan(samakanDenganKisi(s, baris[j])))); // Menjodohkan: lajur kanan diacak aplikasi
       // Draf untuk tampilan bertahap (status tetap "proses"): sudah lewat penjaga ayat, tetapi kunci belum
       // diratakan dan skor belum diisi; keduanya baru di akhir untuk seluruh set.
       await simpan({ soal: periksaSoal(semua, bab, cekAyat) });
@@ -285,7 +285,7 @@ export async function gantiSatuSoal(id: number, no: number, instruksiMentah?: st
       // set lama (sebelum pembuatan bertahap) menyimpan satu jawaban mentah, bukan array
       jawabanAi: JSON.stringify([...(h.jawabanAi?.startsWith("[") ? JSON.parse(h.jawabanAi) : [h.jawabanAi].filter(Boolean)), r.jawaban]),
     };
-    const { stimulus, indikator, ...baru } = r.hasil[0];
+    const { stimulus, indikator, ...baru } = susunMenjodohkan({ ...r.hasil[0], bentuk: lama.bentuk }); // Menjodohkan: pasangan AI → premis, jawaban acak, kunci
     // Ubah: level/TP dari AI dipakai hanya kalau valid. Ganti: disamakan dengan kisi-kisi.
     // Grup & wacana tidak diambil dari jawaban AI: tetap milik soal lama (soal grup tetap di grupnya).
     const grupLama = lama.grup && lama.wacana ? { grup: lama.grup, wacana: lama.wacana } : {};

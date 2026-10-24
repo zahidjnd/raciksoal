@@ -21,7 +21,7 @@ import {
   type ParagraphChild,
 } from "docx";
 import { NAMA_BENTUK, semesterDari, WAKTU_BAWAAN, type Pengaturan } from "./prompt";
-import { identitasBab, kategoriBaru, pecahBaris, POLA_ARAB, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
+import { identitasBab, JUMLAH_PREMIS, kategoriBaru, paragrafArab, pecahBaris, POLA_ARAB, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
 
 const PERINGATAN = "Soal dibuat AI, wajib diperiksa guru sebelum dipakai.";
 
@@ -31,7 +31,7 @@ const FONT = "Times New Roman";
 const FONT_ARAB = "Traditional Arabic";
 const UKURAN = 22; // setengah poin: 22 = 11 pt
 const UKURAN_ARAB = 32; // 16 pt
-const HURUF = ["A", "B", "C", "D", "E", "F"]; // A–E pilihan soal; A–F juga huruf bagian dan jawaban Menjodohkan
+const HURUF = ["A", "B", "C", "D", "E", "F", "G"]; // A–E pilihan soal; A–F juga huruf bagian dan jawaban Menjodohkan
 const ROMAWI = ["I", "II", "III", "IV", "V", "VI"];
 const LEBAR = 10206; // lebar isi A4 (twip) dengan margin kiri-kanan 850
 
@@ -46,6 +46,7 @@ const NAMA_BAGIAN: Record<Bentuk, string> = {
   PG: "PILIHAN GANDA (PG)",
   PGK: "PILIHAN GANDA KOMPLEKS (PGK)",
   BS: "BENAR / SALAH (B / S)",
+  MJ: "MENJODOHKAN",
   ISIAN: "ISIAN SINGKAT",
   URAIAN: "URAIAN / ESAI",
 };
@@ -53,6 +54,7 @@ const PETUNJUK: Record<Bentuk, string> = {
   PG: "Pilihlah salah satu jawaban yang paling tepat (A, B, C, D, atau E)!",
   PGK: "Pilihlah semua jawaban yang tepat dari pilihan A, B, C, D, atau E (jawaban benar lebih dari satu)!",
   BS: "Pilihlah jawaban A jika pernyataan bernilai BENAR, atau jawaban B jika SALAH!",
+  MJ: "Jodohkanlah setiap pernyataan di lajur kiri dengan jawaban yang tepat di lajur kanan! Tulis huruf jawabannya pada kolom \"Jawab\".",
   ISIAN: "Isilah titik-titik berikut dengan jawaban yang singkat dan tepat!",
   URAIAN: "Jawablah pertanyaan berikut dengan singkat, jelas, dan tepat!",
 };
@@ -171,7 +173,8 @@ export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tangga
         isi.push(par([r(`(${dalil.sumber})`, { italics: true, size: 18 })], { alignment: AlignmentType.RIGHT, keepNext: true }));
       }
       if (s.pilihan) s.pilihan.forEach((o, i) => isi.push(...butirBaris(`${HURUF[i]}.`, o, 800, { spacing: { after: 0 }, keepNext: i === 0 || i === 3 })));
-      if (kategoriBaru(s)) isi.push(tabelKategori(s));
+      if (bentuk === "MJ") isi.push(tabelMenjodohkan(s));
+      else if (kategoriBaru(s)) isi.push(tabelKategori(s));
       else if (bentuk === "BS") isi.push(par([r("A.", { bold: true }), r(" Benar\t\t"), r("B.", { bold: true }), r(" Salah")], { indent: { left: 400 } }));
       isi.push(par([], { spacing: { after: 80 } }));
     }
@@ -202,6 +205,46 @@ const sel = (anak: Paragraph[], lebar: number) =>
 // Lembar soal 2 kolom: satu kolom ±4.900 twip, tabel diberi sedikit indentasi seperti pilihan jawaban.
 const KOLOM_KATEGORI = [400, 2500, 850, 850];
 const PETUNJUK_KATEGORI = "Berilah tanda centang (✓) pada kolom yang sesuai untuk setiap pernyataan!";
+
+// Menjodohkan di lembar siswa: Jawab (kosong, diisi huruf) | No | Premis | Huruf | Jawaban. Total sama dengan tabel Kategori.
+const KOLOM_MJ = [650, 400, 1650, 400, 1500];
+
+/** Isi sel satu teks: teks yang hampir seluruhnya Arab menjadi paragraf kanan-ke-kiri rata kanan. */
+const parSel = (isi: string, opsi: Partial<ConstructorParameters<typeof Paragraph>[0] & object> = {}) =>
+  paragrafArab(isi)
+    ? par(teks(isi), { bidirectional: true, alignment: AlignmentType.START, spacing: { after: 0 }, ...opsi })
+    : par(teks(isi), { spacing: { after: 0 }, ...opsi });
+
+/** Soal Menjodohkan di lembar siswa: premis di kiri (dengan kolom kosong untuk huruf jawaban), jawaban A–F di kanan. */
+function tabelMenjodohkan(s: Soal) {
+  const premis = s.premis ?? [];
+  const jawaban = s.jawaban ?? [];
+  const kecil = (t: string) => par([r(t, { bold: true, size: 18 })], { alignment: AlignmentType.CENTER, spacing: { after: 0 } });
+  const tengah = (t: string) => par([r(t)], { alignment: AlignmentType.CENTER, spacing: { after: 0 } });
+  const baris = (isi: Paragraph[][], judul = false) =>
+    new TableRow({
+      tableHeader: judul,
+      cantSplit: true,
+      children: isi.map((anak, i) => new TableCell({ children: anak, width: { size: KOLOM_MJ[i], type: WidthType.DXA }, verticalAlign: VerticalAlign.CENTER, margins: { left: 60, right: 60 } })),
+    });
+  const n = Math.max(premis.length, jawaban.length);
+  return new Table({
+    width: { size: KOLOM_MJ.reduce((a, b) => a + b, 0), type: WidthType.DXA },
+    indent: { size: 400, type: WidthType.DXA },
+    rows: [
+      baris([[kecil("Jawab")], [kecil("No")], [kecil("Premis")], [kecil("")], [kecil("Jawaban")]], true),
+      ...Array.from({ length: n }, (_, i) =>
+        baris([
+          [par([], { spacing: { after: 0 } })],
+          [i < premis.length ? tengah(String(i + 1)) : par([])],
+          [i < premis.length ? parSel(premis[i]) : par([])],
+          [i < jawaban.length ? tengah(`${HURUF[i]}.`) : par([])],
+          [i < jawaban.length ? parSel(jawaban[i]) : par([])],
+        ]),
+      ),
+    ],
+  });
+}
 
 /** Soal Kategori di lembar siswa: No | Pernyataan | label 1 | label 2 (kolom label dikosongkan untuk dicentang). */
 function tabelKategori(s: Soal) {
@@ -248,6 +291,11 @@ export function buatWordKunci(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Da
       // ATURAN-SOAL.md bagian 3: penskoran resmi PG kompleks 1/0 per butir (seperti TKA).
       isi.push(par([r(`Penskoran per soal: memilih SEMUA jawaban benar tanpa pilihan salah = ${penuh} poin; selain itu = 0 poin.`, { italics: true })]));
     }
+    if (bentuk === "MJ") {
+      const penuh = Number(butir[0].s.skor) || 0;
+      const perPasangan = Math.round((penuh / JUMLAH_PREMIS) * 100) / 100;
+      isi.push(par([r(`Penskoran per soal: tiap pasangan yang benar = ${String(perPasangan).replace(".", ",")} poin (5 pasangan benar = ${penuh} poin); pasangan yang salah = 0 poin.`, { italics: true })]));
+    }
     if (bentuk === "ISIAN") {
       const penuh = Number(butir[0].s.skor) || 0;
       isi.push(par([r(`Penskoran per soal: jawaban tepat = ${penuh} poin; selain itu = 0 poin.`, { italics: true })]));
@@ -267,6 +315,10 @@ export function buatWordKunci(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Da
         isi.push(bernomor(`${no}.`, [new TextRun({ text: "Kunci: ", bold: true }), ...teks((s.pernyataan ?? []).map((p, i) => `(${i + 1}) ${kunci[i] ?? "?"}`).join("; "))]));
       } else if (bentuk === "BS") {
         isi.push(bernomor(`${no}.`, [new TextRun({ text: "Kunci: ", bold: true }), new TextRun(kunci[0] === "Benar" ? "A (Benar)" : "B (Salah)")]));
+      } else if (bentuk === "MJ") {
+        const huruf = (h: string) => HURUF.indexOf(String(h).trim().toUpperCase());
+        isi.push(bernomor(`${no}.`, [new TextRun({ text: "Kunci: ", bold: true }), ...teks(kunci.map((h, i) => `${i + 1}-${h}`).join(", "))]));
+        (s.premis ?? []).forEach((pm, i) => isi.push(par([r(`${i + 1}. `), ...teks(pm), r(`  →  ${kunci[i] ?? "?"}. `), ...teks(s.jawaban?.[huruf(kunci[i] ?? "")] ?? "?")], { indent: { left: 800 }, spacing: { after: 0 } })));
       } else if (bentuk === "ISIAN") {
         isi.push(bernomor(`${no}.`, [new TextRun({ text: "Kunci: ", bold: true }), ...teks(kunci[0] ?? "")]));
         if (s.kunciAlt?.length) isi.push(par([r("Jawaban lain yang diterima: ", { italics: true }), ...teks(s.kunciAlt.join("; "))], { indent: { left: 400 }, spacing: { after: 0 } }));

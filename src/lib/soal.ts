@@ -1,6 +1,6 @@
 // Pemeriksaan hasil AI. Tanpa import "@/..." supaya bisa dites langsung: npm test
 
-export type Bentuk = "PG" | "PGK" | "BS" | "ISIAN" | "URAIAN";
+export type Bentuk = "PG" | "PGK" | "BS" | "MJ" | "ISIAN" | "URAIAN";
 
 export type Soal = {
   bentuk: Bentuk;
@@ -15,6 +15,13 @@ export type Soal = {
   // Bentuk ISIAN (0.10.0): pertanyaan memuat bagian kosong "....", kunci = jawaban singkat, kunciAlt = penulisan lain yang
   // juga benar (hanya pegangan guru di lembar kunci; koreksi tetap manual).
   kunciAlt?: string[];
+  // Bentuk MJ = Menjodohkan (0.10.0): premis (lajur kiri, 5), jawaban (lajur kanan, 6 = 5 benar + 1 pengecoh, SUDAH
+  // diacak aplikasi), kunci = array huruf jawaban untuk tiap premis. `pasangan` + `pengecoh` hanya format jawaban AI
+  // (pasangan benar); diubah jadi premis/jawaban/kunci oleh susunMenjodohkan dan tidak pernah disimpan.
+  premis?: string[];
+  jawaban?: string[];
+  pasangan?: { premis: string; jawaban: string }[];
+  pengecoh?: string[];
   rubrik?: { kriteria: string; skor: number }[];
   pembahasan: string;
   level: string;
@@ -82,7 +89,7 @@ export type BarisKisi = {
   wacana?: string; // teks wacana bersama grup itu (disusun AI bersama kisi-kisi)
 };
 
-const URUTAN_BENTUK: Bentuk[] = ["PG", "PGK", "BS", "ISIAN", "URAIAN"]; // harus sama dengan urutan NAMA_BENTUK (prompt.ts)
+const URUTAN_BENTUK: Bentuk[] = ["PG", "PGK", "BS", "MJ", "ISIAN", "URAIAN"]; // harus sama dengan urutan NAMA_BENTUK (prompt.ts)
 
 export const KELAS = ["X", "XI", "XII"];
 
@@ -115,6 +122,42 @@ function rapikanKategori(s: Soal): Soal {
   const label = cariLabel(s.label) ?? (Array.isArray(s.label) ? s.label.map(teks) : []);
   const kunci = [s.kunci].flat().map((k) => label.find((l) => l.toLowerCase() === teks(k).toLowerCase()) ?? teks(k));
   return { ...s, pernyataan: s.pernyataan!.map(teks), label, kunci };
+}
+
+/** Menjodohkan: 5 premis (lajur kiri) dan 6 jawaban (lajur kanan, satu pengecoh). */
+export const JUMLAH_PREMIS = 5;
+const HURUF_MJ = "ABCDEFG";
+const norm = (t: string) => t.normalize("NFC").replace(/\s+/g, " ").trim().toLowerCase();
+
+/**
+ * Soal Menjodohkan dari jawaban AI (`pasangan` benar + `pengecoh`) → premis, jawaban DIACAK aplikasi, dan kunci huruf
+ * (seperti ratakanKunci untuk PG: AI cenderung menaruh jawaban sejajar dengan premisnya). Urutan acak dicoba ulang
+ * beberapa kali supaya tidak persis sama dengan urutan premis. Soal yang sudah berbentuk premis/jawaban/kunci dibiarkan.
+ * Bentuk selain MJ hanya dibersihkan dari field mentah `pasangan`/`pengecoh`.
+ */
+export function susunMenjodohkan(s: Soal, acak: () => number = Math.random): Soal {
+  const { pasangan, pengecoh, ...sisa } = s;
+  if (s.bentuk !== "MJ" || !Array.isArray(pasangan)) return sisa;
+  const teks = (x: unknown) => String(x ?? "").trim();
+  const pas = pasangan.slice(0, JUMLAH_PREMIS).map((p) => ({ premis: teks(p?.premis), jawaban: teks(p?.jawaban) }));
+  const tambahan = (Array.isArray(pengecoh) ? pengecoh : []).map(teks).filter(Boolean).slice(0, 1);
+  const benar = pas.map((p) => p.jawaban);
+  const semua = [...benar, ...tambahan];
+  const sejajar = (j: string[]) => !j.slice(0, benar.length).some((x, k) => x !== benar[k]);
+  let jawaban = [...semua];
+  for (let i = 0; i < 10 && sejajar(jawaban); i++) jawaban = kocok([...semua], acak);
+  // Cadangan pasti (mis. pengacak yang macet): geser satu posisi, sehingga tidak persis sejajar dengan premis.
+  if (semua.length >= 3 && sejajar(jawaban)) jawaban = [...semua.slice(1), semua[0]];
+  const kunci = benar.map((b) => HURUF_MJ[jawaban.indexOf(b)] ?? "");
+  return { ...sisa, premis: pas.map((p) => p.premis), jawaban, kunci };
+}
+
+/** Kebalikan susunMenjodohkan, untuk "Ubah soal": soal MJ dikirim ke AI dalam format pasangan + pengecoh. */
+export function keFormatAI(s: Soal): Omit<Soal, "premis" | "jawaban" | "kunci"> & { pasangan?: { premis: string; jawaban: string }[]; pengecoh?: string[]; kunci?: string | string[] } {
+  if (s.bentuk !== "MJ" || !s.premis || !s.jawaban) return s;
+  const { premis, jawaban, kunci, ...sisa } = s;
+  const idx = [kunci].flat().map((h) => HURUF_MJ.indexOf(String(h).trim().toUpperCase()));
+  return { ...sisa, pasangan: premis.map((p, i) => ({ premis: p, jawaban: jawaban[idx[i]] ?? "" })), pengecoh: jawaban.filter((_, j) => !idx.includes(j)) };
 }
 
 /** Mapel & kelas sebuah bab. Data lama tanpa keduanya = Al-Qur'an Hadis kelas XI (satu-satunya mapel waktu itu). */
@@ -263,6 +306,10 @@ export function rapikanSoal(s: Partial<Soal>, bentuk: Bentuk): Soal {
   const rubrik = (s.rubrik ?? []).map((r) => ({ kriteria: teks(r?.kriteria), skor: Math.max(0, Number(r?.skor) || 0) })).filter((r) => r.kriteria);
   const kategori = bentuk === "BS" && Array.isArray(s.pernyataan);
   const alt = (Array.isArray(s.kunciAlt) ? s.kunciAlt : []).map(teks).filter((x) => x && x !== kunci[0]).slice(0, 5);
+  // Menjodohkan: posisi penting (kunci[i] = huruf untuk premis ke-i), jadi baris kosong tidak dibuang.
+  const premis = (Array.isArray(s.premis) ? s.premis : []).slice(0, JUMLAH_PREMIS).map(teks);
+  const jawaban = (Array.isArray(s.jawaban) ? s.jawaban : []).slice(0, JUMLAH_PREMIS + 2).map(teks);
+  const kunciMj = [s.kunci].flat().slice(0, premis.length).map((h) => teks(h).toUpperCase());
   return {
     bentuk,
     dalil_id: s.dalil_id ? teks(s.dalil_id) : null,
@@ -274,9 +321,10 @@ export function rapikanSoal(s: Partial<Soal>, bentuk: Bentuk): Soal {
           label: (Array.isArray(s.label) ? s.label : []).slice(0, 2).map(teks),
         }
       : {}),
-    kunci: bentuk === "PGK" ? kunci : kategori ? [s.kunci].flat().slice(0, JUMLAH_PERNYATAAN).map(teks) : (kunci[0] ?? ""),
+    kunci: bentuk === "PGK" ? kunci : bentuk === "MJ" ? kunciMj : kategori ? [s.kunci].flat().slice(0, JUMLAH_PERNYATAAN).map(teks) : (kunci[0] ?? ""),
     ...(bentuk === "URAIAN" ? { rubrik } : {}),
     ...(bentuk === "ISIAN" ? { kunciAlt: alt } : {}),
+    ...(bentuk === "MJ" ? { premis, jawaban } : {}),
     ...(Number.isInteger(s.grup) && s.grup! > 0 && teks(s.wacana) ? { grup: s.grup, wacana: teks(s.wacana).slice(0, 3000) } : {}),
     pembahasan: teks(s.pembahasan),
     level: teks(s.level),
@@ -328,6 +376,21 @@ export function bersihkanKodeDalil(teks: string, idDalil: Set<string>) {
 const TITIK_ISIAN = /\.{3,}|…|_{3,}/;
 const MAKS_KATA_ISIAN = 6;
 
+/** Peringatan khusus soal Menjodohkan: jumlah, terisi, kunci sah, satu jawaban untuk satu premis, tidak ada kembar. */
+function periksaMenjodohkan(s: Soal): string[] {
+  const w: string[] = [];
+  const premis = s.premis ?? [];
+  const jawaban = s.jawaban ?? [];
+  const kunci = [s.kunci].flat().map((h) => String(h ?? "").trim().toUpperCase());
+  if (premis.length !== JUMLAH_PREMIS || premis.some((p) => !p)) w.push(`Menjodohkan harus berisi ${JUMLAH_PREMIS} premis yang terisi.`);
+  if (jawaban.length <= premis.length || jawaban.some((j) => !j)) w.push("Jawaban harus lebih banyak dari premis (satu pengecoh) dan terisi semua.");
+  const sah = HURUF_MJ.slice(0, jawaban.length);
+  if (kunci.length !== premis.length || kunci.some((h) => !h || !sah.includes(h))) w.push("Kunci menjodohkan harus satu huruf jawaban untuk setiap premis.");
+  else if (new Set(kunci).size !== kunci.length) w.push("Dua premis memakai jawaban yang sama.");
+  if (new Set(premis.map(norm)).size !== premis.length || new Set(jawaban.map(norm)).size !== jawaban.length) w.push("Ada premis atau jawaban yang sama persis.");
+  return w;
+}
+
 /** Peringatan khusus soal Isian: bagian kosong ada, jawaban singkat, dan jawaban tidak bocor di soal. */
 function periksaIsian(s: Soal): string[] {
   const w: string[] = [];
@@ -359,10 +422,12 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
       pembahasan: bersih(asli.pembahasan),
       ...(asli.pilihan ? { pilihan: asli.pilihan.map(bersih) } : {}),
       ...(Array.isArray(asli.pernyataan) ? { pernyataan: asli.pernyataan.map(bersih) } : {}),
+      ...(Array.isArray(asli.premis) ? { premis: asli.premis.map(bersih) } : {}),
+      ...(Array.isArray(asli.jawaban) ? { jawaban: asli.jawaban.map(bersih) } : {}),
     });
     if (!s.dalil_id && ditemukan) s.dalil_id = ditemukan;
     const peringatan: string[] = [];
-    const semuaTeks = [s.wacana ?? "", s.pertanyaan, ...(s.pilihan ?? []), ...(s.pernyataan ?? []), ...[s.kunci].flat(), ...(s.kunciAlt ?? []), s.pembahasan, ...(s.rubrik ?? []).map((r) => r.kriteria)];
+    const semuaTeks = [s.wacana ?? "", s.pertanyaan, ...(s.pilihan ?? []), ...(s.pernyataan ?? []), ...(s.premis ?? []), ...(s.jawaban ?? []), ...[s.kunci].flat(), ...(s.kunciAlt ?? []), s.pembahasan, ...(s.rubrik ?? []).map((r) => r.kriteria)];
     const arabAsing = semuaTeks.flatMap((t) => arabAsingDi(String(t ?? "")));
     if (arabAsing.length)
       peringatan.push(`${bab.teksArab === "bahasa" ? "Teks Arab mirip ayat Al-Qur'an tetapi" : "Teks Arab"} tidak cocok dengan data terverifikasi: ${arabAsing.join(" | ")}`);
@@ -370,6 +435,7 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
     if ((s.bentuk === "PG" || s.bentuk === "PGK") && s.pilihan?.length !== 5) peringatan.push("Jumlah pilihan bukan 5.");
     if (s.bentuk === "PGK" && !KUNCI_PGK.includes(new Set([s.kunci].flat()).size)) peringatan.push("Kunci PG kompleks harus 2 atau 3 jawaban.");
     if (s.bentuk === "ISIAN") peringatan.push(...periksaIsian(s));
+    if (s.bentuk === "MJ") peringatan.push(...periksaMenjodohkan(s));
     if (kategoriBaru(s)) {
       if (s.pernyataan!.length !== JUMLAH_PERNYATAAN || s.pernyataan!.some((p) => !p)) peringatan.push(`Soal kategori harus berisi ${JUMLAH_PERNYATAAN} pernyataan.`);
       if (!cariLabel(s.label)) peringatan.push(`Label kategori tidak dikenal: ${(s.label ?? []).join(" / ") || "(kosong)"}.`);

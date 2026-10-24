@@ -35,11 +35,11 @@ const JENIS: { tujuan: (typeof TUJUAN)[number]; ket: string; ikon: React.ReactNo
   { tujuan: "Latihan TKA", ket: "Gaya TKA pusat: soal grup, tanpa uraian.", ikon: ikon("M12 3l9 5-9 5-9-5 9-5zM5 10.5V16l7 4 7-4v-5.5") },
 ];
 /** Latihan TKA: bentuk PG / PGK / Kategori saja, bawaan 25 soal (ATURAN-SOAL.md bagian 9). */
-const JUMLAH_TKA = { PG: 15, PGK: 5, BS: 5, ISIAN: 0, URAIAN: 0 };
-const JUMLAH_AWAL = { PG: 10, PGK: 5, BS: 5, ISIAN: 0, URAIAN: 5 };
+const JUMLAH_TKA = { PG: 15, PGK: 5, BS: 5, MJ: 0, ISIAN: 0, URAIAN: 0 };
+const JUMLAH_AWAL = { PG: 10, PGK: 5, BS: 5, MJ: 0, ISIAN: 0, URAIAN: 5 };
 const BENTUK = Object.keys(NAMA_BENTUK) as Bentuk[];
 /** Bentuk yang tidak dipakai Latihan TKA (TKA hanya PG, PGK, Kategori). */
-const TANPA_TKA: Bentuk[] = ["ISIAN", "URAIAN"];
+const TANPA_TKA: Bentuk[] = ["MJ", "ISIAN", "URAIAN"];
 
 type Hasil = NonNullable<Awaited<ReturnType<typeof cekHasil>>>;
 

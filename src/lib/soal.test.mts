@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { arabTakTerverifikasi, bersihkanTanggapan, gabungBab, identitasBab, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, terapkanBobot, type Bab, type Soal } from "./soal.ts";
-import { bagiTahap, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, semesterDari, MAKS_CATATAN, MAKS_INSTRUKSI, rencanaLevel, type Pengaturan } from "./prompt.ts";
+import { arabTakTerverifikasi, bersihkanTanggapan, gabungBab, identitasBab, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, terapkanBobot, type Bab, type Soal } from "./soal.ts";
+import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, semesterDari, MAKS_CATATAN, MAKS_INSTRUKSI, rencanaLevel, type Pengaturan } from "./prompt.ts";
 import { bolehAkses, rapikanUsername } from "./akses.ts";
 import { headerUnduh } from "./nama-file.ts";
 import { keIsian, rapikanMateri, susunDraf, terapkanAnalisa } from "./materi.ts";
@@ -73,18 +73,18 @@ test("identitasBab: data lama tanpa mapel = Al-Qur'an Hadis XI; tanggapan AI dib
 });
 
 test("bagiTahap membagi soal maks 10 per tahap dengan urutan bentuk tetap", () => {
-  const nol = { PG: 0, PGK: 0, BS: 0, ISIAN: 0, URAIAN: 0 };
-  assert.deepEqual(bagiTahap({ PG: 10, PGK: 5, BS: 5, ISIAN: 0, URAIAN: 5 }), [
+  const nol = { PG: 0, PGK: 0, BS: 0, MJ: 0, ISIAN: 0, URAIAN: 0 };
+  assert.deepEqual(bagiTahap({ PG: 10, PGK: 5, BS: 5, MJ: 0, ISIAN: 0, URAIAN: 5 }), [
     { ...nol, PG: 10 },
     { ...nol, PGK: 5, BS: 5 },
     { ...nol, URAIAN: 5 },
   ]);
-  assert.deepEqual(bagiTahap({ PG: 25, PGK: 0, BS: 0, ISIAN: 0, URAIAN: 3 }), [
+  assert.deepEqual(bagiTahap({ PG: 25, PGK: 0, BS: 0, MJ: 0, ISIAN: 0, URAIAN: 3 }), [
     { ...nol, PG: 10 },
     { ...nol, PG: 10 },
     { ...nol, PG: 5, URAIAN: 3 },
   ]);
-  assert.deepEqual(bagiTahap({ PG: 4, PGK: 0, BS: 0, ISIAN: 0, URAIAN: 0 }), [{ ...nol, PG: 4 }]);
+  assert.deepEqual(bagiTahap({ PG: 4, PGK: 0, BS: 0, MJ: 0, ISIAN: 0, URAIAN: 0 }), [{ ...nol, PG: 4 }]);
 });
 
 const bab: Bab = JSON.parse(readFileSync(new URL("../data/qurdis11-bab3.json", import.meta.url), "utf8"));
@@ -543,4 +543,83 @@ test("soal Isian: kunci tunggal + alternatif, bagian kosong wajib, jawaban singk
   assert.deepEqual(r.kunciAlt, ["maqam", "tempat"]);
   assert.equal(r.pilihan, undefined);
   assert.match(buatSistem(bab), /ISIAN \(isian singkat\)/);
+});
+
+test("Menjodohkan: pasangan AI → premis, jawaban diacak aplikasi, kunci huruf selalu cocok; tidak sejajar", () => {
+  const pasangan = [
+    { premis: "مَدْرَسَة", jawaban: "sekolah" },
+    { premis: "كِتَاب", jawaban: "buku" },
+    { premis: "قَلَم", jawaban: "pena" },
+    { premis: "بَاب", jawaban: "pintu" },
+    { premis: "طَالِب", jawaban: "siswa" },
+  ];
+  const mentah: Soal = { bentuk: "MJ", dalil_id: null, pertanyaan: "Jodohkan!", pasangan, pengecoh: ["guru"], kunci: "", pembahasan: "x", level: "C1", tp: "TP 1", skor: 5 };
+  for (const acak of [() => 0.1, () => 0.5, () => 0.9, Math.random, () => 0.3]) {
+    const s = susunMenjodohkan(mentah, acak);
+    assert.equal(s.premis!.length, 5);
+    assert.equal(s.jawaban!.length, 6);
+    assert.equal("pasangan" in s || "pengecoh" in s, false);
+    const kunci = s.kunci as string[];
+    kunci.forEach((h, i) => assert.equal(s.jawaban!["ABCDEFG".indexOf(h)], pasangan[i].jawaban)); // kunci menunjuk jawaban yang benar
+    assert.ok(s.jawaban!.slice(0, 5).some((j, i) => j !== pasangan[i].jawaban)); // tidak persis sejajar dengan premis
+    assert.deepEqual(periksaSoal([s], { ...bab, teksArab: "bahasa" })[0].peringatan, []);
+  }
+  // bentuk lain: field mentah dibuang saja; soal MJ yang sudah berbentuk premis/jawaban/kunci tidak diacak ulang
+  assert.equal("pasangan" in susunMenjodohkan({ ...mentah, bentuk: "PG" }), false);
+  const jadi = susunMenjodohkan(mentah, () => 0.2);
+  assert.deepEqual(susunMenjodohkan({ ...jadi, pasangan: undefined }, () => 0.9).jawaban, jadi.jawaban);
+  // bolak-balik ke format AI (Ubah soal) mengembalikan pasangan yang sama
+  const ai = keFormatAI(jadi);
+  assert.deepEqual(ai.pasangan, pasangan);
+  assert.deepEqual(ai.pengecoh, ["guru"]);
+});
+
+test("Menjodohkan: peringatan jumlah, kunci, jawaban kembar; hasil edit guru dirapikan", () => {
+  const dasar: Soal = { bentuk: "MJ", dalil_id: null, pertanyaan: "Jodohkan!", premis: ["a", "b", "c", "d", "e"], jawaban: ["1", "2", "3", "4", "5", "6"], kunci: ["B", "A", "C", "D", "E"], pembahasan: "x", level: "C1", tp: "TP 1", skor: 5 };
+  assert.deepEqual(periksaSoal([dasar], bab)[0].peringatan, []);
+  const w = (s: Partial<Soal>) => periksaSoal([{ ...dasar, ...s }], bab)[0].peringatan!.join(" | ");
+  assert.match(w({ premis: ["a", "b", "c", "d"] }), /5 premis/);
+  assert.match(w({ jawaban: ["1", "2", "3", "4", "5"] }), /lebih banyak dari premis/);
+  assert.match(w({ kunci: ["B", "A", "C", "D"] }), /satu huruf jawaban/);
+  assert.match(w({ kunci: ["B", "A", "C", "D", "Z"] }), /satu huruf jawaban/);
+  assert.match(w({ kunci: ["A", "A", "C", "D", "E"] }), /jawaban yang sama/);
+  assert.match(w({ jawaban: ["1", "2", "3", "4", "5", "5"] }), /sama persis/);
+  const r = rapikanSoal({ ...dasar, kunci: [" b ", "a", "c", "d", "e", "f", "g"], premis: [" a ", "b", "c", "d", "e", "x"], jawaban: ["1", "2", "3", "4", "5", "6", "7", "8"], skor: 7 }, "MJ");
+  assert.deepEqual(r.kunci, ["B", "A", "C", "D", "E"]);
+  assert.equal(r.premis![0], "a");
+  assert.equal(r.premis!.length, 5);
+  assert.equal(r.jawaban!.length, 7);
+  assert.equal(r.skor, 7);
+  assert.match(buatSistem(bab), /MJ \(menjodohkan\)/);
+  assert.match(String(bersihkanPengaturan({ babId: "x", tujuan: "Latihan TKA", kesulitan: "Sedang", level: { LOTS: 30, MOTS: 40, HOTS: 30 }, jumlah: { PG: 10, PGK: 0, BS: 0, MJ: 1, ISIAN: 0, URAIAN: 0 } } as Pengaturan)), /hanya memakai pilihan ganda/);
+});
+
+test("bagiTahap: satu Menjodohkan dihitung seberat 2 soal biasa per tahap", () => {
+  const nol = { PG: 0, PGK: 0, BS: 0, MJ: 0, ISIAN: 0, URAIAN: 0 };
+  assert.deepEqual(bagiTahap({ ...nol, PG: 6, MJ: 3 }), [{ ...nol, PG: 6, MJ: 2 }, { ...nol, MJ: 1 }]);
+  assert.deepEqual(bagiTahap({ ...nol, MJ: 5 }), [{ ...nol, MJ: 5 }]);
+  assert.deepEqual(bagiTahap({ ...nol, MJ: 6 }), [{ ...nol, MJ: 5 }, { ...nol, MJ: 1 }]);
+  // jumlah dari set lama tanpa kunci bentuk baru tidak merusak pembagian
+  assert.deepEqual(bagiTahap({ PG: 3, PGK: 0, BS: 0, URAIAN: 0 } as never), [{ ...nol, PG: 3 }]);
+});
+
+test("tahap membagi SEMUA soal: jumlah per tahap (jumlahSoal) menutup seluruh baris kisi-kisi, untuk setiap bentuk", () => {
+  // Meniru kerjakan() di actions.ts: kisi-kisi dipotong per tahap sebesar jumlahSoal(tahap). Dulu bentuk baru terlewat → baris kosong → crash.
+  for (const jumlah of [
+    { PG: 3, PGK: 2, BS: 2, MJ: 2, ISIAN: 2, URAIAN: 1 },
+    { PG: 0, PGK: 0, BS: 0, MJ: 7, ISIAN: 9, URAIAN: 0 },
+    { PG: 12, PGK: 0, BS: 0, MJ: 0, ISIAN: 11, URAIAN: 4 },
+  ]) {
+    const total = jumlahSoal(jumlah);
+    const tahap = bagiTahap(jumlah);
+    let awal = 0;
+    for (const t of tahap) {
+      const n = jumlahSoal(t);
+      assert.ok(n > 0);
+      awal += n;
+    }
+    assert.equal(awal, total);
+    assert.equal(jumlahSoal(jumlah), Object.values(jumlah).reduce((a, b) => a + b, 0));
+  }
+  assert.equal(jumlahSoal({ PG: 3, PGK: 0, BS: 0, URAIAN: 1 } as never), 4); // set lama tanpa kunci bentuk baru
 });
