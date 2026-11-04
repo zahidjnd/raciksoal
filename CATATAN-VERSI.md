@@ -27,14 +27,14 @@ hadis karangan dalam mode Bahasa Arab belum bisa dideteksi otomatis (hanya diceg
 - Sidebar menandai **halaman yang sedang dibuka**: riwayat set yang sedang dilihat (latar sorot + judul tebal), juga
   menu admin Semua set, Kelola guru, dan Pengaturan. Jadi selalu terlihat sedang berada di mana.
 - Tombol **Set baru** kini berlatar polos dengan tanda **+** di lingkaran hijau, supaya tidak tampak seperti "sedang dibuka".
-- Tombol **⋯** di riwayat berbentuk tombol (garis dan latar), dan tidak lagi tertinggal tampil setelah menunya ditutup.
 
 ## 0.11.0 — 4 November 2026
 Hasil audit 4 November (lihat `AUDIT-2026-11-04.md`).
 - **Ganti nama dan hapus set** lewat riwayat di sidebar, seperti claude.ai: tombol **⋯** di tiap riwayat (di laptop
   muncul saat kursor diarahkan, di HP selalu terlihat) atau **klik kanan**. Ganti nama langsung di barisnya (Enter =
   simpan, Esc = batal). Set yang dihapus hilang dari riwayat dan tidak bisa dibuka lagi, tetapi **jatah hari ini tidak
-  kembali**; admin masih melihatnya di Semua set dengan label "dihapus guru".
+  kembali**; admin masih melihatnya di Semua set dengan label "dihapus guru". Tombol ⋯ berbentuk tombol (garis dan
+  latar) dan hilang lagi setelah menunya ditutup.
 - **Tambah dan hapus soal** di dalam set (tombol **Lainnya** di kartu soal): "Tambah soal serupa di bawahnya" (dibuat AI,
   bentuk/level/TP sama, ikut batas 30x per set) dan "Hapus soal ini". Nomor soal dan kisi-kisi ikut menyesuaikan.
 - Tampilan HP lebih ringkas: **kop ujian** (semester, tahun, tanggal, waktu) dilipat jadi satu baris ringkasan;
