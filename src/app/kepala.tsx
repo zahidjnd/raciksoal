@@ -113,13 +113,17 @@ export async function Kerangka({ p, lebar = false, setAktif = null, children }: 
   const riwayat = await ambilRiwayat(p.id, BATAS_SIDEBAR);
   const tema = (await cookies()).get("tema")?.value === "gelap" ? "gelap" : "terang";
   // Materi kini dimasukkan langsung di halaman utama (2026-10-20); halaman kelolanya lewat tautan "Kelola materi" di sana.
-  const menu = admin
-    ? [
-        { href: "/admin/set", label: "Semua set" },
-        { href: "/admin/guru", label: "Kelola guru" },
-        { href: "/admin/pengaturan", label: "Pengaturan" },
-      ]
-    : [];
+  // Panduan untuk semua akun (persiapan uji coba guru); menu admin di atasnya.
+  const menu = [
+    ...(admin
+      ? [
+          { href: "/admin/set", label: "Semua set" },
+          { href: "/admin/guru", label: "Kelola guru" },
+          { href: "/admin/pengaturan", label: "Pengaturan" },
+        ]
+      : []),
+    { href: "/panduan", label: "Panduan" },
+  ];
 
   // Tautan ke halaman utama sengaja <a> biasa (bukan Link): halaman Buat Soal membaca ?id= hanya saat dimuat.
   return (

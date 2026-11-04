@@ -15,7 +15,7 @@ Rencana:
 - [x] Coba satu set untuk tiap jenis (Ulangan Harian, AFTS, ASAS, Latihan, Latihan TKA) di hosting + unduh Word-nya.
 - [x] Buat akun guru uji coba di Kelola guru.
 - [x] Hitung kesiapan saldo AI untuk 15–20 guru.
-- [ ] Panduan singkat untuk guru (opsional).
+- [x] Panduan singkat untuk guru (halaman **Panduan** di sidebar, sejak 0.12.0).
 
 Keterbatasan yang sudah diketahui (tidak menghalangi uji coba): dari file PDF hanya teks Latin dan ayat yang
 dikenali mushaf yang dipakai (teks Arab PDF lain, termasuk hadis, dibuang; buku PDF Kemenag teks Arabnya rusak semua);

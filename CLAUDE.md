@@ -386,7 +386,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   harus dimatikan satu per satu (jangan sentuh dokumen pemilik).
   CARA LIHAT LOG HOSTING tanpa SSH: `~/raciksoal-app/app.log` (lewat konektor cPanel `read_file`). Uji laptop: judul set 51
   diubah sementara jadi Arab → soal/kunci/kisi 200; judul dikembalikan.
-- 2026-11-04 AUDIT (`AUDIT-2026-11-04.md`, pemilik bilang "gas sesuai saran"), dikerjakan di laptop, BELUM di-push/versi:
+- 2026-11-04 AUDIT (`AUDIT-2026-11-04.md`, pemilik bilang "gas sesuai saran"), dirilis 0.11.0 + 0.11.1:
   Tampilan: kop ujian di form Buat Soal kini DILIPAT (<details>, tetap di bawah mapel & kelas, ringkasan terlihat);
   tanggal ditulis ulang gaya Indonesia (`hariTanggal` dipindah ke prompt.ts, dipakai word.ts juga); deret nomor soal
   satu baris geser di HP; peringatan Arab penjaga ayat dipecah per baris RTL (`TeksPeringatan`, kartu-soal.tsx);
@@ -408,3 +408,14 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   muncul saat diarahkan, HP selalu tampil) atau klik kanan → menu (`src/app/baris-riwayat.tsx`). Ganti nama langsung di
   baris (Enter/klik luar = simpan, Esc = batal). Tombol di judul halaman hasil dan "Hapus dari riwayat" di set gagal
   DIHAPUS. Uji laptop: set 57 diganti nama lalu dihapus lewat menu.
+  0.11.1: sidebar menandai halaman yang dibuka (`TautanMenu` = usePathname untuk menu; riwayat lewat prop `setAktif`
+  dari page.tsx → `BarisRiwayat aktif`); tombol Set baru berlatar polos, "+" di lingkaran hijau, tidak pernah ditandai.
+- 2026-11-04 PAKET KECIL sebelum uji coba guru (pemilik "gas 1 per satu"), commit terpisah, BELUM di-push:
+  (1) Login: kunci salah kata sandi per PERANGKAT+nama (5x/15 mnt) + per nama dari semua perangkat (30x), di
+  `src/lib/pembatas.ts` (dites). IP = nilai TERAKHIR X-Forwarded-For (yang paling depan bisa dipalsukan).
+  (2) Kartu soal: pesan "Tersimpan ✓" 4 detik setelah Edit (juga setelah Ganti/Ubah berhasil).
+  (3) /admin/guru: ringkasan pemakaian per akun (set hari ini dari jatah, 30 hari, token, set terakhir) + total web.
+  `BATAS_PER_GURU`/`BATAS_TOTAL` kini di pembatas.ts (dipakai actions.ts juga). "Terakhir masuk" SENGAJA tidak dipakai:
+  baris `sesi` terhapus saat guru Keluar → yang tampil "set terakhir" dari hasil_soal.
+  (4) /panduan (src/app/panduan/page.tsx): panduan singkat statis, tautan "Panduan" di sidebar untuk semua akun.
+  Nama tombol di panduan ditulis persis seperti layar: kalau tombol diganti nama, ubah juga panduannya.
