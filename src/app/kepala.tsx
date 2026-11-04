@@ -1,6 +1,6 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
-import { and, desc, eq, gte, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, isNull, or, sql } from "drizzle-orm";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { db } from "@/db";
@@ -88,11 +88,12 @@ export function ambilRiwayat(guruId: string, batas: number) {
       status: hasilSoal.status,
       babId: hasilSoal.babId,
       judulBab: sql<string | null>`${hasilSoal.bab}->>'judul'`,
+      nama: hasilSoal.nama,
       pengaturan: hasilSoal.pengaturan,
       jumlahSoal: sql<number>`coalesce(jsonb_array_length(${hasilSoal.soal}), 0)::int`,
     })
     .from(hasilSoal)
-    .where(eq(hasilSoal.guruId, guruId))
+    .where(and(eq(hasilSoal.guruId, guruId), isNull(hasilSoal.dihapus)))
     .orderBy(desc(hasilSoal.dibuat))
     .limit(batas);
 }
@@ -140,7 +141,7 @@ export async function Kerangka({ p, lebar = false, children }: { p: Pengguna; le
           {riwayat.length === 0 && <p className="px-3 text-xs text-pudar">Belum ada set soal.</p>}
           {riwayat.map((s) => {
             const pg = s.pengaturan as Pengaturan;
-            const label = `${namaTujuan(pg.tujuan)} · ${judulPendek(s.judulBab, s.babId)}`;
+            const label = s.nama ?? `${namaTujuan(pg.tujuan)} · ${judulPendek(s.judulBab, s.babId)}`;
             // Baris kedua (tanggal · jumlah soal): set dengan judul sama bisa dibedakan (audit 2026-11-04).
             const tanggal = s.dibuat.toLocaleDateString("id-ID", { day: "numeric", month: "short", timeZone: "Asia/Jakarta" });
             const keterangan = s.status === "gagal" ? "gagal" : s.status === "proses" ? "sedang dibuat" : `${s.jumlahSoal} soal`;

@@ -101,6 +101,11 @@ export const hasilSoal = pgTable(
     // Salinan data bab saat set dibuat (langkah 8), supaya set tetap utuh walau materi guru diubah/dihapus.
     // Kosong untuk set lama → pakai DAFTAR_BAB[babId].
     bab: jsonb("bab"),
+    // Nama set buatan guru (riwayat, judul halaman hasil, nama file Word). Kosong → judul bab.
+    nama: text("nama"),
+    // Dihapus guru (hapus lunak): tidak tampil dan tidak bisa dibuka siapa pun, tetapi tetap dihitung di jatah harian
+    // (supaya hapus tidak mengembalikan jatah) dan bisa dipulihkan admin lewat database (dihapus = null).
+    dihapus: timestamp("dihapus", { withTimezone: true }),
   },
   (t) => [index("hasil_soal_guru_idx").on(t.guruId, t.dibuat)],
 );

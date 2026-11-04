@@ -101,6 +101,7 @@ export function bersihkanIdentitas(x: unknown): Identitas {
 
 export const MAKS_CATATAN = 500;
 export const MAKS_INSTRUKSI = 300;
+export const MAKS_NAMA_SET = 80;
 
 /** Tulisan guru untuk AI: dirapikan, dipotong, dan tanda """ dibuang supaya tidak keluar dari kutipan. */
 const bersihkanKutipan = (s: unknown, maks: number) => String(s ?? "").replace(/"{3,}/g, '"').trim().slice(0, maks);

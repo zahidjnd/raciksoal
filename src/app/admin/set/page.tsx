@@ -28,6 +28,7 @@ export default async function SemuaSet() {
       guru: pengguna.name,
       jumlahSoal: sql<number>`coalesce(jsonb_array_length(${hasilSoal.soal}), 0)::int`,
       cadangan: sql<number>`coalesce(jsonb_array_length(${hasilSoal.info} -> 'catatan'), 0)::int`,
+      dihapus: hasilSoal.dihapus,
     })
     .from(hasilSoal)
     .leftJoin(pengguna, eq(pengguna.id, hasilSoal.guruId))
@@ -62,6 +63,8 @@ export default async function SemuaSet() {
                 {!!s.cadangan && <span className="ml-1 rounded bg-peringatan-muda px-1 text-peringatan">cadangan dipakai</span>}
                 {s.status === "gagal" && <span className="ml-1 rounded bg-bahaya-muda px-1 text-bahaya">gagal: {s.pesan?.slice(0, 160)}</span>}
                 {s.status === "proses" && <span className="ml-1 rounded bg-peringatan-muda px-1">sedang dibuat</span>}
+                {/* Set terhapus tidak bisa dibuka lagi; pulihkan lewat database: dihapus = null. */}
+                {s.dihapus && <span className="ml-1 rounded bg-krem-sorot px-1">dihapus guru</span>}
               </p>
             </Link>
           );

@@ -4,7 +4,7 @@ import { and, eq, gte, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { hasilSoal } from "@/db/schema";
 import { daftarModel, tanyaAI } from "@/lib/ai";
-import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatPermintaanKisi, buatSistem, buatAnalisaMateri, bersihkanIdentitas, rencanaGrup, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
+import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatPermintaanKisi, buatSistem, buatAnalisaMateri, bersihkanIdentitas, rencanaGrup, MAKS_NAMA_SET, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { BATAS_MATERI, susunDraf, terapkanAnalisa } from "@/lib/materi";
 import { bersihkanTanggapan, gabungBab, identitasBab, KELAS, LEVEL, pemeriksaArab, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, terapkanBobot, type Bab, type BarisKisi, type Soal } from "@/lib/soal";
 import { babDariSet, babMilik, daftarBabMilik } from "@/lib/bab";
@@ -221,7 +221,7 @@ async function ambilSet(id: number, no: number) {
   if (!saya) return SESI_HABIS;
   const [h] = await db.select().from(hasilSoal).where(eq(hasilSoal.id, Number(id)));
   // Set milik guru lain dijawab "tidak ditemukan", supaya keberadaannya pun tidak bocor.
-  if (!h || !bolehAkses(h.guruId, saya) || h.status !== "selesai") return "Set soal tidak ditemukan atau belum selesai.";
+  if (!h || h.dihapus || !bolehAkses(h.guruId, saya) || h.status !== "selesai") return "Set soal tidak ditemukan atau belum selesai.";
   const soal = h.soal as Soal[];
   const bab = babDariSet(h);
   if (!Number.isInteger(no) || no < 0 || no >= soal.length || !bab) return "Nomor soal tidak valid.";
@@ -366,11 +366,36 @@ export async function analisaMateri(input: { mapel: string; kelas: string; parag
 export async function ubahIdentitas(id: number, identitas: Identitas) {
   const saya = await penggunaSaatIni();
   if (!saya) return { ok: false as const, pesan: SESI_HABIS };
-  const [h] = await db.select({ guruId: hasilSoal.guruId, pengaturan: hasilSoal.pengaturan }).from(hasilSoal).where(eq(hasilSoal.id, Number(id)));
-  if (!h || !bolehAkses(h.guruId, saya)) return { ok: false as const, pesan: "Set soal tidak ditemukan." };
+  const [h] = await db.select({ guruId: hasilSoal.guruId, pengaturan: hasilSoal.pengaturan, dihapus: hasilSoal.dihapus }).from(hasilSoal).where(eq(hasilSoal.id, Number(id)));
+  if (!h || h.dihapus || !bolehAkses(h.guruId, saya)) return { ok: false as const, pesan: "Set soal tidak ditemukan." };
   const baru = bersihkanIdentitas(identitas);
   await db.update(hasilSoal).set({ pengaturan: { ...(h.pengaturan as Pengaturan), identitas: baru } }).where(eq(hasilSoal.id, Number(id)));
   return { ok: true as const, identitas: baru };
+}
+
+/** Ganti nama set (tampil di riwayat, judul hasil, nama file Word). Kosong = kembali ke judul bab. Pemilik/admin saja. */
+export async function ubahNamaSet(id: number, namaMentah: string) {
+  const saya = await penggunaSaatIni();
+  if (!saya) return { ok: false as const, pesan: SESI_HABIS };
+  const [h] = await db.select({ guruId: hasilSoal.guruId, dihapus: hasilSoal.dihapus }).from(hasilSoal).where(eq(hasilSoal.id, Number(id)));
+  if (!h || h.dihapus || !bolehAkses(h.guruId, saya)) return { ok: false as const, pesan: "Set soal tidak ditemukan." };
+  const nama = String(namaMentah ?? "").replace(/\s+/g, " ").trim().slice(0, MAKS_NAMA_SET) || null;
+  await db.update(hasilSoal).set({ nama }).where(eq(hasilSoal.id, Number(id)));
+  return { ok: true as const, nama };
+}
+
+/**
+ * Hapus set (hapus lunak, kolom `dihapus`): hilang dari riwayat dan tidak bisa dibuka lagi, tetapi tetap dihitung di
+ * jatah harian. Set yang masih diproses tidak boleh dihapus (pembuatannya masih menulis ke baris itu). Pemilik/admin saja.
+ */
+export async function hapusSet(id: number) {
+  const saya = await penggunaSaatIni();
+  if (!saya) return { ok: false as const, pesan: SESI_HABIS };
+  const [h] = await db.select({ guruId: hasilSoal.guruId, dihapus: hasilSoal.dihapus, status: hasilSoal.status }).from(hasilSoal).where(eq(hasilSoal.id, Number(id)));
+  if (!h || h.dihapus || !bolehAkses(h.guruId, saya)) return { ok: false as const, pesan: "Set soal tidak ditemukan." };
+  if (h.status === "proses") return { ok: false as const, pesan: "Set masih dibuat. Tunggu sampai selesai, lalu hapus." };
+  await db.update(hasilSoal).set({ dihapus: sql`now()` }).where(eq(hasilSoal.id, Number(id)));
+  return { ok: true as const };
 }
 
 /**
@@ -381,12 +406,13 @@ export async function cekHasil(id: number, denganBab = true) {
   const saya = await penggunaSaatIni();
   if (!saya) return null;
   const [h] = await db
-    .select({ guruId: hasilSoal.guruId, status: hasilSoal.status, soal: hasilSoal.soal, kisi: hasilSoal.kisi, bab: hasilSoal.bab, pesan: hasilSoal.pesan, model: hasilSoal.model, babId: hasilSoal.babId, dibuat: hasilSoal.dibuat, info: hasilSoal.info, pengaturan: hasilSoal.pengaturan })
+    .select({ guruId: hasilSoal.guruId, dihapus: hasilSoal.dihapus, nama: hasilSoal.nama, status: hasilSoal.status, soal: hasilSoal.soal, kisi: hasilSoal.kisi, bab: hasilSoal.bab, pesan: hasilSoal.pesan, model: hasilSoal.model, babId: hasilSoal.babId, dibuat: hasilSoal.dibuat, info: hasilSoal.info, pengaturan: hasilSoal.pengaturan })
     .from(hasilSoal)
     .where(eq(hasilSoal.id, Number(id)));
-  if (!h || !bolehAkses(h.guruId, saya)) return null;
-  const { guruId, pengaturan, ...isi } = h; // id pemilik tidak perlu dikirim ke browser
+  if (!h || h.dihapus || !bolehAkses(h.guruId, saya)) return null;
+  const { guruId, dihapus, pengaturan, ...isi } = h; // id pemilik tidak perlu dikirim ke browser
   void guruId;
+  void dihapus;
   const soal = h.soal as Soal[] | null;
   const kisi = h.kisi as BarisKisi[] | null;
   // Catatan guru + tanggapan AI atasnya (ATURAN-SOAL.md bagian 6), untuk guru maupun admin.

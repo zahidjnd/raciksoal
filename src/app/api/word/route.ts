@@ -24,7 +24,7 @@ export async function GET(req: Request) {
 
   const [h] = Number.isInteger(id) ? await db.select().from(hasilSoal).where(eq(hasilSoal.id, id)) : [];
   const bab = h && babDariSet(h);
-  if (!h || !bolehAkses(h.guruId, saya) || h.status !== "selesai" || !bab) {
+  if (!h || h.dihapus || !bolehAkses(h.guruId, saya) || h.status !== "selesai" || !bab) {
     return new Response("Set soal tidak ditemukan atau belum selesai.", { status: 404 });
   }
 
@@ -37,7 +37,7 @@ export async function GET(req: Request) {
       : jenis === "kunci"
         ? await buatWordKunci(h.soal as Soal[], bab, p, h.dibuat)
         : await buatWordSoal(h.soal as Soal[], bab, p, h.dibuat, await ambilNamaMadrasah());
-  const nama = `${NAMA_FILE[jenis]} ${namaTujuan(p.tujuan)} ${bab.judul.split(":")[0]} (set ${id}).docx`;
+  const nama = `${NAMA_FILE[jenis]} ${h.nama ?? `${namaTujuan(p.tujuan)} ${bab.judul.split(":")[0]}`} (set ${id}).docx`;
 
   return new Response(new Uint8Array(isi), {
     headers: {
