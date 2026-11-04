@@ -7,32 +7,30 @@ import { db } from "@/db";
 import { hasilSoal, pengguna } from "@/db/schema";
 import { emailDariUsername, rapikanUsername } from "@/lib/akses";
 import { auth } from "@/lib/auth";
+import { buatPembatas, ipDari } from "@/lib/pembatas";
 
 type Hasil = { pesan: string } | null;
 
-// ponytail: pembatas percobaan disimpan di memori (hilang saat restart), cukup untuk satu madrasah.
-// Kunci per nama pengguna: 5 kali salah → dikunci 15 menit.
-const gagal = new Map<string, { kali: number; sampai: number }>();
-const BATAS_GAGAL = 5;
-const LAMA_KUNCI = 15 * 60 * 1000;
+// Pembatas percobaan salah: per perangkat + nama pengguna, plus batas longgar per nama (src/lib/pembatas.ts, dites).
+const pembatas = buatPembatas();
 
 export async function masuk(_: Hasil, form: FormData): Promise<Hasil> {
   const username = rapikanUsername(String(form.get("username") ?? ""));
   const password = String(form.get("password") ?? "");
   if (!username || !password) return { pesan: "Isi nama pengguna dan kata sandi." };
 
-  const catatan = gagal.get(username);
-  if (catatan && catatan.kali >= BATAS_GAGAL && catatan.sampai > Date.now()) {
+  const h = await headers();
+  const ip = ipDari(h.get("x-forwarded-for"), h.get("x-real-ip") ?? "?");
+  if (pembatas.terkunci(ip, username)) {
     return { pesan: "Terlalu banyak percobaan salah. Coba lagi 15 menit lagi, atau minta admin mereset kata sandi." };
   }
   try {
-    await auth.api.signInUsername({ body: { username, password }, headers: await headers() });
+    await auth.api.signInUsername({ body: { username, password }, headers: h });
   } catch {
-    const kali = (catatan && catatan.sampai > Date.now() ? catatan.kali : 0) + 1;
-    gagal.set(username, { kali, sampai: Date.now() + LAMA_KUNCI });
+    pembatas.gagal(ip, username);
     return { pesan: "Nama pengguna atau kata sandi salah, atau akun dinonaktifkan." };
   }
-  gagal.delete(username);
+  pembatas.berhasil(ip, username);
   redirect("/");
 }
 
