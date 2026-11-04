@@ -127,9 +127,9 @@ export async function Kerangka({ p, lebar = false, setAktif = null, children }: 
       <LaciSidebar>
         {/* Atas (diam): Set baru selalu terlihat. */}
         <div className="shrink-0 px-3 pb-2 text-sm">
-          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- sengaja muat penuh, lihat komentar di atas */}
           {/* Tombol biasa, bukan penanda halaman (pilihan pemilik 2026-11-04): latar polos, "+" di lingkaran hijau
               seperti "New chat" claude.ai; tidak pernah ditandai "sedang dibuka". */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- sengaja muat penuh, lihat komentar di atas */}
           <a href="/" className={`${tautan.replace("block", "flex")} items-center gap-2 font-semibold`}>
             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-hijau text-white" aria-hidden>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
