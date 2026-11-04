@@ -82,6 +82,10 @@ export function semesterDari(tanggal: Date) {
   return bulan >= 7 ? { semester: "Ganjil", tahun: `${tahun}/${tahun + 1}` } : { semester: "Genap", tahun: `${tahun - 1}/${tahun}` };
 }
 
+/** "2026-11-04" → "Rabu, 4 November 2026" (kop Word dan form identitas). Kosong → "". */
+export const hariTanggal = (t?: string) =>
+  t ? new Date(`${t}T00:00:00Z`).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }) : "";
+
 /** Rapikan identitas dari browser; isian tidak sah dibuang (kembali ke bawaan). */
 export function bersihkanIdentitas(x: unknown): Identitas {
   const i = (x ?? {}) as Record<string, unknown>;

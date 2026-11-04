@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { ambilDaftarBab, ambilDaftarModel, ambilJatah, cekHasil, mulaiBuatSoal, ubahIdentitas } from "./actions";
 import { simpanMateri } from "./materi/actions";
-import { KartuSoal, Teks } from "./kartu-soal";
+import { KartuSoal, Teks, TeksPeringatan } from "./kartu-soal";
 import { KotakMateri, type MateriLama } from "./kotak-materi";
-import { FormIdentitas } from "./form-identitas";
+import { FormIdentitas, ringkasIdentitas } from "./form-identitas";
 import { StepAngka } from "./step-angka";
 import { skorOtomatis } from "@/lib/skor";
 import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_SOAL, NAMA_BENTUK, NAMA_LEVEL_TKA, namaTujuan, semesterDari, TKA, TUJUAN, WAKTU_BAWAAN, type Identitas, type Pengaturan } from "@/lib/prompt";
@@ -82,7 +82,7 @@ function TabelKisi({ kisi }: { kisi: BarisKisi[] }) {
                 <td className="border p-2 whitespace-nowrap">{k.tp}</td>
                 <td className="border p-2"><Teks teks={k.materi} /></td>
                 <td className="border p-2">
-                  {k.peringatan?.map((w, i) => <span key={i} className="block font-semibold text-bahaya">⚠️ {w}</span>)}
+                  {k.peringatan?.map((w, i) => <span key={i} className="block font-semibold text-bahaya"><TeksPeringatan w={w} /></span>)}
                   <Teks teks={k.indikator} />
                   <span className="block text-xs text-pudar">Stimulus: <Teks teks={k.stimulus} /></span>
                 </td>
@@ -266,8 +266,18 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
           </div>
 
           <PilihMapel mapel={mapel} kelas={kelas} ubah={pilihMapel} />
-          {/* Identitas ujian (kop Word) selalu tampil di bawah mapel & kelas (pilihan pemilik), terisi otomatis. */}
-          <FormIdentitas nilai={p.identitas ?? {}} ubah={(identitas) => setP({ ...p, identitas })} />
+          {/* Identitas ujian (kop Word) di bawah mapel & kelas (pilihan pemilik), terisi otomatis. Dilipat supaya
+              di HP guru cepat sampai ke Materi (audit 2026-11-04); ringkasannya tetap terlihat. */}
+          <details className="rounded-xl border bg-kartu px-3 text-sm">
+            <summary className="flex min-h-10 cursor-pointer items-center gap-2 py-2 max-md:min-h-11">
+              <span className="shrink-0 font-semibold">Kop ujian</span>
+              <span className="min-w-0 truncate text-pudar">{ringkasIdentitas(p.identitas ?? {})}</span>
+              <span className="ml-auto text-pudar" aria-hidden>▾</span>
+            </summary>
+            <div className="pb-3">
+              <FormIdentitas nilai={p.identitas ?? {}} ubah={(identitas) => setP({ ...p, identitas })} />
+            </div>
+          </details>
           <KotakMateri mapel={mapel} kelas={kelas} daftar={daftarBab} pilihan={pilihan} setPilihan={setPilihan} draf={draf} setDraf={setDraf} />
 
           {/* Kartu jenis soal: pilihan setara, jadi sengaja berbentuk sama. Memilih kartu ikut mengatur komposisi level. */}
@@ -515,13 +525,14 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
           )}
 
           {/* Deret nomor: lompat ke soal; merah = ditandai penjaga ayat, wajib dicek. */}
-          <nav aria-label="Lompat ke nomor soal" className="flex flex-wrap gap-1">
+          {/* HP: satu baris yang bisa digeser (dulu 4 baris untuk 25 soal); laptop: membungkus. */}
+          <nav aria-label="Lompat ke nomor soal" className="-mx-4 flex gap-1 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:overflow-visible md:px-0">
             {soal.map((s, i) => (
               <button
                 key={i}
                 onClick={() => lompat(i + 1)}
                 title={s.peringatan?.length ? `Soal ${i + 1} ditandai, wajib dicek` : `Soal ${i + 1}`}
-                className={`h-11 w-11 rounded-lg border text-sm md:h-8 md:w-8 ${s.peringatan?.length ? "border-bahaya-garis bg-bahaya-muda font-semibold text-bahaya" : "bg-kartu hover:bg-krem"}`}
+                className={`h-11 w-11 shrink-0 rounded-lg border text-sm md:h-8 md:w-8 ${s.peringatan?.length ? "border-bahaya-garis bg-bahaya-muda font-semibold text-bahaya" : "bg-kartu hover:bg-krem"}`}
               >
                 {i + 1}
               </button>

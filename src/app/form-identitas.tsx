@@ -1,7 +1,7 @@
 "use client";
 
 import { StepAngka } from "./step-angka";
-import { semesterDari, WAKTU_BAWAAN, type Identitas } from "@/lib/prompt";
+import { hariTanggal, semesterDari, WAKTU_BAWAAN, type Identitas } from "@/lib/prompt";
 
 /**
  * Identitas ujian untuk kop Word: semester, tahun pelajaran, hari/tanggal, waktu. Kosong → bawaan (semester & tahun
@@ -26,6 +26,8 @@ export function FormIdentitas({ nilai, ubah }: { nilai: Identitas; ubah: (i: Ide
       <label className="block">
         Hari, tanggal
         <input type="date" className={kotak} value={nilai.tanggal ?? ""} onChange={(e) => ubah({ ...nilai, tanggal: e.target.value })} />
+        {/* Tampilan kotak tanggal mengikuti bahasa browser (bisa bulan/tanggal/tahun); tulis ulang gaya Indonesia. */}
+        <span className="mt-0.5 block text-xs text-pudar">{hariTanggal(nilai.tanggal) || "Boleh dikosongkan"}</span>
       </label>
       <label className="block">
         Waktu (menit)
@@ -33,4 +35,10 @@ export function FormIdentitas({ nilai, ubah }: { nilai: Identitas; ubah: (i: Ide
       </label>
     </div>
   );
+}
+
+/** Ringkasan satu baris untuk judul lipatan: "Ganjil 2026/2027 · Rabu, 4 November 2026 · 90 menit". */
+export function ringkasIdentitas(i: Identitas) {
+  const awal = semesterDari(new Date());
+  return [`${i.semester ?? awal.semester} ${i.tahun ?? awal.tahun}`, hariTanggal(i.tanggal) || "tanggal kosong", `${i.waktu ?? WAKTU_BAWAAN} menit`].join(" · ");
 }

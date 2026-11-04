@@ -20,7 +20,7 @@ import {
   WidthType,
   type ParagraphChild,
 } from "docx";
-import { NAMA_BENTUK, semesterDari, WAKTU_BAWAAN, type Pengaturan } from "./prompt";
+import { hariTanggal, NAMA_BENTUK, semesterDari, WAKTU_BAWAAN, type Pengaturan } from "./prompt";
 import { identitasBab, JUMLAH_PREMIS, kategoriBaru, paragrafArab, pecahBaris, POLA_ARAB, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
 
 const PERINGATAN = "Soal dibuat AI, wajib diperiksa guru sebelum dipakai.";
@@ -132,9 +132,6 @@ function judulAsesmen(p: Pengaturan, tanggal: Date) {
 }
 
 /** "2026-12-07" → "Senin, 7 Desember 2026"; kosong → "" (diisi tangan di kertas). */
-const hariTanggal = (t?: string) =>
-  t ? new Date(`${t}T00:00:00Z`).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }) : "";
-
 /** Urutan bentuk yang ada di set, dengan nomor soal global (1, 2, 3, ...). */
 function kelompok(soal: Soal[]) {
   return (Object.keys(NAMA_BENTUK) as Bentuk[])

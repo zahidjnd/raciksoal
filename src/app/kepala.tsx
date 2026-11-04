@@ -140,11 +140,14 @@ export async function Kerangka({ p, lebar = false, children }: { p: Pengguna; le
           {riwayat.length === 0 && <p className="px-3 text-xs text-pudar">Belum ada set soal.</p>}
           {riwayat.map((s) => {
             const pg = s.pengaturan as Pengaturan;
+            const label = `${namaTujuan(pg.tujuan)} · ${judulPendek(s.judulBab, s.babId)}`;
+            // Baris kedua (tanggal · jumlah soal): set dengan judul sama bisa dibedakan (audit 2026-11-04).
+            const tanggal = s.dibuat.toLocaleDateString("id-ID", { day: "numeric", month: "short", timeZone: "Asia/Jakarta" });
+            const keterangan = s.status === "gagal" ? "gagal" : s.status === "proses" ? "sedang dibuat" : `${s.jumlahSoal} soal`;
             return (
-              <a key={s.id} href={`/?id=${s.id}`} className={tautan} title={`set ${s.id}`}>
-                {s.status === "gagal" && "⚠️ "}
-                {namaTujuan(pg.tujuan)} · {judulPendek(s.judulBab, s.babId)}
-                {s.status === "proses" && <span className="text-pudar"> (proses)</span>}
+              <a key={s.id} href={`/?id=${s.id}`} className={tautan} title={`${label} (set ${s.id})`}>
+                <span className={`block truncate ${s.status === "gagal" ? "text-bahaya" : ""}`}>{label}</span>
+                <span className="block text-xs text-pudar">{tanggal} · {keterangan}</span>
               </a>
             );
           })}

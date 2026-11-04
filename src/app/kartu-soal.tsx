@@ -23,6 +23,24 @@ export function Teks({ teks }: { teks: string }) {
 }
 
 /**
+ * Peringatan penjaga ayat ("Teks Arab tidak cocok ...: potongan1 | potongan2"): potongan Arab ditampilkan satu per
+ * baris, kanan-ke-kiri, supaya tidak bercampur dengan kalimat Indonesia. Peringatan lain tampil apa adanya.
+ */
+export function TeksPeringatan({ w }: { w: string }) {
+  const i = w.indexOf(": ");
+  const potongan = i < 0 ? [] : w.slice(i + 2).split(" | ");
+  if (!potongan.length || !potongan.every((p) => new RegExp(POLA_ARAB).test(p))) return <>⚠️ {w}</>;
+  return (
+    <>
+      ⚠️ {w.slice(0, i)}:
+      {potongan.map((p, j) => (
+        <span key={j} dir="rtl" lang="ar" className="mt-1 block text-right font-arab text-xl font-normal">{p}</span>
+      ))}
+    </>
+  );
+}
+
+/**
  * Teks soal berbaris (dialog/hiwar, daftar, puisi). Satu baris: sama seperti `Teks`. Beberapa baris: baris pertama
  * tetap sebaris dengan nomor soal; baris berikutnya masing-masing satu blok, dan baris yang hampir seluruhnya Arab
  * menjadi blok kanan-ke-kiri rata kanan (supaya titik dua, nomor rumpang, dan angka urut benar).
@@ -163,7 +181,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
     )}
     <article id={`soal-${no}`} className={`scroll-mt-4 space-y-2 rounded-xl border p-4 ${s.peringatan?.length ? "border-bahaya-garis bg-bahaya-muda" : "bg-kartu"} ${mengganti ? "opacity-50" : ""}`}>
       {s.peringatan?.map((w, i) => (
-        <p key={i} className="text-sm font-semibold text-bahaya">⚠️ {w}</p>
+        <p key={i} className="text-sm font-semibold text-bahaya"><TeksPeringatan w={w} /></p>
       ))}
       <p>
         <span className="font-semibold">{no}.</span> <TeksBaris teks={s.pertanyaan} />
@@ -259,9 +277,22 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan }: FormProps) {
     setMenyimpan(false);
   }
 
+  // Simpan/Batal juga di atas: form ini tinggi, di HP tombol bawah jauh dari pandangan (audit 2026-11-04).
+  const tombolSimpan = (
+    <div className="flex flex-wrap gap-2">
+      <button className="rounded-lg bg-hijau h-10 px-4 font-semibold text-white disabled:opacity-50" disabled={menyimpan} onClick={simpan}>
+        {menyimpan ? "Menyimpan..." : "Simpan"}
+      </button>
+      <button className="rounded-lg border h-10 px-4" disabled={menyimpan} onClick={onBatal}>Batal</button>
+      {error && <p className="self-center text-bahaya">{error}</p>}
+    </div>
+  );
   return (
     <article className="space-y-3 rounded-lg border-2 border-hijau p-4 text-sm">
-      <p className="font-semibold">Edit soal nomor {no}</p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="font-semibold">Edit soal nomor {no}</p>
+        {tombolSimpan}
+      </div>
 
       {s.grup && s.wacana !== undefined && (
         <label className="block">
@@ -440,13 +471,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan }: FormProps) {
         )}
       </div>
 
-      <div className="flex gap-2">
-        <button className="rounded-lg bg-hijau h-10 px-4 font-semibold text-white disabled:opacity-50" disabled={menyimpan} onClick={simpan}>
-          {menyimpan ? "Menyimpan..." : "Simpan"}
-        </button>
-        <button className="rounded-lg border h-10 px-4" disabled={menyimpan} onClick={onBatal}>Batal</button>
-      </div>
-      {error && <p className="text-bahaya">{error}</p>}
+      {tombolSimpan}
     </article>
   );
 }
