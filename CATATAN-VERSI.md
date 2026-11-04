@@ -23,6 +23,12 @@ hadis karangan dalam mode Bahasa Arab belum bisa dideteksi otomatis (hanya diceg
 
 ---
 
+## 0.11.1 — 4 November 2026
+- Sidebar menandai **halaman yang sedang dibuka**: riwayat set yang sedang dilihat (latar sorot + judul tebal), juga
+  menu admin Semua set, Kelola guru, dan Pengaturan. Jadi selalu terlihat sedang berada di mana.
+- Tombol **Set baru** kini berlatar polos dengan tanda **+** di lingkaran hijau, supaya tidak tampak seperti "sedang dibuka".
+- Tombol **⋯** di riwayat berbentuk tombol (garis dan latar), dan tidak lagi tertinggal tampil setelah menunya ditutup.
+
 ## 0.11.0 — 4 November 2026
 Hasil audit 4 November (lihat `AUDIT-2026-11-04.md`).
 - **Ganti nama dan hapus set** lewat riwayat di sidebar, seperti claude.ai: tombol **⋯** di tiap riwayat (di laptop
