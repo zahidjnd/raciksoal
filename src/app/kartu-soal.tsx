@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { gantiSatuSoal, hapusSoal, simpanSoal, tambahSoalSerupa } from "./actions";
 import { StepAngka } from "./step-angka";
 import { kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, pecahBaris, POLA_ARAB, type Bab, type Soal } from "@/lib/soal";
@@ -139,6 +139,13 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
   const [instruksi, setInstruksi] = useState("");
   const [lainnya, setLainnya] = useState(false); // Ganti & Ubah dilipat supaya kartu lebih lega
   const [error, setError] = useState("");
+  // Pesan berhasil sesaat ("Tersimpan ✓"), supaya guru yakin editannya masuk (audit 2026-11-04).
+  const [berhasil, setBerhasil] = useState("");
+  useEffect(() => {
+    if (!berhasil) return;
+    const t = setTimeout(() => setBerhasil(""), 4000);
+    return () => clearTimeout(t);
+  }, [berhasil]);
 
   async function ganti(jenis: "ganti" | "ubah") {
     if (jenis === "ganti" && !confirm(`Ganti soal nomor ${no} dengan soal baru dari AI? Soal lama akan hilang.`)) return;
@@ -151,6 +158,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
     const isi = (x: Soal) => JSON.stringify([x.pertanyaan, x.pilihan, x.pernyataan, x.kunci, x.pembahasan, x.dalil_id]);
     if (jenis === "ubah" && isi(r.soal) === isi(s))
       setError("AI tidak mengubah soal ini. Mungkin instruksinya bertentangan dengan aturan (mis. meminta ayat/hadis di luar data bab). Coba tulis instruksi lain.");
+    else setBerhasil(jenis === "ubah" ? "Soal sudah diubah ✓" : "Soal sudah diganti ✓");
     onUbah(r.soal);
     setInstruksi("");
   }
@@ -180,6 +188,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
           if (!r.ok) return r.pesan;
           onUbah(r.soal);
           setEdit(false);
+          setBerhasil("Tersimpan ✓");
         }}
       />
     );
@@ -281,6 +290,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
       </>
       )}
       {error && <p className="text-sm text-bahaya">{error}</p>}
+      {berhasil && <p role="status" className="text-sm font-semibold text-hijau-teks">{berhasil}</p>}
     </article>
     </>
   );
