@@ -82,7 +82,7 @@ export function BarisRiwayat({ id, label, nama, keterangan, gagal, kelas }: { id
     <div ref={kotak} className={`group relative shrink-0 ${sibuk ? "opacity-50" : ""}`}>
       <a
         href={`/?id=${id}`}
-        className={`${kelas} pr-10`}
+        className={`${kelas} pr-11 ${menu ? "bg-krem-sorot" : ""}`} // baris tetap tersorot selama menunya terbuka
         title={`${label} (set ${id})`}
         onContextMenu={(e) => {
           e.preventDefault();
@@ -98,7 +98,10 @@ export function BarisRiwayat({ id, label, nama, keterangan, gagal, kelas }: { id
         aria-expanded={menu}
         disabled={sibuk}
         onClick={() => setMenu(!menu)}
-        className={`absolute top-1/2 right-1 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-pudar hover:bg-krem-tua hover:text-tinta focus:opacity-100 max-md:h-11 max-md:w-11 md:opacity-0 md:group-hover:opacity-100 ${menu ? "md:opacity-100" : ""}`}
+        // Bentuk tombol (garis + latar kartu) supaya jelas bisa diklik; hover/terbuka = latar sorot (tertekan).
+        // focus-visible (bukan focus): hanya fokus dari keyboard yang menahan ⋯ tetap tampil; setelah diklik
+        // mouse lalu menu ditutup, ⋯ hilang begitu kursor pergi (dulu "nyangkut" sampai klik tempat lain).
+        className={`absolute top-1/2 right-1.5 flex h-7 w-7 -translate-y-1/2 cursor-pointer items-center justify-center rounded-md border border-batas text-pudar shadow-sm hover:bg-krem-sorot hover:text-tinta focus-visible:opacity-100 max-md:h-10 max-md:w-10 md:opacity-0 md:group-hover:opacity-100 ${menu ? "bg-krem-sorot text-tinta md:opacity-100" : "bg-kartu"}`}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
           <circle cx="5" cy="12" r="1.8" />
