@@ -23,6 +23,16 @@ hadis karangan dalam mode Bahasa Arab belum bisa dideteksi otomatis (hanya diceg
 
 ---
 
+## 0.12.0 — 4 November 2026
+Persiapan uji coba guru.
+- **Halaman Panduan** (tautan di sidebar untuk semua akun): cara membuat set, memeriksa dan memperbaiki soal, mengunduh
+  Word, riwayat, aturan penting, dan apa yang dilakukan kalau ada masalah.
+- **Kelola guru** (admin) menampilkan pemakaian: set hari ini dari jatah 10, jumlah set dan token AI 30 hari, serta
+  tanggal set terakhir tiap akun; di atasnya total pemakaian seluruh web hari ini.
+- Setelah **Edit** soal disimpan muncul tulisan hijau **"Tersimpan ✓"** (juga setelah Ganti/Ubah soal berhasil).
+- Keamanan masuk: salah kata sandi 5 kali kini hanya mengunci **perangkat itu** selama 15 menit, jadi orang lain tidak
+  bisa mengunci akun guru. Tebakan dari banyak perangkat tetap dibatasi (30 kali per nama pengguna).
+
 ## 0.11.1 — 4 November 2026
 - Sidebar menandai **halaman yang sedang dibuka**: riwayat set yang sedang dilihat (latar sorot + judul tebal), juga
   menu admin Semua set, Kelola guru, dan Pengaturan. Jadi selalu terlihat sedang berada di mana.
