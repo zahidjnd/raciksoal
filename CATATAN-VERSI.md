@@ -23,6 +23,26 @@ hadis karangan dalam mode Bahasa Arab belum bisa dideteksi otomatis (hanya diceg
 
 ---
 
+## 0.11.0 — 4 November 2026
+Hasil audit 4 November (lihat `AUDIT-2026-11-04.md`).
+- **Ganti nama dan hapus set** lewat riwayat di sidebar, seperti claude.ai: tombol **⋯** di tiap riwayat (di laptop
+  muncul saat kursor diarahkan, di HP selalu terlihat) atau **klik kanan**. Ganti nama langsung di barisnya (Enter =
+  simpan, Esc = batal). Set yang dihapus hilang dari riwayat dan tidak bisa dibuka lagi, tetapi **jatah hari ini tidak
+  kembali**; admin masih melihatnya di Semua set dengan label "dihapus guru".
+- **Tambah dan hapus soal** di dalam set (tombol **Lainnya** di kartu soal): "Tambah soal serupa di bawahnya" (dibuat AI,
+  bentuk/level/TP sama, ikut batas 30x per set) dan "Hapus soal ini". Nomor soal dan kisi-kisi ikut menyesuaikan.
+- Tampilan HP lebih ringkas: **kop ujian** (semester, tahun, tanggal, waktu) dilipat jadi satu baris ringkasan;
+  **nomor soal** di halaman hasil jadi satu baris yang bisa digeser; tanggal ujian ditulis gaya Indonesia
+  ("Senin, 7 Desember 2026").
+- Peringatan "Teks Arab tidak cocok" menampilkan potongan Arab satu per baris, kanan ke kiri.
+- Form Edit soal: tombol **Simpan/Batal** juga ada di atas.
+- Riwayat di sidebar menampilkan **tanggal dan jumlah soal**, supaya set yang judulnya sama bisa dibedakan.
+- Perbaikan di balik layar:
+  - Editan guru tidak lagi hilang bila bersamaan dengan "Ganti/Ubah soal" yang sedang menunggu AI.
+  - Jatah 10 set/hari tidak bisa terlewati dengan klik ganda; maksimal 2 set dibuat bersamaan per guru.
+  - Pembuatan soal punya batas waktu total 10 menit; lewat dari itu set ditandai gagal (jatah kembali), guru tidak
+    menunggu tanpa akhir.
+
 ## 0.10.2 — 24 Oktober 2026
 - **Skor per soal otomatis.** Guru cukup mengatur jumlah soal per jenis; aplikasi menghitung skor tiap soal (bilangan
   bulat) mengikuti perbandingan bawaan AFTS supaya total **100**, dan memperbaruinya setiap jumlah berubah. Skor yang
