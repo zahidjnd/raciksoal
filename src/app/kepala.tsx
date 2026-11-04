@@ -10,7 +10,7 @@ import { judulPendek } from "@/lib/bab";
 import { namaTujuan, type Pengaturan } from "@/lib/prompt";
 import { keluar } from "./masuk/actions";
 import { LaciSidebar } from "./laci-sidebar";
-import { BarisRiwayat } from "./baris-riwayat";
+import { BarisRiwayat, TautanMenu } from "./baris-riwayat";
 import { TombolTema } from "./tombol-tema";
 import paket from "../../package.json";
 
@@ -107,7 +107,8 @@ const tautan = "block shrink-0 truncate rounded-lg px-3 py-3 text-tinta hover:bg
  * menu + riwayat di tengah digulir); di HP menjadi laci dari kiri (LaciSidebar). Isi halaman di sebelah kanan.
  */
 // lebar: halaman Buat Soal & hasil memakai 1024px (pilihan pemilik 2026-10-20, layar lebar terlihat kosong); halaman lain 768px.
-export async function Kerangka({ p, lebar = false, children }: { p: Pengguna; lebar?: boolean; children: React.ReactNode }) {
+// setAktif: nomor set yang sedang dibuka (?id=, dari page.tsx) → barisnya di riwayat ditandai "sedang dibuka".
+export async function Kerangka({ p, lebar = false, setAktif = null, children }: { p: Pengguna; lebar?: boolean; setAktif?: number | null; children: React.ReactNode }) {
   const admin = p.peran === "admin";
   const riwayat = await ambilRiwayat(p.id, BATAS_SIDEBAR);
   const tema = (await cookies()).get("tema")?.value === "gelap" ? "gelap" : "terang";
@@ -127,15 +128,23 @@ export async function Kerangka({ p, lebar = false, children }: { p: Pengguna; le
         {/* Atas (diam): Set baru selalu terlihat. */}
         <div className="shrink-0 px-3 pb-2 text-sm">
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- sengaja muat penuh, lihat komentar di atas */}
-          <a href="/" className={`${tautan} bg-krem-sorot font-semibold`}>
-            <span className="mr-2 font-bold text-hijau-teks">+</span>Set baru
+          {/* Tombol biasa, bukan penanda halaman (pilihan pemilik 2026-11-04): latar polos, "+" di lingkaran hijau
+              seperti "New chat" claude.ai; tidak pernah ditandai "sedang dibuka". */}
+          <a href="/" className={`${tautan.replace("block", "flex")} items-center gap-2 font-semibold`}>
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-hijau text-white" aria-hidden>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+            </span>
+            Set baru
           </a>
         </div>
 
         {/* Tengah (digulir): menu & riwayat. */}
         <nav aria-label="Menu dan riwayat" className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-3 text-sm">
+          {/* TautanMenu: menu halaman yang sedang dibuka ditandai (komponen browser, membaca alamat halaman). */}
           {menu.map((m) => (
-            <Link key={m.href} href={m.href} className={tautan}>{m.label}</Link>
+            <TautanMenu key={m.href} href={m.href} kelas={tautan}>{m.label}</TautanMenu>
           ))}
 
           <p className="shrink-0 px-3 pt-5 pb-1 text-xs text-pudar">Riwayat</p>
@@ -147,7 +156,7 @@ export async function Kerangka({ p, lebar = false, children }: { p: Pengguna; le
             const tanggal = s.dibuat.toLocaleDateString("id-ID", { day: "numeric", month: "short", timeZone: "Asia/Jakarta" });
             const keterangan = s.status === "gagal" ? "gagal" : s.status === "proses" ? "sedang dibuat" : `${s.jumlahSoal} soal`;
             // Menu ⋯ / klik kanan (Ganti nama, Hapus) ala claude.ai: BarisRiwayat (komponen browser).
-            return <BarisRiwayat key={s.id} id={s.id} label={label} nama={s.nama} keterangan={`${tanggal} · ${keterangan}`} gagal={s.status === "gagal"} kelas={tautan} />;
+            return <BarisRiwayat key={s.id} id={s.id} label={label} nama={s.nama} keterangan={`${tanggal} · ${keterangan}`} gagal={s.status === "gagal"} aktif={s.id === setAktif} kelas={tautan} />;
           })}
           {riwayat.length === BATAS_SIDEBAR && (
             <Link href="/riwayat" className="flex min-h-11 shrink-0 items-center px-3 text-xs text-hijau-teks hover:underline md:min-h-0 md:py-1">Lihat semua riwayat</Link>

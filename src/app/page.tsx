@@ -11,7 +11,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ i
   // "Pakai materi ini lagi": ?materi=materi-3,materi-5 (kepemilikan dicek lagi di mulaiBuatSoal).
   const materi = String(q.materi ?? "").split(",").filter((m) => /^materi-\d+$/.test(m)).slice(0, 5);
   return (
-    <Kerangka p={p} lebar>
+    <Kerangka p={p} lebar setAktif={id}>
       <BuatSoal nama={p.nama} awalId={id} awalMateri={materi} />
     </Kerangka>
   );

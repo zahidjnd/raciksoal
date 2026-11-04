@@ -1,9 +1,23 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { hapusSet, ubahNamaSet } from "./actions";
 import { MAKS_NAMA_SET } from "@/lib/prompt";
+
+/** Tanda "sedang dibuka" di sidebar (riwayat & menu admin): satu baris saja yang memakainya. */
+const TANDA_AKTIF = "bg-krem-sorot font-semibold";
+
+/** Tautan menu sidebar (Semua set, Kelola guru, Pengaturan): ditandai bila alamat halaman sama dengan tautannya. */
+export function TautanMenu({ href, kelas, children }: { href: string; kelas: string; children: React.ReactNode }) {
+  const aktif = usePathname() === href;
+  return (
+    <Link href={href} className={`${kelas} ${aktif ? TANDA_AKTIF : ""}`} aria-current={aktif ? "page" : undefined}>
+      {children}
+    </Link>
+  );
+}
 
 /**
  * Satu baris riwayat di sidebar, gaya claude.ai (pilihan pemilik 2026-11-04): tombol ⋯ (muncul saat diarahkan di
@@ -11,7 +25,8 @@ import { MAKS_NAMA_SET } from "@/lib/prompt";
  * Enter atau klik di luar = simpan, Esc = batal. Pemeriksaan pemilik tetap di server (ubahNamaSet, hapusSet).
  * Tautan sengaja <a> biasa (muat penuh), lihat komentar di kepala.tsx.
  */
-export function BarisRiwayat({ id, label, nama, keterangan, gagal, kelas }: { id: number; label: string; nama: string | null; keterangan: string; gagal: boolean; kelas: string }) {
+// aktif: set ini yang sedang dibuka → latar sorot tetap + judul tebal (TANDA_AKTIF, dipakai juga menu admin).
+export function BarisRiwayat({ id, label, nama, keterangan, gagal, aktif, kelas }: { id: number; label: string; nama: string | null; keterangan: string; gagal: boolean; aktif: boolean; kelas: string }) {
   const router = useRouter();
   const [menu, setMenu] = useState(false);
   const [ketik, setKetik] = useState<string | null>(null); // null = tidak sedang mengganti nama
@@ -82,7 +97,8 @@ export function BarisRiwayat({ id, label, nama, keterangan, gagal, kelas }: { id
     <div ref={kotak} className={`group relative shrink-0 ${sibuk ? "opacity-50" : ""}`}>
       <a
         href={`/?id=${id}`}
-        className={`${kelas} pr-11 ${menu ? "bg-krem-sorot" : ""}`} // baris tetap tersorot selama menunya terbuka
+        className={`${kelas} pr-11 ${aktif ? TANDA_AKTIF : menu ? "bg-krem-sorot" : ""}`} // baris tetap tersorot selama menunya terbuka
+        aria-current={aktif ? "page" : undefined}
         title={`${label} (set ${id})`}
         onContextMenu={(e) => {
           e.preventDefault();
@@ -90,7 +106,7 @@ export function BarisRiwayat({ id, label, nama, keterangan, gagal, kelas }: { id
         }}
       >
         <span className={`block truncate ${gagal ? "text-bahaya" : ""}`}>{label}</span>
-        <span className="block text-xs text-pudar">{keterangan}</span>
+        <span className="block text-xs font-normal text-pudar">{keterangan}</span>
       </a>
       <button
         aria-label={`Pilihan untuk ${label}`}
