@@ -4,7 +4,7 @@ import { and, eq, gte, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { hasilSoal } from "@/db/schema";
 import { daftarModel, tanyaAI } from "@/lib/ai";
-import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatPermintaanKisi, buatSistem, buatAnalisaMateri, bersihkanIdentitas, rencanaGrup, MAKS_NAMA_SET, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
+import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatPermintaanKisi, buatSistem, buatAnalisaMateri, bersihkanIdentitas, rencanaGrup, MAKS_NAMA_SET, MAKS_SOAL, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { BATAS_MATERI, susunDraf, terapkanAnalisa } from "@/lib/materi";
 import { bersihkanTanggapan, gabungBab, identitasBab, KELAS, LEVEL, pemeriksaArab, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, terapkanBobot, type Bab, type BarisKisi, type Soal } from "@/lib/soal";
 import { babDariSet, babMilik, daftarBabMilik } from "@/lib/bab";
@@ -21,11 +21,18 @@ const cekAyat = (arab: string) => !!mushaf().cari(arab);
 const BATAS_PER_GURU = 10;
 const BATAS_TOTAL = 100;
 const BATAS_GANTI_PER_SET = 30;
+// Set yang sedang dibuat bersamaan: per guru (admin bebas, untuk "Bandingkan") dan seluruh web (RAM hosting 1 GB).
+const BATAS_PROSES_GURU = 2;
+const BATAS_PROSES_WEB = 10;
+// Batas waktu TOTAL (audit C3): tanpa ini, timeout per panggilan × coba ulang × model cadangan × tahap bisa
+// membuat guru menunggu puluhan menit. Lewat batas → set gagal (jatah kembali). Normal: 40 soal ±80 detik.
+const TENGGAT_SET = 10 * 60_000;
+const TENGGAT_SATU_SOAL = 4 * 60_000;
 
 /** Jumlah set hari ini (WIB, mulai 00.00) yang tidak gagal; untuk satu guru atau seluruh web. */
-async function hitungHariIni(guruId?: string) {
+async function hitungHariIni(guruId?: string, q: Pick<typeof db, "select"> = db) {
   const awalHariIni = sql`date_trunc('day', now() at time zone 'Asia/Jakarta') at time zone 'Asia/Jakarta'`;
-  const [{ n }] = await db
+  const [{ n }] = await q
     .select({ n: sql<number>`count(*)::int` })
     .from(hasilSoal)
     .where(and(gte(hasilSoal.dibuat, awalHariIni), ne(hasilSoal.status, "gagal"), guruId ? eq(hasilSoal.guruId, guruId) : undefined));
@@ -52,14 +59,19 @@ const pesanError = (e: unknown) => {
  * timeout, jawaban rusak), pindah ke model berikutnya sesuai urutan nomor di .env.
  * Mode "Bandingkan semua model" tidak memakai cadangan.
  */
-async function tanyaDenganCadangan<T>(sistem: string, pengguna: string, slotUtama: number, pakaiCadangan: boolean, ambil: (data: unknown) => T) {
+async function tanyaDenganCadangan<T>(sistem: string, pengguna: string, slotUtama: number, pakaiCadangan: boolean, ambil: (data: unknown) => T, sampai: number) {
   const semuaModel = daftarModel();
   const urutan = pakaiCadangan ? [slotUtama, ...semuaModel.map((m) => m.slot).filter((s) => s !== slotUtama)] : [slotUtama];
   const catatan: string[] = [];
   for (const slot of urutan) {
     const nama = semuaModel.find((m) => m.slot === slot)?.nama ?? `model ${slot}`;
+    // `sampai` = batas waktu total (jam). Habis → jangan coba model berikutnya.
+    if (Date.now() > sampai - 15_000) {
+      catatan.push("Batas waktu total habis, model lain tidak dicoba.");
+      break;
+    }
     try {
-      const r = await tanyaAI(sistem, pengguna, slot);
+      const r = await tanyaAI(sistem, pengguna, slot, sampai);
       if (r.terpotong) throw new Error(`AI (${nama}) gagal: jawaban terpotong karena terlalu panjang.`);
       let hasil: T;
       try {
@@ -120,20 +132,34 @@ export async function mulaiBuatSoal(input: Pengaturan) {
     const model = daftarModel().find((m) => m.slot === p.modelSlot);
     if (!model) return { ok: false as const, pesan: "Model AI tidak dikenal." };
 
-    if (saya.peran !== "admin" && (await hitungHariIni(saya.id)) >= BATAS_PER_GURU) {
-      return { ok: false as const, pesan: `Jatah ${BATAS_PER_GURU} set soal Anda hari ini sudah habis. Silakan lanjutkan besok.` };
-    }
-    if ((await hitungHariIni()) >= BATAS_TOTAL) {
-      return { ok: false as const, pesan: "Batas pembuatan soal seluruh web hari ini sudah tercapai. Silakan coba lagi besok atau hubungi admin." };
-    }
+    // Hitung jatah lalu simpan set dalam SATU transaksi yang memegang kunci bersama (audit C2): klik ganda atau dua
+    // tab menunggu giliran, jadi jatah tidak bisa terlewati. ponytail: satu kunci untuk seluruh web (pembuatan set
+    // jarang & cepat dicatat); pakai kunci per guru bila guru sangat banyak.
+    const mulai = await db.transaction(async (tx) => {
+      await tx.execute(sql`select pg_advisory_xact_lock(4210)`);
+      const proses = (guruId?: string) =>
+        tx
+          .select({ n: sql<number>`count(*)::int` })
+          .from(hasilSoal)
+          .where(and(eq(hasilSoal.status, "proses"), guruId ? eq(hasilSoal.guruId, guruId) : undefined))
+          .then(([r]) => r.n);
+      if (saya.peran !== "admin" && (await hitungHariIni(saya.id, tx)) >= BATAS_PER_GURU)
+        return `Jatah ${BATAS_PER_GURU} set soal Anda hari ini sudah habis. Silakan lanjutkan besok.`;
+      if ((await hitungHariIni(undefined, tx)) >= BATAS_TOTAL)
+        return "Batas pembuatan soal seluruh web hari ini sudah tercapai. Silakan coba lagi besok atau hubungi admin.";
+      if (saya.peran !== "admin" && (await proses(saya.id)) >= BATAS_PROSES_GURU)
+        return `Masih ada ${BATAS_PROSES_GURU} set Anda yang sedang dibuat. Tunggu salah satunya selesai dulu.`;
+      if ((await proses()) >= BATAS_PROSES_WEB) return "Sedang banyak guru membuat soal. Coba lagi 1–2 menit lagi.";
+      const [baris] = await tx
+        .insert(hasilSoal)
+        .values({ status: "proses", guruId: saya.id, babId: p.babIds!.join(","), bab, pengaturan: p, model: model.nama, pesan: "Menyiapkan..." })
+        .returning({ id: hasilSoal.id });
+      return baris.id;
+    });
+    if (typeof mulai === "string") return { ok: false as const, pesan: mulai };
 
-    const [baris] = await db
-      .insert(hasilSoal)
-      .values({ status: "proses", guruId: saya.id, babId: p.babIds!.join(","), bab, pengaturan: p, model: model.nama, pesan: "Menyiapkan..." })
-      .returning({ id: hasilSoal.id });
-
-    void kerjakan(baris.id, bab, p); // sengaja tidak ditunggu, supaya koneksi browser tidak putus
-    return { ok: true as const, id: baris.id };
+    void kerjakan(mulai, bab, p); // sengaja tidak ditunggu, supaya koneksi browser tidak putus
+    return { ok: true as const, id: mulai };
   } catch (e) {
     return { ok: false as const, pesan: `Gagal memulai: ${pesanError(e)}` };
   }
@@ -165,9 +191,10 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
       })
       .where(eq(hasilSoal.id, id));
 
+  const sampai = mulai + TENGGAT_SET; // berlaku untuk seluruh tahap set ini
   const tanya = async <T,>(label: string, pengguna: string, ambil: (data: unknown) => T) => {
     permintaan.push(pengguna);
-    const r = await tanyaDenganCadangan(sistem, pengguna, p.modelSlot ?? 1, !p.bandingkan, ambil);
+    const r = await tanyaDenganCadangan(sistem, pengguna, p.modelSlot ?? 1, !p.bandingkan, ambil, sampai);
     mentah.push(r.jawaban);
     info.tokenMasuk += r.token.masuk;
     info.tokenKeluar += r.token.keluar;
@@ -216,10 +243,13 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
  * Ambil set soal yang sudah selesai + soal nomor `no` (mulai 0), HANYA kalau pengguna yang masuk boleh mengaksesnya
  * (aturan 3: pemilik atau admin). Mengembalikan pesan kalau tidak valid.
  */
-async function ambilSet(id: number, no: number) {
+async function ambilSet(id: number, no: number, tx?: Tx) {
   const saya = await penggunaSaatIni();
   if (!saya) return SESI_HABIS;
-  const [h] = await db.select().from(hasilSoal).where(eq(hasilSoal.id, Number(id)));
+  // Di dalam transaksi (denganSetTerkunci): baris dikunci sampai transaksi selesai.
+  const [h] = tx
+    ? await tx.select().from(hasilSoal).where(eq(hasilSoal.id, Number(id))).for("update")
+    : await db.select().from(hasilSoal).where(eq(hasilSoal.id, Number(id)));
   // Set milik guru lain dijawab "tidak ditemukan", supaya keberadaannya pun tidak bocor.
   if (!h || h.dihapus || !bolehAkses(h.guruId, saya) || h.status !== "selesai") return "Set soal tidak ditemukan atau belum selesai.";
   const soal = h.soal as Soal[];
@@ -228,11 +258,37 @@ async function ambilSet(id: number, no: number) {
   return { h, soal, bab };
 }
 
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+type IsiSet = Exclude<Awaited<ReturnType<typeof ambilSet>>, string>;
+
+/**
+ * Baca lalu ubah satu set di dalam transaksi dengan barisnya dikunci (SELECT ... FOR UPDATE). Aksi lain pada set
+ * yang sama (edit, ganti, tambah, hapus soal) menunggu giliran dan membaca isi TERBARU, jadi tidak saling menimpa
+ * (audit 2026-11-04 C1: dulu edit guru hilang bila tertimpa "Ganti soal" yang sedang menunggu AI).
+ * Jangan memanggil AI di dalam `kerja`: kunci akan tertahan selama AI berpikir.
+ */
+async function denganSetTerkunci<T>(id: number, no: number, kerja: (set: IsiSet, tx: Tx) => Promise<T>) {
+  return db.transaction(async (tx) => {
+    const set = await ambilSet(id, no, tx);
+    return typeof set === "string" ? set : kerja(set, tx);
+  });
+}
+
+/** Kisi-kisi mengikuti nomor soal setelah soal ditambah/dihapus: kolom `no` dinomori ulang 1, 2, 3, ... */
+const nomoriUlang = (kisi: BarisKisi[]) => kisi.map((k, i) => ({ ...k, no: i + 1 }));
+
 /** Simpan hasil edit guru untuk satu soal (hanya pemilik/admin, lewat ambilSet). Penjaga teks Arab tetap berlaku. */
 export async function simpanSoal(id: number, no: number, isian: Soal) {
   try {
-    const set = await ambilSet(id, no);
-    if (typeof set === "string") return { ok: false as const, pesan: set };
+    const r = await denganSetTerkunci(id, no, (set, tx) => simpanSoalDi(set, no, isian, tx));
+    return typeof r === "string" ? { ok: false as const, pesan: r } : { ok: true as const, soal: r };
+  } catch (e) {
+    return { ok: false as const, pesan: `Gagal menyimpan: ${pesanError(e)}` };
+  }
+}
+
+async function simpanSoalDi(set: IsiSet, no: number, isian: Soal, tx: Tx) {
+  {
     const lama = set.soal[no];
     // Nomor grup tetap dari server (bukan dari browser); hanya teks wacananya yang boleh diedit guru.
     const [soal] = periksaSoal([rapikanSoal({ ...isian, grup: lama.grup }, lama.bentuk)], set.bab, cekAyat);
@@ -248,10 +304,24 @@ export async function simpanSoal(id: number, no: number, isian: Soal) {
         if (kisi?.[i]) kisi[i] = { ...kisi[i], wacana: soal.wacana };
       });
     }
-    await db.update(hasilSoal).set({ soal: set.soal, kisi }).where(eq(hasilSoal.id, set.h.id));
-    return { ok: true as const, soal };
+    await tx.update(hasilSoal).set({ soal: set.soal, kisi }).where(eq(hasilSoal.id, set.h.id));
+    return soal;
+  }
+}
+
+/** Hapus satu soal dari set (pemilik/admin). Kisi-kisi ikut dibuang barisnya dan dinomori ulang. Minimal 1 soal tersisa. */
+export async function hapusSoal(id: number, no: number) {
+  try {
+    const r = await denganSetTerkunci(id, no, async (set, tx) => {
+      if (set.soal.length <= 1) return "Set harus berisi minimal 1 soal. Hapus set-nya saja bila tidak dipakai.";
+      const soal = set.soal.filter((_, i) => i !== no);
+      const kisi = set.h.kisi as BarisKisi[] | null;
+      await tx.update(hasilSoal).set({ soal, kisi: kisi ? nomoriUlang(kisi.filter((_, i) => i !== no)) : null }).where(eq(hasilSoal.id, set.h.id));
+      return true;
+    });
+    return typeof r === "string" ? { ok: false as const, pesan: r } : { ok: true as const };
   } catch (e) {
-    return { ok: false as const, pesan: `Gagal menyimpan: ${pesanError(e)}` };
+    return { ok: false as const, pesan: `Gagal menghapus soal: ${pesanError(e)}` };
   }
 }
 
@@ -261,14 +331,26 @@ export async function simpanSoal(id: number, no: number, isian: Soal) {
  * level/TP/indikator boleh berubah dan ikut ke kisi-kisi. Batas 30x per set dipakai bersama.
  */
 export async function gantiSatuSoal(id: number, no: number, instruksiMentah?: string) {
-  const ubah = instruksiMentah !== undefined;
+  return soalBaruDariAI(id, no, instruksiMentah === undefined ? "ganti" : "ubah", instruksiMentah);
+}
+
+/** Tambah 1 soal serupa tepat di bawah soal `no` (bentuk, level, TP sama; skenario baru). Ikut batas 30x per set. */
+export async function tambahSoalSerupa(id: number, no: number) {
+  return soalBaruDariAI(id, no, "tambah");
+}
+
+async function soalBaruDariAI(id: number, no: number, mode: "ganti" | "ubah" | "tambah", instruksiMentah?: string) {
+  const ubah = mode === "ubah";
   const instruksi = bersihkanInstruksi(instruksiMentah);
+  const gagal = (pesan: string) => ({ ok: false as const, pesan });
   try {
-    if (ubah && !instruksi) return { ok: false as const, pesan: "Tulis dulu perubahan yang diminta." };
+    if (ubah && !instruksi) return gagal("Tulis dulu perubahan yang diminta.");
+    // Baca dulu TANPA kunci (AI bisa 20–60 detik); hasilnya ditulis nanti di dalam transaksi terkunci.
     const set = await ambilSet(id, no);
-    if (typeof set === "string") return { ok: false as const, pesan: set };
+    if (typeof set === "string") return gagal(set);
     const { h, bab } = set;
-    if (h.jumlahGanti >= BATAS_GANTI_PER_SET) return { ok: false as const, pesan: `Batas ${BATAS_GANTI_PER_SET} kali ganti/ubah soal untuk set ini sudah habis.` };
+    if (h.jumlahGanti >= BATAS_GANTI_PER_SET) return gagal(`Batas ${BATAS_GANTI_PER_SET} kali ganti/ubah/tambah soal untuk set ini sudah habis.`);
+    if (mode === "tambah" && set.soal.length >= MAKS_SOAL) return gagal(`Satu set maksimal ${MAKS_SOAL} soal.`);
 
     const lama = set.soal[no];
     const kisi = h.kisi as BarisKisi[] | null; // set lama: tanpa kisi-kisi
@@ -277,16 +359,9 @@ export async function gantiSatuSoal(id: number, no: number, instruksiMentah?: st
     const pengguna = buatPenggantiPengguna(h.pengaturan as Pengaturan, lama, set.soal, baris, instruksi);
     const p = h.pengaturan as Pengaturan;
     // Model utama sama dengan set; cadangan dipakai kalau gagal (kecuali set hasil "Bandingkan semua model").
-    const r = await tanyaDenganCadangan(sistem, pengguna, p.modelSlot ?? 1, !p.bandingkan, (d) => ambilSoal(d));
-    // Prompt & jawaban mentah penggantian ikut disimpan (untuk perbandingan model, langkah 4).
-    const catat = {
-      jumlahGanti: h.jumlahGanti + 1,
-      prompt: `${h.prompt}\n\n---\n\n[${ubah ? "UBAH" : "GANTI"} SOAL NOMOR ${no + 1} dengan ${r.model}]\n${pengguna}`,
-      // set lama (sebelum pembuatan bertahap) menyimpan satu jawaban mentah, bukan array
-      jawabanAi: JSON.stringify([...(h.jawabanAi?.startsWith("[") ? JSON.parse(h.jawabanAi) : [h.jawabanAi].filter(Boolean)), r.jawaban]),
-    };
+    const r = await tanyaDenganCadangan(sistem, pengguna, p.modelSlot ?? 1, !p.bandingkan, (d) => ambilSoal(d), Date.now() + TENGGAT_SATU_SOAL);
     const { stimulus, indikator, ...baru } = susunMenjodohkan({ ...r.hasil[0], bentuk: lama.bentuk }); // Menjodohkan: pasangan AI → premis, jawaban acak, kunci
-    // Ubah: level/TP dari AI dipakai hanya kalau valid. Ganti: disamakan dengan kisi-kisi.
+    // Ubah: level/TP dari AI dipakai hanya kalau valid. Ganti/tambah: disamakan dengan kisi-kisi.
     // Grup & wacana tidak diambil dari jawaban AI: tetap milik soal lama (soal grup tetap di grupnya).
     const grupLama = lama.grup && lama.wacana ? { grup: lama.grup, wacana: lama.wacana } : {};
     const { grup: _g, wacana: _w, ...isiBaru } = baru;
@@ -296,22 +371,47 @@ export async function gantiSatuSoal(id: number, no: number, instruksiMentah?: st
     const [soal] = periksaSoal([ubah ? hasilUbah : baris ? samakanDenganKisi(baru, baris) : { ...isiBaru, ...grupLama, bentuk: lama.bentuk }], bab, cekAyat);
     if (!ubah) ratakanKunci([soal]); // posisi kunci PG/PGK diacak (tidak saat "ubah", supaya guru tidak bingung)
     if (p.bobot) terapkanBobot([soal], p.bobot);
-    set.soal[no] = soal;
     // Skenario (dan pada "ubah": indikator, TP, level) baru dicatat di baris kisi-kisi.
     // (aturan 5: teks berisi Arab yang tidak terverifikasi tidak dipakai)
     const aman = (x: unknown) => {
       const t = String(x ?? "").trim();
       return t && !pemeriksaArab(bab, cekAyat)(t).length ? t : null;
     };
-    if (kisi && baris) {
-      kisi[no] = { ...baris, stimulus: aman(stimulus) ?? baris.stimulus };
-      if (ubah) kisi[no] = { ...kisi[no], indikator: aman(indikator) ?? baris.indikator, tp: soal.tp, level: soal.level };
-    }
-    await db.update(hasilSoal).set({ ...catat, soal: set.soal, kisi }).where(eq(hasilSoal.id, h.id));
-    return { ok: true as const, soal };
+    const barisBaru = baris && { ...baris, stimulus: aman(stimulus) ?? baris.stimulus, ...(ubah && { indikator: aman(indikator) ?? baris.indikator, tp: soal.tp, level: soal.level }) };
+
+    // Tulis ke isi TERBARU set (bisa sudah diedit guru selama AI bekerja), dengan baris dikunci.
+    const tulis = await denganSetTerkunci(id, no, async (kini, tx) => {
+      if (JSON.stringify(kini.soal[no]) !== JSON.stringify(lama)) return "Soal ini berubah saat AI bekerja (diedit atau dihapus). Muat ulang halaman lalu coba lagi.";
+      if (kini.h.jumlahGanti >= BATAS_GANTI_PER_SET) return `Batas ${BATAS_GANTI_PER_SET} kali ganti/ubah/tambah soal untuk set ini sudah habis.`;
+      const kisiKini = kini.h.kisi as BarisKisi[] | null;
+      if (mode === "tambah") {
+        if (kini.soal.length >= MAKS_SOAL) return `Satu set maksimal ${MAKS_SOAL} soal.`;
+        kini.soal.splice(no + 1, 0, soal);
+        if (kisiKini && barisBaru) kisiKini.splice(no + 1, 0, barisBaru);
+      } else {
+        kini.soal[no] = soal;
+        if (kisiKini && barisBaru) kisiKini[no] = barisBaru;
+      }
+      const { h: hk } = kini;
+      await tx
+        .update(hasilSoal)
+        .set({
+          soal: kini.soal,
+          kisi: kisiKini && (mode === "tambah" ? nomoriUlang(kisiKini) : kisiKini),
+          jumlahGanti: hk.jumlahGanti + 1,
+          // Prompt & jawaban mentah ikut disimpan (untuk perbandingan model, langkah 4).
+          prompt: `${hk.prompt}\n\n---\n\n[${mode.toUpperCase()} SOAL NOMOR ${no + 1} dengan ${r.model}]\n${pengguna}`,
+          // set lama (sebelum pembuatan bertahap) menyimpan satu jawaban mentah, bukan array
+          jawabanAi: JSON.stringify([...(hk.jawabanAi?.startsWith("[") ? JSON.parse(hk.jawabanAi) : [hk.jawabanAi].filter(Boolean)), r.jawaban]),
+        })
+        .where(eq(hasilSoal.id, hk.id));
+      return soal;
+    });
+    return typeof tulis === "string" ? gagal(tulis) : { ok: true as const, soal: tulis };
   } catch (e) {
     const admin = (await penggunaSaatIni().catch(() => null))?.peran === "admin";
-    return { ok: false as const, pesan: admin ? `Gagal ${ubah ? "mengubah" : "mengganti"}: ${pesanError(e)}` : ubah ? `Gagal mengubah soal, ${SARAN_GURU}` : PESAN_GAGAL_GURU };
+    const kata = { ganti: "mengganti", ubah: "mengubah", tambah: "menambah" }[mode];
+    return gagal(admin ? `Gagal ${kata}: ${pesanError(e)}` : mode === "ganti" ? PESAN_GAGAL_GURU : `Gagal ${kata} soal, ${SARAN_GURU}`);
   }
 }
 
@@ -352,7 +452,7 @@ export async function analisaMateri(input: { mapel: string; kelas: string; parag
 
   const { sistem, pengguna } = buatAnalisaMateri(mapel, kelas, untukAi, isian.teksArab === "bahasa");
   try {
-    const r = await tanyaDenganCadangan(sistem, pengguna, daftarModel()[0]?.slot ?? 1, true, (d) => d);
+    const r = await tanyaDenganCadangan(sistem, pengguna, daftarModel()[0]?.slot ?? 1, true, (d) => d, Date.now() + TENGGAT_SATU_SOAL);
     const a = terapkanAnalisa(r.hasil, isian, untukAi);
     return { ok: true as const, isian: a.isian, catatan: [pesanPdf, a.catatan].filter(Boolean).join(" ") };
   } catch (e) {

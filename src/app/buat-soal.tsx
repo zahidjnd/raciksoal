@@ -591,6 +591,14 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
                           setHasil({ ...hasil, soal: soal.map((x, j) => (j === i ? baru : x)) });
                           cekHasil(id!).then((h) => h && setHasil(h)).catch(() => {}); // kisi-kisi ikut berubah di server
                         }}
+                        onSetBerubah={(ke) =>
+                          cekHasil(id!)
+                            .then((h) => {
+                              if (h) setHasil(h);
+                              if (ke) lompat(ke); // soal tambahan langsung terlihat
+                            })
+                            .catch(() => {})
+                        }
                       />
                     ),
                 )}

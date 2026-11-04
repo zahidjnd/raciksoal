@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { gantiSatuSoal, simpanSoal } from "./actions";
+import { gantiSatuSoal, hapusSoal, simpanSoal, tambahSoalSerupa } from "./actions";
 import { StepAngka } from "./step-angka";
 import { kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, pecahBaris, POLA_ARAB, type Bab, type Soal } from "@/lib/soal";
 import { MAKS_INSTRUKSI } from "@/lib/prompt";
@@ -127,13 +127,14 @@ function TabelKategori({ s, kunci }: { s: Soal; kunci: boolean }) {
 // nomorGrup: diisi ("4–6") hanya untuk soal pertama sebuah soal grup → wacana bersama tampil di atasnya.
 // draf: soal yang sudah jadi selama set masih diproses; hanya dibaca (kunci & urutan pilihan belum final, server
 // juga menolak edit/ganti sebelum selesai).
-type Props = { hasilId: number; no: number; s: Soal; bab: Bab; semuaKunci: boolean; nomorGrup?: string | null; onUbah: (s: Soal) => void; draf?: boolean };
+// onSetBerubah: soal ditambah/dihapus → nomor bergeser, halaman memuat ulang seluruh set.
+type Props = { hasilId: number; no: number; s: Soal; bab: Bab; semuaKunci: boolean; nomorGrup?: string | null; onUbah: (s: Soal) => void; onSetBerubah?: (lompatKe?: number) => void; draf?: boolean };
 
-export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, draf }: Props) {
+export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, onSetBerubah, draf }: Props) {
   const [edit, setEdit] = useState(false);
   const [lihatKunci, setLihatKunci] = useState(false); // kunci & pembahasan dilipat, dibuka per soal atau semua sekaligus
   const tampilKunci = !draf && (semuaKunci || lihatKunci);
-  const [proses, setProses] = useState<"" | "ganti" | "ubah">("");
+  const [proses, setProses] = useState<"" | "ganti" | "ubah" | "tambah" | "hapus">("");
   const mengganti = proses !== "";
   const [instruksi, setInstruksi] = useState("");
   const [lainnya, setLainnya] = useState(false); // Ganti & Ubah dilipat supaya kartu lebih lega
@@ -152,6 +153,19 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
       setError("AI tidak mengubah soal ini. Mungkin instruksinya bertentangan dengan aturan (mis. meminta ayat/hadis di luar data bab). Coba tulis instruksi lain.");
     onUbah(r.soal);
     setInstruksi("");
+  }
+
+  /** Tambah soal serupa (AI, di bawah soal ini) atau hapus soal ini; nomor sesudahnya bergeser. */
+  async function ubahJumlah(jenis: "tambah" | "hapus") {
+    if (jenis === "hapus" && !confirm(`Hapus soal nomor ${no}? Nomor soal sesudahnya ikut bergeser. Soal yang dihapus tidak bisa dikembalikan.`)) return;
+    setError("");
+    setProses(jenis);
+    const putus = { ok: false as const, pesan: "Koneksi terputus. Coba lagi." };
+    const r = await (jenis === "tambah" ? tambahSoalSerupa(hasilId, no - 1) : hapusSoal(hasilId, no - 1)).catch(() => putus);
+    setProses("");
+    if (!r.ok) return setError(r.pesan);
+    setLainnya(false);
+    onSetBerubah?.(jenis === "tambah" ? no + 1 : undefined);
   }
 
   if (edit)
@@ -227,9 +241,21 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
       </div>
       {lainnya && (
       <div className="space-y-2 rounded-lg border bg-krem p-3">
-      <button className={tombol} disabled={mengganti} onClick={() => ganti("ganti")}>
-        {proses === "ganti" ? "Sedang membuat soal pengganti..." : "Ganti soal ini"}
-      </button>
+      <div className="flex flex-wrap gap-2">
+        <button className={tombol} disabled={mengganti} onClick={() => ganti("ganti")}>
+          {proses === "ganti" ? "Sedang membuat soal pengganti..." : "Ganti soal ini"}
+        </button>
+        {onSetBerubah && (
+          <>
+            <button className={tombol} disabled={mengganti} onClick={() => ubahJumlah("tambah")}>
+              {proses === "tambah" ? "Sedang membuat soal tambahan..." : "Tambah soal serupa di bawahnya"}
+            </button>
+            <button className={`${tombol} text-bahaya`} disabled={mengganti} onClick={() => ubahJumlah("hapus")}>
+              {proses === "hapus" ? "Menghapus..." : "Hapus soal ini"}
+            </button>
+          </>
+        )}
+      </div>
       <form
         className="flex gap-2"
         onSubmit={(e) => {

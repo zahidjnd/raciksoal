@@ -386,3 +386,21 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   harus dimatikan satu per satu (jangan sentuh dokumen pemilik).
   CARA LIHAT LOG HOSTING tanpa SSH: `~/raciksoal-app/app.log` (lewat konektor cPanel `read_file`). Uji laptop: judul set 51
   diubah sementara jadi Arab → soal/kunci/kisi 200; judul dikembalikan.
+- 2026-11-04 AUDIT (`AUDIT-2026-11-04.md`, pemilik bilang "gas sesuai saran"), dikerjakan di laptop, BELUM di-push/versi:
+  Tampilan: kop ujian di form Buat Soal kini DILIPAT (<details>, tetap di bawah mapel & kelas, ringkasan terlihat);
+  tanggal ditulis ulang gaya Indonesia (`hariTanggal` dipindah ke prompt.ts, dipakai word.ts juga); deret nomor soal
+  satu baris geser di HP; peringatan Arab penjaga ayat dipecah per baris RTL (`TeksPeringatan`, kartu-soal.tsx);
+  Simpan/Batal juga di atas form Edit; riwayat sidebar 2 baris (label + tanggal · jumlah soal).
+  Fitur: ganti nama set (`hasil_soal.nama`, riwayat/judul/nama file Word) dan hapus set = HAPUS LUNAK
+  (`hasil_soal.dihapus`, migrasi 0008): tetap dihitung di jatah harian, ditolak di cekHasil/ambilSet/identitas/Word,
+  admin melihat label "dihapus guru"; pulihkan lewat DB (`dihapus = null`). Set "proses" tidak bisa dihapus.
+  Tambah soal serupa (`tambahSoalSerupa`, AI, di bawah soal itu, ikut batas 30x per set, maks MAKS_SOAL) dan hapus soal
+  (`hapusSoal`, min 1 soal); kisi-kisi ikut dan dinomori ulang (`nomoriUlang`).
+  Kode: semua penulisan isi set lewat `denganSetTerkunci` (transaksi + SELECT FOR UPDATE). Ganti/ubah/tambah: AI
+  dipanggil di LUAR kunci, lalu ditulis ke isi terbaru; kalau soal itu berubah selama AI bekerja → pesan "muat ulang".
+  `mulaiBuatSoal`: hitung jatah + insert dalam satu transaksi dengan `pg_advisory_xact_lock(4210)`; plus batas set
+  "proses" serentak 2/guru (admin bebas) dan 10/web. Batas waktu total: `TENGGAT_SET` 10 menit per set,
+  `TENGGAT_SATU_SOAL` 4 menit (ganti/ubah/tambah/analisa); `tanyaAI(..., sampai)` memendekkan timeout & coba ulang.
+  Uji laptop: set 56 (hapus soal 2, tambah setelah soal 3, edit soal 2 tetap ada, nama "UH Bahasa Arab — uji nama"),
+  set 55 dihapus (set gagal bekas uji), set 57 (1 PG, cek Buat soal masih jalan). Belum diuji: balapan klik ganda
+  sungguhan dan tenggat (perlu model lambat palsu).

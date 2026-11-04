@@ -45,7 +45,8 @@ export function daftarModel() {
   });
 }
 
-export async function tanyaAI(sistem: string, pengguna: string, slot = 1) {
+/** `sampai` (opsional) = batas waktu total dalam milidetik epoch: timeout dipendekkan dan coba ulang dihentikan. */
+export async function tanyaAI(sistem: string, pengguna: string, slot = 1, sampai = Infinity) {
   const k = konfigurasi(slot);
   if (!k) throw new Error(`Model AI nomor ${slot} belum diatur di .env.`);
   let tambahan = {};
@@ -65,15 +66,16 @@ export async function tanyaAI(sistem: string, pengguna: string, slot = 1) {
     max_tokens: k.maksToken,
   });
 
+  const sisa = () => sampai - Date.now();
   let res: Response;
   for (let coba = 1; ; coba++) {
     res = await fetch(`${k.baseUrl}/chat/completions`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${k.kunci}` },
       body,
-      signal: AbortSignal.timeout(Number(process.env.AI_TIMEOUT_MS ?? 180_000)),
+      signal: AbortSignal.timeout(Math.max(1000, Math.min(Number(process.env.AI_TIMEOUT_MS ?? 180_000), sisa()))),
     });
-    if (res.ok || !COBA_ULANG.includes(res.status) || coba === 3) break;
+    if (res.ok || !COBA_ULANG.includes(res.status) || coba === 3 || sisa() < coba * 10_000 + 30_000) break;
     await tunggu(coba * 10_000); // 10 detik, lalu 20 detik
   }
   if (!res.ok) throw new Error(`AI (${k.model}) gagal: ${alasan(res.status)} (kode ${res.status}). ${(await res.text()).slice(0, 300)}`);
