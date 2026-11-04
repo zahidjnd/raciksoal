@@ -1,3 +1,7 @@
+// Batas pemakaian (aturan 4), dipakai actions.ts dan halaman Kelola guru supaya angkanya selalu sama.
+export const BATAS_PER_GURU = 10; // set per guru per hari (WIB); admin tidak dibatasi per guru
+export const BATAS_TOTAL = 100; // set per hari seluruh web, pengaman saldo AI
+
 // Pembatas percobaan masuk (tanpa import Next/DB, supaya bisa dites: npm test).
 // ponytail: disimpan di memori (hilang saat server restart), cukup untuk satu madrasah & satu proses server.
 

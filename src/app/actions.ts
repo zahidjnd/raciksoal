@@ -11,6 +11,7 @@ import { babDariSet, babMilik, daftarBabMilik } from "@/lib/bab";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
 import { mushaf } from "@/lib/mushaf";
+import { BATAS_PER_GURU, BATAS_TOTAL } from "@/lib/pembatas";
 
 const SESI_HABIS = "Sesi masuk sudah berakhir. Muat ulang halaman lalu masuk lagi.";
 // Materi mode "bahasa" (Bahasa Arab): teks Arab yang dikenali sebagai ayat tetap ditandai (aturan 5). Mushaf dimuat
@@ -18,8 +19,6 @@ const SESI_HABIS = "Sesi masuk sudah berakhir. Muat ulang halaman lalu masuk lag
 const cekAyat = (arab: string) => !!mushaf().cari(arab);
 // Aturan 4: batas pembuatan per guru per hari (admin tidak dibatasi per guru),
 // plus batas total seluruh web sebagai pengaman saldo AI. Set yang GAGAL tidak dihitung.
-const BATAS_PER_GURU = 10;
-const BATAS_TOTAL = 100;
 const BATAS_GANTI_PER_SET = 30;
 // Set yang sedang dibuat bersamaan: per guru (admin bebas, untuk "Bandingkan") dan seluruh web (RAM hosting 1 GB).
 const BATAS_PROSES_GURU = 2;
