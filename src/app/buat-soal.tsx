@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ambilDaftarBab, ambilDaftarModel, ambilJatah, cekHasil, hapusSet, mulaiBuatSoal, ubahIdentitas, ubahNamaSet } from "./actions";
+import { ambilDaftarBab, ambilDaftarModel, ambilJatah, cekHasil, mulaiBuatSoal, ubahIdentitas } from "./actions";
 import { simpanMateri } from "./materi/actions";
 import { KartuSoal, Teks, TeksPeringatan } from "./kartu-soal";
 import { KotakMateri, type MateriLama } from "./kotak-materi";
 import { FormIdentitas, ringkasIdentitas } from "./form-identitas";
 import { StepAngka } from "./step-angka";
 import { skorOtomatis } from "@/lib/skor";
-import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, NAMA_LEVEL_TKA, namaTujuan, semesterDari, TKA, TUJUAN, WAKTU_BAWAAN, type Identitas, type Pengaturan } from "@/lib/prompt";
+import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_SOAL, NAMA_BENTUK, NAMA_LEVEL_TKA, namaTujuan, semesterDari, TKA, TUJUAN, WAKTU_BAWAAN, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { KELAS, pilihanAngka, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { DAFTAR_MAPEL, type IsianMateri } from "@/lib/materi";
 import { useRouter } from "next/navigation";
@@ -482,28 +482,14 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
         </section>
       ) : null}
 
-      {hasil?.status === "gagal" && (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-bahaya-garis bg-bahaya-muda p-3 text-bahaya">
-          <p className="min-w-0 flex-1">Gagal membuat soal: {hasil.pesan}</p>
-          {/* Set gagal juga bisa dibuang dari riwayat. */}
-          <button
-            className="h-8 rounded-lg border border-bahaya-garis bg-kartu px-3 text-sm max-md:min-h-11"
-            onClick={async () => {
-              if (!confirm("Hapus set gagal ini dari riwayat?")) return;
-              const r = await hapusSet(id!).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
-              if (r.ok) location.assign("/");
-              else setError(r.pesan);
-            }}
-          >
-            Hapus dari riwayat
-          </button>
-        </div>
-      )}
+      {hasil?.status === "gagal" && <p className="rounded-lg border border-bahaya-garis bg-bahaya-muda p-3 text-bahaya">Gagal membuat soal: {hasil.pesan}</p>}
 
       {hasil?.status === "selesai" && bab && (
         <section className="space-y-5">
           <div className="space-y-1">
-            <JudulSet key={id} id={id!} nama={hasil.nama} judulBab={bab.judul} />
+            <h1 className="text-2xl">{hasil.nama ?? bab.judul}</h1>
+            {/* Ganti nama & hapus set lewat menu ⋯ / klik kanan di riwayat sidebar (baris-riwayat.tsx). */}
+            {hasil.nama && <p className="text-sm text-pudar">Materi: {bab.judul}</p>}
             <p className="text-sm text-pudar">
               {soal.length} soal
               {hasil.model && <> · model: <b>{hasil.model}</b></>}
@@ -651,63 +637,6 @@ function PilihMapel({ mapel, kelas, ubah }: { mapel: string; kelas: string; ubah
         <option value="">Kelas</option>
         {KELAS.map((k) => <option key={k} value={k}>Kelas {k}</option>)}
       </select>
-    </div>
-  );
-}
-
-/**
- * Judul halaman hasil + Ganti nama + Hapus set (audit 2026-11-04). Nama kosong = judul bab. Hapus = hapus lunak di
- * server (tetap dihitung di jatah); setelah itu kembali ke halaman awal dengan muat penuh (sidebar ikut diperbarui).
- */
-function JudulSet({ id, nama: awal, judulBab }: { id: number; nama: string | null; judulBab: string }) {
-  const [nama, setNama] = useState(awal);
-  const [ketik, setKetik] = useState<string | null>(null); // null = tidak sedang mengganti nama
-  const [pesan, setPesan] = useState("");
-  const [proses, setProses] = useState(false);
-  const putus = { ok: false as const, pesan: "Koneksi terputus. Coba lagi." };
-
-  async function simpanNama() {
-    setProses(true);
-    const r = await ubahNamaSet(id, ketik ?? "").catch(() => putus);
-    setProses(false);
-    if (!r.ok) return setPesan(r.pesan);
-    setNama(r.nama);
-    setKetik(null);
-    setPesan("");
-  }
-  async function hapus() {
-    if (!confirm("Hapus set soal ini? Set akan hilang dari riwayat dan tidak bisa dibuka lagi. (Jatah hari ini tidak kembali.)")) return;
-    setProses(true);
-    const r = await hapusSet(id).catch(() => putus);
-    if (!r.ok) {
-      setProses(false);
-      return setPesan(r.pesan);
-    }
-    location.assign("/");
-  }
-
-  const kecil = "h-8 rounded-lg border bg-kartu px-3 text-sm hover:bg-krem disabled:opacity-50 max-md:min-h-11";
-  if (ketik !== null)
-    return (
-      <form className="flex flex-wrap items-center gap-2" onSubmit={(e) => { e.preventDefault(); simpanNama(); }}>
-        <input autoFocus aria-label="Nama set" className="h-10 min-w-0 flex-1 rounded-lg border bg-kartu px-3" maxLength={MAKS_NAMA_SET} placeholder={judulBab} value={ketik} onChange={(e) => setKetik(e.target.value)} />
-        <button className="h-10 rounded-lg bg-hijau px-4 font-semibold text-white disabled:opacity-50" disabled={proses}>{proses ? "Menyimpan..." : "Simpan"}</button>
-        <button type="button" className="h-10 rounded-lg border px-4" disabled={proses} onClick={() => setKetik(null)}>Batal</button>
-        <p className="w-full text-xs text-pudar">Kosongkan untuk kembali memakai judul materi. Nama tampil di riwayat dan nama file Word.</p>
-        {pesan && <p className="w-full text-sm text-bahaya">{pesan}</p>}
-      </form>
-    );
-  return (
-    <div className="space-y-1">
-      <div className="flex flex-wrap items-start gap-2">
-        <h1 className="min-w-0 basis-full text-2xl sm:basis-auto sm:flex-1">{nama ?? judulBab}</h1>
-        <span className="flex gap-2">
-          <button className={kecil} disabled={proses} onClick={() => setKetik(nama ?? "")}>Ganti nama</button>
-          <button className={`${kecil} text-bahaya`} disabled={proses} onClick={hapus}>Hapus set</button>
-        </span>
-      </div>
-      {nama && <p className="text-sm text-pudar">Materi: {judulBab}</p>}
-      {pesan && <p className="text-sm text-bahaya">{pesan}</p>}
     </div>
   );
 }

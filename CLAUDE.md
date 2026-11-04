@@ -404,3 +404,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   Uji laptop: set 56 (hapus soal 2, tambah setelah soal 3, edit soal 2 tetap ada, nama "UH Bahasa Arab — uji nama"),
   set 55 dihapus (set gagal bekas uji), set 57 (1 PG, cek Buat soal masih jalan). Belum diuji: balapan klik ganda
   sungguhan dan tenggat (perlu model lambat palsu).
+  REVISI (pilihan pemilik, gaya claude.ai): Ganti nama & Hapus set HANYA lewat riwayat sidebar: tombol ⋯ (laptop
+  muncul saat diarahkan, HP selalu tampil) atau klik kanan → menu (`src/app/baris-riwayat.tsx`). Ganti nama langsung di
+  baris (Enter/klik luar = simpan, Esc = batal). Tombol di judul halaman hasil dan "Hapus dari riwayat" di set gagal
+  DIHAPUS. Uji laptop: set 57 diganti nama lalu dihapus lewat menu.

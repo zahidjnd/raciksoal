@@ -10,6 +10,7 @@ import { judulPendek } from "@/lib/bab";
 import { namaTujuan, type Pengaturan } from "@/lib/prompt";
 import { keluar } from "./masuk/actions";
 import { LaciSidebar } from "./laci-sidebar";
+import { BarisRiwayat } from "./baris-riwayat";
 import { TombolTema } from "./tombol-tema";
 import paket from "../../package.json";
 
@@ -145,12 +146,8 @@ export async function Kerangka({ p, lebar = false, children }: { p: Pengguna; le
             // Baris kedua (tanggal · jumlah soal): set dengan judul sama bisa dibedakan (audit 2026-11-04).
             const tanggal = s.dibuat.toLocaleDateString("id-ID", { day: "numeric", month: "short", timeZone: "Asia/Jakarta" });
             const keterangan = s.status === "gagal" ? "gagal" : s.status === "proses" ? "sedang dibuat" : `${s.jumlahSoal} soal`;
-            return (
-              <a key={s.id} href={`/?id=${s.id}`} className={tautan} title={`${label} (set ${s.id})`}>
-                <span className={`block truncate ${s.status === "gagal" ? "text-bahaya" : ""}`}>{label}</span>
-                <span className="block text-xs text-pudar">{tanggal} · {keterangan}</span>
-              </a>
-            );
+            // Menu ⋯ / klik kanan (Ganti nama, Hapus) ala claude.ai: BarisRiwayat (komponen browser).
+            return <BarisRiwayat key={s.id} id={s.id} label={label} nama={s.nama} keterangan={`${tanggal} · ${keterangan}`} gagal={s.status === "gagal"} kelas={tautan} />;
           })}
           {riwayat.length === BATAS_SIDEBAR && (
             <Link href="/riwayat" className="flex min-h-11 shrink-0 items-center px-3 text-xs text-hijau-teks hover:underline md:min-h-0 md:py-1">Lihat semua riwayat</Link>
