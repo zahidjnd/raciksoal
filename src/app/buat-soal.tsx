@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ambilDaftarBab, ambilDaftarModel, ambilJatah, cekHasil, mulaiBuatSoal, ubahIdentitas } from "./actions";
 import { simpanMateri } from "./materi/actions";
 import { KartuSoal, Teks, TeksPeringatan } from "./kartu-soal";
@@ -655,14 +655,22 @@ function PilihMapel({ mapel, kelas, ubah }: { mapel: string; kelas: string; ubah
  */
 function KunciRingkas({ teks }: { teks: string }) {
   const [pesan, setPesan] = useState("");
+  const kotakTeks = useRef<HTMLPreElement>(null);
   async function salin() {
+    let ok = false;
     try {
       await navigator.clipboard.writeText(teks);
-      setPesan("Tersalin ✓");
+      ok = true;
     } catch {
-      setPesan("Tidak bisa menyalin otomatis. Pilih teksnya lalu salin manual.");
+      // Cadangan untuk browser yang memblokir papan klip: pilih teksnya lalu salin cara lama.
+      const r = document.createRange();
+      if (kotakTeks.current) r.selectNodeContents(kotakTeks.current);
+      getSelection()?.removeAllRanges();
+      getSelection()?.addRange(r);
+      ok = document.execCommand("copy");
     }
-    setTimeout(() => setPesan(""), 4000);
+    setPesan(ok ? "Tersalin ✓" : "Tidak bisa menyalin otomatis. Teks sudah dipilih: tekan Ctrl+C (atau tahan lalu Salin di HP).");
+    setTimeout(() => setPesan(""), 5000);
   }
   return (
     <div className="space-y-2 rounded-xl border bg-kartu p-3 text-sm">
@@ -671,7 +679,7 @@ function KunciRingkas({ teks }: { teks: string }) {
         <button className="h-8 rounded-lg bg-hijau px-3 font-semibold text-white hover:bg-hijau-tua max-md:min-h-11" onClick={salin}>Salin</button>
         {pesan && <span role="status" className="text-hijau-teks">{pesan}</span>}
       </div>
-      <pre dir="auto" className="overflow-x-auto font-[inherit] whitespace-pre-wrap">{teks}</pre>
+      <pre ref={kotakTeks} dir="auto" className="overflow-x-auto font-[inherit] whitespace-pre-wrap">{teks}</pre>
     </div>
   );
 }
