@@ -23,6 +23,20 @@ hadis karangan dalam mode Bahasa Arab belum bisa dideteksi otomatis (hanya diceg
 
 ---
 
+## 0.13.0 — 5 November 2026
+Fitur pematangan setelah uji coba guru.
+- **Satu tombol Unduh** di bawah halaman hasil. Pilih **Semua file** untuk mengunduh lembar soal siswa, kunci &
+  pembahasan, dan kisi-kisi (3 file Word) sekaligus; tiap file juga bisa diunduh sendiri. Bila browser bertanya
+  "izinkan beberapa unduhan?", pilih Izinkan.
+- **Cetak tampilan ini (PDF)** ada di menu Unduh: mencetak isi halaman saja (tanpa sidebar dan tombol, selalu warna
+  terang). Catatan: hasil ini **tanpa kop madrasah**; untuk PDF berkop, buka file Word lalu simpan sebagai PDF.
+- **Kunci ringkas**: semua kunci satu set dalam satu kotak (mis. "1. C 2. D …"), dengan tombol **Salin** untuk ditempel
+  di WhatsApp atau catatan.
+- Tombol **↑ / ↓** di kartu soal untuk memindah urutan soal di dalam bagiannya; kisi-kisi ikut berpindah.
+- Halaman **Riwayat** bisa dicari (nama set atau materi) dan disaring per jenis soal dan mapel; admin di **Semua set**
+  juga bisa menyaring per guru dan status. Tautan "Lihat & cari semua riwayat" selalu ada di sidebar.
+- Panduan diperbarui untuk fitur-fitur di atas.
+
 ## 0.12.0 — 4 November 2026
 Persiapan uji coba guru.
 - **Halaman Panduan** (tautan di sidebar untuk semua akun): cara membuat set, memeriksa dan memperbaiki soal, mengunduh

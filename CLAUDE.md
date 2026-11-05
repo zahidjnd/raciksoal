@@ -419,7 +419,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   baris `sesi` terhapus saat guru Keluar → yang tampil "set terakhir" dari hasil_soal.
   (4) /panduan (src/app/panduan/page.tsx): panduan singkat statis, tautan "Panduan" di sidebar untuk semua akun.
   Nama tombol di panduan ditulis persis seperti layar: kalau tombol diganti nama, ubah juga panduannya.
-- 2026-11-05 GELOMBANG 1 (pemilik "gas gelombang 1", setelah uji coba guru), commit terpisah, BELUM di-push:
+- 2026-11-05 GELOMBANG 1 (pemilik "gas gelombang 1", setelah uji coba guru), dirilis 0.13.0:
   (1) Kunci ringkas: `kunciRingkas` (src/lib/kunci.ts, dites) = kunci per bentuk, nomor global, PG sebaris; kotak + tombol
   Salin di halaman hasil. `navigator.clipboard` diblokir di sebagian browser (juga panel browser Claude) → cadangan:
   pilih teks <pre> + `document.execCommand("copy")`.
