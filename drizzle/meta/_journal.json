@@ -64,6 +64,13 @@
       "when": 1793776399445,
       "tag": "0008_nama_hapus_set",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793866045472,
+      "tag": "0009_pemakaian_ai",
+      "breakpoints": true
     }
   ]
 }

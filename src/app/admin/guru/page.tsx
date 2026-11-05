@@ -1,8 +1,8 @@
-import { asc, count, eq, max, sql } from "drizzle-orm";
+import { and, asc, count, eq, gte, max, ne, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { hasilSoal, pengguna } from "@/db/schema";
-import { BATAS_PER_GURU, BATAS_TOTAL } from "@/lib/pembatas";
+import { hasilSoal, pemakaianAi, pengguna } from "@/db/schema";
+import { BATAS_PER_GURU, BATAS_TOTAL, BATAS_UBAH_PER_GURU } from "@/lib/pembatas";
 import { wajibMasuk } from "@/lib/sesi";
 import { Kerangka } from "../../kepala";
 import { AksiGuru, FormTambahGuru } from "./form";
@@ -41,6 +41,13 @@ export default async function KelolaGuru() {
     .from(hasilSoal)
     .groupBy(hasilSoal.guruId);
   const pakaiDari = (id: string) => pakai.find((x) => x.guruId === id);
+  // Ganti/Ubah/Tambah soal hari ini (batas harian per guru, aturan 4).
+  const ubah = await db
+    .select({ guruId: pemakaianAi.guruId, n: sql<number>`count(*)::int` })
+    .from(pemakaianAi)
+    .where(and(gte(pemakaianAi.waktu, awalHariIni), ne(pemakaianAi.jenis, "analisa")))
+    .groupBy(pemakaianAi.guruId);
+  const ubahDari = (id: string) => ubah.find((x) => x.guruId === id)?.n ?? 0;
   const total = { hariIni: pakai.reduce((s, x) => s + x.hariIni, 0), token: pakai.reduce((s, x) => s + x.token, 0) };
   const angka = (n: number) => n.toLocaleString("id-ID");
 
@@ -68,7 +75,8 @@ export default async function KelolaGuru() {
             </div>
             <p className="text-sm text-pudar">
               Hari ini <span className="font-semibold text-tinta">{pakaiDari(g.id)?.hariIni ?? 0}</span>
-              {g.peran === "admin" ? " set (tanpa batas)" : ` dari ${BATAS_PER_GURU} set`} · 30 hari: {pakaiDari(g.id)?.bulan ?? 0} set,{" "}
+              {g.peran === "admin" ? " set (tanpa batas)" : ` dari ${BATAS_PER_GURU} set`}, ganti/ubah {ubahDari(g.id)}
+              {g.peran === "admin" ? "" : ` dari ${BATAS_UBAH_PER_GURU}`} · 30 hari: {pakaiDari(g.id)?.bulan ?? 0} set,{" "}
               {angka(pakaiDari(g.id)?.token ?? 0)} token · set terakhir{" "}
               {/* Bukan "terakhir masuk": sesi login terhapus saat guru Keluar, jadi tanggal set terakhir lebih bisa dipercaya. */}
               {pakaiDari(g.id)?.terakhir?.toLocaleString("id-ID", { timeZone: "Asia/Jakarta", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) ?? "belum ada"}

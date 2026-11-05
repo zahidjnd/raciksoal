@@ -131,3 +131,18 @@ export const materi = pgTable(
   },
   (t) => [index("materi_guru_idx").on(t.guruId)],
 );
+
+// Pemakaian AI di luar pembuatan set (aturan 4): satu baris per Ganti/Ubah/Tambah soal yang berhasil dan per analisa
+// materi, untuk batas harian per guru. Hanya dihitung, isinya tidak dipakai untuk hal lain.
+export const pemakaianAi = pgTable(
+  "pemakaian_ai",
+  {
+    id: serial("id").primaryKey(),
+    guruId: text("guru_id")
+      .notNull()
+      .references(() => pengguna.id),
+    jenis: text("jenis").notNull(), // "ganti" | "ubah" | "tambah" | "analisa"
+    waktu: timestamp("waktu", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index("pemakaian_ai_guru_idx").on(t.guruId, t.waktu)],
+);

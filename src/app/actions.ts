@@ -2,7 +2,7 @@
 
 import { and, eq, gte, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { hasilSoal } from "@/db/schema";
+import { hasilSoal, pemakaianAi } from "@/db/schema";
 import { daftarModel, tanyaAI } from "@/lib/ai";
 import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatPermintaanKisi, buatSistem, buatAnalisaMateri, bersihkanIdentitas, rencanaGrup, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { BATAS_MATERI, susunDraf, terapkanAnalisa } from "@/lib/materi";
@@ -11,7 +11,7 @@ import { babDariSet, babMilik, daftarBabMilik } from "@/lib/bab";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
 import { mushaf } from "@/lib/mushaf";
-import { BATAS_PER_GURU, BATAS_TOTAL } from "@/lib/pembatas";
+import { BATAS_ANALISA, BATAS_PER_GURU, BATAS_TOTAL, BATAS_UBAH_PER_GURU } from "@/lib/pembatas";
 
 const SESI_HABIS = "Sesi masuk sudah berakhir. Muat ulang halaman lalu masuk lagi.";
 // Materi mode "bahasa" (Bahasa Arab): teks Arab yang dikenali sebagai ayat tetap ditandai (aturan 5). Mushaf dimuat
@@ -28,15 +28,26 @@ const BATAS_PROSES_WEB = 10;
 const TENGGAT_SET = 10 * 60_000;
 const TENGGAT_SATU_SOAL = 4 * 60_000;
 
+const awalHariIni = sql`date_trunc('day', now() at time zone 'Asia/Jakarta') at time zone 'Asia/Jakarta'`; // 00.00 WIB
+
 /** Jumlah set hari ini (WIB, mulai 00.00) yang tidak gagal; untuk satu guru atau seluruh web. */
 async function hitungHariIni(guruId?: string, q: Pick<typeof db, "select"> = db) {
-  const awalHariIni = sql`date_trunc('day', now() at time zone 'Asia/Jakarta') at time zone 'Asia/Jakarta'`;
   const [{ n }] = await q
     .select({ n: sql<number>`count(*)::int` })
     .from(hasilSoal)
     .where(and(gte(hasilSoal.dibuat, awalHariIni), ne(hasilSoal.status, "gagal"), guruId ? eq(hasilSoal.guruId, guruId) : undefined));
   return n;
 }
+
+/** Pemakaian AI di luar pembuatan set hari ini (WIB) oleh satu guru: Ganti/Ubah/Tambah soal, atau analisa materi. */
+async function hitungPemakaian(guruId: string, jenis: "ubah" | "analisa", q: Pick<typeof db, "select"> = db) {
+  const [{ n }] = await q
+    .select({ n: sql<number>`count(*)::int` })
+    .from(pemakaianAi)
+    .where(and(eq(pemakaianAi.guruId, guruId), gte(pemakaianAi.waktu, awalHariIni), jenis === "analisa" ? eq(pemakaianAi.jenis, "analisa") : ne(pemakaianAi.jenis, "analisa")));
+  return n;
+}
+const PESAN_BATAS_UBAH = `Batas ${BATAS_UBAH_PER_GURU} kali ganti/ubah/tambah soal hari ini sudah habis. Edit manual dan tulis soal sendiri tetap bisa; coba lagi besok.`;
 
 /** Sisa jatah hari ini untuk ditampilkan di form. batas = null berarti admin (tanpa batas per guru). */
 export async function ambilJatah() {
@@ -254,7 +265,7 @@ async function ambilSet(id: number, no: number, tx?: Tx) {
   const soal = h.soal as Soal[];
   const bab = babDariSet(h);
   if (!Number.isInteger(no) || no < 0 || no >= soal.length || !bab) return "Nomor soal tidak valid.";
-  return { h, soal, bab };
+  return { h, soal, bab, saya };
 }
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -414,7 +425,9 @@ async function soalBaruDariAI(id: number, no: number, mode: "ganti" | "ubah" | "
     // Baca dulu TANPA kunci (AI bisa 20–60 detik); hasilnya ditulis nanti di dalam transaksi terkunci.
     const set = await ambilSet(id, no);
     if (typeof set === "string") return gagal(set);
-    const { h, bab } = set;
+    const { h, bab, saya } = set;
+    const dibatasi = saya.peran !== "admin"; // aturan 4: batas harian per guru, admin bebas
+    if (dibatasi && (await hitungPemakaian(saya.id, "ubah")) >= BATAS_UBAH_PER_GURU) return gagal(PESAN_BATAS_UBAH);
     if (h.jumlahGanti >= BATAS_GANTI_PER_SET) return gagal(`Batas ${BATAS_GANTI_PER_SET} kali ganti/ubah/tambah soal untuk set ini sudah habis.`);
     if (mode === "tambah" && set.soal.length >= MAKS_SOAL) return gagal(`Satu set maksimal ${MAKS_SOAL} soal.`);
 
@@ -449,6 +462,10 @@ async function soalBaruDariAI(id: number, no: number, mode: "ganti" | "ubah" | "
     const tulis = await denganSetTerkunci(id, no, async (kini, tx) => {
       if (JSON.stringify(kini.soal[no]) !== JSON.stringify(lama)) return "Soal ini berubah saat AI bekerja (diedit atau dihapus). Muat ulang halaman lalu coba lagi.";
       if (kini.h.jumlahGanti >= BATAS_GANTI_PER_SET) return `Batas ${BATAS_GANTI_PER_SET} kali ganti/ubah/tambah soal untuk set ini sudah habis.`;
+      // ponytail: dicek ulang di sini, tapi dua permintaan serentak pada set BERBEDA bisa lewat 1–2 di atas batas
+      // (kunci di sini per set). Cukup untuk pengaman biaya; kunci per guru bila perlu tepat.
+      if (dibatasi && (await hitungPemakaian(saya.id, "ubah", tx)) >= BATAS_UBAH_PER_GURU) return PESAN_BATAS_UBAH;
+      await tx.insert(pemakaianAi).values({ guruId: saya.id, jenis: mode });
       const kisiKini = kini.h.kisi as BarisKisi[] | null;
       if (mode === "tambah") {
         if (kini.soal.length >= MAKS_SOAL) return `Satu set maksimal ${MAKS_SOAL} soal.`;
@@ -481,11 +498,6 @@ async function soalBaruDariAI(id: number, no: number, mode: "ganti" | "ubah" | "
   }
 }
 
-// Batas analisa materi per guru per hari (biaya AI), di memori: hilang saat server dinyalakan ulang.
-// ponytail: penghitung di memori, pindah ke tabel bila perlu tepat atau server lebih dari satu.
-const BATAS_ANALISA = 30;
-const analisaHariIni = new Map<string, { hari: string; n: number }>();
-const hariWib = () => new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10);
 
 /**
  * Materi baru dari halaman utama (tempel teks / file Word-PowerPoint, paragraf urut): ayat dicocokkan ke mushaf,
@@ -508,12 +520,10 @@ export async function analisaMateri(input: { mapel: string; kelas: string; parag
     : "";
   if (isian.isi.length < BATAS_MATERI.isiMin) return { ok: false as const, pesan: `Materi terlalu pendek (minimal ${BATAS_MATERI.isiMin} huruf teks).` };
 
+  // Batas analisa per guru per hari (biaya AI); dihitung saat mencoba, walau AI-nya gagal. Admin bebas.
   if (saya.peran !== "admin") {
-    const hari = hariWib();
-    const c = analisaHariIni.get(saya.id);
-    const n = c?.hari === hari ? c.n : 0;
-    if (n >= BATAS_ANALISA) return { ok: false as const, pesan: `Batas ${BATAS_ANALISA} analisa materi hari ini sudah habis. Pakai materi yang sudah ada, atau lanjutkan besok.` };
-    analisaHariIni.set(saya.id, { hari, n: n + 1 });
+    if ((await hitungPemakaian(saya.id, "analisa")) >= BATAS_ANALISA) return { ok: false as const, pesan: `Batas ${BATAS_ANALISA} analisa materi hari ini sudah habis. Pakai materi yang sudah ada, atau lanjutkan besok.` };
+    await db.insert(pemakaianAi).values({ guruId: saya.id, jenis: "analisa" });
   }
 
   const { sistem, pengguna } = buatAnalisaMateri(mapel, kelas, untukAi, isian.teksArab === "bahasa");
