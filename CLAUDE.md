@@ -441,7 +441,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   terpisah di bilah tab DIHAPUS. PDF berkop tidak bisa dibuat di hosting (butuh Word/LibreOffice di server); guru
   disarankan menyimpan Word sebagai PDF. Panduan bagian 3 ikut diperbarui (+ Kunci ringkas, ↑/↓, cari riwayat).
   Uji tanpa benar-benar mengunduh: ganti sementara `HTMLAnchorElement.prototype.click` untuk mencatat alamat, lalu fetch.
-- 2026-11-05 GELOMBANG 2 langkah 1: PAKET A/B/C/D (pemilik "1 1 aja, nomor 1 dulu"), BELUM di-push:
+- 2026-11-05 GELOMBANG 2 langkah 1: PAKET A/B/C/D (pemilik "1 1 aja, nomor 1 dulu"), BELUM di-push (bersama jendela Unduh):
   `susunPaket(soal, setId, paket)` (src/lib/paket.ts, dites, dipakai server & browser): Paket A = urutan asli; paket lain
   pakai pengacak bersemi (mulberry32, seed dari id set + paket) → hasil SAMA setiap diunduh dan ikut editan terbaru,
   TANPA kolom/tabel baru. Diacak: urutan soal di dalam tiap bagian bentuk (soal grup = satu unit), pilihan PG/PGK lewat
@@ -453,3 +453,9 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   Semua file = soal tiap paket + kunci tiap paket + kisi. Kunci ringkas menampilkan kunci tiap paket.
   Cek isi docx di browser tanpa menyimpan file: fetch → baca ZIP (DecompressionStream "deflate-raw") → word/document.xml.
   Uji laptop: set 51, 2 paket: soal B no.1 = soal A no.6, kunci isi sama, padanan lengkap.
+  REVISI UI (pilihan pemilik, tanpa ZIP): menu Unduh sesak diganti JENDELA (`JendelaUnduh`, <dialog> bawaan +
+  showModal: Esc/latar gelap/fokus dari browser; HP = panel dari bawah selebar layar). Dua pilihan: (1) Paket A–D
+  multi-pilih, (2) centang file (soal/kunci/kisi); daftar "Akan diunduh N file" + tombol "Unduh N file"; tautan kecil
+  "Cetak tampilan ini". Pilihan paket per set di localStorage `raciksoal-paket-<id>` (JSON array); hanya ["A"] = file
+  tanpa label paket. Kunci ringkas mengikuti paket terpilih. Setter memakai bentuk FUNGSI (lama => baru): klik beruntun
+  cepat dulu saling menimpa (terlihat saat uji otomatis).

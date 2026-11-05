@@ -33,10 +33,10 @@ const LANGKAH: { judul: string; isi: React.ReactNode[] }[] = [
   {
     judul: "3. Mengunduh file",
     isi: [
-      <>Tekan tombol hijau <b>Unduh</b> di bawah halaman hasil, lalu pilih <b>Semua file</b> untuk mengunduh lembar soal siswa (berkop madrasah), kunci &amp; pembahasan, dan kisi-kisi sekaligus. Bila browser bertanya “izinkan beberapa unduhan?”, pilih <b>Izinkan</b>. Satu per satu juga bisa dipilih di menu yang sama.</>,
-      <>Mau beberapa paket (mencegah contek)? Di menu Unduh pilih <b>Jumlah paket</b> 2–4. Paket A sama dengan urutan di layar; paket B, C, D berisi soal yang sama dengan urutan soal dan pilihan berbeda. Tiap paket punya lembar soal dan kuncinya sendiri; kisi-kisi mengikuti Paket A (padanan nomor ada di lembar kunci). <b>Kunci ringkas</b> ikut menampilkan kunci tiap paket.</>,
+      <>Tekan tombol hijau <b>Unduh</b> di bawah halaman hasil. Di jendela yang muncul: (1) pilih <b>Paket</b>, (2) centang <b>File</b> yang dibutuhkan (lembar soal siswa berkop madrasah, kunci &amp; pembahasan, kisi-kisi), lalu tekan <b>Unduh … file</b>. Daftar file yang akan diunduh tampil sebelum tombol ditekan. Bila browser bertanya “izinkan beberapa unduhan?”, pilih <b>Izinkan</b>.</>,
+      <>Mau beberapa paket (mencegah contek)? Pilih lebih dari satu huruf paket, mis. <b>A</b> dan <b>B</b>. Paket A sama dengan urutan di layar; paket B, C, D berisi soal yang sama dengan urutan soal dan pilihan berbeda. Tiap paket punya lembar soal dan kuncinya sendiri; kisi-kisi cukup satu (urutan Paket A, padanan nomornya ada di lembar kunci). <b>Kunci ringkas</b> ikut menampilkan kunci paket yang dipilih.</>,
       <>File Word selalu mengikuti isi terbaru, termasuk soal yang sudah diedit.</>,
-      <>Butuh PDF? Buka file Word-nya lalu simpan sebagai PDF (di HP lewat aplikasi Word atau Google Docs). Pilihan <b>Cetak tampilan ini</b> di menu Unduh hanya untuk cek cepat: tanpa kop madrasah.</>,
+      <>Butuh PDF? Buka file Word-nya lalu simpan sebagai PDF (di HP lewat aplikasi Word atau Google Docs). Tautan <b>Cetak tampilan ini</b> di jendela Unduh hanya untuk cek cepat: tanpa kop madrasah.</>,
       <>Kop ujian bisa diubah setelah soal jadi lewat <b>Identitas ujian di kop Word</b> di bawah daftar soal, lalu unduh ulang.</>,
     ],
   },

@@ -9,7 +9,7 @@ import { FormIdentitas, ringkasIdentitas } from "./form-identitas";
 import { StepAngka } from "./step-angka";
 import { skorOtomatis } from "@/lib/skor";
 import { kunciRingkas } from "@/lib/kunci";
-import { PAKET, susunPaket } from "@/lib/paket";
+import { PAKET, susunPaket, type Paket } from "@/lib/paket";
 import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_SOAL, NAMA_BENTUK, NAMA_LEVEL_TKA, namaTujuan, semesterDari, TKA, TUJUAN, WAKTU_BAWAAN, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { KELAS, pilihanAngka, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { DAFTAR_MAPEL, type IsianMateri } from "@/lib/materi";
@@ -126,20 +126,26 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
   const [tab, setTab] = useState<"soal" | "kisi">("soal"); // halaman hasil
   const [semuaKunci, setSemuaKunci] = useState(false);
   const [kunciSingkat, setKunciSingkat] = useState(false); // kotak "Kunci ringkas" (semua kunci satu set, bisa disalin)
-  // Jumlah paket (A–D, paket.ts): dipakai menu Unduh & Kunci ringkas; diingat per set di perangkat ini (kenyamanan saja).
-  const [jumlahPaket, setJumlahPaketMentah] = useState(1);
+  // Paket yang dipilih (A–D, paket.ts): dipakai jendela Unduh & Kunci ringkas; diingat per set di perangkat ini
+  // (kenyamanan saja). Bawaan: Paket A saja = file seperti dulu, tanpa label paket.
+  const [paketDipilih, setPaketDipilihMentah] = useState<Paket[]>(["A"]);
   useEffect(() => {
     try {
-      const n = Number(localStorage.getItem(`raciksoal-paket-${id}`));
-      setJumlahPaketMentah(n >= 1 && n <= PAKET.length ? n : 1);
-    } catch {}
+      const x = JSON.parse(localStorage.getItem(`raciksoal-paket-${id}`) ?? "[]");
+      setPaketDipilihMentah(Array.isArray(x) && x.length && x.every((k) => PAKET.includes(k)) ? x : ["A"]);
+    } catch {
+      setPaketDipilihMentah(["A"]);
+    }
   }, [id]);
-  const setJumlahPaket = (n: number) => {
-    setJumlahPaketMentah(n);
-    try {
-      localStorage.setItem(`raciksoal-paket-${id}`, String(n));
-    } catch {}
-  };
+  // Menerima fungsi (dari pilihan TERBARU), supaya klik beruntun yang cepat tidak saling menimpa.
+  const setPaketDipilih = (ubah: (lama: Paket[]) => Paket[]) =>
+    setPaketDipilihMentah((lama) => {
+      const x = ubah(lama);
+      try {
+        localStorage.setItem(`raciksoal-paket-${id}`, JSON.stringify(x));
+      } catch {}
+      return x;
+    });
   const [jatah, setJatah] = useState<Awaited<ReturnType<typeof ambilJatah>>>(null);
   const muatJatah = () => ambilJatah().then(setJatah).catch(() => {});
   const jatahHabis = !!jatah?.batas && jatah.terpakai >= jatah.batas;
@@ -580,8 +586,8 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
           {tab === "soal" && kunciSingkat && (
             <KunciRingkas
               teks={
-                jumlahPaket > 1
-                  ? PAKET.slice(0, jumlahPaket).map((k) => kunciRingkas(susunPaket(soal, id!, k).soal, `${hasil.nama ?? bab.judul} — Paket ${k}`)).join("\n\n")
+                pakaiLabelPaket(paketDipilih)
+                  ? paketDipilih.map((k) => kunciRingkas(susunPaket(soal, id!, k).soal, `${hasil.nama ?? bab.judul} — Paket ${k}`)).join("\n\n")
                   : kunciRingkas(soal, hasil.nama ?? bab.judul)
               }
             />
@@ -629,7 +635,7 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
 
           {/* Satu tombol Unduh menempel di bawah layar (pilihan pemilik 2026-11-05). File Word selalu mengikuti isi terbaru. */}
           <div className="sticky bottom-0 z-10 -mx-4 print:hidden flex flex-wrap items-center gap-2 border-t border-garis bg-krem px-4 py-2 md:-mx-8 md:px-8">
-            <MenuUnduh id={id!} adaKisi={!!hasil.kisi?.length} jumlahPaket={jumlahPaket} setJumlahPaket={setJumlahPaket} />
+            <JendelaUnduh id={id!} adaKisi={!!hasil.kisi?.length} paketDipilih={paketDipilih} setPaketDipilih={setPaketDipilih} />
           </div>
         </section>
       )}
@@ -669,44 +675,44 @@ function PilihMapel({ mapel, kelas, ubah }: { mapel: string; kelas: string; ubah
   );
 }
 
-/**
- * Menu Unduh (pilihan pemilik 2026-11-05, menggantikan 3 tombol + tombol Cetak terpisah): pilihan utama "Semua file"
- * mengunduh 3 Word satu per satu (bukan ZIP: guru di HP sering bingung membuka ZIP; browser bisa bertanya sekali
- * "izinkan beberapa unduhan"). PDF berkop TIDAK bisa dibuat di hosting (butuh Word/LibreOffice di server), jadi
- * "Cetak tampilan ini" hanya pilihan terakhir untuk cek cepat tanpa kop (globals.css @media print).
- */
-function MenuUnduh({ id, adaKisi, jumlahPaket, setJumlahPaket }: { id: number; adaKisi: boolean; jumlahPaket: number; setJumlahPaket: (n: number) => void }) {
-  const [buka, setBuka] = useState(false);
-  const kotak = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!buka) return;
-    const luar = (e: MouseEvent) => !kotak.current?.contains(e.target as Node) && setBuka(false);
-    const esc = (e: KeyboardEvent) => e.key === "Escape" && setBuka(false);
-    document.addEventListener("mousedown", luar);
-    document.addEventListener("keydown", esc);
-    return () => {
-      document.removeEventListener("mousedown", luar);
-      document.removeEventListener("keydown", esc);
-    };
-  }, [buka]);
+/** Hanya Paket A = file seperti dulu (tanpa label & tanpa parameter paket). */
+const pakaiLabelPaket = (x: Paket[]) => !(x.length === 1 && x[0] === "A");
 
-  const file = [
-    { jenis: "soal", judul: "Lembar soal siswa", ket: "Berkop madrasah, siap dicetak" },
-    { jenis: "kunci", judul: "Kunci & pembahasan", ket: "Pegangan guru" },
-    ...(adaKisi ? [{ jenis: "kisi", judul: "Kisi-kisi", ket: "Untuk administrasi" }] : []),
-  ];
-  // Satu paket = tanpa parameter paket (file seperti dulu). Beberapa paket: soal & kunci per paket, kisi-kisi sekali
-  // (urutan Paket A; lembar kunci paket lain memuat padanan nomornya).
-  const daftarPaket = jumlahPaket > 1 ? PAKET.slice(0, jumlahPaket) : [];
-  const alamat = (jenis: string, paket?: string) => `/api/word?id=${id}&jenis=${jenis}${paket ? `&paket=${paket}` : ""}`;
-  const semua = file.flatMap((f) => (f.jenis === "kisi" || !daftarPaket.length ? [alamat(f.jenis)] : daftarPaket.map((k) => alamat(f.jenis, k))));
-  /** Semua file: satu per satu dengan jeda kecil, supaya browser tidak menganggapnya satu unduhan saja. */
-  function unduhSemua() {
-    setBuka(false);
-    semua.forEach((href, i) =>
+const FILE_UNDUH = [
+  { jenis: "soal", judul: "Lembar soal siswa", pendek: "Soal", ket: "Berkop madrasah, siap dicetak" },
+  { jenis: "kunci", judul: "Kunci & pembahasan", pendek: "Kunci", ket: "Pegangan guru" },
+  { jenis: "kisi", judul: "Kisi-kisi", pendek: "Kisi-kisi", ket: "Untuk administrasi" },
+] as const;
+
+/**
+ * Jendela Unduh (pilihan pemilik 2026-11-05, menggantikan menu sesak berisi tombol per paket): dua pilihan saja,
+ * (1) paket mana (A–D, boleh lebih dari satu) dan (2) file apa (centang), lalu daftar "Akan diunduh" dan satu tombol
+ * "Unduh N file". Unduhan berurutan, sengaja BUKAN ZIP (guru di HP bingung membuka ZIP). Kisi-kisi selalu sekali
+ * (urutan Paket A). PDF berkop tidak bisa dibuat di hosting (butuh Word/LibreOffice), jadi "Cetak tampilan ini" hanya
+ * cek cepat tanpa kop (globals.css @media print). Memakai <dialog> bawaan: Esc, latar gelap, dan fokus keyboard
+ * ditangani browser. Di HP tampil sebagai panel dari bawah selebar layar.
+ */
+function JendelaUnduh({ id, adaKisi, paketDipilih, setPaketDipilih }: { id: number; adaKisi: boolean; paketDipilih: Paket[]; setPaketDipilih: (ubah: (lama: Paket[]) => Paket[]) => void }) {
+  const jendela = useRef<HTMLDialogElement>(null);
+  const [jenis, setJenis] = useState<string[]>(["soal", "kunci", "kisi"]);
+  const tersedia = FILE_UNDUH.filter((f) => f.jenis !== "kisi" || adaKisi);
+  const label = pakaiLabelPaket(paketDipilih);
+  const daftar = tersedia
+    .filter((f) => jenis.includes(f.jenis))
+    .flatMap((f) =>
+      f.jenis === "kisi" || !label
+        ? [{ href: `/api/word?id=${id}&jenis=${f.jenis}`, nama: f.pendek }]
+        : paketDipilih.map((k) => ({ href: `/api/word?id=${id}&jenis=${f.jenis}&paket=${k}`, nama: `${f.pendek} Paket ${k}` })),
+    );
+  const alasan = !paketDipilih.length ? "Pilih minimal satu paket." : !daftar.length ? "Centang minimal satu file." : "";
+
+  /** Satu per satu dengan jeda kecil, supaya browser tidak menganggapnya satu unduhan saja. */
+  function unduh() {
+    jendela.current?.close();
+    daftar.forEach((f, i) =>
       setTimeout(() => {
         const a = document.createElement("a");
-        a.href = href;
+        a.href = f.href;
         a.download = "";
         document.body.appendChild(a);
         a.click();
@@ -714,77 +720,105 @@ function MenuUnduh({ id, adaKisi, jumlahPaket, setJumlahPaket }: { id: number; a
       }, i * 800),
     );
   }
+  const ubahPaket = (k: Paket) => setPaketDipilih((lama) => PAKET.filter((x) => (x === k ? !lama.includes(k) : lama.includes(x))));
+  const tutup = () => jendela.current?.close();
 
-  const baris = "flex w-full flex-col items-start rounded-lg px-3 py-2 text-left hover:bg-krem-sorot max-md:min-h-11";
   return (
-    <div ref={kotak} className="relative">
+    <>
       <button
-        aria-haspopup="menu"
-        aria-expanded={buka}
-        onClick={() => setBuka(!buka)}
+        aria-haspopup="dialog"
+        onClick={() => jendela.current?.showModal()}
         className="inline-flex h-10 items-center gap-2 rounded-lg bg-hijau px-5 font-semibold text-white hover:bg-hijau-tua max-md:min-h-11"
       >
-        Unduh
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden className={buka ? "rotate-180" : ""}>
-          <path d="M6 15l6-6 6 6" />
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
         </svg>
+        Unduh
       </button>
-      {buka && (
-        // Terbuka ke ATAS (tombol ada di dasar layar).
-        <div role="menu" className="absolute bottom-full left-0 z-20 mb-2 w-[min(20rem,calc(100vw-2rem))] rounded-xl border bg-kartu p-1.5 text-sm shadow-lg">
-          {/* Paket A/B (paket.ts): isi soal sama, urutan soal & pilihan berbeda. */}
-          <div className="flex flex-wrap items-center gap-1 px-3 py-2" role="group" aria-label="Jumlah paket">
-            <span className="mr-1 text-xs text-pudar">Jumlah paket:</span>
-            {PAKET.map((_, i) => (
-              <button
-                key={i}
-                aria-pressed={jumlahPaket === i + 1}
-                onClick={() => setJumlahPaket(i + 1)}
-                className={`h-8 min-w-8 rounded-lg border px-2 text-sm max-md:min-h-10 ${jumlahPaket === i + 1 ? "border-hijau bg-hijau-muda font-semibold text-hijau-teks" : "bg-kartu hover:bg-krem"}`}
-              >
-                {i + 1}
-              </button>
-            ))}
+      <dialog
+        ref={jendela}
+        aria-labelledby="judul-unduh"
+        // Klik di latar gelap (di luar kotak) = tutup.
+        onClick={(e) => e.target === jendela.current && tutup()}
+        className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-2xl border bg-kartu p-0 text-tinta shadow-xl backdrop:bg-black/50 max-md:mb-0 max-md:w-full max-md:max-w-none max-md:rounded-b-none"
+      >
+        <div className="space-y-5 p-5">
+          <div className="flex items-center justify-between">
+            <h2 id="judul-unduh">Unduh file</h2>
+            <button onClick={tutup} aria-label="Tutup" className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-krem-sorot">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
+            </button>
           </div>
-          {daftarPaket.length > 0 && <p className="px-3 pb-1 text-xs text-pudar">Paket {daftarPaket.join(", ")}: urutan soal dan pilihan berbeda, isi sama.</p>}
-          <button role="menuitem" className={`${baris} bg-hijau-muda`} onClick={unduhSemua}>
-            <span className="font-semibold text-hijau-teks">Semua file ({semua.length} Word)</span>
-            <span className="text-xs text-pudar">
-              {daftarPaket.length ? `lembar soal & kunci tiap paket, kisi-kisi` : file.map((f) => f.judul.toLowerCase()).join(", ")}
-            </span>
-          </button>
-          {file.map((f) =>
-            daftarPaket.length && f.jenis !== "kisi" ? (
-              <div key={f.jenis} className="flex flex-wrap items-center gap-1 px-3 py-2">
-                <span className="mr-1 w-full font-semibold sm:w-auto">{f.judul}:</span>
-                {daftarPaket.map((k) => (
-                  <a key={k} role="menuitem" href={alamat(f.jenis, k)} onClick={() => setBuka(false)} className="inline-flex h-8 items-center rounded-lg border bg-kartu px-2 text-sm hover:bg-krem-sorot max-md:min-h-10">
-                    Paket {k}
-                  </a>
-                ))}
-              </div>
+
+          <fieldset className="space-y-2">
+            <legend className="mb-2 font-semibold">1. Paket</legend>
+            <div className="flex gap-2">
+              {PAKET.map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  aria-pressed={paketDipilih.includes(k)}
+                  onClick={() => ubahPaket(k)}
+                  className={`h-11 flex-1 rounded-lg border text-base font-semibold ${paketDipilih.includes(k) ? "border-hijau bg-hijau-muda text-hijau-teks" : "bg-kartu text-pudar hover:bg-krem"}`}
+                >
+                  {k}
+                  {paketDipilih.includes(k) && " ✓"}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-pudar">Paket A = urutan seperti di layar. Paket B–D: soal sama, urutan soal dan pilihan diacak (mencegah contek).</p>
+          </fieldset>
+
+          <fieldset className="space-y-1">
+            <legend className="mb-2 font-semibold">2. File</legend>
+            {tersedia.map((f) => (
+              <label key={f.jenis} className="flex min-h-11 cursor-pointer flex-wrap items-center gap-x-3 rounded-lg px-2 hover:bg-krem">
+                <input
+                  type="checkbox"
+                  className="h-5 w-5 accent-hijau"
+                  checked={jenis.includes(f.jenis)}
+                  onChange={(e) => {
+                    const ya = e.target.checked;
+                    setJenis((lama) => (ya ? [...lama, f.jenis] : lama.filter((x) => x !== f.jenis)));
+                  }}
+                />
+                <span className="font-semibold">{f.judul}</span>
+                <span className="text-xs text-pudar">{f.jenis === "kisi" && label ? "satu file, urutan Paket A" : f.ket}</span>
+              </label>
+            ))}
+          </fieldset>
+
+          <div className="rounded-lg bg-krem p-3 text-sm" aria-live="polite">
+            {alasan ? (
+              <p className="text-peringatan">{alasan}</p>
             ) : (
-              <a key={f.jenis} role="menuitem" className={baris} href={alamat(f.jenis)} onClick={() => setBuka(false)}>
-                <span className="font-semibold">{f.judul} (Word)</span>
-                <span className="text-xs text-pudar">{f.jenis === "kisi" && daftarPaket.length ? "Urutan Paket A (padanan nomor ada di lembar kunci)" : f.ket}</span>
-              </a>
-            ),
-          )}
-          <div className="my-1 border-t" />
+              <>
+                <p className="font-semibold">Akan diunduh {daftar.length} file Word:</p>
+                <p className="text-pudar">{daftar.map((f) => f.nama).join(", ")}</p>
+                {daftar.length > 1 && <p className="mt-1 text-xs text-pudar">Bila browser bertanya “izinkan beberapa unduhan?”, pilih Izinkan.</p>}
+              </>
+            )}
+          </div>
+
+          <button disabled={!!alasan} onClick={unduh} className="h-12 w-full rounded-lg bg-hijau text-base font-semibold text-white hover:bg-hijau-tua disabled:opacity-40">
+            {alasan ? "Unduh" : `Unduh ${daftar.length} file`}
+          </button>
+
           <button
-            role="menuitem"
-            className={baris}
+            type="button"
+            className="w-full text-center text-sm text-pudar underline hover:text-tinta"
             onClick={() => {
-              setBuka(false);
-              setTimeout(() => window.print(), 100); // tunggu menu tertutup supaya tidak ikut tercetak
+              tutup();
+              setTimeout(() => window.print(), 100); // tunggu jendela tertutup supaya tidak ikut tercetak
             }}
           >
-            <span>Cetak tampilan ini (PDF)</span>
-            <span className="text-xs text-pudar">Tanpa kop madrasah, untuk cek cepat. Kunci ikut bila sedang ditampilkan.</span>
+            Cetak tampilan ini (PDF, tanpa kop madrasah)
           </button>
         </div>
-      )}
-    </div>
+      </dialog>
+    </>
   );
 }
 
