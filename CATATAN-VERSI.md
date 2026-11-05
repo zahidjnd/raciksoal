@@ -21,6 +21,22 @@ Keterbatasan yang sudah diketahui (tidak menghalangi uji coba): dari file PDF ha
 dikenali mushaf yang dipakai (teks Arab PDF lain, termasuk hadis, dibuang; buku PDF Kemenag teks Arabnya rusak semua);
 hadis karangan dalam mode Bahasa Arab belum bisa dideteksi otomatis (hanya dicegah lewat instruksi ke AI).
 
+## Persiapan menuju 1.0.0 (dipakai resmi)
+Target: **setelah ASAS Ganjil (sekitar Desember 2026)**.
+- [ ] Dipakai sungguhan oleh sebagian besar guru untuk ujian resmi (ASAS Ganjil). Cek: kolom set 30 hari di **Kelola guru**.
+- [ ] 2–4 minggu berturut-turut tanpa masalah penghalang (guru tidak bisa membuat soal atau mengunduh Word).
+      Kalau ada masalah seperti itu, hitungan mulai lagi dari nol.
+- [ ] Backup malam berjalan rutin (pita merah backup tidak muncul) dan uji pulih diulang (terakhir 15 Oktober 2026).
+- [ ] Saldo AI cukup untuk satu semester (hitung dari token 30 hari di Kelola guru).
+- [ ] Guru mandiri dengan Panduan; pertanyaan yang sering muncul dimasukkan ke Panduan.
+- [ ] Ada admin cadangan: punya akun admin (dibuat sekali lewat perintah database di cPanel, belum ada tombolnya),
+      tahu cara restart dan membaca status, bisa memulihkan backup (`deploy/pulihkan-backup.md`), memegang kata sandi backup.
+- [ ] Tes otomatis pemisahan data antar guru (guru B tidak bisa membuka/mengedit/mengunduh set guru A).
+- [ ] Batas harian per guru untuk Ganti/Ubah/Tambah soal.
+
+Ditunda (setelah 1.0.0 atau bila dibutuhkan): bank soal (direncanakan dulu), katalog CP/TP, rumus/gambar/tabel.
+Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubrik ada di file kunci).
+
 ---
 
 ## 0.15.0 — 5 November 2026
