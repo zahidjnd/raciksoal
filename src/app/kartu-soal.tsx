@@ -128,11 +128,15 @@ function TabelKategori({ s, kunci }: { s: Soal; kunci: boolean }) {
 // draf: soal yang sudah jadi selama set masih diproses; hanya dibaca (kunci & urutan pilihan belum final, server
 // juga menolak edit/ganti sebelum selesai).
 // onSetBerubah: soal ditambah/dihapus → nomor bergeser, halaman memuat ulang seluruh set.
+/** Jatah Ganti/Ubah/Tambah pakai AI: dipakai di set ini (maks batasSet, permanen) dan hari ini (guru; admin = null). */
+export type JatahUbah = { set: number; batasSet: number; hari: number | null; batasHari: number | null };
+
 type Props = { hasilId: number; no: number; s: Soal; bab: Bab; semuaKunci: boolean; nomorGrup?: string | null; onUbah: (s: Soal) => void; onSetBerubah?: (lompatKe?: number) => void; draf?: boolean;
+  jatahUbah?: JatahUbah | null;
   // Tombol ↑/↓ (pindah urutan): hanya di dalam bagian bentuk yang sama, bukan soal grup (dihitung halaman hasil).
   bisaNaik?: boolean; bisaTurun?: boolean };
 
-export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, onSetBerubah, draf, bisaNaik, bisaTurun }: Props) {
+export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, onSetBerubah, draf, bisaNaik, bisaTurun, jatahUbah }: Props) {
   const [edit, setEdit] = useState(false);
   const [lihatKunci, setLihatKunci] = useState(false); // kunci & pembahasan dilipat, dibuka per soal atau semua sekaligus
   const tampilKunci = !draf && (semuaKunci || lihatKunci);
@@ -140,6 +144,10 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
   const mengganti = proses !== "";
   const [instruksi, setInstruksi] = useState("");
   const [lainnya, setLainnya] = useState(false); // Ganti & Ubah dilipat supaya kartu lebih lega
+  // Jatah AI habis → tombol Ganti/Tambah/Ubah dimatikan dengan alasan tertulis (server tetap memeriksa sendiri).
+  const sisaSet = jatahUbah ? jatahUbah.batasSet - jatahUbah.set : null;
+  const sisaHari = jatahUbah?.batasHari != null ? jatahUbah.batasHari - (jatahUbah.hari ?? 0) : null;
+  const habisAI = sisaSet !== null && sisaSet <= 0 ? "set" : sisaHari !== null && sisaHari <= 0 ? "hari" : "";
   const [error, setError] = useState("");
   // Pesan berhasil sesaat ("Tersimpan ✓"), supaya guru yakin editannya masuk (audit 2026-11-04).
   const [berhasil, setBerhasil] = useState("");
@@ -269,12 +277,12 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
       {lainnya && (
       <div className="space-y-2 rounded-lg border bg-krem p-3">
       <div className="flex flex-wrap gap-2">
-        <button className={tombol} disabled={mengganti} onClick={() => ganti("ganti")}>
+        <button className={tombol} disabled={mengganti || !!habisAI} onClick={() => ganti("ganti")}>
           {proses === "ganti" ? "Sedang membuat soal pengganti..." : "Ganti soal ini"}
         </button>
         {onSetBerubah && (
           <>
-            <button className={tombol} disabled={mengganti} onClick={() => ubahJumlah("tambah")}>
+            <button className={tombol} disabled={mengganti || !!habisAI} onClick={() => ubahJumlah("tambah")}>
               {proses === "tambah" ? "Sedang membuat soal tambahan..." : "Tambah soal serupa di bawahnya"}
             </button>
             <button className={`${tombol} text-bahaya`} disabled={mengganti} onClick={() => ubahJumlah("hapus")}>
@@ -296,13 +304,22 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
           aria-label={`Minta perubahan soal nomor ${no}`}
           maxLength={MAKS_INSTRUKSI}
           value={instruksi}
-          disabled={mengganti}
+          disabled={mengganti || !!habisAI}
           onChange={(e) => setInstruksi(e.target.value)}
         />
-        <button className={tombol} disabled={mengganti || !instruksi.trim()}>
+        <button className={tombol} disabled={mengganti || !instruksi.trim() || !!habisAI}>
           {proses === "ubah" ? "Sedang mengubah soal..." : "Ubah soal"}
         </button>
       </form>
+      {jatahUbah && (
+        <p className={`text-xs ${habisAI ? "font-semibold text-bahaya" : "text-pudar"}`}>
+          {habisAI === "set"
+            ? `Jatah ${jatahUbah.batasSet} kali ganti/ubah/tambah untuk set ini sudah habis dan tidak kembali. Perbaiki lewat Edit atau Tulis soal sendiri, atau buat set baru dengan "Pakai materi ini lagi".`
+            : habisAI === "hari"
+              ? `Jatah ${jatahUbah.batasHari} kali ganti/ubah/tambah hari ini sudah habis. Edit dan Tulis soal sendiri tetap bisa; besok jatahnya kembali.`
+              : `Sisa ganti/ubah/tambah pakai AI: set ini ${sisaSet} dari ${jatahUbah.batasSet}${sisaHari !== null ? ` · hari ini ${sisaHari} dari ${jatahUbah.batasHari}` : ""}.`}
+        </p>
+      )}
       </div>
       )}
       </>

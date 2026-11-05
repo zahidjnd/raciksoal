@@ -39,6 +39,15 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.16.3 — 5 November 2026
+- Menu **Lainnya** di kartu soal kini menampilkan **sisa jatah** Ganti/Ubah/Tambah pakai AI, misalnya
+  "Sisa ganti/ubah/tambah pakai AI: set ini 12 dari 30 · hari ini 41 dari 60". Jadi guru tahu sebelum jatahnya habis.
+- Kalau jatah habis, tombol Ganti, Tambah, dan Ubah soal **dimatikan** dengan alasan tertulis:
+  - jatah **set** habis: tidak kembali; perbaiki lewat Edit atau Tulis soal sendiri, atau buat set baru dengan
+    "Pakai materi ini lagi";
+  - jatah **hari ini** habis: Edit dan Tulis soal sendiri tetap bisa; besok jatahnya kembali.
+- Panduan menjelaskan bahwa jatah 30 per set tidak kembali, sedangkan jatah 60 per hari kembali penuh setiap hari.
+
 ## 0.16.2 — 5 November 2026
 - Kalau guru salah kata sandi 5 kali, perangkatnya dikunci 15 menit. Sekarang **"Reset kata sandi" oleh admin langsung
   membuka kunci itu**, jadi guru bisa segera masuk dengan kata sandi baru tanpa menunggu. (Dulu tetap harus menunggu

@@ -621,6 +621,7 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
                         bab={bab}
                         semuaKunci={semuaKunci}
                         nomorGrup={nomorGrup(soal, i)}
+                        jatahUbah={hasil.jatahUbah}
                         onUbah={(baru) => {
                           setHasil({ ...hasil, soal: soal.map((x, j) => (j === i ? baru : x)) });
                           cekHasil(id!).then((h) => h && setHasil(h)).catch(() => {}); // kisi-kisi ikut berubah di server

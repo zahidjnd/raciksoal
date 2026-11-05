@@ -489,3 +489,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
 - 2026-11-05 (0.16.2, pilihan pemilik): "Reset kata sandi" admin MEMBUKA kunci salah sandi nama itu (`pembatasMasuk.buka`).
   Pembatas kini satu objek bersama `pembatasMasuk` di pembatas.ts (disimpan di globalThis), dipakai masuk/actions.ts dan
   admin/guru/actions.ts. Diuji: guru.uji.ayat dikunci 5x salah → admin reset (sandi sama) → langsung bisa masuk.
+- 2026-11-05 (0.16.3): `cekHasil` mengirim `jatahUbah` {set, batasSet, hari, batasHari} (hari = null untuk admin; null
+  selama proses). `KartuSoal` prop `jatahUbah`: baris sisa di menu Lainnya; habis → Ganti/Tambah/Ubah `disabled` + alasan
+  (server tetap memeriksa). Pesan habis per set = `PESAN_BATAS_SET` (actions.ts). Diuji set 54: jumlah_ganti 30 → pesan
+  set; 60 baris pemakaian_ai → pesan hari; data uji dibersihkan (set 54 jumlah_ganti = 1).

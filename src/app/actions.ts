@@ -47,6 +47,7 @@ async function hitungPemakaian(guruId: string, jenis: "ubah" | "analisa", q: Pic
     .where(and(eq(pemakaianAi.guruId, guruId), gte(pemakaianAi.waktu, awalHariIni), jenis === "analisa" ? eq(pemakaianAi.jenis, "analisa") : ne(pemakaianAi.jenis, "analisa")));
   return n;
 }
+const PESAN_BATAS_SET = `Jatah ${BATAS_GANTI_PER_SET} kali ganti/ubah/tambah soal untuk set ini sudah habis dan tidak kembali. Perbaiki soal lewat Edit atau Tulis soal sendiri, atau buat set baru dengan "Pakai materi ini lagi".`;
 const PESAN_BATAS_UBAH = `Batas ${BATAS_UBAH_PER_GURU} kali ganti/ubah/tambah soal hari ini sudah habis. Edit manual dan tulis soal sendiri tetap bisa; coba lagi besok.`;
 
 /** Sisa jatah hari ini untuk ditampilkan di form. batas = null berarti admin (tanpa batas per guru). */
@@ -428,7 +429,7 @@ async function soalBaruDariAI(id: number, no: number, mode: "ganti" | "ubah" | "
     const { h, bab, saya } = set;
     const dibatasi = saya.peran !== "admin"; // aturan 4: batas harian per guru, admin bebas
     if (dibatasi && (await hitungPemakaian(saya.id, "ubah")) >= BATAS_UBAH_PER_GURU) return gagal(PESAN_BATAS_UBAH);
-    if (h.jumlahGanti >= BATAS_GANTI_PER_SET) return gagal(`Batas ${BATAS_GANTI_PER_SET} kali ganti/ubah/tambah soal untuk set ini sudah habis.`);
+    if (h.jumlahGanti >= BATAS_GANTI_PER_SET) return gagal(PESAN_BATAS_SET);
     if (mode === "tambah" && set.soal.length >= MAKS_SOAL) return gagal(`Satu set maksimal ${MAKS_SOAL} soal.`);
 
     const lama = set.soal[no];
@@ -461,7 +462,7 @@ async function soalBaruDariAI(id: number, no: number, mode: "ganti" | "ubah" | "
     // Tulis ke isi TERBARU set (bisa sudah diedit guru selama AI bekerja), dengan baris dikunci.
     const tulis = await denganSetTerkunci(id, no, async (kini, tx) => {
       if (JSON.stringify(kini.soal[no]) !== JSON.stringify(lama)) return "Soal ini berubah saat AI bekerja (diedit atau dihapus). Muat ulang halaman lalu coba lagi.";
-      if (kini.h.jumlahGanti >= BATAS_GANTI_PER_SET) return `Batas ${BATAS_GANTI_PER_SET} kali ganti/ubah/tambah soal untuk set ini sudah habis.`;
+      if (kini.h.jumlahGanti >= BATAS_GANTI_PER_SET) return PESAN_BATAS_SET;
       // ponytail: dicek ulang di sini, tapi dua permintaan serentak pada set BERBEDA bisa lewat 1–2 di atas batas
       // (kunci di sini per set). Cukup untuk pengaman biaya; kunci per guru bila perlu tepat.
       if (dibatasi && (await hitungPemakaian(saya.id, "ubah", tx)) >= BATAS_UBAH_PER_GURU) return PESAN_BATAS_UBAH;
@@ -582,13 +583,18 @@ export async function cekHasil(id: number, denganBab = true) {
   const saya = await penggunaSaatIni();
   if (!saya) return null;
   const [h] = await db
-    .select({ guruId: hasilSoal.guruId, dihapus: hasilSoal.dihapus, nama: hasilSoal.nama, status: hasilSoal.status, soal: hasilSoal.soal, kisi: hasilSoal.kisi, bab: hasilSoal.bab, pesan: hasilSoal.pesan, model: hasilSoal.model, babId: hasilSoal.babId, dibuat: hasilSoal.dibuat, info: hasilSoal.info, pengaturan: hasilSoal.pengaturan })
+    .select({ guruId: hasilSoal.guruId, dihapus: hasilSoal.dihapus, nama: hasilSoal.nama, status: hasilSoal.status, soal: hasilSoal.soal, kisi: hasilSoal.kisi, bab: hasilSoal.bab, pesan: hasilSoal.pesan, model: hasilSoal.model, babId: hasilSoal.babId, dibuat: hasilSoal.dibuat, info: hasilSoal.info, pengaturan: hasilSoal.pengaturan, jumlahGanti: hasilSoal.jumlahGanti })
     .from(hasilSoal)
     .where(eq(hasilSoal.id, Number(id)));
   if (!h || h.dihapus || !bolehAkses(h.guruId, saya)) return null;
-  const { guruId, dihapus, pengaturan, ...isi } = h; // id pemilik tidak perlu dikirim ke browser
+  const { guruId, dihapus, pengaturan, jumlahGanti, ...isi } = h; // id pemilik tidak perlu dikirim ke browser
   void guruId;
   void dihapus;
+  // Sisa jatah Ganti/Ubah/Tambah (ditampilkan di menu Lainnya): per set (permanen) dan per hari (guru saja).
+  const guru = saya.peran !== "admin";
+  const jatahUbah = h.status === "selesai"
+    ? { set: jumlahGanti, batasSet: BATAS_GANTI_PER_SET, hari: guru ? await hitungPemakaian(saya.id, "ubah") : null, batasHari: guru ? BATAS_UBAH_PER_GURU : null }
+    : null;
   const soal = h.soal as Soal[] | null;
   const kisi = h.kisi as BarisKisi[] | null;
   // Catatan guru + tanggapan AI atasnya (ATURAN-SOAL.md bagian 6), untuk guru maupun admin.
@@ -600,7 +606,7 @@ export async function cekHasil(id: number, denganBab = true) {
   if (saya.peran !== "admin") {
     // Guru tidak menerima info teknis (model, waktu, token, catatan cadangan) maupun rincian error penyedia AI.
     // (halaman sudah menambahkan awalan "Gagal membuat soal:")
-    return { ...isi, soal, kisi, bab, catatan, tanggapan, identitas, model: null, info: null, pesan: h.status === "gagal" ? SARAN_GURU : h.pesan };
+    return { ...isi, soal, kisi, bab, catatan, tanggapan, identitas, jatahUbah, model: null, info: null, pesan: h.status === "gagal" ? SARAN_GURU : h.pesan };
   }
-  return { ...isi, soal, kisi, bab, catatan, tanggapan, identitas, info: h.info as { detik: number; tokenMasuk: number; tokenKeluar: number; catatan?: string[] } | null };
+  return { ...isi, soal, kisi, bab, catatan, tanggapan, identitas, jatahUbah, info: h.info as { detik: number; tokenMasuk: number; tokenKeluar: number; catatan?: string[] } | null };
 }
