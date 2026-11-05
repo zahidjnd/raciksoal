@@ -1,5 +1,6 @@
 // Uji pemisahan data antar guru (aturan 3), lewat aplikasi yang sedang berjalan di LAPTOP:
 // guru B mencoba membuka, mengubah, dan mengunduh set & materi milik guru A. Semua harus ditolak, dan isi A tetap utuh.
+// Juga: pintu HTTP Better Auth (/api/auth/...) harus tertutup; satu-satunya jalan masuk = halaman Masuk (ada pembatasnya).
 //
 // Jalankan saat server dev menyala (dua akun GURU, bukan admin):
 //   UJI_A=nama:sandi UJI_B=nama:sandi npm run uji:pemisahan
@@ -16,18 +17,6 @@ const cek = (benar: boolean, apa: string, rincian = "") => {
   console.log(`${benar ? "LULUS" : "GAGAL"}  ${apa}${!benar && rincian ? `\n       ${rincian}` : ""}`);
   if (!benar) gagal++;
 };
-
-async function masuk(akun: string | undefined, label: string) {
-  const i = akun?.indexOf(":") ?? -1;
-  if (!akun || i < 1) throw new Error(`Isi ${label} dengan nama:sandi.`);
-  const r = await fetch(`${BASE}/api/auth/sign-in/username`, {
-    method: "POST",
-    headers: { "content-type": "application/json", origin: BASE },
-    body: JSON.stringify({ username: akun.slice(0, i), password: akun.slice(i + 1) }),
-  });
-  if (!r.ok) throw new Error(`${label}: gagal masuk (HTTP ${r.status}).`);
-  return r.headers.getSetCookie().map((c) => c.split(";")[0]).join("; ");
-}
 
 const halaman = (cookie: string, jalur: string) => fetch(BASE + jalur, { headers: { cookie }, redirect: "manual" });
 
@@ -61,6 +50,22 @@ async function aksi(cookie: string, nama: string, ...args: unknown[]) {
   return { teks: daftar.join("\n"), nilai: baris ? JSON.parse(baris.slice(2)) : undefined };
 }
 
+/** Masuk lewat formulir halaman Masuk, dikirim seperti browser tanpa JavaScript (isian tersembunyi dari halamannya). */
+async function masuk(akun: string | undefined, label: string) {
+  const i = akun?.indexOf(":") ?? -1;
+  if (!akun || i < 1) throw new Error(`Isi ${label} dengan nama:sandi.`);
+  const html = await (await fetch(`${BASE}/masuk`)).text();
+  const form = new FormData();
+  for (const [, nama, nilai] of html.matchAll(/<input type="hidden" name="([^"]+)"(?: value="([^"]*)")?\/>/g))
+    form.append(nama, (nilai ?? "").replaceAll("&quot;", '"').replaceAll("&amp;", "&"));
+  form.append("username", akun.slice(0, i));
+  form.append("password", akun.slice(i + 1));
+  const r = await fetch(`${BASE}/masuk`, { method: "POST", headers: { origin: BASE }, body: form, redirect: "manual" });
+  const cookie = r.headers.getSetCookie().map((c) => c.split(";")[0]).join("; ");
+  if (!cookie.includes("session_token")) throw new Error(`${label}: gagal masuk. ${(await r.text()).match(/"pesan":"([^"]*)"/)?.[1] ?? `HTTP ${r.status}`}`);
+  return cookie;
+}
+
 const A = await masuk(process.env.UJI_A, "UJI_A");
 const B = await masuk(process.env.UJI_B, "UJI_B");
 
@@ -72,6 +77,12 @@ await halaman(A, "/materi/baru");
 ID = idAksi();
 
 cek((await aksi(B, "ambilDaftarModel")).nilai?.length === 0, "akun B adalah guru (bukan admin)");
+
+// Pintu HTTP Better Auth tertutup (dulu bisa menebak sandi tanpa kena pembatas halaman Masuk).
+for (const jalur of ["sign-in/username", "sign-in/email", "update-user", "is-username-available", "get-session"]) {
+  const s = (await fetch(`${BASE}/api/auth/${jalur}`, { method: "POST", headers: { "content-type": "application/json", origin: BASE, cookie: B }, body: "{}" })).status;
+  cek(s === 404, `pintu /api/auth/${jalur} tertutup`, `HTTP ${s}`);
+}
 
 let setA = 0;
 let isiA = "";

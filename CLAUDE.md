@@ -479,8 +479,10 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   (2) Tabel `pemakaian_ai` (migrasi 0009): baris per Ganti/Ubah/Tambah yang BERHASIL (ditulis di transaksi yang sama)
   dan per analisa materi (dihitung saat mencoba). `BATAS_UBAH_PER_GURU` 60 & `BATAS_ANALISA` 30 di pembatas.ts; admin
   bebas. `ambilSet` kini juga mengembalikan `saya`. Penghitung analisa di memori DIHAPUS.
-  TEMUAN (belum dikerjakan): `/api/auth/sign-in/username` bawaan Better Auth bisa dipanggil langsung dan MELEWATI
-  pembatas 5x salah di `masuk/actions.ts` (hanya kena rate limit bawaan Better Auth yang lebih longgar).
+  0.16.1: rute `src/app/api/auth/[...all]/route.ts` DIHAPUS (pintu HTTP Better Auth melewati pembatas halaman Masuk;
+  aplikasi hanya memakai `auth.api...` di server). JANGAN dipasang lagi tanpa pembatas. Tes kini masuk lewat formulir
+  /masuk (isian tersembunyi `$ACTION_...`, seperti browser tanpa JS) dan mengecek 5 pintu /api/auth → 404 (34 pemeriksaan).
+  Diuji di browser: masuk, kunci 5x salah, tambah guru, nonaktif/aktifkan, reset sandi, ganti sandi Akun, Keluar.
   CATATAN DOCKER LAPTOP: port 5432 juga dipakai `datainduk-db-1` (proyek lain, autostart). Untuk uji: hentikan itu,
   nyalakan `raciksoal-db`; kalau port tidak muncul (`5432/tcp` saja) → `docker network connect bridge raciksoal-db` lalu
   start ulang. Setelah selesai, kembalikan: stop raciksoal-db, start datainduk-db-1.

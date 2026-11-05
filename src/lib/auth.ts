@@ -1,4 +1,6 @@
-// Login guru (Better Auth). Hanya dipakai di server.
+// Login guru (Better Auth). Hanya dipakai di server, lewat `auth.api...` di server action.
+// SENGAJA tanpa rute HTTP /api/auth/[...all] (dihapus 0.16.1): rute itu membuka ±35 pintu (mis. sign-in/username,
+// sign-in/email) yang melewati pembatas 5x salah di halaman Masuk, padahal aplikasi tidak memakainya.
 // Butuh di .env: BETTER_AUTH_SECRET (kunci rahasia acak), BETTER_AUTH_URL (alamat web), ADMIN_USERNAME.
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";

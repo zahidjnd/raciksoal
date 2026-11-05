@@ -39,6 +39,12 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.16.1 — 5 November 2026
+- Keamanan masuk: satu-satunya jalan masuk kini **halaman Masuk**. Dulu ada "pintu belakang" bawaan alat login
+  (alamat /api/auth/...) yang bisa dipakai menebak kata sandi berkali-kali tanpa kena kunci 5 kali salah. Pintu itu
+  tidak dipakai aplikasi, jadi ditutup. Tidak ada perubahan tampilan; masuk, keluar, ganti kata sandi, dan Kelola guru
+  tetap seperti biasa.
+
 ## 0.16.0 — 5 November 2026
 Perapian keamanan menuju 1.0.0.
 - **Batas harian Ganti/Ubah/Tambah soal: 60 kali per guru per hari** (selain batas 30 kali per set). Yang dihitung hanya
