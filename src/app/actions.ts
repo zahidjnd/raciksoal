@@ -4,9 +4,9 @@ import { and, eq, gte, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { hasilSoal } from "@/db/schema";
 import { daftarModel, tanyaAI } from "@/lib/ai";
-import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatPermintaanKisi, buatSistem, buatAnalisaMateri, bersihkanIdentitas, rencanaGrup, MAKS_NAMA_SET, MAKS_SOAL, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
+import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatPermintaanKisi, buatSistem, buatAnalisaMateri, bersihkanIdentitas, rencanaGrup, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { BATAS_MATERI, susunDraf, terapkanAnalisa } from "@/lib/materi";
-import { bersihkanTanggapan, gabungBab, identitasBab, KELAS, LEVEL, pemeriksaArab, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, terapkanBobot, type Bab, type BarisKisi, type Soal } from "@/lib/soal";
+import { bersihkanTanggapan, gabungBab, identitasBab, KELAS, LEVEL, pemeriksaArab, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, terapkanBobot, type Bab, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { babDariSet, babMilik, daftarBabMilik } from "@/lib/bab";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
@@ -305,6 +305,53 @@ async function simpanSoalDi(set: IsiSet, no: number, isian: Soal, tx: Tx) {
     }
     await tx.update(hasilSoal).set({ soal: set.soal, kisi }).where(eq(hasilSoal.id, set.h.id));
     return soal;
+  }
+}
+
+/** Isian soal manual yang belum lengkap → pesan untuk guru (soal AI tidak lewat sini). */
+function kurangLengkap(s: Soal): string {
+  const kosong = (x?: string[]) => !x?.length || x.some((t) => !t);
+  if (!s.pertanyaan) return "Tulis pertanyaannya dulu.";
+  if ((s.bentuk === "PG" || s.bentuk === "PGK") && kosong(s.pilihan)) return "Isi kelima pilihan jawaban.";
+  if (s.bentuk === "PG" && !"ABCDE".includes(String(s.kunci) || "?")) return "Pilih kunci jawabannya.";
+  if (s.bentuk === "BS" && kosong(s.pernyataan)) return "Isi keempat pernyataan.";
+  if (s.bentuk === "MJ" && (kosong(s.premis) || (s.jawaban ?? []).filter(Boolean).length < (s.premis?.length ?? 0) + 1))
+    return "Isi kelima premis dan keenam jawaban (satu jawaban sebagai pengecoh).";
+  if ((s.bentuk === "ISIAN" || s.bentuk === "URAIAN") && !String(s.kunci)) return "Isi kunci jawabannya.";
+  return "";
+}
+
+/**
+ * Soal tulisan guru sendiri (tanpa AI, tidak memakai jatah). Disisipkan di akhir bagian bentuknya (urutan bagian
+ * di Word baku); kisi-kisi mendapat baris baru dan dinomori ulang. Lewat `rapikanSoal` + `periksaSoal` yang sama
+ * dengan Edit, jadi penjaga ayat tetap berlaku (aturan 5). Pemilik/admin saja (ambilSet di denganSetTerkunci).
+ */
+export async function tambahSoalManual(id: number, isian: Soal) {
+  try {
+    const bentuk = (Object.keys(NAMA_BENTUK) as Bentuk[]).find((b) => b === isian?.bentuk);
+    if (!bentuk) return { ok: false as const, pesan: "Bentuk soal tidak dikenal." };
+    const r = await denganSetTerkunci(id, 0, async (set, tx) => {
+      const p = set.h.pengaturan as Pengaturan;
+      if (p.tujuan === TKA && ["MJ", "ISIAN", "URAIAN"].includes(bentuk)) return "Latihan TKA hanya memakai PG, PG kompleks, dan Kategori.";
+      if (set.soal.length >= MAKS_SOAL) return `Satu set maksimal ${MAKS_SOAL} soal.`;
+      const rapi = rapikanSoal({ ...isian, grup: undefined, wacana: undefined }, bentuk);
+      const kurang = kurangLengkap(rapi);
+      if (kurang) return kurang;
+      if (!set.bab.tp.some((t) => t.kode === rapi.tp)) rapi.tp = set.bab.tp[0]?.kode ?? rapi.tp;
+      if (!LEVEL.includes(rapi.level)) rapi.level = "C2";
+      const [soal] = periksaSoal([rapi], set.bab, cekAyat);
+      // Akhir bagian bentuknya: setelah soal terakhir yang urutan bentuknya <= bentuk ini.
+      const urut = Object.keys(NAMA_BENTUK) as Bentuk[];
+      const posisi = set.soal.reduce((akhir, s, i) => (urut.indexOf(s.bentuk) <= urut.indexOf(bentuk) ? i + 1 : akhir), 0);
+      set.soal.splice(posisi, 0, soal);
+      const kisi = set.h.kisi as BarisKisi[] | null;
+      kisi?.splice(posisi, 0, { no: 0, bentuk, tp: soal.tp, materi: "(soal tulisan guru)", indikator: "(soal tulisan guru)", level: soal.level, dalil_id: soal.dalil_id, stimulus: "" });
+      await tx.update(hasilSoal).set({ soal: set.soal, kisi: kisi && nomoriUlang(kisi) }).where(eq(hasilSoal.id, set.h.id));
+      return posisi;
+    });
+    return typeof r === "string" ? { ok: false as const, pesan: r } : { ok: true as const, no: r + 1 };
+  } catch (e) {
+    return { ok: false as const, pesan: `Gagal menyimpan soal: ${pesanError(e)}` };
   }
 }
 

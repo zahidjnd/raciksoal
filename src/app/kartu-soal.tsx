@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { gantiSatuSoal, hapusSoal, pindahSoal, simpanSoal, tambahSoalSerupa } from "./actions";
+import { gantiSatuSoal, hapusSoal, pindahSoal, simpanSoal, tambahSoalManual, tambahSoalSerupa } from "./actions";
 import { StepAngka } from "./step-angka";
-import { kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, pecahBaris, POLA_ARAB, type Bab, type Soal } from "@/lib/soal";
-import { MAKS_INSTRUKSI } from "@/lib/prompt";
+import { kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, pecahBaris, POLA_ARAB, type Bab, type Bentuk, type Soal } from "@/lib/soal";
+import { MAKS_INSTRUKSI, NAMA_BENTUK } from "@/lib/prompt";
 
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
 const HURUF = ["A", "B", "C", "D", "E", "F", "G"];
@@ -314,9 +314,9 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
   );
 }
 
-type FormProps = { no: number; awal: Soal; bab: Bab; onBatal: () => void; onSimpan: (s: Soal) => Promise<string | void> };
+type FormProps = { no: number; awal: Soal; bab: Bab; onBatal: () => void; onSimpan: (s: Soal) => Promise<string | void>; judul?: string };
 
-function FormSoal({ no, awal, bab, onBatal, onSimpan }: FormProps) {
+function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
   const [s, setS] = useState<Soal>(structuredClone(awal));
   const [menyimpan, setMenyimpan] = useState(false);
   const [error, setError] = useState("");
@@ -344,7 +344,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan }: FormProps) {
   return (
     <article className="space-y-3 rounded-lg border-2 border-hijau p-4 text-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="font-semibold">Edit soal nomor {no}</p>
+        <p className="font-semibold">{judul ?? `Edit soal nomor ${no}`}</p>
         {tombolSimpan}
       </div>
 
@@ -527,5 +527,53 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan }: FormProps) {
 
       {tombolSimpan}
     </article>
+  );
+}
+
+/** Soal kosong untuk "Tulis soal sendiri": bentuk sama dengan formulir Edit, TP pertama bab, skor bawaan bentuknya. */
+function soalKosong(bentuk: Bentuk, bab: Bab, skor: number): Soal {
+  const dasar = { bentuk, dalil_id: null, pertanyaan: "", pembahasan: "", level: "C2", tp: bab.tp[0]?.kode ?? "", skor } as Soal;
+  if (bentuk === "PG") return { ...dasar, pilihan: ["", "", "", "", ""], kunci: "A" };
+  if (bentuk === "PGK") return { ...dasar, pilihan: ["", "", "", "", ""], kunci: ["A", "B"] };
+  if (bentuk === "BS") return { ...dasar, pernyataan: ["", "", "", ""], label: [...LABEL_KATEGORI[0]], kunci: ["", "", "", ""] };
+  if (bentuk === "MJ") return { ...dasar, premis: ["", "", "", "", ""], jawaban: ["", "", "", "", "", ""], kunci: ["", "", "", "", ""] };
+  if (bentuk === "ISIAN") return { ...dasar, kunci: "", kunciAlt: [] };
+  return { ...dasar, kunci: "", rubrik: [{ kriteria: "", skor }] };
+}
+
+/**
+ * "Tulis soal sendiri" (gelombang 2): soal tanpa AI, tidak memakai jatah. Tombol kecil di akhir bagian bentuknya
+ * (atau pilihan bentuk lain bila `bentukLain` diisi); formulir = formulir Edit dengan isi kosong. Server
+ * (`tambahSoalManual`) menyisipkannya di akhir bagian bentuk itu dan tetap memeriksanya dengan penjaga ayat.
+ */
+export function TulisSoalSendiri({ hasilId, bentuk, bentukLain, bab, skorBawaan, onSelesai }: { hasilId: number; bentuk?: Bentuk; bentukLain?: Bentuk[]; bab: Bab; skorBawaan: (b: Bentuk) => number; onSelesai: (no: number) => void }) {
+  const [pilih, setPilih] = useState<Bentuk | null>(null);
+  if (pilih)
+    return (
+      <FormSoal
+        no={0}
+        judul={`Soal baru (tulis sendiri): ${NAMA_BENTUK[pilih]}`}
+        awal={soalKosong(pilih, bab, skorBawaan(pilih))}
+        bab={bab}
+        onBatal={() => setPilih(null)}
+        onSimpan={async (isian) => {
+          const r = await tambahSoalManual(hasilId, isian).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
+          if (!r.ok) return r.pesan;
+          setPilih(null);
+          onSelesai(r.no);
+        }}
+      />
+    );
+  const gaya = "h-10 rounded-lg border border-dashed bg-transparent px-4 text-sm text-pudar hover:border-hijau hover:text-hijau-teks max-md:min-h-11";
+  if (bentuk) return <button className={gaya} onClick={() => setPilih(bentuk)}>+ Tulis soal {NAMA_BENTUK[bentuk]} sendiri</button>;
+  if (!bentukLain?.length) return null;
+  return (
+    <label className="flex flex-wrap items-center gap-2 text-sm text-pudar">
+      + Tulis soal bentuk lain:
+      <select className="h-10 rounded-lg border bg-kartu px-2 text-sm text-tinta max-md:min-h-11" value="" onChange={(e) => e.target.value && setPilih(e.target.value as Bentuk)}>
+        <option value="">Pilih bentuk…</option>
+        {bentukLain.map((b) => <option key={b} value={b}>{NAMA_BENTUK[b]}</option>)}
+      </select>
+    </label>
   );
 }

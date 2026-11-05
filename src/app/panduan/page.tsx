@@ -26,6 +26,7 @@ const LANGKAH: { judul: string; isi: React.ReactNode[] }[] = [
       <>Tekan <b>Kunci &amp; pembahasan</b> untuk melihat jawaban, atau <b>Tampilkan semua kunci</b> sekaligus. <b>Kunci ringkas</b> menampilkan semua kunci dalam satu kotak (mis. “1. C 2. D …”); tekan <b>Salin</b> untuk menempelnya di WhatsApp atau catatan.</>,
       <><b>Edit</b>: ubah teks soal, pilihan, kunci, pembahasan, level, TP, atau skor, lalu <b>Simpan</b>. Muncul tulisan hijau “Tersimpan ✓”.</>,
       <><b>Lainnya</b>: <b>Ganti soal ini</b> (soal baru dari AI), <b>Ubah soal</b> (tulis permintaan, mis. “jadikan lebih sulit”), <b>Tambah soal serupa di bawahnya</b>, atau <b>Hapus soal ini</b>. Ganti/ubah/tambah dibatasi 30 kali per set.</>,
+      <>Punya soal sendiri? Tekan <b>+ Tulis soal … sendiri</b> di akhir tiap bagian (atau <b>Tulis soal bentuk lain</b> di paling bawah). Formulirnya sama dengan Edit; soal ini tanpa AI dan tidak memakai jatah, tetapi tetap diperiksa pemeriksa ayat.</>,
       <>Tombol <b>↑</b> / <b>↓</b> di kanan bawah kartu memindah urutan soal di dalam bagiannya (mis. sesama Pilihan Ganda).</>,
       <>Tab <b>Kisi-kisi</b> menampilkan TP, indikator, dan level setiap nomor.</>,
     ],

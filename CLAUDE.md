@@ -459,3 +459,10 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   "Cetak tampilan ini". Pilihan paket per set di localStorage `raciksoal-paket-<id>` (JSON array); hanya ["A"] = file
   tanpa label paket. Kunci ringkas mengikuti paket terpilih. Setter memakai bentuk FUNGSI (lama => baru): klik beruntun
   cepat dulu saling menimpa (terlihat saat uji otomatis).
+- 2026-11-05 GELOMBANG 2 langkah 2: SOAL MANUAL (LJK & lembar penilaian uraian DICORET pemilik: madrasah punya LJK
+  sendiri; rubrik sudah di file kunci). BELUM di-push. `tambahSoalManual(id, isian)` (actions.ts): tanpa AI, tidak
+  memakai jatah/batas 30x; `rapikanSoal` + `kurangLengkap` (pesan isian kurang) + `periksaSoal` (penjaga ayat) lewat
+  `denganSetTerkunci`; disisipkan di AKHIR bagian bentuknya, baris kisi "(soal tulisan guru)" + `nomoriUlang`; TKA menolak
+  MJ/ISIAN/URAIAN. UI: `TulisSoalSendiri` (kartu-soal.tsx) = tombol bergaris putus "+ Tulis soal <bentuk> sendiri" di akhir
+  tiap bagian + pilihan "bentuk lain" di bawah; formulir = `FormSoal` (prop `judul`) dengan `soalKosong`; skor bawaan =
+  skor soal sebentuk di set, atau BOBOT_BAWAAN. Uji laptop set 51: PG manual masuk no. 11, kisi 26 baris, lalu dihapus lagi.

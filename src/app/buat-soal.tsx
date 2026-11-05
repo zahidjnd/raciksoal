@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ambilDaftarBab, ambilDaftarModel, ambilJatah, cekHasil, mulaiBuatSoal, ubahIdentitas } from "./actions";
 import { simpanMateri } from "./materi/actions";
-import { KartuSoal, Teks, TeksPeringatan } from "./kartu-soal";
+import { KartuSoal, Teks, TeksPeringatan, TulisSoalSendiri } from "./kartu-soal";
 import { KotakMateri, type MateriLama } from "./kotak-materi";
 import { FormIdentitas, ringkasIdentitas } from "./form-identitas";
 import { StepAngka } from "./step-angka";
@@ -257,6 +257,17 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
 
   const bab = hasil?.bab; // salinan bab milik set (berisi ayat terverifikasi untuk tampilan & edit)
   const soal = hasil?.soal ?? [];
+
+  /** Set berubah di server (soal manual ditambah): muat ulang, lalu gulir ke nomor `ke`. */
+  const muatUlangLalu = (ke: number) =>
+    cekHasil(id!)
+      .then((h) => {
+        if (h) setHasil(h);
+        lompat(ke);
+      })
+      .catch(() => {});
+  /** Skor bawaan soal tulisan guru: sama dengan soal sebentuk di set ini, kalau belum ada pakai bobot bawaan. */
+  const skorBawaan = (b: Bentuk) => soal.find((s) => s.bentuk === b)?.skor ?? BOBOT_BAWAAN[b];
 
   /** Deret nomor: pindah ke tab Soal dulu (kartu belum tampil saat tab Kisi-kisi), lalu gulir ke soalnya. */
   function lompat(no: number) {
@@ -627,8 +638,17 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
                       />
                     ),
                 )}
+                {/* Soal tulisan guru sendiri (tanpa AI), disisipkan di akhir bagian ini. */}
+                <div className="print:hidden">
+                  <TulisSoalSendiri hasilId={id!} bentuk={b} bab={bab} skorBawaan={skorBawaan} onSelesai={muatUlangLalu} />
+                </div>
               </div>
             ))
+          )}
+          {tab === "soal" && (
+            <div className="print:hidden">
+              <TulisSoalSendiri hasilId={id!} bentukLain={BENTUK.filter((b) => !soal.some((s) => s.bentuk === b))} bab={bab} skorBawaan={skorBawaan} onSelesai={muatUlangLalu} />
+            </div>
           )}
 
           <div className="print:hidden"><IdentitasHasil key={id} id={id!} awal={hasil.identitas} /></div>
