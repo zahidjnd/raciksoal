@@ -31,8 +31,6 @@ Target: **setelah ASAS Ganjil (sekitar Desember 2026)**.
       aplikasi jalan di atasnya dan pemilik bisa masuk, membuka set, mengunduh Word). Tetap pantau pita merah sampai 1.0.0.
 - [ ] Saldo AI cukup untuk satu semester (hitung dari token 30 hari di Kelola guru).
 - [ ] Guru mandiri dengan Panduan; pertanyaan yang sering muncul dimasukkan ke Panduan.
-- [ ] Ada admin cadangan: punya akun admin (dibuat sekali lewat perintah database di cPanel, belum ada tombolnya),
-      tahu cara restart dan membaca status, bisa memulihkan backup (`deploy/pulihkan-backup.md`), memegang kata sandi backup.
 - [x] Tes otomatis pemisahan data antar guru (guru B tidak bisa membuka/mengedit/mengunduh set guru A). Sejak 0.16.0.
 - [x] Batas harian per guru untuk Ganti/Ubah/Tambah soal. Sejak 0.16.0.
 
