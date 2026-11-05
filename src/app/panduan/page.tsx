@@ -23,17 +23,19 @@ const LANGKAH: { judul: string; isi: React.ReactNode[] }[] = [
     isi: [
       <>Semua soal dibuat AI dan <b>wajib diperiksa guru sebelum dipakai</b>.</>,
       <>Nomor soal berwarna <b>merah</b> berarti ditandai pemeriksa ayat (teks Arab tidak cocok dengan data terverifikasi). Periksa soal itu lebih dulu.</>,
-      <>Tekan <b>Kunci &amp; pembahasan</b> untuk melihat jawaban, atau <b>Tampilkan semua kunci</b> sekaligus.</>,
+      <>Tekan <b>Kunci &amp; pembahasan</b> untuk melihat jawaban, atau <b>Tampilkan semua kunci</b> sekaligus. <b>Kunci ringkas</b> menampilkan semua kunci dalam satu kotak (mis. “1. C 2. D …”); tekan <b>Salin</b> untuk menempelnya di WhatsApp atau catatan.</>,
       <><b>Edit</b>: ubah teks soal, pilihan, kunci, pembahasan, level, TP, atau skor, lalu <b>Simpan</b>. Muncul tulisan hijau “Tersimpan ✓”.</>,
       <><b>Lainnya</b>: <b>Ganti soal ini</b> (soal baru dari AI), <b>Ubah soal</b> (tulis permintaan, mis. “jadikan lebih sulit”), <b>Tambah soal serupa di bawahnya</b>, atau <b>Hapus soal ini</b>. Ganti/ubah/tambah dibatasi 30 kali per set.</>,
+      <>Tombol <b>↑</b> / <b>↓</b> di kanan bawah kartu memindah urutan soal di dalam bagiannya (mis. sesama Pilihan Ganda).</>,
       <>Tab <b>Kisi-kisi</b> menampilkan TP, indikator, dan level setiap nomor.</>,
     ],
   },
   {
-    judul: "3. Mengunduh file Word",
+    judul: "3. Mengunduh file",
     isi: [
-      <>Bilah di bawah halaman hasil: <b>Soal</b> (lembar siswa, dengan kop madrasah), <b>Kunci &amp; pembahasan</b> (pegangan guru), dan <b>Kisi-kisi</b>.</>,
+      <>Tekan tombol hijau <b>Unduh</b> di bawah halaman hasil, lalu pilih <b>Semua file</b> untuk mengunduh lembar soal siswa (berkop madrasah), kunci &amp; pembahasan, dan kisi-kisi sekaligus. Bila browser bertanya “izinkan beberapa unduhan?”, pilih <b>Izinkan</b>. Satu per satu juga bisa dipilih di menu yang sama.</>,
       <>File Word selalu mengikuti isi terbaru, termasuk soal yang sudah diedit.</>,
+      <>Butuh PDF? Buka file Word-nya lalu simpan sebagai PDF (di HP lewat aplikasi Word atau Google Docs). Pilihan <b>Cetak tampilan ini</b> di menu Unduh hanya untuk cek cepat: tanpa kop madrasah.</>,
       <>Kop ujian bisa diubah setelah soal jadi lewat <b>Identitas ujian di kop Word</b> di bawah daftar soal, lalu unduh ulang.</>,
     ],
   },
@@ -41,6 +43,7 @@ const LANGKAH: { judul: string; isi: React.ReactNode[] }[] = [
     judul: "4. Riwayat",
     isi: [
       <>Set yang pernah dibuat ada di sidebar bagian <b>Riwayat</b>. Set yang sedang dibuka bertanda latar lebih gelap.</>,
+      <>Klik <b>Lihat &amp; cari semua riwayat</b> untuk mencari set berdasarkan nama atau materi, juga menyaring per jenis soal dan mapel.</>,
       <>Klik tombol <b>⋯</b> (atau klik kanan) pada riwayat untuk <b>Ganti nama</b> atau <b>Hapus</b>. Set yang dihapus tidak bisa dibuka lagi, dan jatah hari itu tidak kembali.</>,
     ],
   },

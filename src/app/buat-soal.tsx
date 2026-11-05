@@ -556,10 +556,6 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
                 <button className={chip} aria-expanded={kunciSingkat} onClick={() => setKunciSingkat(!kunciSingkat)}>
                   Kunci ringkas
                 </button>
-                {/* Cetak dari web: hanya isi (globals.css @media print). Kunci ikut tercetak bila sedang ditampilkan. */}
-                <button className={chip} onClick={() => window.print()} title="Cetak soal yang tampil (kunci ikut bila sedang ditampilkan)">
-                  Cetak
-                </button>
                 <button className={chip} onClick={() => setSemuaKunci(!semuaKunci)}>
                   {semuaKunci ? "Sembunyikan semua kunci" : "Tampilkan semua kunci"}
                 </button>
@@ -608,14 +604,9 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
 
           <div className="print:hidden"><IdentitasHasil key={id} id={id!} awal={hasil.identitas} /></div>
 
-          {/* Tombol unduh menempel di bawah layar. File Word selalu mengikuti isi terbaru (termasuk editan). */}
+          {/* Satu tombol Unduh menempel di bawah layar (pilihan pemilik 2026-11-05). File Word selalu mengikuti isi terbaru. */}
           <div className="sticky bottom-0 z-10 -mx-4 print:hidden flex flex-wrap items-center gap-2 border-t border-garis bg-krem px-4 py-2 md:-mx-8 md:px-8">
-            <span className="text-sm font-semibold">Unduh<span className="hidden sm:inline"> Word</span>:</span>
-            <a className="inline-flex h-8 items-center rounded-lg bg-hijau px-4 text-sm font-semibold text-white hover:bg-hijau-tua max-md:min-h-11" href={`/api/word?id=${id}&jenis=soal`}>
-              Soal
-            </a>
-            <a className={aksi2} href={`/api/word?id=${id}&jenis=kunci`}><span>Kunci<span className="hidden sm:inline"> &amp; pembahasan</span></span></a>
-            {!!hasil.kisi?.length && <a className={aksi2} href={`/api/word?id=${id}&jenis=kisi`}>Kisi-kisi</a>}
+            <MenuUnduh id={id!} adaKisi={!!hasil.kisi?.length} />
           </div>
         </section>
       )}
@@ -651,6 +642,93 @@ function PilihMapel({ mapel, kelas, ubah }: { mapel: string; kelas: string; ubah
         <option value="">Kelas</option>
         {KELAS.map((k) => <option key={k} value={k}>Kelas {k}</option>)}
       </select>
+    </div>
+  );
+}
+
+/**
+ * Menu Unduh (pilihan pemilik 2026-11-05, menggantikan 3 tombol + tombol Cetak terpisah): pilihan utama "Semua file"
+ * mengunduh 3 Word satu per satu (bukan ZIP: guru di HP sering bingung membuka ZIP; browser bisa bertanya sekali
+ * "izinkan beberapa unduhan"). PDF berkop TIDAK bisa dibuat di hosting (butuh Word/LibreOffice di server), jadi
+ * "Cetak tampilan ini" hanya pilihan terakhir untuk cek cepat tanpa kop (globals.css @media print).
+ */
+function MenuUnduh({ id, adaKisi }: { id: number; adaKisi: boolean }) {
+  const [buka, setBuka] = useState(false);
+  const kotak = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!buka) return;
+    const luar = (e: MouseEvent) => !kotak.current?.contains(e.target as Node) && setBuka(false);
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setBuka(false);
+    document.addEventListener("mousedown", luar);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("mousedown", luar);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [buka]);
+
+  const file = [
+    { jenis: "soal", judul: "Lembar soal siswa", ket: "Berkop madrasah, siap dicetak" },
+    { jenis: "kunci", judul: "Kunci & pembahasan", ket: "Pegangan guru" },
+    ...(adaKisi ? [{ jenis: "kisi", judul: "Kisi-kisi", ket: "Untuk administrasi" }] : []),
+  ];
+  const alamat = (jenis: string) => `/api/word?id=${id}&jenis=${jenis}`;
+  /** Semua file: satu per satu dengan jeda kecil, supaya browser tidak menganggapnya satu unduhan saja. */
+  function unduhSemua() {
+    setBuka(false);
+    file.forEach((f, i) =>
+      setTimeout(() => {
+        const a = document.createElement("a");
+        a.href = alamat(f.jenis);
+        a.download = "";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      }, i * 800),
+    );
+  }
+
+  const baris = "flex w-full flex-col items-start rounded-lg px-3 py-2 text-left hover:bg-krem-sorot max-md:min-h-11";
+  return (
+    <div ref={kotak} className="relative">
+      <button
+        aria-haspopup="menu"
+        aria-expanded={buka}
+        onClick={() => setBuka(!buka)}
+        className="inline-flex h-10 items-center gap-2 rounded-lg bg-hijau px-5 font-semibold text-white hover:bg-hijau-tua max-md:min-h-11"
+      >
+        Unduh
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden className={buka ? "rotate-180" : ""}>
+          <path d="M6 15l6-6 6 6" />
+        </svg>
+      </button>
+      {buka && (
+        // Terbuka ke ATAS (tombol ada di dasar layar).
+        <div role="menu" className="absolute bottom-full left-0 z-20 mb-2 w-[min(20rem,calc(100vw-2rem))] rounded-xl border bg-kartu p-1.5 text-sm shadow-lg">
+          <button role="menuitem" className={`${baris} bg-hijau-muda`} onClick={unduhSemua}>
+            <span className="font-semibold text-hijau-teks">Semua file ({file.length} Word)</span>
+            <span className="text-xs text-pudar">{file.map((f) => f.judul.toLowerCase()).join(", ")}</span>
+          </button>
+          {file.map((f) => (
+            <a key={f.jenis} role="menuitem" className={baris} href={alamat(f.jenis)} onClick={() => setBuka(false)}>
+              <span className="font-semibold">{f.judul} (Word)</span>
+              <span className="text-xs text-pudar">{f.ket}</span>
+            </a>
+          ))}
+          <div className="my-1 border-t" />
+          <button
+            role="menuitem"
+            className={baris}
+            onClick={() => {
+              setBuka(false);
+              setTimeout(() => window.print(), 100); // tunggu menu tertutup supaya tidak ikut tercetak
+            }}
+          >
+            <span>Cetak tampilan ini (PDF)</span>
+            <span className="text-xs text-pudar">Tanpa kop madrasah, untuk cek cepat. Kunci ikut bila sedang ditampilkan.</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }

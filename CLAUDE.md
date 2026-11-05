@@ -435,3 +435,9 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   Cek tampilan cetak tanpa mode cetak: salin aturan @media print dari document.styleSheets ke <style> sementara.
   CATATAN UJI: kata sandi `admin.uji` di DB laptop sudah tidak cocok dengan `.claude/akun-uji.local.txt` (diganti saat
   pemilik mencoba); /admin/set dengan saringan belum dicoba di browser. Akun guru uji masih cocok.
+  (5) MENU UNDUH (pilihan pemilik): bilah bawah halaman hasil = SATU tombol hijau "Unduh" (`MenuUnduh` di buat-soal.tsx,
+  terbuka ke atas): "Semua file (3 Word)" = 3 unduhan berurutan jeda 800 ms (sengaja BUKAN ZIP: guru di HP bingung
+  membuka ZIP), lalu tiap file satu per satu, lalu "Cetak tampilan ini (PDF)" (tanpa kop, cek cepat). Tombol Cetak
+  terpisah di bilah tab DIHAPUS. PDF berkop tidak bisa dibuat di hosting (butuh Word/LibreOffice di server); guru
+  disarankan menyimpan Word sebagai PDF. Panduan bagian 3 ikut diperbarui (+ Kunci ringkas, ↑/↓, cari riwayat).
+  Uji tanpa benar-benar mengunduh: ganti sementara `HTMLAnchorElement.prototype.click` untuk mencatat alamat, lalu fetch.
