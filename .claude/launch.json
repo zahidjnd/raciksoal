@@ -23,6 +23,18 @@
         "BETTER_AUTH_URL": "http://localhost:3002",
         "ADMIN_USERNAME": "admin.uji"
       }
+    },
+    {
+      "name": "uji-pulih",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["next", "dev", "-p", "3003"],
+      "port": 3003,
+      "env": {
+        "DATABASE_URL": "postgres://pulih:pulih-lokal-sementara@127.0.0.1:5434/pulih",
+        "BETTER_AUTH_SECRET": "khusus-uji-di-laptop-jangan-dipakai-di-hosting-0000000000",
+        "BETTER_AUTH_URL": "http://localhost:3003",
+        "ADMIN_USERNAME": "zahidjnd"
+      }
     }
   ]
 }

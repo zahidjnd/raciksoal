@@ -22,6 +22,17 @@ docker exec -i raciksoal-db psql -q -v ON_ERROR_STOP=1 -U raciksoal -d pulih < r
 docker exec raciksoal-db psql -U raciksoal -d pulih -c "select count(*) from hasil_soal"
 ```
 
+## 3c. Uji pulih lengkap (latihan berkala, tanpa menyentuh data laptop)
+1. Picu backup baru: cPanel → File Manager → `raciksoal-app` → buat file kosong `jalankan-backup` (≤ 7 menit).
+2. Unduh `raciksoal.sql.gz.enc` terbaru ke folder sementara, buka kuncinya (langkah 2; sandi diketik pemilik).
+3. Database uji terpisah (port 5434, hapus setelah selesai):
+   `docker run -d --name raciksoal-uji-pulih -e POSTGRES_USER=pulih -e POSTGRES_PASSWORD=pulih-lokal-sementara -e POSTGRES_DB=pulih -p 127.0.0.1:5434:5432 postgres:16-alpine`
+   lalu `docker exec -i raciksoal-uji-pulih psql -q -v ON_ERROR_STOP=1 -U pulih -d pulih < raciksoal.sql`.
+4. Cek: jumlah baris `__drizzle_migrations` = jumlah file `drizzle/*.sql`; akun, set, materi per guru cocok dengan Kelola guru.
+5. Jalankan aplikasi di atasnya: konfigurasi `uji-pulih` di `.claude/launch.json` (port 3003). Pemilik masuk dengan akunnya,
+   membuka set, mengunduh Word. JANGAN membuat set (kunci AI asli).
+6. Bereskan: `docker rm -f raciksoal-uji-pulih`, hapus `raciksoal.sql` dan file `.enc` yang diunduh.
+
 ## 3b. Pulihkan di hosting (kalau database hosting rusak/hilang)
 1. Matikan aplikasi dulu: hapus sementara cron `jalan.sh`, lalu `kill $(cat ~/raciksoal-app/app.pid)`.
 2. Di cPanel → PostgreSQL Databases: hapus lalu buat ulang database kosong (nama dan user sama), beri user hak penuh.

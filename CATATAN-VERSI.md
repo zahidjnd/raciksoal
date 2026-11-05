@@ -26,7 +26,9 @@ Target: **setelah ASAS Ganjil (sekitar Desember 2026)**.
 - [ ] Dipakai sungguhan oleh sebagian besar guru untuk ujian resmi (ASAS Ganjil). Cek: kolom set 30 hari di **Kelola guru**.
 - [ ] 2–4 minggu berturut-turut tanpa masalah penghalang (guru tidak bisa membuat soal atau mengunduh Word).
       Kalau ada masalah seperti itu, hitungan mulai lagi dari nol.
-- [ ] Backup malam berjalan rutin (pita merah backup tidak muncul) dan uji pulih diulang (terakhir 15 Oktober 2026).
+- [x] Backup malam berjalan rutin (pita merah backup tidak muncul) dan uji pulih diulang. **5 November 2026: lulus**
+      (backup 22 malam berturut-turut tanpa terlewat; backup manual 16.56 dibuka, dipulihkan tanpa error, isi utuh,
+      aplikasi jalan di atasnya dan pemilik bisa masuk, membuka set, mengunduh Word). Tetap pantau pita merah sampai 1.0.0.
 - [ ] Saldo AI cukup untuk satu semester (hitung dari token 30 hari di Kelola guru).
 - [ ] Guru mandiri dengan Panduan; pertanyaan yang sering muncul dimasukkan ke Panduan.
 - [ ] Ada admin cadangan: punya akun admin (dibuat sekali lewat perintah database di cPanel, belum ada tombolnya),
