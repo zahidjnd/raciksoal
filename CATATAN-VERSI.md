@@ -23,6 +23,18 @@ hadis karangan dalam mode Bahasa Arab belum bisa dideteksi otomatis (hanya diceg
 
 ---
 
+## 0.14.0 — 5 November 2026
+- **Paket A, B, C, D** untuk mencegah contek. Isi soal sama; di paket B–D urutan soal (di dalam tiap bagian) dan
+  urutan pilihan jawaban diacak, lajur kanan Menjodohkan juga diacak. Soal grup tetap bersama wacananya, pilihan angka
+  tetap urut kecil ke besar, dan kunci tetap tersebar merata. Acakan tetap: Paket B selalu sama setiap kali diunduh
+  dan ikut soal yang sudah diedit.
+- Lembar soal tiap paket bertuliskan **"PAKET B"** (dst.) di atas soal pertama; kop madrasah tidak berubah. Lembar
+  kunci tiap paket memuat **padanan nomor** ke Paket A, karena kisi-kisi mengikuti urutan Paket A.
+- **Jendela Unduh** baru (menggantikan menu kecil): (1) pilih paket, boleh lebih dari satu, (2) centang file yang
+  dibutuhkan, lalu terlihat daftar file yang akan diunduh dan satu tombol **"Unduh N file"**. Di HP tampil sebagai
+  panel dari bawah. Bawaannya Paket A saja, sama seperti sebelumnya.
+- **Kunci ringkas** ikut menampilkan kunci paket yang dipilih.
+
 ## 0.13.0 — 5 November 2026
 Fitur pematangan setelah uji coba guru.
 - **Satu tombol Unduh** di bawah halaman hasil. Pilih **Semua file** untuk mengunduh lembar soal siswa, kunci &

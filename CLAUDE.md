@@ -441,7 +441,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   terpisah di bilah tab DIHAPUS. PDF berkop tidak bisa dibuat di hosting (butuh Word/LibreOffice di server); guru
   disarankan menyimpan Word sebagai PDF. Panduan bagian 3 ikut diperbarui (+ Kunci ringkas, ↑/↓, cari riwayat).
   Uji tanpa benar-benar mengunduh: ganti sementara `HTMLAnchorElement.prototype.click` untuk mencatat alamat, lalu fetch.
-- 2026-11-05 GELOMBANG 2 langkah 1: PAKET A/B/C/D (pemilik "1 1 aja, nomor 1 dulu"), BELUM di-push (bersama jendela Unduh):
+- 2026-11-05 GELOMBANG 2 langkah 1: PAKET A/B/C/D (pemilik "1 1 aja, nomor 1 dulu"), dirilis 0.14.0 bersama jendela Unduh:
   `susunPaket(soal, setId, paket)` (src/lib/paket.ts, dites, dipakai server & browser): Paket A = urutan asli; paket lain
   pakai pengacak bersemi (mulberry32, seed dari id set + paket) → hasil SAMA setiap diunduh dan ikut editan terbaru,
   TANPA kolom/tabel baru. Diacak: urutan soal di dalam tiap bagian bentuk (soal grup = satu unit), pilihan PG/PGK lewat
