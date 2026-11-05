@@ -69,6 +69,8 @@ function Angka({ label, nilai, ubah }: { label: string; nilai: number; ubah: (n:
 function TabelKisi({ kisi }: { kisi: BarisKisi[] }) {
   return (
     <div className="overflow-x-auto bg-kartu">
+        {/* Tabel lebih lebar dari layar HP (min. 640px): beri tahu bahwa bisa digeser. */}
+        <p className="px-2 py-1 text-xs text-pudar md:hidden print:hidden">Geser tabel ke samping untuk melihat semua kolom →</p>
         <table className="w-full min-w-[640px] border-collapse text-sm">
           <thead>
             <tr className="bg-krem-sorot text-left">
@@ -475,7 +477,8 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
       )}
 
       {proses && !!soal.length && (
-        <div className="flex items-center gap-2 rounded-lg border border-hijau/25 bg-hijau-muda px-3 py-2 text-sm text-hijau-teks" role="status">
+        // Menempel di atas saat guru menggulir membaca draf (HP: tepat di bawah bilah menu setinggi ±57px).
+        <div className="sticky top-[57px] z-20 flex items-center gap-2 rounded-lg border border-hijau/25 bg-hijau-muda px-3 py-2 text-sm text-hijau-teks shadow-sm md:top-3" role="status">
           <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-hijau/25 border-t-hijau" aria-hidden />
           <span>Masih meracik: {soal.length} dari {hasil?.kisi?.length ?? "?"} soal sudah jadi · {detik} detik</span>
         </div>

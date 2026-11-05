@@ -52,6 +52,14 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.16.4 — 5 November 2026
+Persiapan ASAS: tampilan HP saat soal sedang dibuat.
+- Tulisan **"Masih meracik: 10 dari 12 soal sudah jadi"** kini **menempel di atas layar** saat guru menggulir membaca
+  draf soal, jadi selalu terlihat kapan prosesnya selesai.
+- Tabel **kisi-kisi** di HP diberi petunjuk **"Geser tabel ke samping untuk melihat semua kolom →"** (tabelnya lebih lebar
+  dari layar HP).
+- Sudah dicek: riwayat di sidebar langsung berubah dari "sedang dibuat" menjadi jumlah soal begitu set selesai.
+
 ## 0.16.3 — 5 November 2026
 - Menu **Lainnya** di kartu soal kini menampilkan **sisa jatah** Ganti/Ubah/Tambah pakai AI, misalnya
   "Sisa ganti/ubah/tambah pakai AI: set ini 12 dari 30 · hari ini 41 dari 60". Jadi guru tahu sebelum jatahnya habis.
