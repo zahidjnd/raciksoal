@@ -632,3 +632,16 @@ test("ringkasSudah: jawaban PG/PGK/isian ikut dikirim ke AI supaya tidak bocor k
   assert.equal(ringkasSudah({ ...dasar, bentuk: "ISIAN", pertanyaan: "Bekerja adalah ....", kunci: "ibadah" } as Soal), "Bekerja adalah .... → jawaban: ibadah");
   assert.equal(ringkasSudah({ ...dasar, bentuk: "URAIAN", pertanyaan: "Jelaskan!", kunci: "panjang sekali" } as Soal), "Jelaskan!");
 });
+
+test("periksaSoal: kunci isian yang sudah tertulis di soal lain ditandai (ḥ = h, tanpa memotong kata)", () => {
+  const bab = { id: "x", judul: "x", tp: [{ kode: "TP 1", teks: "x" }], dalil: [], materi: [] } as Bab;
+  const dasar = { dalil_id: null, pembahasan: "", level: "C1", tp: "TP 1", skor: 1 };
+  const pg = { ...dasar, bentuk: "PG", pertanyaan: "Perbedaan keduanya adalah ....", pilihan: ["mukjizat ḥissī ditangkap pancaindra", "b", "c", "d", "e"], kunci: "A" } as Soal;
+  const isian = (kunci: string) => ({ ...dasar, bentuk: "ISIAN", pertanyaan: "Mukjizat yang ditangkap pancaindra disebut mukjizat ....", kunci }) as Soal;
+  const [, bocor] = periksaSoal([pg, isian("hissi")], bab);
+  assert.ok(bocor.peringatan!.some((p) => p.includes("soal nomor 1")));
+  const [, aman] = periksaSoal([pg, isian("ma'nawi")], bab);
+  assert.deepEqual(aman.peringatan, []);
+  const [, angka] = periksaSoal([{ ...pg, pilihan: ["tahun 2019", "b", "c", "d", "e"] }, isian("19")], bab);
+  assert.deepEqual(angka.peringatan, []); // "19" tidak dianggap ada di dalam "2019"
+});

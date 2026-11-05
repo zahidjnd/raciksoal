@@ -521,3 +521,12 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   dibuat" kini `ringkasSudah` (prompt.ts, dites): pertanyaan + "→ jawaban:" (PG/PGK teks pilihan kunci, isian kunci).
   Uji laptop set 66 (12 soal, 2 tahap): prompt memuat jawaban, TAPI isian no. 11 (kunci "ḥissī") masih bocor dari
   pilihan benar PG no. 2. Aturan saja belum cukup; calon langkah: pemeriksa aplikasi (huruf dinormalkan, ḥ=h).
+- 2026-11-05 (0.17.3) PEMERIKSA KUNCI ISIAN BOCOR: `bocorDi` di `periksaSoal` (soal.ts, dites): kunci isian (`polos`: NFD
+  tanpa diakritik, huruf kecil, batas kata) ada di pertanyaan/pilihan/pernyataan/premis/jawaban soal LAIN → peringatan
+  "Jawaban isian sudah tertulis di soal nomor N". Hanya jalan bila periksaSoal diberi seluruh set (kerjakan); Ganti/Edit
+  memeriksa satu soal → tidak dicek. Pindai semua set laptop: 4 dari 7 isian bocor, keempatnya sungguhan.
+  Perbaikan otomatis: diperiksa bersama seluruh set; bila bocor, instruksi "tanyakan konsep LAIN" (ditaruh di depan,
+  instruksi dipotong 300 huruf) dan `indikator` AI menggantikan indikator kisi (+ kisi disimpan saat selesai).
+  `ambilSoal` kini menerima `"soal": {...}` atau soal tanpa pembungkus. Uji set 68: 2 bocor → 2 diperbaiki, 0 merah,
+  tapi soal 9 & 10 hasil perbaikan mirip satu sama lain. Uji lewat skrip (panel browser tersembunyi): server action
+  `mulaiBuatSoal` dipanggil seperti di uji-pemisahan.mts.

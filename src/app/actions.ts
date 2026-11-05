@@ -102,7 +102,9 @@ async function tanyaDenganCadangan<T>(sistem: string, pengguna: string, slotUtam
 
 /** Ambil daftar soal dari JSON jawaban AI; `perlu` = jumlah minimal (kelebihan dibuang). */
 function ambilSoal(data: unknown, perlu = 1): Soal[] {
-  const soal = (data as { soal?: unknown })?.soal;
+  // Sebagian jawaban satu soal datang tanpa dibungkus daftar ("soal": {...} atau soalnya langsung) → dibungkus di sini.
+  const mentah = (data as { soal?: unknown })?.soal ?? ((data as { pertanyaan?: unknown })?.pertanyaan ? data : undefined);
+  const soal = mentah && !Array.isArray(mentah) && typeof mentah === "object" ? [mentah] : mentah;
   if (!Array.isArray(soal) || !soal.length) throw new Error("daftar soal tidak ditemukan.");
   if (soal.length < perlu) throw new Error(`hanya ${soal.length} dari ${perlu} soal.`);
   return (soal as Soal[]).slice(0, Math.max(perlu, 1));
@@ -252,15 +254,21 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
       info.perbaikan ??= [];
       await simpan({ pesan: `Memperbaiki soal ${i + 1}` });
       try {
-        const instruksi = `Perbaiki soal ini agar memenuhi aturan, tanpa mengubah bentuk, TP, dan level. Masalah yang ditemukan pemeriksa aplikasi: ${masalah}`;
+        // Kebocoran jawaban sering berasal dari kisi-kisi (konsep yang sama diuji dua kali), jadi AI boleh menanyakan konsep
+        // lain; petunjuk ini ditulis di depan karena instruksi dipotong 300 huruf.
+        const bocor = s.peringatan.some((w) => w.startsWith("Jawaban isian sudah tertulis"));
+        const instruksi = `${bocor ? "Jawaban bocor: tanyakan konsep LAIN dari materi yang jawabannya belum tertulis di soal mana pun, dan tulis indikator barunya. " : ""}Perbaiki soal ini (bentuk, TP, level tetap). Masalah: ${masalah}`;
         const [baru] = await tanya(`Perbaikan soal ${i + 1}`, buatPenggantiPengguna(p, s, soal, kisi[i], instruksi), (d) => ambilSoal(d));
-        const { stimulus: _s, indikator: _i, ...isi } = susunMenjodohkan(samakanDenganKisi(baru, kisi[i]));
+        const { stimulus: _s, indikator, ...isi } = susunMenjodohkan(samakanDenganKisi(baru, kisi[i]));
         void _s;
-        void _i;
-        const [cek] = periksaSoal([isi], bab, cekAyat);
+        // Diperiksa bersama seluruh set (bukan sendirian), supaya kunci isian yang masih bocor ke soal lain tetap ketahuan.
+        const cek = periksaSoal(soal.map((x, j) => (j === i ? isi : x)), bab, cekAyat)[i];
         if (cek.peringatan?.length) info.perbaikan.push(`Soal ${i + 1}: perbaikan otomatis masih melanggar aturan (${cek.peringatan.join("; ")}), soal awal dipakai.`);
         else {
           soal[i] = cek;
+          // Indikator baru (konsep lain) ikut ke kisi-kisi; teks berisi Arab tak terverifikasi tidak dipakai (aturan 5).
+          const ind = String(indikator ?? "").trim();
+          if (bocor && ind && !pemeriksaArab(bab, cekAyat)(ind).length) kisi[i] = { ...kisi[i], indikator: ind };
           info.perbaikan.push(`Soal ${i + 1} diperbaiki otomatis: ${masalah}`);
         }
       } catch (e) {
@@ -269,7 +277,7 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
     }
     ratakanKunci(soal);
     if (p.bobot) terapkanBobot(soal, p.bobot);
-    await simpan({ status: "selesai", soal, pesan: null, model: [...dipakai].join(" + ") });
+    await simpan({ status: "selesai", soal, kisi, pesan: null, model: [...dipakai].join(" + ") });
   } catch (e) {
     await simpan({ status: "gagal", pesan: pesanError(e) }).catch(() => {});
   }

@@ -52,6 +52,14 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.17.3 — 5 November 2026
+- **Kunci isian yang bocor kini ditandai merah**: kalau jawaban soal isian sudah tertulis di pertanyaan atau pilihan soal
+  lain (misalnya kunci "ḥissī" padahal "mukjizat ḥissī" sudah jadi pilihan di soal PG), soal isian itu ditandai, lalu
+  **diperbaiki otomatis**: AI diminta menanyakan konsep lain, dan indikator di kisi-kisi ikut diperbarui.
+  Pemeriksaannya mengabaikan beda huruf seperti ḥ/h dan ā/a.
+- Perbaikan otomatis tidak lagi gagal kalau AI mengirim satu soal tanpa dibungkus daftar.
+- Diketahui: soal hasil perbaikan kadang mirip dengan soal lain (guru tetap perlu memeriksa).
+
 ## 0.17.2 — 5 November 2026
 - Aturan baru untuk AI: **jawaban satu soal tidak boleh tertulis di soal lain** (terutama kunci isian singkat).
   Saat soal dibuat bertahap, AI kini juga diberi tahu **jawaban** soal-soal tahap sebelumnya, bukan hanya pertanyaannya.

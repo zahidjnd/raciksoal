@@ -404,11 +404,23 @@ function periksaIsian(s: Soal): string[] {
   return w;
 }
 
+/** Teks disederhanakan untuk dibandingkan: tanda diakritik dibuang (ḥ→h, ā→a), huruf kecil, tanda baca jadi spasi. */
+const polos = (t: unknown) => ` ${String(t ?? "").normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim()} `;
+
+/** Nomor soal lain (1, 2, ...) yang pertanyaan/pilihannya sudah memuat kunci isian soal ke-i (ATURAN-SOAL 2b no. 11). */
+function bocorDi(soal: Soal[], i: number): number[] {
+  const kunci = polos([soal[i].kunci].flat()[0]);
+  if (kunci.trim().length < 2) return [];
+  return soal.flatMap((s, j) =>
+    j !== i && [s.pertanyaan, ...(s.pilihan ?? []), ...(s.pernyataan ?? []), ...(s.premis ?? []), ...(s.jawaban ?? [])].some((t) => polos(t).includes(kunci)) ? [j + 1] : [],
+  );
+}
+
 /** Beri peringatan pada soal yang bermasalah. Aturan 5: teks Arab hanya boleh dari data terverifikasi. */
 export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
   const arabAsingDi = pemeriksaArab(bab, cekAyat);
   const dalilAda = new Set(bab.dalil.map((d) => d.id));
-  return soal.map((asli) => {
+  return soal.map((asli, i) => {
     // Bersihkan kode dalil yang bocor; kalau AI lupa mengisi dalil_id, pakai kode yang ditemukan di teks.
     let ditemukan: string | null = null;
     const bersih = (t: string) => {
@@ -434,7 +446,11 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
     if (s.dalil_id && !dalilAda.has(s.dalil_id)) peringatan.push(`Dalil "${s.dalil_id}" tidak ada di data bab.`);
     if ((s.bentuk === "PG" || s.bentuk === "PGK") && s.pilihan?.length !== 5) peringatan.push("Jumlah pilihan bukan 5.");
     if (s.bentuk === "PGK" && !KUNCI_PGK.includes(new Set([s.kunci].flat()).size)) peringatan.push("Kunci PG kompleks harus 2 atau 3 jawaban.");
-    if (s.bentuk === "ISIAN") peringatan.push(...periksaIsian(s));
+    if (s.bentuk === "ISIAN") {
+      peringatan.push(...periksaIsian(s));
+      const di = bocorDi(soal, i);
+      if (di.length) peringatan.push(`Jawaban isian sudah tertulis di soal nomor ${di.join(", ")}.`);
+    }
     if (s.bentuk === "MJ") peringatan.push(...periksaMenjodohkan(s));
     if (kategoriBaru(s)) {
       if (s.pernyataan!.length !== JUMLAH_PERNYATAAN || s.pernyataan!.some((p) => !p)) peringatan.push(`Soal kategori harus berisi ${JUMLAH_PERNYATAAN} pernyataan.`);
