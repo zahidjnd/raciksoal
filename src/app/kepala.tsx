@@ -127,7 +127,7 @@ export async function Kerangka({ p, lebar = false, setAktif = null, children }: 
 
   // Tautan ke halaman utama sengaja <a> biasa (bukan Link): halaman Buat Soal membaca ?id= hanya saat dimuat.
   return (
-    <div className="md:pl-64 xl:pl-72">
+    <div className="kerangka md:pl-64 xl:pl-72">
       <LaciSidebar>
         {/* Atas (diam): Set baru selalu terlihat. */}
         <div className="shrink-0 px-3 pb-2 text-sm">

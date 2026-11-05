@@ -498,10 +498,10 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
               {hasil.info && ` · ${hasil.info.detik} detik · ${(hasil.info.tokenMasuk + hasil.info.tokenKeluar).toLocaleString("id-ID")} token`}
               {` · ${soal.filter((s) => s.peringatan?.length).length} soal ditandai`}
             </p>
-            <p className="text-xs text-pudar">File Word di bilah bawah selalu mengikuti isi terbaru, termasuk soal yang diedit atau diganti.</p>
+            <p className="text-xs text-pudar print:hidden">File Word di bilah bawah selalu mengikuti isi terbaru, termasuk soal yang diedit atau diganti.</p>
             {/* Set dari materi (bukan set lama dari bab bawaan): buat set baru dengan materi yang sama. Muat penuh, lihat komentar di kepala.tsx. */}
             {hasil.babId.split(",").every((b) => /^materi-\d+$/.test(b)) && (
-              <a href={`/?materi=${hasil.babId}`} className="inline-block text-sm text-hijau-teks underline">
+              <a href={`/?materi=${hasil.babId}`} className="inline-block text-sm text-hijau-teks underline print:hidden">
                 Pakai materi ini lagi untuk set baru
               </a>
             )}
@@ -530,7 +530,7 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
 
           {/* Deret nomor: lompat ke soal; merah = ditandai penjaga ayat, wajib dicek. */}
           {/* HP: satu baris yang bisa digeser (dulu 4 baris untuk 25 soal); laptop: membungkus. */}
-          <nav aria-label="Lompat ke nomor soal" className="-mx-4 flex gap-1 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:overflow-visible md:px-0">
+          <nav aria-label="Lompat ke nomor soal" className="print:hidden -mx-4 flex gap-1 overflow-x-auto px-4 pb-1 md:mx-0 md:flex-wrap md:overflow-visible md:px-0">
             {soal.map((s, i) => (
               <button
                 key={i}
@@ -543,7 +543,7 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
             ))}
           </nav>
 
-          <div className="flex flex-wrap items-center gap-2 border-b pb-3">
+          <div className="flex flex-wrap items-center gap-2 border-b pb-3 print:hidden">
             {!!hasil.kisi?.length &&
               (["soal", "kisi"] as const).map((t) => (
                 <button key={t} aria-pressed={tab === t} onClick={() => setTab(t)} className={`${chip} ${tab === t ? "border-hijau bg-hijau-muda font-semibold text-hijau-teks" : ""}`}>
@@ -555,6 +555,10 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
               <>
                 <button className={chip} aria-expanded={kunciSingkat} onClick={() => setKunciSingkat(!kunciSingkat)}>
                   Kunci ringkas
+                </button>
+                {/* Cetak dari web: hanya isi (globals.css @media print). Kunci ikut tercetak bila sedang ditampilkan. */}
+                <button className={chip} onClick={() => window.print()} title="Cetak soal yang tampil (kunci ikut bila sedang ditampilkan)">
+                  Cetak
                 </button>
                 <button className={chip} onClick={() => setSemuaKunci(!semuaKunci)}>
                   {semuaKunci ? "Sembunyikan semua kunci" : "Tampilkan semua kunci"}
@@ -602,10 +606,10 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
             ))
           )}
 
-          <IdentitasHasil key={id} id={id!} awal={hasil.identitas} />
+          <div className="print:hidden"><IdentitasHasil key={id} id={id!} awal={hasil.identitas} /></div>
 
           {/* Tombol unduh menempel di bawah layar. File Word selalu mengikuti isi terbaru (termasuk editan). */}
-          <div className="sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center gap-2 border-t border-garis bg-krem px-4 py-2 md:-mx-8 md:px-8">
+          <div className="sticky bottom-0 z-10 -mx-4 print:hidden flex flex-wrap items-center gap-2 border-t border-garis bg-krem px-4 py-2 md:-mx-8 md:px-8">
             <span className="text-sm font-semibold">Unduh<span className="hidden sm:inline"> Word</span>:</span>
             <a className="inline-flex h-8 items-center rounded-lg bg-hijau px-4 text-sm font-semibold text-white hover:bg-hijau-tua max-md:min-h-11" href={`/api/word?id=${id}&jenis=soal`}>
               Soal

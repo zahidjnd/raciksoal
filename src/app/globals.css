@@ -28,7 +28,9 @@
 }
 
 /* Mode gelap (pilihan guru, disimpan di cookie `tema`; bawaan terang). Abu-hangat seperti claude.ai, bukan hitam.
-   Hijau tulisan dicerahkan karena #006316 hanya 2,5:1 di latar gelap. Semua pasangan teks/latar >= 4,5:1. */
+   Hijau tulisan dicerahkan karena #006316 hanya 2,5:1 di latar gelap. Semua pasangan teks/latar >= 4,5:1.
+   Hanya untuk LAYAR: saat dicetak selalu memakai warna terang (hemat tinta, terbaca di kertas). */
+@media screen {
 [data-tema="gelap"] {
   color-scheme: dark;
   --color-hijau: #1a7f37; /* putih di atasnya 5,1:1 */
@@ -51,6 +53,7 @@
   --color-peringatan-muda: #3a2f14;
   --color-peringatan: #f3d58a;
   --color-peringatan-garis: #8a6a1f;
+}
 }
 
 body {
@@ -134,5 +137,32 @@ body:has(#halaman-masuk) > footer {
   input:not([type="checkbox"]):not([type="radio"]),
   textarea {
     min-height: 44px;
+  }
+}
+
+/* Cetak dari web (Ctrl+P / tombol Cetak, audit 2026-11-04): hanya isi halaman. Sidebar, bilah unduh, deret nomor,
+   tab, dan semua tombol disembunyikan (elemen ber-`print:hidden` + aturan di bawah); kartu soal tidak terpotong. */
+@media print {
+  @page {
+    margin: 15mm;
+  }
+  body {
+    background: #fff;
+  }
+  button,
+  aside[aria-label="Menu"] {
+    display: none !important;
+  }
+  .kerangka {
+    padding-left: 0 !important;
+  }
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+  article,
+  figure,
+  table tr {
+    break-inside: avoid;
   }
 }

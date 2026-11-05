@@ -36,7 +36,7 @@ export function LaciSidebar({ children }: { children: React.ReactNode }) {
   return (
     <>
       {/* HP: bilah atas menempel, berisi tombol ☰. */}
-      <div className="sticky top-0 z-30 flex items-center gap-2 border-b border-garis bg-krem-tua px-2 py-1.5 md:hidden">
+      <div className="sticky top-0 z-30 flex items-center gap-2 border-b border-garis bg-krem-tua px-2 py-1.5 md:hidden print:hidden">
         <button onClick={() => setBuka(true)} aria-label="Buka menu" aria-expanded={buka} className="flex h-11 w-11 items-center justify-center rounded-lg hover:bg-krem-sorot">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
             <path d="M4 7h16M4 12h16M4 17h16" />
@@ -49,7 +49,7 @@ export function LaciSidebar({ children }: { children: React.ReactNode }) {
       <div
         aria-hidden
         onClick={() => setBuka(false)}
-        className={`fixed inset-0 z-40 bg-black/50 transition-opacity motion-reduce:transition-none md:hidden ${buka ? "opacity-100" : "pointer-events-none opacity-0"}`}
+        className={`fixed inset-0 z-40 bg-black/50 print:hidden transition-opacity motion-reduce:transition-none md:hidden ${buka ? "opacity-100" : "pointer-events-none opacity-0"}`}
       />
 
       <aside
