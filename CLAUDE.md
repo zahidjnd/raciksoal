@@ -52,7 +52,11 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
 - VERSI (sejak 2026-10-20, mulai 0.8.0): sebelum setiap push, naikkan versi (`npm version X.Y.Z --no-git-tag-version`;
   Z = perbaikan kecil, Y = fitur baru), tulis perubahannya dalam bahasa sederhana di `CATATAN-VERSI.md`, commit, beri
   penanda git `vX.Y.Z`, lalu kabari pemilik versinya. Nomor versi tampil di sidebar (dari package.json).
-  0.9.0 = setelah daftar "Persiapan menuju 0.9.0" di CATATAN-VERSI.md beres (siap uji coba guru); 1.0.0 = dipakai resmi.
+  0.9.0 = setelah daftar "Persiapan menuju 0.9.0" di CATATAN-VERSI.md beres (siap uji coba guru); 1.0.0 = setelah daftar
+  "Persiapan menuju 1.0.0" beres (target setelah ASAS Ganjil, ±Desember 2026).
+- SEBELUM SETIAP PUSH yang menyentuh server action / rute / halaman: jalankan `npm run uji:pemisahan` di laptop (server dev +
+  Docker menyala; akun `guru.uji.ayat` = A, `guru.uji.b` = B, sandi di `.claude/akun-uji.local.txt`). Aksi/rute BARU yang
+  menerima id set/materi WAJIB ditambahkan ke skrip itu.
 - Kalau terjadi error, jelaskan penyebabnya dengan bahasa sederhana sebelum memperbaiki.
 
 ## Urutan pembangunan
@@ -466,3 +470,17 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   MJ/ISIAN/URAIAN. UI: `TulisSoalSendiri` (kartu-soal.tsx) = tombol bergaris putus "+ Tulis soal <bentuk> sendiri" di akhir
   tiap bagian + pilihan "bentuk lain" di bawah; formulir = `FormSoal` (prop `judul`) dengan `soalKosong`; skor bawaan =
   skor soal sebentuk di set, atau BOBOT_BAWAAN. Uji laptop set 51: PG manual masuk no. 11, kisi 26 baris, lalu dihapus lagi.
+- 2026-11-05 PERAPIAN KEAMANAN (pemilik "gas 1-4"), dirilis 0.16.0. Daftar "Persiapan menuju 1.0.0" di CATATAN-VERSI.md.
+  (1) `scripts/uji-pemisahan.mts` (`npm run uji:pemisahan`, env UJI_A/UJI_B = nama:sandi, hanya localhost): masuk lewat
+  `/api/auth/sign-in/username`, memanggil server action lewat HTTP (header `Next-Action`, id dari
+  `.next/server/server-reference-manifest.json`; mode dev: halaman dibuka dulu agar aksinya terkompilasi), 30 pemeriksaan.
+  Dibuktikan bisa gagal: pemeriksa pemilik `cekHasil` dirusak sementara → GAGAL. Akun `guru.uji.b` dibuat langsung di DB
+  laptop (hash `better-auth/crypto` hashPassword). Tidak jalan di GitHub (tanpa DB/server).
+  (2) Tabel `pemakaian_ai` (migrasi 0009): baris per Ganti/Ubah/Tambah yang BERHASIL (ditulis di transaksi yang sama)
+  dan per analisa materi (dihitung saat mencoba). `BATAS_UBAH_PER_GURU` 60 & `BATAS_ANALISA` 30 di pembatas.ts; admin
+  bebas. `ambilSet` kini juga mengembalikan `saya`. Penghitung analisa di memori DIHAPUS.
+  TEMUAN (belum dikerjakan): `/api/auth/sign-in/username` bawaan Better Auth bisa dipanggil langsung dan MELEWATI
+  pembatas 5x salah di `masuk/actions.ts` (hanya kena rate limit bawaan Better Auth yang lebih longgar).
+  CATATAN DOCKER LAPTOP: port 5432 juga dipakai `datainduk-db-1` (proyek lain, autostart). Untuk uji: hentikan itu,
+  nyalakan `raciksoal-db`; kalau port tidak muncul (`5432/tcp` saja) → `docker network connect bridge raciksoal-db` lalu
+  start ulang. Setelah selesai, kembalikan: stop raciksoal-db, start datainduk-db-1.

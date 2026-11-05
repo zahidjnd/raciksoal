@@ -31,13 +31,25 @@ Target: **setelah ASAS Ganjil (sekitar Desember 2026)**.
 - [ ] Guru mandiri dengan Panduan; pertanyaan yang sering muncul dimasukkan ke Panduan.
 - [ ] Ada admin cadangan: punya akun admin (dibuat sekali lewat perintah database di cPanel, belum ada tombolnya),
       tahu cara restart dan membaca status, bisa memulihkan backup (`deploy/pulihkan-backup.md`), memegang kata sandi backup.
-- [ ] Tes otomatis pemisahan data antar guru (guru B tidak bisa membuka/mengedit/mengunduh set guru A).
-- [ ] Batas harian per guru untuk Ganti/Ubah/Tambah soal.
+- [x] Tes otomatis pemisahan data antar guru (guru B tidak bisa membuka/mengedit/mengunduh set guru A). Sejak 0.16.0.
+- [x] Batas harian per guru untuk Ganti/Ubah/Tambah soal. Sejak 0.16.0.
 
 Ditunda (setelah 1.0.0 atau bila dibutuhkan): bank soal (direncanakan dulu), katalog CP/TP, rumus/gambar/tabel.
 Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubrik ada di file kunci).
 
 ---
+
+## 0.16.0 — 5 November 2026
+Perapian keamanan menuju 1.0.0.
+- **Batas harian Ganti/Ubah/Tambah soal: 60 kali per guru per hari** (selain batas 30 kali per set). Yang dihitung hanya
+  yang berhasil. Kalau habis, Edit dan Tulis soal sendiri tetap bisa. Admin tidak dibatasi.
+- Batas **analisa materi** (30 kali per hari) kini tercatat di database, jadi tidak lagi kembali ke nol saat server
+  dinyalakan ulang.
+- **Kelola guru** menampilkan "ganti/ubah X dari 60" hari ini untuk tiap guru.
+- Di balik layar: tes otomatis **pemisahan data antar guru**. Akun guru B mencoba 24 cara membuka, mengubah, dan
+  mengunduh set serta materi guru A; semuanya harus ditolak dan isi guru A tetap utuh. Tes ini dijalankan di laptop
+  sebelum setiap rilis.
+- Daftar **Persiapan menuju 1.0.0** ditambahkan di atas (target: setelah ASAS Ganjil, sekitar Desember 2026).
 
 ## 0.15.0 — 5 November 2026
 - **Tulis soal sendiri.** Di akhir tiap bagian halaman hasil ada tombol **"+ Tulis soal … sendiri"** (dan "Tulis soal
