@@ -1,6 +1,6 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
-import { and, desc, eq, gte, isNull, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, isNull, or, sql, type SQL } from "drizzle-orm";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { db } from "@/db";
@@ -81,7 +81,7 @@ async function PeringatanBackup() {
 }
 
 /** Set soal milik satu guru, terbaru dulu (aturan 3: selalu disaring per guru). Dipakai sidebar dan /riwayat. */
-export function ambilRiwayat(guruId: string, batas: number) {
+export function ambilRiwayat(guruId: string, batas: number, saring?: SQL) {
   return db
     .select({
       id: hasilSoal.id,
@@ -94,7 +94,7 @@ export function ambilRiwayat(guruId: string, batas: number) {
       jumlahSoal: sql<number>`coalesce(jsonb_array_length(${hasilSoal.soal}), 0)::int`,
     })
     .from(hasilSoal)
-    .where(and(eq(hasilSoal.guruId, guruId), isNull(hasilSoal.dihapus)))
+    .where(and(eq(hasilSoal.guruId, guruId), isNull(hasilSoal.dihapus), saring))
     .orderBy(desc(hasilSoal.dibuat))
     .limit(batas);
 }
@@ -162,8 +162,9 @@ export async function Kerangka({ p, lebar = false, setAktif = null, children }: 
             // Menu ⋯ / klik kanan (Ganti nama, Hapus) ala claude.ai: BarisRiwayat (komponen browser).
             return <BarisRiwayat key={s.id} id={s.id} label={label} nama={s.nama} keterangan={`${tanggal} · ${keterangan}`} gagal={s.status === "gagal"} aktif={s.id === setAktif} kelas={tautan} />;
           })}
-          {riwayat.length === BATAS_SIDEBAR && (
-            <Link href="/riwayat" className="flex min-h-11 shrink-0 items-center px-3 text-xs text-hijau-teks hover:underline md:min-h-0 md:py-1">Lihat semua riwayat</Link>
+          {/* Selalu tampil (bila ada set): halaman Riwayat punya pencarian & saringan. */}
+          {riwayat.length > 0 && (
+            <Link href="/riwayat" className="flex min-h-11 shrink-0 items-center px-3 text-xs text-hijau-teks hover:underline md:min-h-0 md:py-1">Lihat &amp; cari semua riwayat</Link>
           )}
         </nav>
 

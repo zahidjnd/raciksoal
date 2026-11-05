@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { and, eq, isNull } from "drizzle-orm";
+import { db } from "@/db";
+import { hasilSoal } from "@/db/schema";
+import { adaSaringan, bacaSaringan, FormSaring, kolomMapel, syaratSaringan } from "../saring-set";
 import { judulPendek } from "@/lib/bab";
 import { namaTujuan, type Pengaturan } from "@/lib/prompt";
 import { wajibMasuk } from "@/lib/sesi";
@@ -7,16 +11,20 @@ import { ambilRiwayat, Kerangka } from "../kepala";
 const BATAS_TAMPIL = 100;
 const LABEL_STATUS: Record<string, string> = { proses: "sedang dibuat", selesai: "selesai", gagal: "gagal" };
 
-export default async function Riwayat() {
+export default async function Riwayat({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const p = await wajibMasuk();
+  const f = bacaSaringan(await searchParams);
   // Aturan 3: hanya set milik pengguna yang sedang masuk (admin melihat semua set di halaman admin, langkah 5d).
-  const daftar = await ambilRiwayat(p.id, BATAS_TAMPIL);
+  const daftar = await ambilRiwayat(p.id, BATAS_TAMPIL, syaratSaringan(f, false));
+  const mapel = (await db.selectDistinct({ m: kolomMapel }).from(hasilSoal).where(and(eq(hasilSoal.guruId, p.id), isNull(hasilSoal.dihapus)))).map((x) => x.m).sort();
 
   return (
     <Kerangka p={p}>
       <section className="space-y-3">
         <h1 className="text-2xl">Riwayat set soal Anda ({daftar.length}{daftar.length === BATAS_TAMPIL ? " terbaru" : ""})</h1>
-        {daftar.length === 0 && (
+        <FormSaring f={f} mapel={mapel} ada={adaSaringan(f)} />
+        {daftar.length === 0 && adaSaringan(f) && <p className="text-sm text-pudar">Tidak ada set yang cocok dengan saringan.</p>}
+        {daftar.length === 0 && !adaSaringan(f) && (
           <p className="text-sm text-pudar">
             Belum ada set soal. <Link href="/" className="text-hijau-teks underline">Buat soal pertama Anda</Link>.
           </p>

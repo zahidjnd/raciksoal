@@ -1,4 +1,4 @@
-import { desc, eq, sql } from "drizzle-orm";
+import { asc, desc, eq, sql } from "drizzle-orm";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
@@ -7,13 +7,17 @@ import { judulPendek } from "@/lib/bab";
 import { namaTujuan, type Pengaturan } from "@/lib/prompt";
 import { wajibMasuk } from "@/lib/sesi";
 import { Kerangka } from "../../kepala";
+import { adaSaringan, bacaSaringan, FormSaring, kolomMapel, syaratSaringan } from "../../saring-set";
 
 const BATAS_TAMPIL = 200;
 
 /** Khusus admin: semua set soal dari semua guru, untuk memantau pemakaian dan kegagalan model. */
-export default async function SemuaSet() {
+export default async function SemuaSet({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const p = await wajibMasuk();
   if (p.peran !== "admin") redirect("/");
+  const f = bacaSaringan(await searchParams);
+  const mapel = (await db.selectDistinct({ m: kolomMapel }).from(hasilSoal)).map((x) => x.m).sort();
+  const guru = await db.select({ id: pengguna.id, nama: pengguna.name }).from(pengguna).orderBy(asc(pengguna.name));
 
   const daftar = await db
     .select({
@@ -32,6 +36,7 @@ export default async function SemuaSet() {
     })
     .from(hasilSoal)
     .leftJoin(pengguna, eq(pengguna.id, hasilSoal.guruId))
+    .where(syaratSaringan(f, true))
     .orderBy(desc(hasilSoal.dibuat))
     .limit(BATAS_TAMPIL);
 
@@ -39,6 +44,8 @@ export default async function SemuaSet() {
     <Kerangka p={p}>
       <section className="space-y-3">
         <h1 className="text-2xl">Semua set soal ({daftar.length}{daftar.length === BATAS_TAMPIL ? " terbaru" : ""})</h1>
+        <FormSaring f={f} mapel={mapel} guru={guru} ada={adaSaringan(f)} />
+        {daftar.length === 0 && <p className="text-sm text-pudar">Tidak ada set yang cocok dengan saringan.</p>}
         <div className="divide-y divide-batas overflow-hidden rounded-xl border bg-kartu">
         {daftar.map((s) => {
           const pg = s.pengaturan as Pengaturan;
