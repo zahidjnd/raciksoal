@@ -23,6 +23,14 @@ hadis karangan dalam mode Bahasa Arab belum bisa dideteksi otomatis (hanya diceg
 
 ---
 
+## 0.15.0 — 5 November 2026
+- **Tulis soal sendiri.** Di akhir tiap bagian halaman hasil ada tombol **"+ Tulis soal … sendiri"** (dan "Tulis soal
+  bentuk lain" di paling bawah). Formulirnya sama dengan Edit. Soal ini **tanpa AI** dan **tidak memakai jatah**,
+  langsung masuk di akhir bagiannya, dan kisi-kisi ikut bertambah.
+- Soal tulisan guru tetap diperiksa pemeriksa ayat: teks Arab yang tidak cocok dengan data terverifikasi ditandai merah.
+  Isian yang belum lengkap diberi pesan yang jelas.
+- Panduan diperbarui.
+
 ## 0.14.0 — 5 November 2026
 - **Paket A, B, C, D** untuk mencegah contek. Isi soal sama; di paket B–D urutan soal (di dalam tiap bagian) dan
   urutan pilihan jawaban diacak, lajur kanan Menjodohkan juga diacak. Soal grup tetap bersama wacananya, pilihan angka
