@@ -562,6 +562,14 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
               </ul>
             </div>
           )}
+          {!!hasil.info?.perbaikan?.length && (
+            <div className="rounded-lg border bg-kartu p-3 text-sm">
+              <p className="font-semibold">Perbaikan otomatis (soal yang melanggar aturan, dikirim ulang ke AI 1x):</p>
+              <ul className="list-disc pl-5">
+                {hasil.info.perbaikan.map((c, i) => <li key={i}><Teks teks={c} /></li>)}
+              </ul>
+            </div>
+          )}
 
           {/* Deret nomor: lompat ke soal; merah = ditandai penjaga ayat, wajib dicek. */}
           {/* HP: satu baris yang bisa digeser (dulu 4 baris untuk 25 soal); laptop: membungkus. */}

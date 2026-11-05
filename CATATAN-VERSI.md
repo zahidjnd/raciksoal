@@ -52,6 +52,17 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.17.0 — 5 November 2026
+Fitur baru: **perbaikan otomatis soal bertanda merah**.
+- Saat set dibuat, setiap soal yang melanggar aturan (misalnya kunci PG Kompleks bukan 2–3, pilihan bukan 5, soal
+  isian tanpa titik-titik, menjodohkan dengan kunci kembar, teks Arab yang tidak cocok dengan mushaf) **dikirim balik ke
+  AI satu kali** untuk diperbaiki, lalu **diperiksa ulang oleh aplikasi**. Kalau sudah bersih, soal diganti; kalau masih
+  melanggar, soal awal tetap ditandai merah untuk diperiksa guru.
+- Tidak memakai jatah Ganti/Ubah guru. Waktu hanya bertambah kalau memang ada soal yang merah.
+- Admin melihat kotak "Perbaikan otomatis" di halaman hasil (soal mana dan masalahnya apa).
+- Tetap berlaku: kesalahan yang tidak bisa dideteksi aplikasi (misalnya hitungan keliru tapi jumlah kuncinya pas)
+  tidak ikut diperbaiki. Guru tetap wajib memeriksa.
+
 ## 0.16.5 — 5 November 2026
 Perbaikan dari uji perbandingan model (DeepSeek Flash vs Claude Opus).
 - Sebagian model AI (misalnya Claude) kadang membungkus jawabannya dengan tanda ```json, sehingga set soal **gagal**

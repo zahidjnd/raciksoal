@@ -506,3 +506,10 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   "bukan JSON". Kini `buangPagar` (ai.ts, dites) di `tanyaAI` membuangnya untuk semua model. Gemini flash-lite: 503 "high
   demand" 2x (pemilik: lewati). Hasil: DeepSeek tetap utama (cepat/murah/stabil); Opus soalnya lebih matang tapi mahal.
   Kedua model: kunci Isian bisa bocor di pilihan soal lain (belum diatasi). Set uji laptop 58–64.
+- 2026-11-05 (0.17.0, pemilik "gas") PERBAIKAN OTOMATIS 1x: di akhir `kerjakan`, tiap soal dengan `peringatan` dikirim
+  ulang ke AI lewat `buatPenggantiPengguna(..., instruksi = daftar masalah)` (jalur "ubah"), lalu `samakanDenganKisi`
+  + `susunMenjodohkan` + `periksaSoal`; dipakai hanya bila bersih. Catatan di `info.perbaikan` (BUKAN `info.catatan`:
+  itu memicu pita merah admin & hitungan cadangan), tampil hanya untuk admin. Tidak memakai jatah. Ganti/Ubah/Tambah
+  tidak ikut. Kasus asal: set 40 hosting (Opus pihak ketiga) PGK dengan 4 kunci benar: AI menulis "pilihan" dulu baru
+  "kunci", jadi terlanjur. Uji laptop set 65: DeepSeek soal 2 "Jumlah pilihan bukan 5" → diperbaiki, 0 ditandai.
+  Jalur "masih merah"/"gagal" belum teruji langsung.

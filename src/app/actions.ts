@@ -189,7 +189,8 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
   const mulai = Date.now();
   const dipakai = new Set<string>(); // model yang benar-benar menghasilkan soal (bisa lebih dari satu kalau cadangan dipakai)
   // tanggapan: balasan AI atas catatan guru (dikirim juga ke guru, lihat cekHasil)
-  const info: { detik: number; tokenMasuk: number; tokenKeluar: number; catatan: string[]; tanggapan?: string } = { detik: 0, tokenMasuk: 0, tokenKeluar: 0, catatan: [] };
+  // perbaikan: hasil perbaikan otomatis soal bertanda merah (terpisah dari catatan cadangan, supaya tidak memicu pita merah admin)
+  const info: { detik: number; tokenMasuk: number; tokenKeluar: number; catatan: string[]; tanggapan?: string; perbaikan?: string[] } = { detik: 0, tokenMasuk: 0, tokenKeluar: 0, catatan: [] };
   // Prompt, jawaban mentah, waktu, dan token setiap tahap disimpan untuk perbandingan model (langkah 4).
   const simpan = (data: Partial<typeof hasilSoal.$inferInsert>) =>
     db
@@ -242,6 +243,30 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
       await simpan({ soal: periksaSoal(semua, bab, cekAyat) });
     }
     const soal = periksaSoal(semua, bab, cekAyat);
+    // Perbaikan otomatis 1x: soal bertanda merah dikirim balik ke AI beserta daftar masalahnya, lalu hasilnya DIPERIKSA
+    // ULANG oleh aplikasi (aturan 5: AI menulis, aplikasi yang memeriksa). Dipakai hanya kalau bersih; kalau tidak,
+    // soal lama (tetap merah) dibiarkan untuk guru. Tidak memakai jatah Ganti/Ubah.
+    for (const [i, s] of soal.entries()) {
+      if (!s.peringatan?.length) continue;
+      const masalah = s.peringatan.join("; ");
+      info.perbaikan ??= [];
+      await simpan({ pesan: `Memperbaiki soal ${i + 1}` });
+      try {
+        const instruksi = `Perbaiki soal ini agar memenuhi aturan, tanpa mengubah bentuk, TP, dan level. Masalah yang ditemukan pemeriksa aplikasi: ${masalah}`;
+        const [baru] = await tanya(`Perbaikan soal ${i + 1}`, buatPenggantiPengguna(p, s, soal, kisi[i], instruksi), (d) => ambilSoal(d));
+        const { stimulus: _s, indikator: _i, ...isi } = susunMenjodohkan(samakanDenganKisi(baru, kisi[i]));
+        void _s;
+        void _i;
+        const [cek] = periksaSoal([isi], bab, cekAyat);
+        if (cek.peringatan?.length) info.perbaikan.push(`Soal ${i + 1}: perbaikan otomatis masih melanggar aturan (${cek.peringatan.join("; ")}), soal awal dipakai.`);
+        else {
+          soal[i] = cek;
+          info.perbaikan.push(`Soal ${i + 1} diperbaiki otomatis: ${masalah}`);
+        }
+      } catch (e) {
+        info.perbaikan.push(`Soal ${i + 1}: perbaikan otomatis gagal (${pesanError(e)}), soal awal dipakai.`);
+      }
+    }
     ratakanKunci(soal);
     if (p.bobot) terapkanBobot(soal, p.bobot);
     await simpan({ status: "selesai", soal, pesan: null, model: [...dipakai].join(" + ") });
@@ -608,5 +633,5 @@ export async function cekHasil(id: number, denganBab = true) {
     // (halaman sudah menambahkan awalan "Gagal membuat soal:")
     return { ...isi, soal, kisi, bab, catatan, tanggapan, identitas, jatahUbah, model: null, info: null, pesan: h.status === "gagal" ? SARAN_GURU : h.pesan };
   }
-  return { ...isi, soal, kisi, bab, catatan, tanggapan, identitas, jatahUbah, info: h.info as { detik: number; tokenMasuk: number; tokenKeluar: number; catatan?: string[] } | null };
+  return { ...isi, soal, kisi, bab, catatan, tanggapan, identitas, jatahUbah, info: h.info as { detik: number; tokenMasuk: number; tokenKeluar: number; catatan?: string[]; perbaikan?: string[] } | null };
 }
