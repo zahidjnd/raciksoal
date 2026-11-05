@@ -764,7 +764,6 @@ function JendelaUnduh({ id, adaKisi, paketDipilih, setPaketDipilih }: { id: numb
                   className={`h-11 flex-1 rounded-lg border text-base font-semibold ${paketDipilih.includes(k) ? "border-hijau bg-hijau-muda text-hijau-teks" : "bg-kartu text-pudar hover:bg-krem"}`}
                 >
                   {k}
-                  {paketDipilih.includes(k) && " ✓"}
                 </button>
               ))}
             </div>
