@@ -410,7 +410,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   DIHAPUS. Uji laptop: set 57 diganti nama lalu dihapus lewat menu.
   0.11.1: sidebar menandai halaman yang dibuka (`TautanMenu` = usePathname untuk menu; riwayat lewat prop `setAktif`
   dari page.tsx → `BarisRiwayat aktif`); tombol Set baru berlatar polos, "+" di lingkaran hijau, tidak pernah ditandai.
-- 2026-11-04 PAKET KECIL sebelum uji coba guru (pemilik "gas 1 per satu"), commit terpisah, BELUM di-push:
+- 2026-11-04 PAKET KECIL sebelum uji coba guru (pemilik "gas 1 per satu"), dirilis 0.12.0:
   (1) Login: kunci salah kata sandi per PERANGKAT+nama (5x/15 mnt) + per nama dari semua perangkat (30x), di
   `src/lib/pembatas.ts` (dites). IP = nilai TERAKHIR X-Forwarded-For (yang paling depan bisa dipalsukan).
   (2) Kartu soal: pesan "Tersimpan ✓" 4 detik setelah Edit (juga setelah Ganti/Ubah berhasil).
@@ -419,3 +419,19 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   baris `sesi` terhapus saat guru Keluar → yang tampil "set terakhir" dari hasil_soal.
   (4) /panduan (src/app/panduan/page.tsx): panduan singkat statis, tautan "Panduan" di sidebar untuk semua akun.
   Nama tombol di panduan ditulis persis seperti layar: kalau tombol diganti nama, ubah juga panduannya.
+- 2026-11-05 GELOMBANG 1 (pemilik "gas gelombang 1", setelah uji coba guru), commit terpisah, BELUM di-push:
+  (1) Kunci ringkas: `kunciRingkas` (src/lib/kunci.ts, dites) = kunci per bentuk, nomor global, PG sebaris; kotak + tombol
+  Salin di halaman hasil. `navigator.clipboard` diblokir di sebagian browser (juga panel browser Claude) → cadangan:
+  pilih teks <pre> + `document.execCommand("copy")`.
+  (2) Tombol ↑/↓ di kartu soal (`pindahSoal`, lewat `denganSetTerkunci`): tukar dengan tetangga HANYA bila bentuk sama
+  (urutan bagian di Word baku) dan bukan soal grup; kisi-kisi ikut ditukar + `nomoriUlang`.
+  (3) Pencarian/saringan riwayat (`src/app/saring-set.tsx`: formulir GET biasa, `bacaSaringan` membersihkan nilai alamat,
+  `syaratSaringan` → SQL berparameter; mapel set lama = "Al-Qur'an Hadis"). /riwayat: cari, jenis, mapel. /admin/set:
+  + guru, status (termasuk "dihapus guru"). `ambilRiwayat(guruId, batas, saring?)`. Tautan "Lihat & cari semua riwayat"
+  di sidebar selalu tampil bila ada set.
+  (4) Cetak dari web: blok mode gelap globals.css kini `@media screen` (cetak selalu terang); `@media print` di akhir
+  globals.css + `print:hidden` (bilah HP, latar laci, deret nomor, tab, bilah unduh, identitas, teks bantuan) + semua
+  `button` disembunyikan; pembungkus Kerangka punya kelas `kerangka`. Tombol "Cetak" (window.print) di bilah tab.
+  Cek tampilan cetak tanpa mode cetak: salin aturan @media print dari document.styleSheets ke <style> sementara.
+  CATATAN UJI: kata sandi `admin.uji` di DB laptop sudah tidak cocok dengan `.claude/akun-uji.local.txt` (diganti saat
+  pemilik mencoba); /admin/set dengan saringan belum dicoba di browser. Akun guru uji masih cocok.
