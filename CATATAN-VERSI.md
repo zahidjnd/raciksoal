@@ -52,6 +52,11 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.17.2 — 5 November 2026
+- Aturan baru untuk AI: **jawaban satu soal tidak boleh tertulis di soal lain** (terutama kunci isian singkat).
+  Saat soal dibuat bertahap, AI kini juga diberi tahu **jawaban** soal-soal tahap sebelumnya, bukan hanya pertanyaannya.
+  Mengurangi kebocoran, tetapi belum menjamin: guru tetap perlu memeriksa.
+
 ## 0.17.1 — 5 November 2026
 - **Peringatan "materi sedikit sekali"** di kotak Materi: muncul kalau isi materi kurang dari 300 huruf (misalnya hanya
   berisi perintah "terapkan materi kelas 11"), baik materi baru hasil analisa maupun "materi sebelumnya". Tanpa isi bab

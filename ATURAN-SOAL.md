@@ -73,6 +73,9 @@ Bloom revisi juga membagi jenis pengetahuan: faktual, konseptual, prosedural, me
 8. 🆕 **Pilihan berupa angka/tahun/urutan disusun berurutan** (kecil → besar, lama → baru), dan **tidak diacak**.
 9. 🆕 Soal tidak bergantung pada jawaban soal lain.
 10. ✅ Soal dalam satu set tidak saling mirip; sebar ke semua TP dan materi.
+11. 🆕 **Jawaban satu soal tidak boleh tertulis di soal lain** dalam set yang sama (di pokok soal maupun pilihan),
+    terutama kunci isian singkat. Contoh salah: kunci isian "ikhlas karena Allah", padahal frasa itu sudah menjadi
+    pilihan di soal PG nomor 2. (Disetujui 2026-11-05; aplikasi mengirim jawaban soal tahap sebelumnya ke AI.)
 
 ### 2c. Bahasa
 1. 🆕 Bahasa Indonesia baku, efektif, komunikatif, sesuai usia siswa MA.

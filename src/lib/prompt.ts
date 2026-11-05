@@ -198,6 +198,7 @@ KAIDAH KONSTRUKSI:
 - Pengecoh masuk akal, homogen, panjang pilihan relatif seimbang. Hindari pilihan "semua benar" / "semua salah".
 - Pilihan berupa angka, tahun, atau urutan ditulis berurutan (kecil → besar, lama → baru).
 - Setiap soal berdiri sendiri: tidak bergantung pada jawaban soal lain.
+- Jawaban satu soal TIDAK BOLEH tertulis di soal lain dalam set ini (di pokok soal maupun pilihan), terutama kunci isian singkat.
 - Soal tidak saling mirip; sebar ke seluruh TP dan materi${adaDalil ? " (dan dalil)" : ""}.
 - Tulis pilihan TANPA huruf A–E di depannya. Pembahasan TIDAK menyebut huruf pilihan (urutan pilihan PG dan PGK akan diacak ulang oleh aplikasi).
 - JANGAN merujuk ke sumber data di soal, pilihan, maupun pembahasan: tanpa frasa "menurut materi", "berdasarkan materi", "dalam bab ini", "sesuai data", "teks di atas", "bacaan", dan sejenisnya (siswa sudah tahu soal berasal dari pelajaran). Jika perlu menyebut sumber, sebut sumber aslinya (nama tokoh, kitab, buku, undang-undang, atau ${adaDalil ? 'dalil, misalnya "Menurut QS. An-Nūr [24]: 2"' : "peristiwa"}).
@@ -421,14 +422,24 @@ function tulisWacana(kisi: { grup?: number | null; wacana?: string; no?: number 
 Soal grup memakai wacana grupnya sebagai stimulus. JANGAN menulis ulang wacana di "pertanyaan" (aplikasi menampilkannya sekali di atas soal pertama grup); langsung tulis pokok soal, misalnya "Berdasarkan teks tersebut, ...". Untuk soal grup, merujuk "teks tersebut" diperbolehkan.\n`;
 }
 
+/** Satu baris daftar "soal yang sudah dibuat": pertanyaan (dipotong) + jawabannya (PG/PGK/isian), supaya jawaban tidak bocor ke soal lain. */
+export function ringkasSudah(s: Soal): string {
+  const kunci = [s.kunci].flat().map((k) => String(k ?? "").trim());
+  const jawaban =
+    s.bentuk === "PG" || s.bentuk === "PGK"
+      ? kunci.map((h) => s.pilihan?.["ABCDE".indexOf(h.toUpperCase())]).filter(Boolean).join("; ")
+      : s.bentuk === "ISIAN" ? kunci[0] : "";
+  return `${String(s.pertanyaan ?? "").slice(0, 160)}${jawaban ? ` → jawaban: ${jawaban.slice(0, 120)}` : ""}`;
+}
+
 /**
- * Permintaan untuk satu tahap. `sudah` = pertanyaan dari tahap sebelumnya, supaya AI tidak membuat soal yang mirip.
+ * Permintaan untuk satu tahap. `sudah` = soal tahap sebelumnya (lihat ringkasSudah), supaya AI tidak membuat soal yang mirip.
  * `kisi` = baris kisi-kisi untuk tahap ini (set lama tanpa kisi-kisi: kosong, pakai komposisi level).
  */
 export function buatPengguna(p: Pengaturan, jumlah: Record<Bentuk, number>, sudah: string[], tambahan = "", kisi: BarisKisi[] = []) {
   const urutan = urutanBentuk(jumlah);
   const daftarSudah = sudah.length
-    ? `\nSoal berikut SUDAH dibuat dalam set ini. Jangan membuat soal yang sama atau mirip (pokok bahasan maupun redaksinya), jangan memakai lagi skenario/kasus yang sama, dan hitung pola "berdebat/berbeda pendapat" yang sudah ada di daftar ini terhadap batas 2 kali. Ambil sisi materi, dalil, atau TP yang lain:\n${sudah.map((s) => `- ${s.slice(0, 160)}`).join("\n")}\n`
+    ? `\nSoal berikut SUDAH dibuat dalam set ini. Jangan membuat soal yang sama atau mirip (pokok bahasan maupun redaksinya), jangan memakai lagi skenario/kasus yang sama, dan hitung pola "berdebat/berbeda pendapat" yang sudah ada di daftar ini terhadap batas 2 kali. Ambil sisi materi, dalil, atau TP yang lain. Jawaban soal-soal itu (setelah "→ jawaban:") JANGAN tertulis di pokok soal atau pilihan soal baru, dan jawaban soal baru jangan sudah tertulis di soal-soal itu:\n${sudah.map((s) => `- ${s}`).join("\n")}\n`
     : "";
   const rencana = kisi.length
     ? `Tulis tepat ${kisi.length} soal sesuai KISI-KISI berikut, satu soal per baris, urut sesuai nomor. Setiap soal WAJIB memakai bentuk, tp, level, dan dalil_id barisnya, mengukur indikatornya, dan memakai stimulus/skenario yang tertulis (jangan diganti skenario lain):\n${kisi.map(tulisKisi).join("\n")}${tulisWacana(kisi)}`
@@ -456,7 +467,7 @@ ${kisi ? `Kisi-kisinya: indikator "${kisi.indikator}", stimulus "${kisi.stimulus
 """${bersihkanInstruksi(instruksi)}"""
 Kembalikan tepat 1 soal hasil perubahan. Bagian yang tidak diminta untuk diubah biarkan sama. "level" dan "tp" boleh berubah bila instruksi menuntutnya.
 Tambahkan field "indikator" (indikator soal gaya Kemenag yang sesuai dengan soal hasil perubahan) dan "stimulus" (jenis + skenario, maks 15 kata, atau "tanpa stimulus").\n`;
-    return buatPengguna(p, jumlah, semua.filter((s) => s !== lama).map((s) => s.pertanyaan), tambahan);
+    return buatPengguna(p, jumlah, semua.filter((s) => s !== lama).map(ringkasSudah), tambahan);
   }
   const sasaran = kisi?.grup && lama.wacana
     ? `dengan bentuk ${kisi.bentuk}, ${kisi.tp}, level ${kisi.level}, tetap mengukur indikator: "${kisi.indikator}", dan tetap memakai WACANA GRUP ${lama.grup} di bawah (soal grup), dengan pokok soal yang berbeda dari soal yang diganti`
@@ -465,5 +476,5 @@ Tambahkan field "indikator" (indikator soal gaya Kemenag yang sesuai dengan soal
     : `${lama.bentuk} pengganti dengan level ${lama.level} dan ${lama.tp} (abaikan komposisi level di atas)`;
   const tambahan = `\nIni permintaan MENGGANTI soal berikut (guru tidak memakainya): "${lama.pertanyaan.slice(0, 300)}"
 Buat tepat 1 soal ${sasaran}. Gunakan ${kisi?.grup && lama.wacana ? "" : "skenario, "}sudut pandang dan redaksi yang berbeda dari soal yang diganti maupun soal lain di daftar.\n${kisi?.grup ? tulisWacana([lama]) : ""}`;
-  return buatPengguna(p, jumlah, semua.map((s) => s.pertanyaan), tambahan);
+  return buatPengguna(p, jumlah, semua.map(ringkasSudah), tambahan);
 }

@@ -517,3 +517,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   "Etos Kerja" 490 huruf soalnya bagus). Server sudah menolak < 100 huruf saat analisa. `daftarBabMilik` (bab.ts) kini
   mengirim `huruf` (jumlah huruf `bab.materi`). Hanya peringatan, tidak memblokir. Asal: set 40 hosting (Matematika XI,
   materi = perintah "kelas 11") → AI mencampur K13 kelas XI + Kurikulum Merdeka kelas X.
+- 2026-11-05 (0.17.2) JAWABAN BOCOR ANTARSOAL: ATURAN-SOAL.md 2b no. 11 + baris di `buatSistem`; daftar "soal yang sudah
+  dibuat" kini `ringkasSudah` (prompt.ts, dites): pertanyaan + "→ jawaban:" (PG/PGK teks pilihan kunci, isian kunci).
+  Uji laptop set 66 (12 soal, 2 tahap): prompt memuat jawaban, TAPI isian no. 11 (kunci "ḥissī") masih bocor dari
+  pilihan benar PG no. 2. Aturan saja belum cukup; calon langkah: pemeriksa aplikasi (huruf dinormalkan, ḥ=h).

@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { arabTakTerverifikasi, bersihkanTanggapan, gabungBab, identitasBab, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, terapkanBobot, type Bab, type Soal } from "./soal.ts";
-import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, semesterDari, MAKS_CATATAN, MAKS_INSTRUKSI, rencanaLevel, type Pengaturan } from "./prompt.ts";
+import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, semesterDari, MAKS_CATATAN, MAKS_INSTRUKSI, rencanaLevel, type Pengaturan } from "./prompt.ts";
 import { bolehAkses, rapikanUsername } from "./akses.ts";
 import { headerUnduh } from "./nama-file.ts";
 import { keIsian, rapikanMateri, susunDraf, terapkanAnalisa } from "./materi.ts";
@@ -622,4 +622,13 @@ test("tahap membagi SEMUA soal: jumlah per tahap (jumlahSoal) menutup seluruh ba
     assert.equal(jumlahSoal(jumlah), Object.values(jumlah).reduce((a, b) => a + b, 0));
   }
   assert.equal(jumlahSoal({ PG: 3, PGK: 0, BS: 0, URAIAN: 1 } as never), 4); // set lama tanpa kunci bentuk baru
+});
+
+test("ringkasSudah: jawaban PG/PGK/isian ikut dikirim ke AI supaya tidak bocor ke soal lain", () => {
+  const dasar = { dalil_id: null, pembahasan: "", level: "C1", tp: "TP 1", skor: 1 };
+  const pilihan = ["riya", "ikhlas karena Allah", "pamer", "malas", "upah"];
+  assert.equal(ringkasSudah({ ...dasar, bentuk: "PG", pertanyaan: "Niat bekerja ....", pilihan, kunci: "B" } as Soal), "Niat bekerja .... → jawaban: ikhlas karena Allah");
+  assert.equal(ringkasSudah({ ...dasar, bentuk: "PGK", pertanyaan: "Ciri ...", pilihan, kunci: ["B", "d"] } as Soal), "Ciri ... → jawaban: ikhlas karena Allah; malas");
+  assert.equal(ringkasSudah({ ...dasar, bentuk: "ISIAN", pertanyaan: "Bekerja adalah ....", kunci: "ibadah" } as Soal), "Bekerja adalah .... → jawaban: ibadah");
+  assert.equal(ringkasSudah({ ...dasar, bentuk: "URAIAN", pertanyaan: "Jelaskan!", kunci: "panjang sekali" } as Soal), "Jelaskan!");
 });
