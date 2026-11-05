@@ -486,3 +486,6 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   CATATAN DOCKER LAPTOP: port 5432 juga dipakai `datainduk-db-1` (proyek lain, autostart). Untuk uji: hentikan itu,
   nyalakan `raciksoal-db`; kalau port tidak muncul (`5432/tcp` saja) → `docker network connect bridge raciksoal-db` lalu
   start ulang. Setelah selesai, kembalikan: stop raciksoal-db, start datainduk-db-1.
+- 2026-11-05 (0.16.2, pilihan pemilik): "Reset kata sandi" admin MEMBUKA kunci salah sandi nama itu (`pembatasMasuk.buka`).
+  Pembatas kini satu objek bersama `pembatasMasuk` di pembatas.ts (disimpan di globalThis), dipakai masuk/actions.ts dan
+  admin/guru/actions.ts. Diuji: guru.uji.ayat dikunci 5x salah → admin reset (sandi sama) → langsung bisa masuk.

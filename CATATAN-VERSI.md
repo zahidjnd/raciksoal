@@ -39,6 +39,12 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.16.2 — 5 November 2026
+- Kalau guru salah kata sandi 5 kali, perangkatnya dikunci 15 menit. Sekarang **"Reset kata sandi" oleh admin langsung
+  membuka kunci itu**, jadi guru bisa segera masuk dengan kata sandi baru tanpa menunggu. (Dulu tetap harus menunggu
+  15 menit walau sudah direset.)
+- Panduan menjelaskan kunci 15 menit ini.
+
 ## 0.16.1 — 5 November 2026
 - Keamanan masuk: satu-satunya jalan masuk kini **halaman Masuk**. Dulu ada "pintu belakang" bawaan alat login
   (alamat /api/auth/...) yang bisa dipakai menebak kata sandi berkali-kali tanpa kena kunci 5 kali salah. Pintu itu

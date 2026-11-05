@@ -37,12 +37,23 @@ export function buatPembatas(sekarang = () => Date.now()) {
         data.set(k, { kali: (lama?.kali ?? 0) + 1, sampai: sekarang() + LAMA_KUNCI });
       }
     },
+    /** Admin mereset kata sandi: semua kunci untuk nama ini dibuka (dari perangkat mana pun). */
+    buka(nama: string) {
+      for (const k of data.keys()) if (k === nama || k.endsWith(`|${nama}`)) data.delete(k);
+    },
     /** Berhasil masuk: catatan perangkat ini dihapus (catatan nama tetap, supaya tebakan dari perangkat lain tetap terhitung). */
     berhasil(ip: string, nama: string) {
       data.delete(kunciPerangkat(ip, nama));
     },
   };
 }
+
+/**
+ * Satu pembatas untuk seluruh server: dipakai halaman Masuk (mencatat salah) dan Kelola guru (reset = buka kunci).
+ * Disimpan di globalThis supaya tetap satu walau berkas dimuat ulang (mode dev) atau dibundel di dua tempat.
+ */
+const g = globalThis as typeof globalThis & { __pembatasMasuk?: ReturnType<typeof buatPembatas> };
+export const pembatasMasuk = (g.__pembatasMasuk ??= buatPembatas());
 
 /**
  * IP perangkat dari header proxy. Diambil yang TERAKHIR di X-Forwarded-For (ditambahkan proxy hosting sendiri);

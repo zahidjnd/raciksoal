@@ -2,8 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
+import { eq } from "drizzle-orm";
+import { db } from "@/db";
+import { pengguna } from "@/db/schema";
 import { emailDariUsername, rapikanUsername } from "@/lib/akses";
 import { auth } from "@/lib/auth";
+import { pembatasMasuk } from "@/lib/pembatas";
 import { pesanAuth } from "@/lib/pesan-auth";
 import { penggunaSaatIni } from "@/lib/sesi";
 
@@ -49,7 +53,10 @@ export async function resetKataSandi(_: Hasil, form: FormData): Promise<Hasil> {
   } catch (e) {
     return { ok: false, pesan: pesanAuth(e) };
   }
-  return { ok: true, pesan: "Kata sandi direset. Guru harus masuk lagi dengan kata sandi baru." };
+  // Guru yang terkunci karena salah 5x bisa langsung masuk dengan kata sandi baru (tanpa menunggu 15 menit).
+  const [u] = await db.select({ username: pengguna.username }).from(pengguna).where(eq(pengguna.id, userId));
+  if (u?.username) pembatasMasuk.buka(u.username);
+  return { ok: true, pesan: "Kata sandi direset dan kunci salah kata sandi dibuka. Guru bisa langsung masuk dengan kata sandi baru." };
 }
 
 export async function ubahStatus(_: Hasil, form: FormData): Promise<Hasil> {

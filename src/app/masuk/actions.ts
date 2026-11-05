@@ -7,12 +7,12 @@ import { db } from "@/db";
 import { hasilSoal, pengguna } from "@/db/schema";
 import { emailDariUsername, rapikanUsername } from "@/lib/akses";
 import { auth } from "@/lib/auth";
-import { buatPembatas, ipDari } from "@/lib/pembatas";
+import { ipDari, pembatasMasuk as pembatas } from "@/lib/pembatas";
 
 type Hasil = { pesan: string } | null;
 
 // Pembatas percobaan salah: per perangkat + nama pengguna, plus batas longgar per nama (src/lib/pembatas.ts, dites).
-const pembatas = buatPembatas();
+// Dibuka admin lewat "Reset kata sandi" (admin/guru/actions.ts).
 
 export async function masuk(_: Hasil, form: FormData): Promise<Hasil> {
   const username = rapikanUsername(String(form.get("username") ?? ""));

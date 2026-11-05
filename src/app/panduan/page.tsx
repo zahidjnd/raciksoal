@@ -62,7 +62,7 @@ const LANGKAH: { judul: string; isi: React.ReactNode[] }[] = [
     isi: [
       <>Muat ulang halaman (tarik ke bawah di HP, atau tekan F5 di laptop), lalu coba lagi.</>,
       <>Bila masih bermasalah, hubungi admin dan sebutkan nomor versi yang tertulis di bawah nama Anda di sidebar.</>,
-      <>Lupa kata sandi: minta admin meresetnya. Kata sandi bisa diganti sendiri di halaman <b>Akun</b> (klik nama Anda di sidebar).</>,
+      <>Lupa kata sandi: minta admin meresetnya. Salah kata sandi 5 kali membuat perangkat itu terkunci 15 menit; reset dari admin langsung membuka kuncinya. Kata sandi bisa diganti sendiri di halaman <b>Akun</b> (klik nama Anda di sidebar).</>,
     ],
   },
 ];
