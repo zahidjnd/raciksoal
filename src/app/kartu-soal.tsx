@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { gantiSatuSoal, hapusSoal, simpanSoal, tambahSoalSerupa } from "./actions";
+import { gantiSatuSoal, hapusSoal, pindahSoal, simpanSoal, tambahSoalSerupa } from "./actions";
 import { StepAngka } from "./step-angka";
 import { kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, pecahBaris, POLA_ARAB, type Bab, type Soal } from "@/lib/soal";
 import { MAKS_INSTRUKSI } from "@/lib/prompt";
@@ -128,13 +128,15 @@ function TabelKategori({ s, kunci }: { s: Soal; kunci: boolean }) {
 // draf: soal yang sudah jadi selama set masih diproses; hanya dibaca (kunci & urutan pilihan belum final, server
 // juga menolak edit/ganti sebelum selesai).
 // onSetBerubah: soal ditambah/dihapus → nomor bergeser, halaman memuat ulang seluruh set.
-type Props = { hasilId: number; no: number; s: Soal; bab: Bab; semuaKunci: boolean; nomorGrup?: string | null; onUbah: (s: Soal) => void; onSetBerubah?: (lompatKe?: number) => void; draf?: boolean };
+type Props = { hasilId: number; no: number; s: Soal; bab: Bab; semuaKunci: boolean; nomorGrup?: string | null; onUbah: (s: Soal) => void; onSetBerubah?: (lompatKe?: number) => void; draf?: boolean;
+  // Tombol ↑/↓ (pindah urutan): hanya di dalam bagian bentuk yang sama, bukan soal grup (dihitung halaman hasil).
+  bisaNaik?: boolean; bisaTurun?: boolean };
 
-export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, onSetBerubah, draf }: Props) {
+export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, onSetBerubah, draf, bisaNaik, bisaTurun }: Props) {
   const [edit, setEdit] = useState(false);
   const [lihatKunci, setLihatKunci] = useState(false); // kunci & pembahasan dilipat, dibuka per soal atau semua sekaligus
   const tampilKunci = !draf && (semuaKunci || lihatKunci);
-  const [proses, setProses] = useState<"" | "ganti" | "ubah" | "tambah" | "hapus">("");
+  const [proses, setProses] = useState<"" | "ganti" | "ubah" | "tambah" | "hapus" | "pindah">("");
   const mengganti = proses !== "";
   const [instruksi, setInstruksi] = useState("");
   const [lainnya, setLainnya] = useState(false); // Ganti & Ubah dilipat supaya kartu lebih lega
@@ -161,6 +163,16 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
     else setBerhasil(jenis === "ubah" ? "Soal sudah diubah ✓" : "Soal sudah diganti ✓");
     onUbah(r.soal);
     setInstruksi("");
+  }
+
+  /** Tukar dengan soal di atas/bawahnya; halaman memuat ulang set lalu menggulir ke posisi barunya. */
+  async function pindah(arah: -1 | 1) {
+    setError("");
+    setProses("pindah");
+    const r = await pindahSoal(hasilId, no - 1, arah).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
+    setProses("");
+    if (!r.ok) return setError(r.pesan);
+    onSetBerubah?.(no + arah);
   }
 
   /** Tambah soal serupa (AI, di bawah soal ini) atau hapus soal ini; nomor sesudahnya bergeser. */
@@ -247,6 +259,12 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
         <button className={tombol} aria-expanded={lainnya} disabled={mengganti} onClick={() => setLainnya(!lainnya)}>
           {mengganti ? "Sedang memproses..." : lainnya ? "Tutup" : "Lainnya"}
         </button>
+        {onSetBerubah && (bisaNaik || bisaTurun) && (
+          <span className="ml-auto flex gap-1">
+            <button className={tombol} disabled={mengganti || !bisaNaik} onClick={() => pindah(-1)} aria-label={`Pindah soal nomor ${no} ke atas`} title="Pindah ke atas">↑</button>
+            <button className={tombol} disabled={mengganti || !bisaTurun} onClick={() => pindah(1)} aria-label={`Pindah soal nomor ${no} ke bawah`} title="Pindah ke bawah">↓</button>
+          </span>
+        )}
       </div>
       {lainnya && (
       <div className="space-y-2 rounded-lg border bg-krem p-3">

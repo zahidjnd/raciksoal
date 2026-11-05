@@ -585,6 +585,8 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
                           setHasil({ ...hasil, soal: soal.map((x, j) => (j === i ? baru : x)) });
                           cekHasil(id!).then((h) => h && setHasil(h)).catch(() => {}); // kisi-kisi ikut berubah di server
                         }}
+                        bisaNaik={soal[i - 1]?.bentuk === s.bentuk && !s.grup && !soal[i - 1]?.grup}
+                        bisaTurun={soal[i + 1]?.bentuk === s.bentuk && !s.grup && !soal[i + 1]?.grup}
                         onSetBerubah={(ke) =>
                           cekHasil(id!)
                             .then((h) => {

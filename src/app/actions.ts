@@ -308,6 +308,26 @@ async function simpanSoalDi(set: IsiSet, no: number, isian: Soal, tx: Tx) {
   }
 }
 
+/** Soal `no` boleh ditukar dengan tetangganya (`no + arah`): bentuk sama (urutan bagian di Word baku) dan bukan soal grup. */
+export async function pindahSoal(id: number, no: number, arah: -1 | 1) {
+  try {
+    const r = await denganSetTerkunci(id, no, async (set, tx) => {
+      const ke = no + (arah === -1 ? -1 : 1);
+      const [a, b] = [set.soal[no], set.soal[ke]];
+      if (!b || a.bentuk !== b.bentuk) return "Soal sudah di ujung bagiannya.";
+      if (a.grup || b.grup) return "Soal grup (wacana bersama) tidak bisa dipindah.";
+      [set.soal[no], set.soal[ke]] = [b, a];
+      const kisi = set.h.kisi as BarisKisi[] | null;
+      if (kisi?.[no] && kisi[ke]) [kisi[no], kisi[ke]] = [kisi[ke], kisi[no]];
+      await tx.update(hasilSoal).set({ soal: set.soal, kisi: kisi && nomoriUlang(kisi) }).where(eq(hasilSoal.id, set.h.id));
+      return true;
+    });
+    return typeof r === "string" ? { ok: false as const, pesan: r } : { ok: true as const };
+  } catch (e) {
+    return { ok: false as const, pesan: `Gagal memindah soal: ${pesanError(e)}` };
+  }
+}
+
 /** Hapus satu soal dari set (pemilik/admin). Kisi-kisi ikut dibuang barisnya dan dinomori ulang. Minimal 1 soal tersisa. */
 export async function hapusSoal(id: number, no: number) {
   try {
