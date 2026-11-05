@@ -52,6 +52,12 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.17.1 — 5 November 2026
+- **Peringatan "materi sedikit sekali"** di kotak Materi: muncul kalau isi materi kurang dari 300 huruf (misalnya hanya
+  berisi perintah "terapkan materi kelas 11"), baik materi baru hasil analisa maupun "materi sebelumnya". Tanpa isi bab
+  yang jelas, AI menebak isi pelajaran sendiri dan soal bisa meleset dari buku/kurikulum (kasus set ASAS Matematika XI).
+  Guru tetap boleh lanjut.
+
 ## 0.17.0 — 5 November 2026
 Fitur baru: **perbaikan otomatis soal bertanda merah**.
 - Saat set dibuat, setiap soal yang melanggar aturan (misalnya kunci PG Kompleks bukan 2–3, pilihan bukan 5, soal

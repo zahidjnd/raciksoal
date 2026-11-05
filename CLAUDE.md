@@ -513,3 +513,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   tidak ikut. Kasus asal: set 40 hosting (Opus pihak ketiga) PGK dengan 4 kunci benar: AI menulis "pilihan" dulu baru
   "kunci", jadi terlanjur. Uji laptop set 65: DeepSeek soal 2 "Jumlah pilihan bukan 5" → diperbaiki, 0 ditandai.
   Jalur "masih merah"/"gagal" belum teruji langsung.
+- 2026-11-05 (0.17.1) PERINGATAN MATERI SEDIKIT: `MATERI_SEDIKIT` = 300 huruf (kotak-materi.tsx; 500 terlalu rewel: materi uji
+  "Etos Kerja" 490 huruf soalnya bagus). Server sudah menolak < 100 huruf saat analisa. `daftarBabMilik` (bab.ts) kini
+  mengirim `huruf` (jumlah huruf `bab.materi`). Hanya peringatan, tidak memblokir. Asal: set 40 hosting (Matematika XI,
+  materi = perintah "kelas 11") → AI mencampur K13 kelas XI + Kurikulum Merdeka kelas X.

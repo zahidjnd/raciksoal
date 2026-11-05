@@ -25,13 +25,15 @@ export async function daftarBabMilik(guruId: string) {
       judul: sql<string>`${materi.bab}->>'judul'`,
       mapel: sql<string | null>`${materi.bab}->>'mapel'`,
       kelas: sql<string | null>`${materi.bab}->>'kelas'`,
+      // jumlah huruf isi materi (untuk peringatan "materi terlalu sedikit")
+      huruf: sql<number>`coalesce((select sum(length(x)) from jsonb_array_elements_text(${materi.bab}->'materi') x), 0)::int`,
       diubah: materi.diubah,
     })
     .from(materi)
     .where(eq(materi.guruId, guruId))
     .orderBy(desc(materi.diubah));
   // Materi lama tanpa mapel = Al-Qur'an Hadis kelas XI (sama dengan identitasBab).
-  return milik.map((m) => ({ id: `materi-${m.id}`, judul: m.judul, mapel: m.mapel || "Al-Qur'an Hadis", kelas: m.kelas || "XI", diubah: m.diubah }));
+  return milik.map((m) => ({ id: `materi-${m.id}`, judul: m.judul, mapel: m.mapel || "Al-Qur'an Hadis", kelas: m.kelas || "XI", huruf: m.huruf, diubah: m.diubah }));
 }
 
 /** Bab sebuah set: salinan yang disimpan saat set dibuat; set lama (tanpa salinan) memakai bab bawaan. */

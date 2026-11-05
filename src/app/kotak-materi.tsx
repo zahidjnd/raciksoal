@@ -6,7 +6,19 @@ import { analisaMateri } from "./actions";
 import type { IsianMateri } from "@/lib/materi";
 import { MAKS_GABUNG } from "@/lib/soal";
 
-export type MateriLama = { id: string; judul: string; mapel: string; kelas: string };
+export type MateriLama = { id: string; judul: string; mapel: string; kelas: string; huruf?: number };
+
+/** Di bawah ini isi materi dianggap terlalu sedikit: AI akan menebak isi pelajaran sendiri (kasus set ASAS Matematika XI). */
+// 300: ringkasan pendek yang masih layak (±400–500 huruf, mis. "Etos Kerja" uji laptop) tidak ikut diperingatkan.
+const MATERI_SEDIKIT = 300;
+function PeringatanSedikit({ huruf }: { huruf: number }) {
+  return (
+    <p className="rounded-lg border border-peringatan-garis bg-peringatan-muda p-2 text-sm text-peringatan" role="alert">
+      Isi materinya sedikit sekali ({huruf.toLocaleString("id-ID")} huruf). AI akan menebak isi pelajaran sendiri, jadi soal bisa
+      tidak sesuai buku/kurikulum yang dipakai. Sebaiknya tempel atau lampirkan isi bab dari buku atau modul. Tetap boleh lanjut.
+    </p>
+  );
+}
 type Props = {
   mapel: string;
   kelas: string;
@@ -88,11 +100,14 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
       {pilihan.map((id) => {
         const m = daftar.find((x) => x.id === id);
         return (
-          <div key={id} className="flex items-center justify-between gap-2 rounded-lg border border-hijau/40 bg-hijau-muda/40 px-3 py-2 text-sm">
-            <span className="min-w-0 truncate">✓ {m?.judul ?? id}</span>
-            <button className="shrink-0 text-xs text-pudar hover:text-bahaya" aria-label={`Lepas materi ${m?.judul ?? id}`} onClick={() => setPilihan(pilihan.filter((x) => x !== id))}>
-              ✕ Lepas
-            </button>
+          <div key={id} className="space-y-2">
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-hijau/40 bg-hijau-muda/40 px-3 py-2 text-sm">
+              <span className="min-w-0 truncate">✓ {m?.judul ?? id}</span>
+              <button className="shrink-0 text-xs text-pudar hover:text-bahaya" aria-label={`Lepas materi ${m?.judul ?? id}`} onClick={() => setPilihan(pilihan.filter((x) => x !== id))}>
+                ✕ Lepas
+              </button>
+            </div>
+            {m?.huruf !== undefined && m.huruf < MATERI_SEDIKIT && <PeringatanSedikit huruf={m.huruf} />}
           </div>
         );
       })}
@@ -179,6 +194,7 @@ function KartuDraf({
         <p className="font-semibold text-hijau-teks">Materi baru (hasil analisa AI, silakan periksa)</p>
         <button className="shrink-0 text-xs text-pudar hover:text-bahaya" onClick={batal}>✕ Batalkan</button>
       </div>
+      {draf.isi.trim().length < MATERI_SEDIKIT && <PeringatanSedikit huruf={draf.isi.trim().length} />}
       <label className="block">
         Judul
         <input className={`${kotak} mt-1`} maxLength={150} value={draf.judul} onChange={(e) => ubah({ judul: e.target.value })} />
