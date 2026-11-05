@@ -501,3 +501,8 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   `TabelKisi`: petunjuk geser `md:hidden`. Sidebar sudah ikut berubah saat set selesai (`router.refresh()`, sejak 10b).
   Cara melihat keadaan draf tanpa AI: salin `soal` set ke tabel sementara, set `status='proses'` + soal dipotong, lalu
   kembalikan (jangan restart server selama itu: set proses ditandai gagal saat server menyala).
+- 2026-11-05 (0.16.5) UJI MODEL di laptop (deepseek-flash, gemini-3.5-flash-lite, claude-opus-5-5 di slot 1/2/3 .env laptop):
+  Claude lewat endpoint format OpenAI MENGABAIKAN `response_format` dan kadang membungkus JSON dengan ```json → set gagal
+  "bukan JSON". Kini `buangPagar` (ai.ts, dites) di `tanyaAI` membuangnya untuk semua model. Gemini flash-lite: 503 "high
+  demand" 2x (pemilik: lewati). Hasil: DeepSeek tetap utama (cepat/murah/stabil); Opus soalnya lebih matang tapi mahal.
+  Kedua model: kunci Isian bisa bocor di pilihan soal lain (belum diatasi). Set uji laptop 58–64.

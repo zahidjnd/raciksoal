@@ -52,6 +52,11 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.16.5 — 5 November 2026
+Perbaikan dari uji perbandingan model (DeepSeek Flash vs Claude Opus).
+- Sebagian model AI (misalnya Claude) kadang membungkus jawabannya dengan tanda ```json, sehingga set soal **gagal**
+  dengan pesan "jawaban bukan JSON". Kini tanda itu dibuang otomatis sebelum jawaban dibaca, untuk semua model.
+
 ## 0.16.4 — 5 November 2026
 Persiapan ASAS: tampilan HP saat soal sedang dibuat.
 - Tulisan **"Masih meracik: 10 dari 12 soal sudah jadi"** kini **menempel di atas layar** saat guru menggulir membaca

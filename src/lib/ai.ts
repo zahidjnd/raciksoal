@@ -37,6 +37,9 @@ function alasan(status: number) {
 }
 const tunggu = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/** Sebagian model (mis. Claude) membungkus JSON dengan ```json ... ``` walau diminta JSON murni → buang pembungkusnya. */
+export const buangPagar = (teks: string) => teks.trim().replace(/^```(?:json)?\s*([\s\S]*?)\s*```$/i, "$1");
+
 /** Model yang terpasang di .env (hanya nomor dan nama, tanpa kunci). */
 export function daftarModel() {
   return [1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((slot) => {
@@ -83,7 +86,7 @@ export async function tanyaAI(sistem: string, pengguna: string, slot = 1, sampai
   const pilihan = data.choices?.[0];
   if (!pilihan) throw new Error(`AI (${k.model}) tidak mengirim jawaban.`);
   return {
-    jawaban: String(pilihan.message?.content ?? ""),
+    jawaban: buangPagar(String(pilihan.message?.content ?? "")),
     terpotong: pilihan.finish_reason === "length",
     model: k.model,
     token: { masuk: Number(data.usage?.prompt_tokens) || 0, keluar: Number(data.usage?.completion_tokens) || 0 },
