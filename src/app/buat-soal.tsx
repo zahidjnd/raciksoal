@@ -8,6 +8,7 @@ import { KotakMateri, type MateriLama } from "./kotak-materi";
 import { FormIdentitas, ringkasIdentitas } from "./form-identitas";
 import { StepAngka } from "./step-angka";
 import { skorOtomatis } from "@/lib/skor";
+import { kunciRingkas } from "@/lib/kunci";
 import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_SOAL, NAMA_BENTUK, NAMA_LEVEL_TKA, namaTujuan, semesterDari, TKA, TUJUAN, WAKTU_BAWAAN, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { KELAS, pilihanAngka, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { DAFTAR_MAPEL, type IsianMateri } from "@/lib/materi";
@@ -123,6 +124,7 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
   const [buka, setBuka] = useState<"jumlah" | "lanjutan" | null>(null); // panel di bawah kotak ketik
   const [tab, setTab] = useState<"soal" | "kisi">("soal"); // halaman hasil
   const [semuaKunci, setSemuaKunci] = useState(false);
+  const [kunciSingkat, setKunciSingkat] = useState(false); // kotak "Kunci ringkas" (semua kunci satu set, bisa disalin)
   const [jatah, setJatah] = useState<Awaited<ReturnType<typeof ambilJatah>>>(null);
   const muatJatah = () => ambilJatah().then(setJatah).catch(() => {});
   const jatahHabis = !!jatah?.batas && jatah.terpakai >= jatah.batas;
@@ -550,11 +552,17 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
               ))}
             <span className="flex-1" />
             {tab === "soal" && (
-              <button className={chip} onClick={() => setSemuaKunci(!semuaKunci)}>
-                {semuaKunci ? "Sembunyikan semua kunci" : "Tampilkan semua kunci"}
-              </button>
+              <>
+                <button className={chip} aria-expanded={kunciSingkat} onClick={() => setKunciSingkat(!kunciSingkat)}>
+                  Kunci ringkas
+                </button>
+                <button className={chip} onClick={() => setSemuaKunci(!semuaKunci)}>
+                  {semuaKunci ? "Sembunyikan semua kunci" : "Tampilkan semua kunci"}
+                </button>
+              </>
             )}
           </div>
+          {tab === "soal" && kunciSingkat && <KunciRingkas teks={kunciRingkas(soal, hasil.nama ?? bab.judul)} />}
 
           {tab === "kisi" && !!hasil.kisi?.length ? (
             <TabelKisi kisi={hasil.kisi} />
@@ -637,6 +645,33 @@ function PilihMapel({ mapel, kelas, ubah }: { mapel: string; kelas: string; ubah
         <option value="">Kelas</option>
         {KELAS.map((k) => <option key={k} value={k}>Kelas {k}</option>)}
       </select>
+    </div>
+  );
+}
+
+/**
+ * Kunci seluruh set dalam satu kotak (mis. "Pilihan Ganda: 1. A  2. C ...") untuk mencocokkan jawaban siswa dengan
+ * cepat; tombol Salin menyalin ke papan klip (bisa ditempel di WhatsApp/catatan). Teks tetap bisa dipilih manual.
+ */
+function KunciRingkas({ teks }: { teks: string }) {
+  const [pesan, setPesan] = useState("");
+  async function salin() {
+    try {
+      await navigator.clipboard.writeText(teks);
+      setPesan("Tersalin ✓");
+    } catch {
+      setPesan("Tidak bisa menyalin otomatis. Pilih teksnya lalu salin manual.");
+    }
+    setTimeout(() => setPesan(""), 4000);
+  }
+  return (
+    <div className="space-y-2 rounded-xl border bg-kartu p-3 text-sm">
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="font-semibold">Kunci ringkas</p>
+        <button className="h-8 rounded-lg bg-hijau px-3 font-semibold text-white hover:bg-hijau-tua max-md:min-h-11" onClick={salin}>Salin</button>
+        {pesan && <span role="status" className="text-hijau-teks">{pesan}</span>}
+      </div>
+      <pre dir="auto" className="overflow-x-auto font-[inherit] whitespace-pre-wrap">{teks}</pre>
     </div>
   );
 }
