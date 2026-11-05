@@ -521,6 +521,7 @@ Saat melapor masalah, sertakan **versi** (tertulis di sidebar), nomor set (`?id=
 | [DESIGN.md](DESIGN.md) | Arah tampilan: warna, huruf, bentuk, tema |
 | [AUDIT-2026-11-04.md](AUDIT-2026-11-04.md) | Audit fitur, tampilan, dan kode beserta statusnya |
 | [deploy/pulihkan-backup.md](deploy/pulihkan-backup.md) | Membuka, menguji, dan memulihkan backup |
+| [dokumen/Hitungan-Biaya-AI-RacikSoal.pdf](dokumen/Hitungan-Biaya-AI-RacikSoal.pdf) | Perkiraan biaya & token AI setahun (realistis dan batas atas), cara menghitung ulang |
 | `CLAUDE.md` | Catatan kerja untuk asisten AI: aturan proyek dan riwayat keputusan teknis yang rinci |
 | `.env.example` | Contoh pengaturan dengan penjelasan |
 

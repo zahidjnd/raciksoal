@@ -29,7 +29,20 @@ Target: **setelah ASAS Ganjil (sekitar Desember 2026)**.
 - [x] Backup malam berjalan rutin (pita merah backup tidak muncul) dan uji pulih diulang. **5 November 2026: lulus**
       (backup 22 malam berturut-turut tanpa terlewat; backup manual 16.56 dibuka, dipulihkan tanpa error, isi utuh,
       aplikasi jalan di atasnya dan pemilik bisa masuk, membuka set, mengunduh Word). Tetap pantau pita merah sampai 1.0.0.
-- [ ] Saldo AI cukup untuk satu semester (hitung dari token 30 hari di Kelola guru).
+- [ ] Saldo AI cukup untuk satu semester. Dicentang setelah saldo DeepSeek diisi. Hitungan (5 November 2026,
+      rincian lengkap di `dokumen/Hitungan-Biaya-AI-RacikSoal.pdf`):
+      - Dasar: ekspor DeepSeek 7 Okt–5 Nov 2026 = 230 panggilan, 1,79 juta token, $0,41 untuk ±34 set.
+        Per set ±53.000 token (±41.000 masuk, ±12.000 keluar), biaya dibulatkan **$0,015 (±Rp271)**, sudah termasuk
+        Ganti/Ubah/Tambah dan analisa materi. Kurs Rp18.050/USD. Semua angka di bawah + cadangan 50%.
+      - **Realistis (20 guru, setahun)**: aplikasi ramai hanya saat AFTS/ASAS (4 kali setahun, ±4 set per guru per ujian
+        = 320 set), hari biasa ringan (±1 set per guru per bulan = 200 set). Total ±520 set, ±41 juta token,
+        **±$11,7 = ±Rp211 ribu setahun**. Satu musim ujian ±80 set = ±Rp32 ribu.
+      - **Hitungan kasar (batas atas)**, set per guru per tahun = ulangan harian + ujian + latihan/coba-coba:
+        hemat 72 set (UH 2 mingguan) = ±$32 = **±Rp585 ribu**; sedang 122 set (UH mingguan) = ±$55 = **±Rp991 ribu**;
+        rajin 198 set = ±$89 = **±Rp1,61 juta** setahun.
+      - Saran: isi saldo bertahap (±$15 cukup untuk setahun realistis), pengingat saldo DeepSeek di $5, cek halaman
+        Usage sebelum tiap AFTS/ASAS, hitung ulang setelah ASAS Ganjil dengan data sungguhan.
+        Pengaman aplikasi: maks. 100 set/hari seluruh web = biaya terburuk ±$1,5 (±Rp27 ribu) per hari.
 - [ ] Guru mandiri dengan Panduan; pertanyaan yang sering muncul dimasukkan ke Panduan.
 - [x] Tes otomatis pemisahan data antar guru (guru B tidak bisa membuka/mengedit/mengunduh set guru A). Sejak 0.16.0.
 - [x] Batas harian per guru untuk Ganti/Ubah/Tambah soal. Sejak 0.16.0.
