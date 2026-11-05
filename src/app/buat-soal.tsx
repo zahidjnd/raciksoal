@@ -9,6 +9,7 @@ import { FormIdentitas, ringkasIdentitas } from "./form-identitas";
 import { StepAngka } from "./step-angka";
 import { skorOtomatis } from "@/lib/skor";
 import { kunciRingkas } from "@/lib/kunci";
+import { PAKET, susunPaket } from "@/lib/paket";
 import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_SOAL, NAMA_BENTUK, NAMA_LEVEL_TKA, namaTujuan, semesterDari, TKA, TUJUAN, WAKTU_BAWAAN, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { KELAS, pilihanAngka, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { DAFTAR_MAPEL, type IsianMateri } from "@/lib/materi";
@@ -125,6 +126,20 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
   const [tab, setTab] = useState<"soal" | "kisi">("soal"); // halaman hasil
   const [semuaKunci, setSemuaKunci] = useState(false);
   const [kunciSingkat, setKunciSingkat] = useState(false); // kotak "Kunci ringkas" (semua kunci satu set, bisa disalin)
+  // Jumlah paket (A–D, paket.ts): dipakai menu Unduh & Kunci ringkas; diingat per set di perangkat ini (kenyamanan saja).
+  const [jumlahPaket, setJumlahPaketMentah] = useState(1);
+  useEffect(() => {
+    try {
+      const n = Number(localStorage.getItem(`raciksoal-paket-${id}`));
+      setJumlahPaketMentah(n >= 1 && n <= PAKET.length ? n : 1);
+    } catch {}
+  }, [id]);
+  const setJumlahPaket = (n: number) => {
+    setJumlahPaketMentah(n);
+    try {
+      localStorage.setItem(`raciksoal-paket-${id}`, String(n));
+    } catch {}
+  };
   const [jatah, setJatah] = useState<Awaited<ReturnType<typeof ambilJatah>>>(null);
   const muatJatah = () => ambilJatah().then(setJatah).catch(() => {});
   const jatahHabis = !!jatah?.batas && jatah.terpakai >= jatah.batas;
@@ -562,7 +577,15 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
               </>
             )}
           </div>
-          {tab === "soal" && kunciSingkat && <KunciRingkas teks={kunciRingkas(soal, hasil.nama ?? bab.judul)} />}
+          {tab === "soal" && kunciSingkat && (
+            <KunciRingkas
+              teks={
+                jumlahPaket > 1
+                  ? PAKET.slice(0, jumlahPaket).map((k) => kunciRingkas(susunPaket(soal, id!, k).soal, `${hasil.nama ?? bab.judul} — Paket ${k}`)).join("\n\n")
+                  : kunciRingkas(soal, hasil.nama ?? bab.judul)
+              }
+            />
+          )}
 
           {tab === "kisi" && !!hasil.kisi?.length ? (
             <TabelKisi kisi={hasil.kisi} />
@@ -606,7 +629,7 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
 
           {/* Satu tombol Unduh menempel di bawah layar (pilihan pemilik 2026-11-05). File Word selalu mengikuti isi terbaru. */}
           <div className="sticky bottom-0 z-10 -mx-4 print:hidden flex flex-wrap items-center gap-2 border-t border-garis bg-krem px-4 py-2 md:-mx-8 md:px-8">
-            <MenuUnduh id={id!} adaKisi={!!hasil.kisi?.length} />
+            <MenuUnduh id={id!} adaKisi={!!hasil.kisi?.length} jumlahPaket={jumlahPaket} setJumlahPaket={setJumlahPaket} />
           </div>
         </section>
       )}
@@ -652,7 +675,7 @@ function PilihMapel({ mapel, kelas, ubah }: { mapel: string; kelas: string; ubah
  * "izinkan beberapa unduhan"). PDF berkop TIDAK bisa dibuat di hosting (butuh Word/LibreOffice di server), jadi
  * "Cetak tampilan ini" hanya pilihan terakhir untuk cek cepat tanpa kop (globals.css @media print).
  */
-function MenuUnduh({ id, adaKisi }: { id: number; adaKisi: boolean }) {
+function MenuUnduh({ id, adaKisi, jumlahPaket, setJumlahPaket }: { id: number; adaKisi: boolean; jumlahPaket: number; setJumlahPaket: (n: number) => void }) {
   const [buka, setBuka] = useState(false);
   const kotak = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -672,14 +695,18 @@ function MenuUnduh({ id, adaKisi }: { id: number; adaKisi: boolean }) {
     { jenis: "kunci", judul: "Kunci & pembahasan", ket: "Pegangan guru" },
     ...(adaKisi ? [{ jenis: "kisi", judul: "Kisi-kisi", ket: "Untuk administrasi" }] : []),
   ];
-  const alamat = (jenis: string) => `/api/word?id=${id}&jenis=${jenis}`;
+  // Satu paket = tanpa parameter paket (file seperti dulu). Beberapa paket: soal & kunci per paket, kisi-kisi sekali
+  // (urutan Paket A; lembar kunci paket lain memuat padanan nomornya).
+  const daftarPaket = jumlahPaket > 1 ? PAKET.slice(0, jumlahPaket) : [];
+  const alamat = (jenis: string, paket?: string) => `/api/word?id=${id}&jenis=${jenis}${paket ? `&paket=${paket}` : ""}`;
+  const semua = file.flatMap((f) => (f.jenis === "kisi" || !daftarPaket.length ? [alamat(f.jenis)] : daftarPaket.map((k) => alamat(f.jenis, k))));
   /** Semua file: satu per satu dengan jeda kecil, supaya browser tidak menganggapnya satu unduhan saja. */
   function unduhSemua() {
     setBuka(false);
-    file.forEach((f, i) =>
+    semua.forEach((href, i) =>
       setTimeout(() => {
         const a = document.createElement("a");
-        a.href = alamat(f.jenis);
+        a.href = href;
         a.download = "";
         document.body.appendChild(a);
         a.click();
@@ -705,16 +732,44 @@ function MenuUnduh({ id, adaKisi }: { id: number; adaKisi: boolean }) {
       {buka && (
         // Terbuka ke ATAS (tombol ada di dasar layar).
         <div role="menu" className="absolute bottom-full left-0 z-20 mb-2 w-[min(20rem,calc(100vw-2rem))] rounded-xl border bg-kartu p-1.5 text-sm shadow-lg">
+          {/* Paket A/B (paket.ts): isi soal sama, urutan soal & pilihan berbeda. */}
+          <div className="flex flex-wrap items-center gap-1 px-3 py-2" role="group" aria-label="Jumlah paket">
+            <span className="mr-1 text-xs text-pudar">Jumlah paket:</span>
+            {PAKET.map((_, i) => (
+              <button
+                key={i}
+                aria-pressed={jumlahPaket === i + 1}
+                onClick={() => setJumlahPaket(i + 1)}
+                className={`h-8 min-w-8 rounded-lg border px-2 text-sm max-md:min-h-10 ${jumlahPaket === i + 1 ? "border-hijau bg-hijau-muda font-semibold text-hijau-teks" : "bg-kartu hover:bg-krem"}`}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
+          {daftarPaket.length > 0 && <p className="px-3 pb-1 text-xs text-pudar">Paket {daftarPaket.join(", ")}: urutan soal dan pilihan berbeda, isi sama.</p>}
           <button role="menuitem" className={`${baris} bg-hijau-muda`} onClick={unduhSemua}>
-            <span className="font-semibold text-hijau-teks">Semua file ({file.length} Word)</span>
-            <span className="text-xs text-pudar">{file.map((f) => f.judul.toLowerCase()).join(", ")}</span>
+            <span className="font-semibold text-hijau-teks">Semua file ({semua.length} Word)</span>
+            <span className="text-xs text-pudar">
+              {daftarPaket.length ? `lembar soal & kunci tiap paket, kisi-kisi` : file.map((f) => f.judul.toLowerCase()).join(", ")}
+            </span>
           </button>
-          {file.map((f) => (
-            <a key={f.jenis} role="menuitem" className={baris} href={alamat(f.jenis)} onClick={() => setBuka(false)}>
-              <span className="font-semibold">{f.judul} (Word)</span>
-              <span className="text-xs text-pudar">{f.ket}</span>
-            </a>
-          ))}
+          {file.map((f) =>
+            daftarPaket.length && f.jenis !== "kisi" ? (
+              <div key={f.jenis} className="flex flex-wrap items-center gap-1 px-3 py-2">
+                <span className="mr-1 w-full font-semibold sm:w-auto">{f.judul}:</span>
+                {daftarPaket.map((k) => (
+                  <a key={k} role="menuitem" href={alamat(f.jenis, k)} onClick={() => setBuka(false)} className="inline-flex h-8 items-center rounded-lg border bg-kartu px-2 text-sm hover:bg-krem-sorot max-md:min-h-10">
+                    Paket {k}
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <a key={f.jenis} role="menuitem" className={baris} href={alamat(f.jenis)} onClick={() => setBuka(false)}>
+                <span className="font-semibold">{f.judul} (Word)</span>
+                <span className="text-xs text-pudar">{f.jenis === "kisi" && daftarPaket.length ? "Urutan Paket A (padanan nomor ada di lembar kunci)" : f.ket}</span>
+              </a>
+            ),
+          )}
           <div className="my-1 border-t" />
           <button
             role="menuitem"

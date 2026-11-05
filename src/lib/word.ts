@@ -146,9 +146,14 @@ function kelompok(soal: Soal[]) {
  */
 const TAHAN_WACANA = 3;
 
-/** Lembar soal untuk siswa: kop asli format AFTS + soal 2 kolom (tanpa kunci). */
-export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Date, sekolah = "MADRASAH ALIYAH AL-FATAH") {
+/**
+ * Lembar soal untuk siswa: kop asli format AFTS + soal 2 kolom (tanpa kunci).
+ * `paket` (A–D, bila guru membuat beberapa paket): tulisan "PAKET B" di atas soal pertama, sengaja TIDAK di kop
+ * supaya kop asli madrasah tidak berubah. `soal` sudah disusun per paket oleh `susunPaket` (paket.ts).
+ */
+export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Date, sekolah = "MADRASAH ALIYAH AL-FATAH", paket?: string) {
   const isi: (Paragraph | Table)[] = [];
+  if (paket) isi.push(par([r(`PAKET ${paket}`, { bold: true, size: 28 })], { alignment: AlignmentType.RIGHT, keepNext: true, spacing: { after: 120 } }));
   kelompok(soal).forEach(({ bentuk, butir }, k) => {
     const kategori = bentuk === "BS" && butir.some((x) => kategoriBaru(x.s));
     isi.push(par([r(`${ROMAWI[k]}. ${kategori ? "PILIHAN GANDA KOMPLEKS KATEGORI" : NAMA_BAGIAN[bentuk]}`, { bold: true })], { keepNext: true, spacing: { before: k ? 200 : 0, after: 40 } }));
@@ -265,14 +270,18 @@ function tabelKategori(s: Soal) {
 }
 
 /** Kunci jawaban, pembahasan, dan pedoman penskoran untuk guru. */
-export function buatWordKunci(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Date) {
+/**
+ * Kunci & pembahasan. `paket` + `asal` (bila beberapa paket): judul memuat "PAKET B" dan di akhir ada padanan nomor
+ * soal paket ini dengan Paket A (asal[i] = indeks soal di Paket A), supaya kisi-kisi (urutan Paket A) tetap terpakai.
+ */
+export function buatWordKunci(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Date, paket?: string, asal?: number[]) {
   const { judul, tp } = judulAsesmen(p, tanggal);
   const total = soal.reduce((n, s) => n + (Number(s.skor) || 0), 0);
   const tengah = (t: string, size = UKURAN, bold = true) => par([new TextRun({ text: t, bold, size })], { alignment: AlignmentType.CENTER, spacing: { after: 0 } });
   const kecil = (t: string) => par([new TextRun({ text: t, size: 18, color: "666666" })], { indent: { left: 400 }, spacing: { after: 0 } });
 
   const isi: (Paragraph | Table)[] = [
-    tengah("KUNCI JAWABAN & PEDOMAN PENSKORAN (PEGANGAN GURU)", 26),
+    tengah(`KUNCI JAWABAN & PEDOMAN PENSKORAN (PEGANGAN GURU)${paket ? ` — PAKET ${paket}` : ""}`, 26),
     tengah(`${judul} ${identitasBab(bab).mapel.toUpperCase()} KELAS ${identitasBab(bab).kelas} (TP ${tp})`),
     tengah(`${bab.judul} | ${soal.length} soal | Total skor: ${total}`, UKURAN, false),
     par([new TextRun({ text: `⚠️ ${PERINGATAN}`, bold: true, color: "C00000" })], { alignment: AlignmentType.CENTER, spacing: { before: 120, after: 200 } }),
@@ -339,6 +348,10 @@ export function buatWordKunci(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Da
     }
   });
   isi.push(par([new TextRun({ text: `REKAPITULASI SKOR: ${rekap.join(" + ")} = ${total}`, bold: true })], { spacing: { before: 200 } }));
+  if (paket && paket !== "A" && asal) {
+    isi.push(par([new TextRun({ text: `PADANAN NOMOR PAKET ${paket} → PAKET A (untuk kisi-kisi)`, bold: true })], { spacing: { before: 200, after: 40 } }));
+    isi.push(par([r(asal.map((a, i) => `${i + 1}→${a + 1}`).join(",  "))]));
+  }
 
   return Packer.toBuffer(
     new Document({

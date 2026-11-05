@@ -473,7 +473,7 @@ function urutkanAngka(s: Soal) {
   s.kunci = s.bentuk === "PG" ? (kunci[0] ?? s.kunci) : kunci;
 }
 
-function kocok<T>(arr: T[], acak: () => number): T[] {
+export function kocok<T>(arr: T[], acak: () => number): T[] {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(acak() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];

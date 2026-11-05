@@ -441,3 +441,15 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   terpisah di bilah tab DIHAPUS. PDF berkop tidak bisa dibuat di hosting (butuh Word/LibreOffice di server); guru
   disarankan menyimpan Word sebagai PDF. Panduan bagian 3 ikut diperbarui (+ Kunci ringkas, ↑/↓, cari riwayat).
   Uji tanpa benar-benar mengunduh: ganti sementara `HTMLAnchorElement.prototype.click` untuk mencatat alamat, lalu fetch.
+- 2026-11-05 GELOMBANG 2 langkah 1: PAKET A/B/C/D (pemilik "1 1 aja, nomor 1 dulu"), BELUM di-push:
+  `susunPaket(soal, setId, paket)` (src/lib/paket.ts, dites, dipakai server & browser): Paket A = urutan asli; paket lain
+  pakai pengacak bersemi (mulberry32, seed dari id set + paket) → hasil SAMA setiap diunduh dan ikut editan terbaru,
+  TANPA kolom/tabel baru. Diacak: urutan soal di dalam tiap bagian bentuk (soal grup = satu unit), pilihan PG/PGK lewat
+  `ratakanKunci` (kunci tetap merata, pilihan angka tetap urut; aman karena prompt melarang pembahasan menyebut huruf),
+  lajur kanan MJ lewat `keFormatAI` → `susunMenjodohkan`. `asal[i]` = indeks soal di Paket A.
+  Word: `/api/word?...&paket=A..D` (tanpa parameter = file lama tanpa label). Lembar soal: "PAKET B" di atas soal pertama
+  (BUKAN di kop, supaya kop asli utuh). Kunci: judul "— PAKET B" + "PADANAN NOMOR PAKET B → PAKET A" di akhir. Kisi-kisi
+  hanya urutan Paket A. Menu Unduh: "Jumlah paket" 1–4 (diingat per set di localStorage `raciksoal-paket-<id>`);
+  Semua file = soal tiap paket + kunci tiap paket + kisi. Kunci ringkas menampilkan kunci tiap paket.
+  Cek isi docx di browser tanpa menyimpan file: fetch → baca ZIP (DecompressionStream "deflate-raw") → word/document.xml.
+  Uji laptop: set 51, 2 paket: soal B no.1 = soal A no.6, kunci isi sama, padanan lengkap.

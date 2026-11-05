@@ -9,10 +9,12 @@ import { namaTujuan, type Pengaturan } from "@/lib/prompt";
 import type { BarisKisi, Soal } from "@/lib/soal";
 import { buatWordKisi, buatWordKunci, buatWordSoal } from "@/lib/word";
 import { headerUnduh } from "@/lib/nama-file";
+import { bacaPaket, susunPaket } from "@/lib/paket";
 
 const NAMA_FILE = { soal: "Soal", kunci: "Kunci", kisi: "Kisi-kisi" } as const;
 
 // Unduh Word: /api/word?id=6&jenis=soal (lembar siswa), jenis=kunci atau jenis=kisi (pegangan guru).
+// &paket=A..D (bila guru memilih beberapa paket): soal/kunci disusun per paket (paket.ts); kisi-kisi tetap urutan Paket A.
 // Hanya pemilik set atau admin (aturan 3).
 export async function GET(req: Request) {
   const saya = await penggunaSaatIni();
@@ -29,15 +31,18 @@ export async function GET(req: Request) {
   }
 
   const p = h.pengaturan as Pengaturan;
+  const adaPaket = url.searchParams.has("paket") && jenis !== "kisi";
+  const paket = bacaPaket(url.searchParams.get("paket"));
+  const susunan = susunPaket(h.soal as Soal[], id, adaPaket ? paket : "A");
   const kisi = h.kisi as BarisKisi[] | null;
   if (jenis === "kisi" && !kisi?.length) return new Response("Set soal ini dibuat sebelum ada fitur kisi-kisi.", { status: 404 });
   const isi =
     jenis === "kisi"
       ? await buatWordKisi(kisi!, bab, p, h.dibuat)
       : jenis === "kunci"
-        ? await buatWordKunci(h.soal as Soal[], bab, p, h.dibuat)
-        : await buatWordSoal(h.soal as Soal[], bab, p, h.dibuat, await ambilNamaMadrasah());
-  const nama = `${NAMA_FILE[jenis]} ${h.nama ?? `${namaTujuan(p.tujuan)} ${bab.judul.split(":")[0]}`} (set ${id}).docx`;
+        ? await buatWordKunci(susunan.soal, bab, p, h.dibuat, adaPaket ? paket : undefined, susunan.asal)
+        : await buatWordSoal(susunan.soal, bab, p, h.dibuat, await ambilNamaMadrasah(), adaPaket ? paket : undefined);
+  const nama = `${NAMA_FILE[jenis]}${adaPaket ? ` Paket ${paket}` : ""} ${h.nama ?? `${namaTujuan(p.tujuan)} ${bab.judul.split(":")[0]}`} (set ${id}).docx`;
 
   return new Response(new Uint8Array(isi), {
     headers: {
