@@ -267,7 +267,8 @@ dokumen resmi Pusmendik tidak bisa dibuka dari sini).
 - Panduan Kurikulum Berbasis Cinta, Kepdirjen Pendis 6077/2025 — Kemenag: https://cdn.kemenag.go.id/storage/archives/panduan-kurikulum-berbasis-cinta.pdf
 - KMA 1503/2025 tentang pedoman kurikulum madrasah — ayomadrasah.id: https://www.ayomadrasah.id/2025/11/kma-1503-tahun-2025-kurikulum-ra-madrasah.html
 - Juknis Penilaian Hasil Belajar MA, Kepdirjen Pendis 3751/2018: https://man2acehbesar.wordpress.com/wp-content/uploads/2019/04/sk-dirjen-juknis-penilaian-hasil-belajar-pada-ma.pdf
-- Kerangka Asesmen TKA (Perka BSKAP 045/H/AN/2025) — Pusmendik: https://pusmendik.kemendikdasmen.go.id/pdf/file-175
+- Kerangka Asesmen TKA (Perka BSKAP 045/H/AN/2025) — Pusmendik: https://pusmendik.kemendikdasmen.go.id/tka/files/15034.pdf
+  (naskah resmi sudah dibaca 2026-11-07; perbedaan dengan aplikasi ada di RUJUKAN.md bagian I2)
 - Kajian kerangka asesmen TKA SMA — yunandra.com: https://yunandra.com/kajian-peraturan-kerangka-asesmen-tka-sma-ma-smk-mak-pada-sk-bskap-no-045-tahun-2025/
 - 3 jenis soal TKA SMA — detikEdu: https://www.detik.com/edu/detikpedia/d-8083189/3-jenis-soal-tka-jenjang-sma-dan-sederajat-2025-panduan-belajar-nih
 - Contoh soal TKA SMA 2026 — blog ITERA: https://blog.itera.ac.id/25-contoh-soal-tka-sma-2026-dan-pembahasannya/
