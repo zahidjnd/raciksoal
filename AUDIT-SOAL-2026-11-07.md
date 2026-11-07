@@ -1,5 +1,11 @@
 # Audit Hasil Soal — 7 November 2026 (versi 0.18.1)
 
+> **Status akhir (versi 0.19.1, 7 November 2026): semua temuan sudah ditangani.** Lihat bagian "Tindak lanjut" di
+> bawah: 0.18.2 (Temuan 1, 2, 4), 0.18.3 (isian bocor), 0.19.0 (Temuan 3, 5, 6, 7), 0.19.1 (menjodohkan pengelompokan,
+> isian bocor). Sisa kecil yang tetap ditandai merah atau perlu dilihat guru: isian berjawaban angka yang sama dengan
+> hasil soal hitungan lain, dan menjodohkan "pengelompokan yang dipaksakan". Bagian di bawah ini adalah hasil audit
+> **sebelum** perbaikan.
+
 Tujuan: mengecek apakah soal buatan AI sudah mengikuti [ATURAN-SOAL.md](ATURAN-SOAL.md), termasuk aturan baru 0.18.0–0.18.1.
 Uji di **laptop** (bukan hosting), akun `guru.uji.ayat`, model utama **deepseek-flash**, materi ditulis khusus untuk uji
 (tanpa ayat/hadis). Semua soal dibaca satu per satu.
@@ -213,7 +219,7 @@ yang dipaksakan" (perbaikan otomatis sering gagal karena materinya
 sempit, jadi konsep yang sama terpakai di beberapa soal; calon perbaikan: menghindarinya sejak tahap kisi-kisi).
 
 ## Catatan uji
-- Materi uji 7, 8, 9 dan set 69–73 ada di database **laptop** (akun `guru.uji.ayat`). Bisa dihapus bila pemilik
+- Materi uji 7–10 dan set 69–80 ada di database **laptop** (set 79–80 & materi-10 milik `guru.uji.b`) (akun `guru.uji.ayat`). Bisa dihapus bila pemilik
   setuju.
 - Biaya: 3 set dengan deepseek-flash, kira-kira Rp1.000.
 - Isi materi Fikih, Ekonomi, dan Biologi ditulis untuk uji. Audit ini menilai **kepatuhan aturan**; ketepatan isi

@@ -11,6 +11,8 @@ Versi 0.18.2 (dari `AUDIT-SOAL-2026-11-07.md`): kunci PG dicocokkan dengan hasil
 pilihan gabungan (2b no. 6), pembahasan tidak menunjuk urutan pilihan (10 no. 2).
 Versi 0.19.0 (sisa audit): HOTS tanpa stimulus ditandai (1c no. 3), Menjodohkan mirip ditandai (2b no. 10), pernyataan
 Kategori diacak aplikasi + label diragamkan (bagian 3), contoh rubrik dengan skor sebagian (bagian 3).
+Versi 0.18.3: jawaban isian direncanakan di kisi-kisi dan dilarang tertulis di soal lain (2b no. 11).
+Versi 0.19.1: menjodohkan wajib satu-satu (bagian 3); perbaikan isian bocor diberi daftar kata terpakai (2b no. 11).
 
 Tanda di dokumen ini:
 - ✅ = sudah dijalankan aplikasi (semua aturan di file ini sudah jalan, kecuali yang diberi ⚠️ atau "ditunda")
