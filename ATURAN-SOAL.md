@@ -22,6 +22,7 @@ Tanda di dokumen ini:
 > Catatan sumber: dokumen resmi Kemenag tentang penulisan butir soal **tidak ditemukan utuh di internet**.
 > Isi di bawah dirangkum dari panduan penyusunan soal Asesmen Madrasah yang beredar, kaidah Puspendik,
 > taksonomi Bloom revisi, dan panduan Kurikulum Berbasis Cinta (Kemenag 2025). Daftar sumber ada di bagian akhir.
+> Dasar setiap aturan (resmi / kaidah / keputusan madrasah / belum ada) dipetakan di `RUJUKAN.md`.
 
 ---
 
