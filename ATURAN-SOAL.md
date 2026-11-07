@@ -7,6 +7,8 @@ yang diberikan ke AI setiap kali membuat soal.
 Revisi 2026-11-07 (versi 0.18.0, disetujui pemilik): kesulitan vs HOTS (1c no. 5), khilafiyah (2a no. 6), kunci tidak
 boleh pilihan terpanjang + pemeriksa aplikasi (2b no. 7), ejaan KBBI (2c no. 5), nama tokoh (4 no. 6), dan tanda di
 dokumen ini disamakan dengan aplikasi. Versi 0.18.1: uraian berbatasan (bagian 3) dan pemeriksa pilihan terlarang (2b no. 6).
+Versi 0.18.2 (dari `AUDIT-SOAL-2026-11-07.md`): kunci PG dicocokkan dengan hasil hitung AI (2a no. 2), PG kompleks tanpa
+pilihan gabungan (2b no. 6), pembahasan tidak menunjuk urutan pilihan (10 no. 2).
 
 Tanda di dokumen ini:
 - ✅ = sudah dijalankan aplikasi (semua aturan di file ini sudah jalan, kecuali yang diberi ⚠️ atau "ditunda")
@@ -63,7 +65,10 @@ Bloom revisi juga membagi jenis pengetahuan: faktual, konseptual, prosedural, me
 
 ### 2a. Materi
 1. ✅ Soal sesuai indikator di kisi-kisi.
-2. ✅ Konsep benar; jawaban benar berdasar materi bab.
+2. ✅ Konsep benar; jawaban benar berdasar materi bab. 🔍 (0.18.2) Untuk PG, AI menulis **langkah hitung/alasan dan isi
+   jawaban benar LEBIH DULU**, baru pilihan dan kunci. Aplikasi mencocokkan isi itu dengan pilihan yang ditandai kunci:
+   tidak cocok atau tidak ada di pilihan → merah → perbaikan otomatis. (Audit 2026-11-07: 3 dari 52 kunci salah karena
+   AI menulis kunci sebelum menghitung.) Langkah dan isi jawaban itu tidak disimpan.
 3. ✅ Pengetahuan umum boleh dipakai untuk **cerita/stimulus**, tetapi **kunci jawaban harus berdasar materi bab**.
 4. ✅ Tidak memuat SARA, politik praktis, pornografi, propaganda, kekerasan, atau merek dagang;
    tidak bertentangan dengan Pancasila, UUD 1945, NKRI, Bhinneka Tunggal Ika, dan nilai agama.
@@ -81,7 +86,9 @@ Bloom revisi juga membagi jenis pengetahuan: faktual, konseptual, prosedural, me
 5. ✅ Pokok soal dan pilihan hanya memuat yang perlu.
 6. ✅ 🔍 (0.18.1) Tidak memakai pilihan "semua benar" / "semua salah" / "tidak ada yang benar", dan tidak memakai
    pilihan yang menunjuk huruf pilihan lain ("A dan B benar"): urutan pilihan diacak aplikasi (juga per paket), jadi
-   hurufnya bisa menunjuk pilihan yang salah. Pilihan yang menunjuk NOMOR pernyataan di soal ("1 dan 3") tetap boleh.
+   hurufnya bisa menunjuk pilihan yang salah. Pilihan yang menunjuk NOMOR pernyataan di soal ("1 dan 3") tetap boleh
+   di PG biasa, tetapi 🔍 (0.18.2) **tidak boleh di PG kompleks**: siswa yang memilih "(2) dan (3)" benar isinya tapi
+   dinilai salah, karena di PG kompleks siswa sendiri yang memilih semua jawaban yang tepat.
 7. ✅ Panjang pilihan relatif sama. 🔍 (0.18.0) **Kunci tidak boleh menjadi pilihan yang paling panjang/paling rinci.**
    Diukur pada 274 PG lama: 60% kuncinya pilihan terpanjang (kalau acak hanya 20%), jadi siswa bisa menebak.
    Aplikasi menandai PG yang kuncinya terpanjang DAN ≥ 1,5× rata-rata panjang pengecoh (kunci < 15 huruf dilewati).
@@ -225,7 +232,8 @@ dokumen resmi Pusmendik tidak bisa dibuka dari sini).
 1. ✅ Pernyataan salah pada MCMA dan Kategori dibuat dengan **mengubah satu konsep kunci** dari pernyataan benar
    (sebab-akibat dibalik, istilah tertukar, naik/turun, terbesar/terkecil). Jebakan harus pada konsep,
    bukan permainan kata yang menyesatkan.
-2. ✅ **Pembahasan menjelaskan kunci DAN alasan setiap pengecoh salah** (semua bentuk PG).
+2. ✅ **Pembahasan menjelaskan kunci DAN alasan setiap pengecoh salah** (semua bentuk PG). 🔍 (0.18.2) Pengecoh
+   ditunjuk dengan **isinya**, bukan huruf atau urutannya ("pengecoh kedua"), karena urutan pilihan diacak aplikasi.
 3. ✅ Soal penalaran (terutama IPA/IPS) boleh memakai data: tabel hasil percobaan, perbandingan dua kondisi
    (wilayah X vs Y), kelompok kontrol.
 

@@ -28,6 +28,10 @@ export type Soal = {
   tp: string;
   skor: number;
   peringatan?: string[]; // diisi aplikasi, bukan AI
+  // Hanya di jawaban AI untuk PG (0.18.2): langkah hitung/penalaran + isi jawaban benar, ditulis SEBELUM pilihan supaya
+  // kunci tidak terlanjur ditulis sebelum dihitung. Dicocokkan dengan pilihan kunci di periksaSoal, lalu dibuang (tidak disimpan).
+  langkah?: string;
+  jawaban_benar?: string;
   stimulus?: string; // hanya pada jawaban "ganti satu soal": ringkasan skenario baru untuk kisi-kisi
   indikator?: string; // hanya pada jawaban "minta perubahan": indikator baru untuk kisi-kisi
   // Soal grup (Latihan TKA, Tahap E): soal berurutan berbentuk sama dengan nomor grup sama memakai satu wacana,
@@ -441,6 +445,29 @@ const PILIHAN_TERLARANG = [
 ];
 const adaPilihanTerlarang = (s: Soal) => (s.pilihan ?? []).some((p) => PILIHAN_TERLARANG.some((r) => r.test(String(p ?? "").trim())));
 
+// PG kompleks: pilihan gabungan nomor ("(2) dan (3)", "1, 2, dan 4") membuat siswa yang memilihnya benar isinya tapi
+// dinilai salah (audit 2026-11-07, set 70 no. 13). Di PG biasa pola ini tetap boleh (menunjuk pernyataan bernomor di soal).
+const GABUNGAN_NOMOR = /^\(?\d\)?(\s*,\s*\(?\d\)?)*\s*,?\s*(dan|serta|&)\s*\(?\d\)?\.?$/;
+
+// Pembahasan PG/PGK yang menunjuk pilihan dengan URUTAN ("pengecoh kedua"): salah setelah pilihan diacak (audit 2026-11-07).
+const URUTAN_PILIHAN = /\b(pengecoh|pilihan|opsi)\s+(ke-?\s?[1-5]\b|pertama|kedua|ketiga|keempat|kelima|terakhir)/i;
+
+/**
+ * PG: jawaban benar yang ditulis AI SEBELUM pilihan (setelah menghitung) harus sama dengan pilihan yang ditandai kunci.
+ * Audit 2026-11-07: 3 dari 52 kunci salah karena AI menulis kunci dulu, baru menghitung di pembahasan.
+ * Dibandingkan tanpa spasi/tanda baca/huruf besar ("Rp82.500.000" = "Rp 82.500.000").
+ */
+function cekJawabanBenar(s: Soal): string | null {
+  const rata = (t: unknown) => polos(t).replace(/\s+/g, "");
+  const benar = rata(s.jawaban_benar);
+  if (!benar) return null;
+  const di = (s.pilihan ?? []).findIndex((p) => rata(p) === benar);
+  if (di < 0) return `Jawaban benar hasil hitung/penalaran ("${String(s.jawaban_benar).slice(0, 80)}") tidak ada di pilihan.`;
+  if (HURUF[di] !== String(s.kunci ?? "").trim().toUpperCase())
+    return `Kunci tidak cocok: jawaban benar hasil hitung/penalaran adalah "${String(s.jawaban_benar).slice(0, 80)}", tetapi kunci menunjuk pilihan lain.`;
+  return null;
+}
+
 /** Beri peringatan pada soal yang bermasalah. Aturan 5: teks Arab hanya boleh dari data terverifikasi. */
 export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
   const arabAsingDi = pemeriksaArab(bab, cekAyat);
@@ -472,6 +499,14 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
     if ((s.bentuk === "PG" || s.bentuk === "PGK") && s.pilihan?.length !== 5) peringatan.push("Jumlah pilihan bukan 5.");
     if ((s.bentuk === "PG" || s.bentuk === "PGK") && adaPilihanTerlarang(s))
       peringatan.push('Ada pilihan "semua benar/salah", "tidak ada yang benar", atau yang menunjuk huruf pilihan lain (urutan pilihan diacak aplikasi). Ganti dengan pilihan berisi.');
+    if (s.bentuk === "PGK" && (s.pilihan ?? []).some((p) => GABUNGAN_NOMOR.test(String(p ?? "").trim())))
+      peringatan.push('Pilihan PG kompleks tidak boleh berupa gabungan nomor ("(2) dan (3)"): siswa sendiri yang memilih semua jawaban yang tepat. Tulis tiap pilihan sebagai satu pernyataan.');
+    if ((s.bentuk === "PG" || s.bentuk === "PGK") && URUTAN_PILIHAN.test(s.pembahasan ?? ""))
+      peringatan.push('Pembahasan menunjuk pilihan dengan urutan ("pengecoh kedua"), padahal urutan pilihan diacak aplikasi. Sebut isi pilihannya.');
+    if (s.bentuk === "PG") {
+      const w = cekJawabanBenar(s);
+      if (w) peringatan.push(w);
+    }
     if (s.bentuk === "PG" && kunciTerpanjang(s)) peringatan.push("Jawaban benar jauh lebih panjang dari semua pengecoh, jadi mudah ditebak. Samakan panjang dan kerincian pilihan.");
     if (s.bentuk === "PGK" && !KUNCI_PGK.includes(new Set([s.kunci].flat()).size)) peringatan.push("Kunci PG kompleks harus 2 atau 3 jawaban.");
     if (s.bentuk === "ISIAN") {
@@ -486,7 +521,11 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
       const kunci = [s.kunci].flat();
       if (kunci.length !== s.pernyataan!.length || kunci.some((k) => !s.label?.includes(k))) peringatan.push("Kunci kategori harus satu label untuk setiap pernyataan.");
     }
-    return { ...s, peringatan };
+    // langkah & jawaban_benar hanya untuk pemeriksaan di atas: tidak disimpan (kalau disimpan, Edit guru membuatnya basi).
+    const { langkah: _l, jawaban_benar: _j, ...simpan } = s;
+    void _l;
+    void _j;
+    return { ...simpan, peringatan };
   });
 }
 

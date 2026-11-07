@@ -542,3 +542,9 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   3/52 kunci SALAH dari AI sendiri (`jawaban_ai` sudah salah: AI menulis pilihan & kunci sebelum menghitung di
   pembahasan); 4 pembahasan menunjuk "pengecoh kedua" (salah setelah diacak). Usulan perbaikan urut prioritas ada di
   file audit, MENUNGGU keputusan pemilik.
+- 2026-11-07 (0.18.2, pemilik "gas 1, 2, 4" dari audit): PG: AI menulis `langkah` + `jawaban_benar` SEBELUM pilihan;
+  `cekJawabanBenar` (soal.ts) mencocokkan dengan pilihan kunci (polos tanpa spasi) → merah bila beda/tidak ada →
+  perbaikan otomatis. `periksaSoal` MEMBUANG kedua field itu (jangan disimpan: Edit guru membuatnya basi; field tanpa
+  jawaban_benar = tidak dicek). `GABUNGAN_NOMOR` (PGK saja) dan `URUTAN_PILIHAN` (pembahasan PG/PGK "pengecoh kedua").
+  Uji ulang set laptop 72 (Ekonomi ASAS 25) & 73 (Biologi TKA 15): kunci benar semua, tanpa merah palsu; 3 isian
+  set 72 tetap merah karena bocor sungguhan (masalah terbuka). Skrip uji: buat-set.mts di scratchpad (tidak di repo).

@@ -60,7 +60,7 @@ test("instruksi AI universal: mapel & kelas dari bab, aturan dalil hanya bila ma
   assert.ok(fisika.includes("soal Fisika kelas X ") && fisika.includes("Mata pelajaran: Fisika, kelas X"));
   assert.ok(!fisika.includes("Perhatikan firman Allah") && !fisika.includes("Dalil:"));
   assert.ok(fisika.includes('Selalu isi "dalil_id": null')); // aturan 5 tetap: dilarang mengutip ayat/hadis
-  for (const kaidah of ["negatif ganda", "SARA", "BUKAN oleh kata kerja","HOTS bukan berarti sulit", "setiap pengecoh salah", "langkah hitung", "Panca Cinta", "khilafiyah", "paling panjang", "Nama tokoh", "KBBI", "TANPA huruf bergaris", "tidak menghapus stimulus soal HOTS"])
+  for (const kaidah of ["negatif ganda", "SARA", "BUKAN oleh kata kerja","HOTS bukan berarti sulit", "setiap pengecoh salah", "langkah hitung", "Panca Cinta", "khilafiyah", "paling panjang", "Nama tokoh", "KBBI", "TANPA huruf bergaris", "tidak menghapus stimulus soal HOTS", '"jawaban_benar"', "pengecoh kedua", "gabungan"])
     assert.ok(fisika.includes(kaidah), kaidah);
 });
 
@@ -276,6 +276,30 @@ test("periksaSoal: pilihan 'semua benar' dan yang menunjuk huruf pilihan lain di
   for (const e of ["1 dan 3", "(2) dan (4)", "perusahaan A dan B sama-sama rugi", "semua harta yang mencapai nisab", "sedekah"])
     assert.ok(!tanda(pg(e)), e);
   assert.ok(tanda({ ...pg("Semua benar"), bentuk: "PGK", kunci: ["A", "B"] }));
+});
+
+test("periksaSoal: jawaban_benar AI harus sama dengan pilihan kunci; langkah & jawaban_benar tidak disimpan", () => {
+  const pg = (jawaban_benar: string, kunci = "A"): Soal => ({ bentuk: "PG", dalil_id: null, pertanyaan: "PKP?", langkah: "150 - 67,5 = 82,5 juta", jawaban_benar, pilihan: ["Rp82.500.000", "Rp87.000.000", "Rp91.500.000", "Rp96.000.000", "Rp100.500.000"], kunci, pembahasan: "", level: "C3", tp: "TP 2", skor: 2 });
+  const [cocok] = periksaSoal([pg("Rp 82.500.000")], bab); // beda spasi tetap cocok
+  assert.deepEqual(cocok.peringatan, []);
+  assert.ok(!("jawaban_benar" in cocok) && !("langkah" in cocok));
+  assert.ok(periksaSoal([pg("Rp82.500.000", "B")], bab)[0].peringatan!.some((w) => w.startsWith("Kunci tidak cocok"))); // kasus set 70 no. 6
+  assert.ok(periksaSoal([pg("Rp44.000.000", "C")], bab)[0].peringatan!.some((w) => w.includes("tidak ada di pilihan"))); // kasus set 70 no. 7
+  const tanpa = pg("");
+  delete tanpa.jawaban_benar;
+  assert.deepEqual(periksaSoal([tanpa], bab)[0].peringatan, []); // soal lama / editan guru: tidak dicek
+});
+
+test("periksaSoal: PGK pilihan gabungan nomor dan pembahasan yang menunjuk urutan pilihan ditandai", () => {
+  const pgk: Soal = { bentuk: "PGK", dalil_id: null, pertanyaan: "?", pilihan: ["(1)", "(2)", "(3)", "(4)", "(2) dan (3)"], kunci: ["B", "C"], pembahasan: "Pernyataan (2) dan (3) tepat.", level: "C2", tp: "TP 1", skor: 1 };
+  const w = (s: Soal) => periksaSoal([s], bab)[0].peringatan!;
+  assert.ok(w(pgk).some((x) => x.includes("gabungan nomor")));
+  assert.ok(!w({ ...pgk, pilihan: ["(1)", "(2)", "(3)", "(4)", "(5)"] }).some((x) => x.includes("gabungan nomor")));
+  const pg: Soal = { bentuk: "PG", dalil_id: null, pertanyaan: "?", pilihan: ["1 dan 2", "1 dan 3", "2 dan 3", "2 dan 4", "3 dan 4"], kunci: "B", pembahasan: "Kunci benar. Pengecoh kedua salah karena ...", level: "C2", tp: "TP 1", skor: 2 };
+  assert.ok(w(pg).some((x) => x.includes("urutan")));
+  assert.ok(!w(pg).some((x) => x.includes("gabungan nomor"))); // PG biasa boleh "1 dan 3"
+  for (const p of ["Pilihan ke-2 keliru", "opsi terakhir salah", "pilihan pertama keliru"]) assert.ok(w({ ...pg, pembahasan: p }).some((x) => x.includes("urutan")), p);
+  assert.ok(!w({ ...pg, pembahasan: "Pilihan tentang inflasi berat keliru karena ..." }).some((x) => x.includes("urutan")));
 });
 
 test("pilihan angka diurutkan kecil → besar (format Indonesia), tidak diacak, kunci ikut", () => {

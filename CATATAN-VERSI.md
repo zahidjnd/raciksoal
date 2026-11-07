@@ -52,6 +52,17 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.18.2 — 7 November 2026
+Perbaikan dari hasil audit uji soal (`AUDIT-SOAL-2026-11-07.md`):
+- **Kunci PG yang salah hitung kini ditandai merah.** Sebelumnya AI kadang menulis kunci dulu, baru menghitung.
+  Contohnya pembahasan menghitung Rp82.500.000, tapi kuncinya Rp87.000.000. Sekarang AI wajib menghitung dulu dan
+  menulis jawaban benarnya, baru menyusun pilihan. Aplikasi mencocokkannya dengan kunci; kalau tidak cocok, soal
+  diperbaiki otomatis. Uji ulang dua set (37 soal): semua kunci benar.
+- **Pembahasan yang menunjuk "pengecoh kedua" kini ditandai.** Urutan pilihan diacak aplikasi, jadi "kedua" bisa
+  menunjuk pilihan yang salah. Pembahasan harus menyebut isi pilihannya.
+- **PG kompleks dengan pilihan "(2) dan (3)" kini ditandai.** Di PG kompleks, siswa sendiri yang memilih semua
+  jawaban yang tepat, jadi pilihan gabungan membingungkan.
+
 ## 0.18.1 — 7 November 2026
 - **Soal uraian kini menyebut batasan jawaban** ("Sebutkan tiga ...", "Jelaskan dua alasan ..."), bukan "Jelaskan
   tentang ...!". Rubriknya mengikuti batasan itu, supaya penilaian lebih adil.

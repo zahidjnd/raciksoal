@@ -137,8 +137,25 @@ Hal-hal ini tidak bisa diperiksa otomatis dengan andal, dan tetap menjadi bagian
 3. **Temuan 3 + 5** (HOTS tanpa stimulus, perbaikan otomatis tahu soal lain).
 4. **Temuan 6 + 7** (instruksi saja).
 
+## Tindak lanjut: versi 0.18.2 (Temuan 1, 2, 4 diperbaiki)
+
+- **Temuan 1:** untuk PG, AI kini menulis `langkah` dan `jawaban_benar` sebelum pilihan. Aplikasi mencocokkannya dengan
+  pilihan kunci (tidak cocok / tidak ada di pilihan → merah → perbaikan otomatis). Kedua field tidak disimpan.
+- **Temuan 2:** pembahasan PG/PGK yang menunjuk "pengecoh kedua", "pilihan pertama", "opsi terakhir", "pilihan ke-2" ditandai.
+- **Temuan 4:** PG kompleks dengan pilihan gabungan nomor ("(2) dan (3)") ditandai. Di PG biasa tetap boleh.
+
+Uji ulang dengan materi yang sama:
+
+| Set | Materi | Hasil |
+|---|---|---|
+| 72 | Ekonomi, ASAS 25 (pengganti set 70) | 12/12 PG menulis `jawaban_benar`; 0 tersimpan. Semua soal hitungan dihitung ulang manual → **kunci benar semua** (PPN, PPh berlapis, inflasi IHK). Tidak ada "pengecoh kedua", tidak ada pilihan gabungan, tidak ada tanda merah palsu. **3 isian tetap merah** karena bocor sungguhan ("memaksa", "11", "hiperinflasi" sudah tertulis di soal lain) |
+| 73 | Biologi, TKA 15 (pengganti set 71) | 8/8 PG menulis `jawaban_benar`; kunci benar semua; tidak ada tanda merah, tidak ada perbaikan. Soal grup kini memakai wacananya. Masih ada salah ketik "eritrosin" di satu pengecoh (no. 4) |
+
+Masih terbuka: Temuan 3, 5, 6, 7, dan **kunci isian yang bocor** (perbaikan otomatis sering gagal karena materinya
+sempit, jadi konsep yang sama terpakai di beberapa soal; calon perbaikan: menghindarinya sejak tahap kisi-kisi).
+
 ## Catatan uji
-- Materi uji 7, 8, 9 dan set 69, 70, 71 ada di database **laptop** (akun `guru.uji.ayat`). Bisa dihapus bila pemilik
+- Materi uji 7, 8, 9 dan set 69–73 ada di database **laptop** (akun `guru.uji.ayat`). Bisa dihapus bila pemilik
   setuju.
 - Biaya: 3 set dengan deepseek-flash, kira-kira Rp1.000.
 - Isi materi Fikih, Ekonomi, dan Biologi ditulis untuk uji. Audit ini menilai **kepatuhan aturan**; ketepatan isi
