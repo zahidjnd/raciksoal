@@ -268,6 +268,16 @@ test("periksaSoal: kunci PG yang jauh lebih panjang dari semua pengecoh ditandai
   assert.ok(!tanda({ ...pg("salat duha"), pilihan: ["salat duha", "puasa", "zakat", "haji", "infak"] })); // kunci pendek dilewati
 });
 
+test("periksaSoal: pilihan 'semua benar' dan yang menunjuk huruf pilihan lain ditandai; '1 dan 3' lolos", () => {
+  const pg = (e: string): Soal => ({ bentuk: "PG", dalil_id: null, pertanyaan: "?", pilihan: ["puasa", "zakat", "haji", "infak", e], kunci: "A", pembahasan: "", level: "C2", tp: "TP 3.1", skor: 2 });
+  const tanda = (s: Soal) => periksaSoal([s], bab)[0].peringatan!.some((w) => w.includes("semua benar"));
+  for (const e of ["Semua jawaban benar", "semua benar.", "Semua pilihan di atas salah", "Tidak ada yang benar", "A dan B benar", "Jawaban A, B, dan C", "A & C"])
+    assert.ok(tanda(pg(e)), e);
+  for (const e of ["1 dan 3", "(2) dan (4)", "perusahaan A dan B sama-sama rugi", "semua harta yang mencapai nisab", "sedekah"])
+    assert.ok(!tanda(pg(e)), e);
+  assert.ok(tanda({ ...pg("Semua benar"), bentuk: "PGK", kunci: ["A", "B"] }));
+});
+
 test("pilihan angka diurutkan kecil → besar (format Indonesia), tidak diacak, kunci ikut", () => {
   const s: Soal = { bentuk: "PG", dalil_id: null, pertanyaan: "Berapa?", kunci: "A", pilihan: ["Rp 1.500.000", "Rp 250.000", "Rp 12,5", "Rp 2.000", "Rp 300"], pembahasan: "", level: "C3", tp: "TP 1", skor: 2 };
   assert.ok(pilihanAngka(s));

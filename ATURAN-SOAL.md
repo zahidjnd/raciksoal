@@ -6,7 +6,7 @@ yang diberikan ke AI setiap kali membuat soal.
 
 Revisi 2026-11-07 (versi 0.18.0, disetujui pemilik): kesulitan vs HOTS (1c no. 5), khilafiyah (2a no. 6), kunci tidak
 boleh pilihan terpanjang + pemeriksa aplikasi (2b no. 7), ejaan KBBI (2c no. 5), nama tokoh (4 no. 6), dan tanda di
-dokumen ini disamakan dengan aplikasi.
+dokumen ini disamakan dengan aplikasi. Versi 0.18.1: uraian berbatasan (bagian 3) dan pemeriksa pilihan terlarang (2b no. 6).
 
 Tanda di dokumen ini:
 - ✅ = sudah dijalankan aplikasi (semua aturan di file ini sudah jalan, kecuali yang diberi ⚠️ atau "ditunda")
@@ -79,7 +79,9 @@ Bloom revisi juga membagi jenis pengetahuan: faktual, konseptual, prosedural, me
 3. ✅ Tidak ada **negatif ganda** (contoh salah: "Berikut ini yang tidak benar, kecuali ...").
 4. ✅ Kata negatif di pokok soal (BUKAN, KECUALI, TIDAK) ditulis **huruf kapital** supaya tidak terlewat.
 5. ✅ Pokok soal dan pilihan hanya memuat yang perlu.
-6. ✅ Tidak memakai pilihan "semua benar" / "semua salah".
+6. ✅ 🔍 (0.18.1) Tidak memakai pilihan "semua benar" / "semua salah" / "tidak ada yang benar", dan tidak memakai
+   pilihan yang menunjuk huruf pilihan lain ("A dan B benar"): urutan pilihan diacak aplikasi (juga per paket), jadi
+   hurufnya bisa menunjuk pilihan yang salah. Pilihan yang menunjuk NOMOR pernyataan di soal ("1 dan 3") tetap boleh.
 7. ✅ Panjang pilihan relatif sama. 🔍 (0.18.0) **Kunci tidak boleh menjadi pilihan yang paling panjang/paling rinci.**
    Diukur pada 274 PG lama: 60% kuncinya pilihan terpanjang (kalau acak hanya 20%), jadi siswa bisa menebak.
    Aplikasi menandai PG yang kuncinya terpanjang DAN ≥ 1,5× rata-rata panjang pengecoh (kunci < 15 huruf dilewati).
@@ -112,7 +114,7 @@ Bloom revisi juga membagi jenis pengetahuan: faktual, konseptual, prosedural, me
 | **PG Kompleks — Kategori (dulu "Benar/Salah")** | satu stimulus + **4 pernyataan**, tiap pernyataan dinilai dengan sepasang label | ✅ label: Benar/Salah, Fakta/Opini, Sesuai/Tidak Sesuai, Tepat/Tidak Tepat, atau Didukung/Tidak Didukung |
 | **Menjodohkan** | 5 premis; jawaban di lajur kanan lebih banyak dari premis | ✅ (0.10.0) 5 premis + 6 jawaban (1 pengecoh). AI hanya menulis 5 pasangan benar + 1 pengecoh; **aplikasi mengacak lajur kanan dan menyusun kunci hurufnya**. Skor **per pasangan** (bobot 5 = 1 poin/pasangan). Bukan untuk Latihan TKA |
 | **Isian / jawaban singkat** | jawaban berupa kata, frasa, angka, atau simbol | ✅ (0.10.0) kalimat dengan satu bagian kosong "....", kunci: AI diminta ≤ 5 kata, aplikasi baru menandai bila > 6 kata (kelonggaran) + jawaban lain yang diterima (pegangan guru). Skor 1/0. Jawaban tidak boleh muncul di soal. Bukan untuk Latihan TKA |
-| **Uraian** | menuntut jawaban terurai; wajib ada **pedoman penskoran (rubrik)** | ✅ sesuai |
+| **Uraian** | menuntut jawaban terurai; wajib ada **pedoman penskoran (rubrik)** | ✅ sesuai. (0.18.1) Soal wajib menyebut **batasan jawaban** ("Sebutkan **tiga** ...", "dari segi ... dan ..."), bukan "Jelaskan tentang ...!"; kunci lengkap untuk semua bagian; rubrik mengikuti batasan (3 hal → 3 kriteria) dan menyebut kapan skor penuh/sebagian. Hanya instruksi ke AI, tidak diperiksa aplikasi |
 
 🔍 Susunan tiap bentuk di tabel ini (jumlah pilihan/pernyataan/premis, jumlah dan bentuk kunci, bagian kosong isian)
 diperiksa aplikasi.

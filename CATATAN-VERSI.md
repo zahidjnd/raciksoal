@@ -52,6 +52,13 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.18.1 — 7 November 2026
+- **Soal uraian kini menyebut batasan jawaban** ("Sebutkan tiga ...", "Jelaskan dua alasan ..."), bukan "Jelaskan
+  tentang ...!". Rubriknya mengikuti batasan itu, supaya penilaian lebih adil.
+- **Pilihan "semua benar", "tidak ada yang benar", dan "A dan B benar" kini ditandai merah** lalu diperbaiki otomatis.
+  Pilihan yang menunjuk huruf berbahaya karena urutan pilihan diacak aplikasi (juga di Paket B–D). Pilihan seperti
+  "1 dan 3" (nomor pernyataan di soal) tetap boleh.
+
 ## 0.18.0 — 7 November 2026
 Revisi aturan soal (ATURAN-SOAL.md):
 - **Kunci PG yang mencolok panjangnya kini ditandai merah** dan diperbaiki otomatis. Di soal lama, 6 dari 10 soal PG

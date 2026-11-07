@@ -429,6 +429,18 @@ function kunciTerpanjang(s: Soal) {
   return pj[k] > Math.max(...lain) && pj[k] >= 1.5 * (lain.reduce((a, b) => a + b, 0) / lain.length);
 }
 
+/**
+ * Pilihan terlarang (ATURAN-SOAL 2b no. 6): "semua benar/salah", "tidak ada yang benar", atau pilihan yang HANYA
+ * menunjuk huruf pilihan lain ("A dan B benar") — huruf itu jadi salah setelah pilihan diacak. Sengaja hanya pilihan
+ * yang isinya seluruhnya pola itu, supaya "1 dan 3" (nomor pernyataan di soal) dan "perusahaan A dan B rugi" lolos.
+ */
+const PILIHAN_TERLARANG = [
+  /^(semua|semuanya|seluruh)\s*(jawaban|pilihan|pernyataan)?\s*(di atas)?\s*(benar|salah|tepat)\.?$/i,
+  /^tidak\s+ada\s+(jawaban\s+|pilihan\s+|pernyataan\s+)?yang\s+(benar|tepat|salah)\.?$/i,
+  /^([Jj]awaban\s+|[Pp]ilihan\s+)?[A-E](\s*,\s*[A-E])*\s*,?\s*(dan|serta|&)\s*[A-E]\s*(benar|tepat|salah)?\.?$/,
+];
+const adaPilihanTerlarang = (s: Soal) => (s.pilihan ?? []).some((p) => PILIHAN_TERLARANG.some((r) => r.test(String(p ?? "").trim())));
+
 /** Beri peringatan pada soal yang bermasalah. Aturan 5: teks Arab hanya boleh dari data terverifikasi. */
 export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
   const arabAsingDi = pemeriksaArab(bab, cekAyat);
@@ -458,6 +470,8 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
       peringatan.push(`${bab.teksArab === "bahasa" ? "Teks Arab mirip ayat Al-Qur'an tetapi" : "Teks Arab"} tidak cocok dengan data terverifikasi: ${arabAsing.join(" | ")}`);
     if (s.dalil_id && !dalilAda.has(s.dalil_id)) peringatan.push(`Dalil "${s.dalil_id}" tidak ada di data bab.`);
     if ((s.bentuk === "PG" || s.bentuk === "PGK") && s.pilihan?.length !== 5) peringatan.push("Jumlah pilihan bukan 5.");
+    if ((s.bentuk === "PG" || s.bentuk === "PGK") && adaPilihanTerlarang(s))
+      peringatan.push('Ada pilihan "semua benar/salah", "tidak ada yang benar", atau yang menunjuk huruf pilihan lain (urutan pilihan diacak aplikasi). Ganti dengan pilihan berisi.');
     if (s.bentuk === "PG" && kunciTerpanjang(s)) peringatan.push("Jawaban benar jauh lebih panjang dari semua pengecoh, jadi mudah ditebak. Samakan panjang dan kerincian pilihan.");
     if (s.bentuk === "PGK" && !KUNCI_PGK.includes(new Set([s.kunci].flat()).size)) peringatan.push("Kunci PG kompleks harus 2 atau 3 jawaban.");
     if (s.bentuk === "ISIAN") {
