@@ -98,7 +98,11 @@ Bloom revisi juga membagi jenis pengetahuan: faktual, konseptual, prosedural, me
 11. ✅ **Jawaban satu soal tidak boleh tertulis di soal lain** dalam set yang sama (di pokok soal maupun pilihan),
     terutama kunci isian singkat. Contoh salah: kunci isian "ikhlas karena Allah", padahal frasa itu sudah menjadi
     pilihan di soal PG nomor 2. (Disetujui 2026-11-05; aplikasi mengirim jawaban soal tahap sebelumnya ke AI.)
-    🔍 Kunci isian yang tertulis di soal lain ditandai merah (0.17.3).
+    🔍 Kunci isian yang tertulis di soal lain ditandai merah (0.17.3); sejak 0.18.3 pesannya menyebut potongan teks
+    tempat jawaban itu tertulis, dan dua soal isian dengan kunci sama juga ditandai.
+    (0.18.3) Pencegahan: jawaban soal isian **direncanakan di tahap kisi-kisi**, lalu dikirim ke setiap tahap soal sebagai
+    kata yang tidak boleh ditulis di soal lain (soal isian ditulis paling akhir, jadi dulu jawabannya sering sudah
+    terpakai sebagai pengecoh PG). Jawaban berupa angka tidak dilarang, karena bisa jadi data soal hitungan.
 
 ### 2c. Bahasa
 1. ✅ Bahasa Indonesia baku, efektif, komunikatif, sesuai usia siswa MA.

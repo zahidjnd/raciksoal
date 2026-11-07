@@ -151,7 +151,23 @@ Uji ulang dengan materi yang sama:
 | 72 | Ekonomi, ASAS 25 (pengganti set 70) | 12/12 PG menulis `jawaban_benar`; 0 tersimpan. Semua soal hitungan dihitung ulang manual → **kunci benar semua** (PPN, PPh berlapis, inflasi IHK). Tidak ada "pengecoh kedua", tidak ada pilihan gabungan, tidak ada tanda merah palsu. **3 isian tetap merah** karena bocor sungguhan ("memaksa", "11", "hiperinflasi" sudah tertulis di soal lain) |
 | 73 | Biologi, TKA 15 (pengganti set 71) | 8/8 PG menulis `jawaban_benar`; kunci benar semua; tidak ada tanda merah, tidak ada perbaikan. Soal grup kini memakai wacananya. Masih ada salah ketik "eritrosin" di satu pengecoh (no. 4) |
 
-Masih terbuka: Temuan 3, 5, 6, 7, dan **kunci isian yang bocor** (perbaikan otomatis sering gagal karena materinya
+## Tindak lanjut: versi 0.18.3 (kunci isian yang bocor)
+
+Jawaban isian kini direncanakan di kisi-kisi dan dikirim ke setiap tahap soal sebagai kata terlarang. Pesan merah
+menyebut potongan teks tempat bocornya.
+
+| | Isian bocor saat dibuat | Tetap merah setelah perbaikan otomatis |
+|---|---|---|
+| Ekonomi sebelum (set 70, 72) | 2 dari 3, 3 dari 3 | 1, 3 |
+| Ekonomi sesudah (set 75) | 1 dari 3 (angka "Rp110.000", sengaja tidak dilarang) | **0** |
+| Fikih sesudah (set 74) | 2 dari 2 | 1 |
+
+Kesimpulan: membaik, belum tuntas. Di set 74, AI tetap memakai "fardu ain" sebagai kunci PG no. 1, karena kisi-kisinya
+sendiri merencanakan PG no. 1 dan isian no. 10 untuk konsep yang sama (hukum salat Jumat). AI lebih mengikuti
+kisi-kisi daripada larangan. Hal ini tidak bisa dideteksi otomatis dengan andal. Tanda merah tetap menjadi pengaman,
+dan kini menunjuk letaknya: `soal nomor 1 ("Fardu ain")`.
+
+Masih terbuka: Temuan 3, 5, 6, 7, dan sisa **kunci isian yang bocor** (perbaikan otomatis sering gagal karena materinya
 sempit, jadi konsep yang sama terpakai di beberapa soal; calon perbaikan: menghindarinya sejak tahap kisi-kisi).
 
 ## Catatan uji

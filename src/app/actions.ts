@@ -4,7 +4,7 @@ import { and, eq, gte, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { hasilSoal, pemakaianAi } from "@/db/schema";
 import { daftarModel, tanyaAI } from "@/lib/ai";
-import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, ringkasSudah, buatPermintaanKisi, buatSistem, buatAnalisaMateri, bersihkanIdentitas, rencanaGrup, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
+import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, laranganIsian, ringkasSudah, buatPermintaanKisi, buatSistem, buatAnalisaMateri, bersihkanIdentitas, rencanaGrup, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { BATAS_MATERI, susunDraf, terapkanAnalisa } from "@/lib/materi";
 import { bersihkanTanggapan, gabungBab, identitasBab, KELAS, LEVEL, pemeriksaArab, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, terapkanBobot, type Bab, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { babDariSet, babMilik, daftarBabMilik } from "@/lib/bab";
@@ -237,7 +237,7 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
       const baris = kisi.slice(awal, awal + n);
       awal += n;
       await simpan({ pesan: `Tahap ${i + 1} dari ${tahap.length}` });
-      const pengguna = buatPengguna(p, jumlah, semua.map(ringkasSudah), "", baris);
+      const pengguna = buatPengguna(p, jumlah, semua.map(ringkasSudah), laranganIsian(kisi), baris);
       const soal = await tanya(`Tahap ${i + 1}`, pengguna, (d) => ambilSoal(d, baris.length));
       semua.push(...soal.map((s, j) => susunMenjodohkan(samakanDenganKisi(s, baris[j])))); // Menjodohkan: lajur kanan diacak aplikasi
       // Draf untuk tampilan bertahap (status tetap "proses"): sudah lewat penjaga ayat, tetapi kunci belum
@@ -258,7 +258,8 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
         // lain; petunjuk ini ditulis di depan karena instruksi dipotong 300 huruf.
         const bocor = s.peringatan.some((w) => w.startsWith("Jawaban isian sudah tertulis"));
         const instruksi = `${bocor ? "Jawaban bocor: tanyakan konsep LAIN dari materi yang jawabannya belum tertulis di soal mana pun, dan tulis indikator barunya. " : ""}Perbaiki soal ini (bentuk, TP, level tetap). Masalah: ${masalah}`;
-        const [baru] = await tanya(`Perbaikan soal ${i + 1}`, buatPenggantiPengguna(p, s, soal, kisi[i], instruksi), (d) => ambilSoal(d));
+        // Instruksi buatan aplikasi boleh lebih panjang dari batas guru (300), supaya potongan teks bocor tidak terpotong.
+        const [baru] = await tanya(`Perbaikan soal ${i + 1}`, buatPenggantiPengguna(p, s, soal, kisi[i], instruksi, 800), (d) => ambilSoal(d));
         const { stimulus: _s, indikator, ...isi } = susunMenjodohkan(samakanDenganKisi(baru, kisi[i]));
         void _s;
         // Diperiksa bersama seluruh set (bukan sendirian), supaya kunci isian yang masih bocor ke soal lain tetap ketahuan.

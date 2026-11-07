@@ -548,3 +548,9 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   jawaban_benar = tidak dicek). `GABUNGAN_NOMOR` (PGK saja) dan `URUTAN_PILIHAN` (pembahasan PG/PGK "pengecoh kedua").
   Uji ulang set laptop 72 (Ekonomi ASAS 25) & 73 (Biologi TKA 15): kunci benar semua, tanpa merah palsu; 3 isian
   set 72 tetap merah karena bocor sungguhan (masalah terbuka). Skrip uji: buat-set.mts di scratchpad (tidak di repo).
+- 2026-11-07 (0.18.3) ISIAN BOCOR: `BarisKisi.jawaban` = rencana jawaban isian (diminta di kisi lewat `RENCANA_ISIAN`, hanya
+  bila ada ISIAN; disimpan di kisi, tidak dipakai Word); `laranganIsian(kisi)` (prompt.ts, jawaban berangka dilewati)
+  dikirim sebagai `tambahan` di SETIAP tahap; `tulisKisi` menulis "Jawaban (kunci)". `bocorDi` kini mengembalikan
+  `nomor ("potongan")` + menghitung isian lain berkunci sama; perbaikan otomatis memakai batas instruksi 800
+  (`buatPenggantiPengguna(..., maksInstruksi)`). Uji laptop set 74 (Fikih: 1 tetap merah, karena kisi merencanakan PG
+  no. 1 dan isian no. 10 untuk konsep sama) & 75 (Ekonomi: 0 merah, dulu 1–3).

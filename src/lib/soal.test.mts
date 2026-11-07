@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { arabTakTerverifikasi, bersihkanTanggapan, gabungBab, identitasBab, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, terapkanBobot, type Bab, type Soal } from "./soal.ts";
-import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, semesterDari, MAKS_CATATAN, MAKS_INSTRUKSI, rencanaLevel, type Pengaturan } from "./prompt.ts";
+import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, laranganIsian, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, semesterDari, MAKS_CATATAN, MAKS_INSTRUKSI, rencanaLevel, type Pengaturan } from "./prompt.ts";
 import { bolehAkses, rapikanUsername } from "./akses.ts";
 import { headerUnduh } from "./nama-file.ts";
 import { keIsian, rapikanMateri, susunDraf, terapkanAnalisa } from "./materi.ts";
@@ -688,4 +688,26 @@ test("periksaSoal: kunci isian yang sudah tertulis di soal lain ditandai (ḥ = 
   assert.deepEqual(aman.peringatan, []);
   const [, angka] = periksaSoal([{ ...pg, pilihan: ["tahun 2019", "b", "c", "d", "e"] }, isian("19")], bab);
   assert.deepEqual(angka.peringatan, []); // "19" tidak dianggap ada di dalam "2019"
+});
+
+test("0.18.3: jawaban isian direncanakan di kisi-kisi, jadi kata terlarang untuk soal lain; pesan bocor menyebut potongan teks", () => {
+  const p = { babId: "x", tujuan: "PAS", kesulitan: "Sedang", jumlah: { PG: 2, PGK: 0, BS: 0, MJ: 0, ISIAN: 1, URAIAN: 0 }, level: { LOTS: 30, MOTS: 40, HOTS: 30 } } as Pengaturan;
+  assert.ok(buatPermintaanKisi(p).includes('"jawaban" (HANYA baris ISIAN)'));
+  assert.ok(!buatPermintaanKisi({ ...p, jumlah: { ...p.jumlah, ISIAN: 0 } }).includes('"jawaban" (HANYA baris ISIAN)'));
+  const bab = { id: "x", judul: "x", tp: [{ kode: "TP 1", teks: "x" }], dalil: [], materi: [] } as Bab;
+  const baris = (bentuk: string, jawaban?: string) => ({ bentuk, tp: "TP 1", materi: "m", indikator: "i", level: "C1", dalil_id: null, stimulus: "s", jawaban });
+  const kisi = periksaKisi([baris("PG", "dibuang"), baris("PG"), baris("ISIAN", "hiperinflasi")], p.jumlah, bab);
+  assert.equal(kisi[0].jawaban, undefined); // hanya baris ISIAN yang menyimpan rencana jawaban
+  assert.equal(kisi[2].jawaban, "hiperinflasi");
+  assert.ok(laranganIsian(kisi).includes('"hiperinflasi"'));
+  assert.equal(laranganIsian([{ ...kisi[2], jawaban: "11%" }]), ""); // angka tidak dilarang (bisa jadi data soal hitungan)
+  assert.equal(laranganIsian(kisi.slice(0, 2)), "");
+  // pesan bocor menyebut potongan teks tempat jawabannya tertulis; isian lain dengan kunci sama juga bocor
+  const dasar = { dalil_id: null, pembahasan: "", level: "C1", tp: "TP 1", skor: 1 };
+  const pg = { ...dasar, bentuk: "PG", pertanyaan: "Inflasi 120% digolongkan ....", pilihan: ["inflasi ringan", "inflasi sedang", "inflasi berat", "hiperinflasi", "deflasi"], kunci: "D" } as Soal;
+  const isian = { ...dasar, bentuk: "ISIAN", pertanyaan: "Inflasi di atas 100% disebut ....", kunci: "hiperinflasi" } as Soal;
+  const w = periksaSoal([pg, isian], bab)[1].peringatan!.join(" ");
+  assert.ok(w.includes('soal nomor 1 ("hiperinflasi")'), w);
+  const dua = periksaSoal([{ ...isian, pertanyaan: "Golongan inflasi paling parah adalah ...." }, isian], bab);
+  assert.ok(dua[1].peringatan!.some((x) => x.includes("soal nomor 1")));
 });

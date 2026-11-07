@@ -52,6 +52,14 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.18.3 — 7 November 2026
+- **Jawaban soal isian lebih jarang bocor.** Jawaban isian kini direncanakan sejak kisi-kisi, lalu AI dilarang
+  menuliskannya di soal lain. Uji set Ekonomi: dulu 2–3 soal isian tetap merah, sekarang 0. Belum tuntas: kalau
+  kisi-kisinya sendiri menanyakan konsep yang sama dua kali, jawaban masih bisa bocor (tetap ditandai merah).
+- **Pesan "jawaban isian sudah tertulis" kini menunjukkan letaknya**, misalnya: soal nomor 1 ("Fardu ain").
+  Guru tidak perlu mencari sendiri.
+- Dua soal isian dengan jawaban yang sama juga ditandai.
+
 ## 0.18.2 — 7 November 2026
 Perbaikan dari hasil audit uji soal (`AUDIT-SOAL-2026-11-07.md`):
 - **Kunci PG yang salah hitung kini ditandai merah.** Sebelumnya AI kadang menulis kunci dulu, baru menghitung.

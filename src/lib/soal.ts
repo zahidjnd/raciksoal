@@ -91,6 +91,9 @@ export type BarisKisi = {
   peringatan?: string[]; // diisi aplikasi (aturan 5: teks Arab tak terverifikasi)
   grup?: number | null; // soal grup (Latihan TKA): nomor grup, atau null untuk soal tunggal
   wacana?: string; // teks wacana bersama grup itu (disusun AI bersama kisi-kisi)
+  // ISIAN (0.18.3): rencana jawaban dari tahap kisi-kisi. Dikirim ke tahap soal lain sebagai kata terlarang (laranganIsian),
+  // karena soal isian ditulis paling akhir dan jawabannya dulu sering sudah terpakai sebagai pengecoh soal PG.
+  jawaban?: string;
 };
 
 const URUTAN_BENTUK: Bentuk[] = ["PG", "PGK", "BS", "MJ", "ISIAN", "URAIAN"]; // harus sama dengan urutan NAMA_BENTUK (prompt.ts)
@@ -195,12 +198,14 @@ export function periksaKisi(data: unknown, jumlah: Record<Bentuk, number>, bab: 
     if (baris.length < jumlah[b]) throw new Error(`kisi-kisi ${b} hanya ${baris.length} dari ${jumlah[b]} baris.`);
     return baris.map((k) => {
       const isi = { materi: teks(k.materi), indikator: teks(k.indikator), stimulus: teks(k.stimulus) };
-      const arabAsing = Object.values(isi).flatMap(arabAsingDi);
+      const jawaban = b === "ISIAN" ? teks(k.jawaban).slice(0, 60) : "";
+      const arabAsing = [...Object.values(isi), jawaban].flatMap(arabAsingDi);
       return {
         no: 0,
         bentuk: b,
         tp: teks(k.tp),
         ...isi,
+        ...(jawaban && { jawaban }),
         level: teks(k.level).toUpperCase(),
         dalil_id: k.dalil_id && dalilAda.has(teks(k.dalil_id)) ? teks(k.dalil_id) : null,
         peringatan: arabAsing.length ? [`Teks Arab tidak cocok dengan data terverifikasi: ${arabAsing.join(" | ")}`] : [],
@@ -411,13 +416,26 @@ function periksaIsian(s: Soal): string[] {
 /** Teks disederhanakan untuk dibandingkan: tanda diakritik dibuang (ḥ→h, ā→a), huruf kecil, tanda baca jadi spasi. */
 const polos = (t: unknown) => ` ${String(t ?? "").normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim()} `;
 
-/** Nomor soal lain (1, 2, ...) yang pertanyaan/pilihannya sudah memuat kunci isian soal ke-i (ATURAN-SOAL 2b no. 11). */
-function bocorDi(soal: Soal[], i: number): number[] {
-  const kunci = polos([soal[i].kunci].flat()[0]);
+/**
+ * Soal lain yang sudah memuat kunci isian soal ke-i (ATURAN-SOAL 2b no. 11), berikut potongan teksnya ("8 (…hiperinflasi…)"),
+ * supaya guru dan perbaikan otomatis tahu persis letaknya (0.18.3; dulu hanya nomor, AI tidak melihat pengecoh soal itu).
+ * Kunci isian lain yang sama persis juga dihitung bocor.
+ */
+function bocorDi(soal: Soal[], i: number): string[] {
+  const asli = String([soal[i].kunci].flat()[0] ?? "").trim();
+  const kunci = polos(asli);
   if (kunci.trim().length < 2) return [];
-  return soal.flatMap((s, j) =>
-    j !== i && [s.pertanyaan, ...(s.pilihan ?? []), ...(s.pernyataan ?? []), ...(s.premis ?? []), ...(s.jawaban ?? [])].some((t) => polos(t).includes(kunci)) ? [j + 1] : [],
-  );
+  const potong = (t: string) => {
+    const di = t.toLowerCase().indexOf(asli.toLowerCase());
+    const a = Math.max(0, di - 25);
+    return `${a ? "…" : ""}${t.slice(a, a + 60)}${t.length > a + 60 ? "…" : ""}`;
+  };
+  return soal.flatMap((s, j) => {
+    if (j === i) return [];
+    const teks = [s.pertanyaan, ...(s.pilihan ?? []), ...(s.pernyataan ?? []), ...(s.premis ?? []), ...(s.jawaban ?? []), ...(s.bentuk === "ISIAN" ? [s.kunci].flat() : [])];
+    const kena = teks.find((t) => polos(t).includes(kunci));
+    return kena === undefined ? [] : [`${j + 1} ("${potong(String(kena))}")`];
+  });
 }
 
 /**
@@ -512,7 +530,7 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
     if (s.bentuk === "ISIAN") {
       peringatan.push(...periksaIsian(s));
       const di = bocorDi(soal, i);
-      if (di.length) peringatan.push(`Jawaban isian sudah tertulis di soal nomor ${di.join(", ")}.`);
+      if (di.length) peringatan.push(`Jawaban isian sudah tertulis di soal nomor ${di.slice(0, 3).join(", ")}${di.length > 3 ? `, dan ${di.length - 3} soal lain` : ""}.`);
     }
     if (s.bentuk === "MJ") peringatan.push(...periksaMenjodohkan(s));
     if (kategoriBaru(s)) {

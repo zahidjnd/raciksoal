@@ -398,8 +398,8 @@ Isi setiap baris:
 - "dalil_id": id dalil yang dipakai, atau null. Bila DATA BAB memuat dalil, sebar ke semua dalil.
 - "stimulus": jenis stimulus + skenario singkat (maks 15 kata), atau "tanpa stimulus". Ikuti aturan STIMULUS: setiap skenario BERBEDA satu sama lain dalam seluruh kisi-kisi.
 Indikator antarbaris juga tidak boleh sama persis; ambil sisi materi yang berbeda.
-${tanpaArab ? 'Di kisi-kisi JANGAN menulis huruf Arab sama sekali; sebut lafaz dengan transliterasi Latin (misalnya "lā taqrabū az-zinā").' : "Di kisi-kisi boleh menulis kosakata/kalimat Arab buatan sendiri, tetapi JANGAN menulis ayat atau hadis."}
-${p.tujuan === TKA ? `${SOAL_GRUP}${tanpaArab ? " Wacana tanpa huruf Arab." : " Wacana boleh berbahasa Arab, tetapi bukan ayat atau hadis."}\n` : ""}${p.catatan ? `${TANGGAPAN}\n` : ""}FORMAT JAWABAN untuk permintaan ini: hanya JSON {${p.catatan ? '"tanggapan":"...",' : ""}"kisi":[{"bentuk":"PG","tp":"TP 3.1","materi":"...","indikator":"...","level":"C2","dalil_id":null,"stimulus":"tanpa stimulus"${p.tujuan === TKA ? ',"grup":null' : ""}}]${p.tujuan === TKA ? ',"wacana":[{"grup":1,"teks":"..."}]' : ""}}`;
+${p.jumlah.ISIAN ? `${RENCANA_ISIAN}\n` : ""}${tanpaArab ? 'Di kisi-kisi JANGAN menulis huruf Arab sama sekali; sebut lafaz dengan transliterasi Latin (misalnya "lā taqrabū az-zinā").' : "Di kisi-kisi boleh menulis kosakata/kalimat Arab buatan sendiri, tetapi JANGAN menulis ayat atau hadis."}
+${p.tujuan === TKA ? `${SOAL_GRUP}${tanpaArab ? " Wacana tanpa huruf Arab." : " Wacana boleh berbahasa Arab, tetapi bukan ayat atau hadis."}\n` : ""}${p.catatan ? `${TANGGAPAN}\n` : ""}FORMAT JAWABAN untuk permintaan ini: hanya JSON {${p.catatan ? '"tanggapan":"...",' : ""}"kisi":[{"bentuk":"PG","tp":"TP 3.1","materi":"...","indikator":"...","level":"C2","dalil_id":null,"stimulus":"tanpa stimulus"${p.tujuan === TKA ? ',"grup":null' : ""}}${p.jumlah.ISIAN ? ',{"bentuk":"ISIAN",...,"jawaban":"..."}' : ""}]${p.tujuan === TKA ? ',"wacana":[{"grup":1,"teks":"..."}]' : ""}}`;
 }
 
 // ATURAN-SOAL.md bagian 9 no. 4: soal grup TKA. Dibatasi bentuk sama supaya lembar soal tetap per bagian bentuk.
@@ -411,9 +411,23 @@ const SOAL_GRUP = `SOAL GRUP (gaya TKA): nomor yang ditandai GRUP N di atas SUDA
 // ATURAN-SOAL.md bagian 6 no. 2: AI menjawab catatan guru; tampil di paling atas hasil soal.
 const TANGGAPAN = `Isi juga "tanggapan": balasan singkat untuk guru (maks 3 kalimat, sapa dengan "Anda") tentang catatannya: apa yang Anda ikuti dan bagaimana, serta bagian yang TIDAK bisa diikuti beserta alasannya. Bila meminta jumlah/bentuk soal lain, arahkan ke tombol jumlah soal di form; bila meminta komposisi level lain, arahkan ke menu Lanjutan.`;
 
+// 0.18.3: jawaban isian direncanakan di kisi-kisi, supaya tahap soal lain (yang ditulis LEBIH DULU) bisa menghindarinya.
+const RENCANA_ISIAN = `- "jawaban" (HANYA baris ISIAN): rencana jawaban soal isian itu (1–5 kata). Pilih istilah/konsep yang TIDAK akan menjadi kunci, pengecoh, atau data di soal lain dalam kisi-kisi ini, dan berbeda antarbaris isian. Jangan berupa angka yang juga dipakai sebagai data soal lain (misalnya tarif yang diberikan di soal hitungan).`;
+
 /** Baris kisi-kisi dalam bentuk ringkas untuk permintaan soal. */
 const tulisKisi = (k: BarisKisi) =>
-  `- Nomor ${k.no} | ${k.bentuk} | ${k.tp} | ${k.level} | dalil_id: ${k.dalil_id ?? "null"} | Indikator: ${k.indikator} | Stimulus: ${k.grup && k.wacana ? `WACANA GRUP ${k.grup}` : k.stimulus}`;
+  `- Nomor ${k.no} | ${k.bentuk} | ${k.tp} | ${k.level} | dalil_id: ${k.dalil_id ?? "null"} | Indikator: ${k.indikator} | Stimulus: ${k.grup && k.wacana ? `WACANA GRUP ${k.grup}` : k.stimulus}${k.jawaban ? ` | Jawaban (kunci): ${k.jawaban}` : ""}`;
+
+/**
+ * Daftar jawaban isian rencana kisi-kisi yang TIDAK boleh tertulis di soal lain (ATURAN-SOAL 2b no. 11), untuk setiap
+ * tahap soal. Jawaban yang memuat angka dilewati: melarang angka (mis. tarif 11%) bisa membuat AI mengubah data yang benar.
+ */
+export function laranganIsian(kisi: BarisKisi[]) {
+  const kata = [...new Set(kisi.filter((k) => k.bentuk === "ISIAN" && k.jawaban && !/\d/.test(k.jawaban)).map((k) => k.jawaban!.trim()))];
+  return kata.length
+    ? `Kata/istilah berikut adalah JAWABAN soal isian di set ini: ${kata.map((k) => `"${k}"`).join(", ")}. JANGAN tuliskan kata-kata itu di pokok soal, pilihan, pernyataan, premis, maupun wacana soal lain (hanya soal isian yang bersangkutan yang memakainya, sebagai kunci).\n`
+    : "";
+}
 
 /** Wacana soal grup yang dipakai baris-baris ini (sekali per grup), untuk permintaan soal. */
 function tulisWacana(kisi: { grup?: number | null; wacana?: string; no?: number }[]) {
@@ -460,7 +474,7 @@ ${daftarSudah}${tambahan}Balas hanya dengan JSON sesuai format.`;
  * Permintaan "ganti satu soal": 1 soal baru dengan bentuk, level, dan TP yang sama (dan indikator kisi-kisi
  * yang sama bila ada), tapi skenario berbeda dari semua soal di set.
  */
-export function buatPenggantiPengguna(p: Pengaturan, lama: Soal, semua: Soal[], kisi?: BarisKisi, instruksi = "") {
+export function buatPenggantiPengguna(p: Pengaturan, lama: Soal, semua: Soal[], kisi?: BarisKisi, instruksi = "", maksInstruksi = MAKS_INSTRUKSI) {
   const jumlah = { PG: 0, PGK: 0, BS: 0, MJ: 0, ISIAN: 0, URAIAN: 0, [lama.bentuk]: 1 };
   if (instruksi) {
     // "Minta perubahan": soal yang sama ditulis ulang sesuai instruksi guru. Instruksi tidak boleh mengalahkan aturan sistem.
@@ -471,7 +485,7 @@ export function buatPenggantiPengguna(p: Pengaturan, lama: Soal, semua: Soal[], 
     const tambahan = `\nIni permintaan MENGUBAH satu soal sesuai instruksi guru. Soal saat ini (JSON):
 ${JSON.stringify(isiLama)}
 ${kisi ? `Kisi-kisinya: indikator "${kisi.indikator}", stimulus "${kisi.stimulus}".\n` : ""}${tulisWacana([{ grup, wacana }])}Instruksi guru (ikuti selama tidak bertentangan dengan aturan di instruksi sistem: jangan mengetik ayat/hadis, jangan memakai dalil atau fakta di luar data bab, tetap bentuk ${lama.bentuk}):
-"""${bersihkanInstruksi(instruksi)}"""
+"""${bersihkanKutipan(instruksi, maksInstruksi)}"""
 Kembalikan tepat 1 soal hasil perubahan. Bagian yang tidak diminta untuk diubah biarkan sama. "level" dan "tp" boleh berubah bila instruksi menuntutnya.
 Tambahkan field "indikator" (indikator soal gaya Kemenag yang sesuai dengan soal hasil perubahan) dan "stimulus" (jenis + skenario, maks 15 kata, atau "tanpa stimulus").\n`;
     return buatPengguna(p, jumlah, semua.filter((s) => s !== lama).map(ringkasSudah), tambahan);
