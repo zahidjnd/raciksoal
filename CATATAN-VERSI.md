@@ -52,6 +52,16 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.19.0 — 7 November 2026
+Sisa perbaikan dari audit uji soal:
+- **Urutan 4 pernyataan soal Kategori kini diacak aplikasi**, sehingga letak pernyataan yang salah tidak lagi berpola
+  (dulu sering Benar, Benar, Benar, Salah). Label juga lebih beragam (Benar/Salah, Tepat/Tidak Tepat, dan lainnya).
+- **Rubrik uraian kini menyebut skor sebagian**, misalnya "4 = dua perbedaan tepat; 2 = satu perbedaan tepat;
+  0 = tidak ada". Angkanya selalu cocok dengan bobot uraian di form.
+- **Soal HOTS yang tidak punya stimulus sama sekali kini ditandai merah** dan diperbaiki otomatis.
+- **Dua soal menjodohkan yang hampir sama kini ditandai merah**, dan AI kini melihat isi menjodohkan lain saat menulis
+  soal baru.
+
 ## 0.18.3 — 7 November 2026
 - **Jawaban soal isian lebih jarang bocor.** Jawaban isian kini direncanakan sejak kisi-kisi, lalu AI dilarang
   menuliskannya di soal lain. Uji set Ekonomi: dulu 2–3 soal isian tetap merah, sekarang 0. Belum tuntas: kalau

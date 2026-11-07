@@ -217,6 +217,7 @@ LEVEL KOGNITIF (taksonomi Bloom revisi):
 - Level ditentukan oleh proses berpikir yang dibutuhkan siswa, BUKAN oleh kata kerja di soal. Soal "Analisislah ..." yang jawabannya bisa dihafal tetap C1.
 - HOTS bukan berarti sulit: HOTS = menalar. Soal HOTS WAJIB memakai stimulus baru (kasus, data, teks, fenomena) dan jawabannya diperoleh dengan mengolah stimulus itu, bukan hafalan.
 - Soal C1–C2 cukup pokok soal langsung, tanpa stimulus panjang.
+- Bila jawaban bisa langsung ditemukan tertulis di stimulus atau cukup diingat dari materi, soal itu LOTS, bukan HOTS. Soal C4–C6 menuntut siswa MENGOLAH stimulus (membandingkan, menghubungkan, menyimpulkan, menilai) untuk sampai ke jawaban; jangan menulis jawabannya di stimulus.
 - Tingkat kesulitan mengatur berat soal DI DALAM levelnya: tidak mengubah level dan tidak menghapus stimulus soal HOTS.
 
 STIMULUS (berlaku untuk seluruh set soal, lintas bentuk soal):
@@ -241,7 +242,7 @@ FORMAT JAWABAN (kecuali permintaan menyebut format lain): hanya JSON (tanpa teks
 Untuk BS: {"bentuk":"BS","dalil_id":null,"pertanyaan":"...","pernyataan":["...","...","...","..."],"label":["Fakta","Opini"],"kunci":["Fakta","Opini","Opini","Fakta"],"pembahasan":"...","level":"C4","tp":"TP 3.2","skor":1}
 Untuk MJ: {"bentuk":"MJ","dalil_id":null,"pertanyaan":"Jodohkan setiap kata di lajur kiri dengan artinya di lajur kanan!","pasangan":[{"premis":"...","jawaban":"..."}],"pengecoh":["..."],"pembahasan":"...","level":"C1","tp":"TP 3.2","skor":1} ("pasangan" berisi TEPAT 5 objek)
 Untuk ISIAN: {"bentuk":"ISIAN","dalil_id":null,"pertanyaan":"Kata yang menunjukkan tempat adalah ....","kunci":"mahall","kunciAlt":[],"pembahasan":"...","level":"C1","tp":"TP 3.2","skor":1}
-Untuk URAIAN tambahkan "rubrik":[{"kriteria":"...","skor":2}]. "tp" diisi kode TP yang paling sesuai.
+Untuk URAIAN tambahkan "rubrik", setiap kriteria menyebut skor penuh DAN skor sebagian dengan skala yang SAMA dengan "skor" kriteria itu; contoh bila jumlah skor rubrik 5: [{"kriteria":"Menyebut tiga syarat sah salat Jumat (3 = tiga benar; 2 = dua benar; 1 = satu benar; 0 = tidak ada yang benar)","skor":3},{"kriteria":"Menjelaskan alasan dengan tepat (2 = alasan tepat dan lengkap; 1 = alasan kurang lengkap; 0 = salah atau kosong)","skor":2}]. "tp" diisi kode TP yang paling sesuai.
 
 DATA BAB
 Mata pelajaran: ${mapel}, kelas ${kelas}
@@ -280,7 +281,7 @@ Balas JSON {"judul":"...","tp":["..."],"pokok":["..."],"dalil":[{"no":1,"sumber"
 const BENTUK_SOAL = `BENTUK SOAL:
 - PG: 5 pilihan, tepat 1 benar. Tulis berurutan: "pertanyaan", lalu "langkah" (langkah hitung atau alasan singkat untuk menemukan jawaban benar; wajib lengkap untuk soal hitungan), lalu "jawaban_benar" (isi jawaban benar hasil langkah itu), BARU "pilihan" (salah satunya salinan PERSIS "jawaban_benar") dan "kunci" ("A".."E", huruf pilihan yang sama dengan "jawaban_benar"). Periksa ulang hitungan sebelum menulis pilihan.
 - PGK (pilihan ganda kompleks, model jawaban ganda/MCMA): 5 pilihan, 2 ATAU 3 benar (tidak semua), sesuai isi soal; ragamkan jumlahnya dalam satu set. Setiap pilihan satu pernyataan utuh; JANGAN pilihan gabungan seperti "(2) dan (3)" atau "1, 2, dan 4". "kunci": array berisi 2 atau 3 huruf jawaban benar. Akhiri pertanyaan dengan "(Pilih semua jawaban yang tepat)" tanpa menyebut jumlah jawaban benar.
-- BS (pilihan ganda kompleks model Kategori): "pertanyaan" berisi stimulus/pokok soal + perintah, misalnya "Tentukan apakah setiap pernyataan berikut Benar atau Salah!". Lalu tepat 4 "pernyataan" yang masing-masing dinilai dengan sepasang "label", salah satu dari: ["Benar","Salah"], ["Fakta","Opini"], ["Sesuai","Tidak Sesuai"], ["Tepat","Tidak Tepat"], ["Didukung","Tidak Didukung"] (didukung/tidak oleh stimulus). Pilih pasangan label yang paling cocok dengan isi soal dan ragamkan dalam satu set. "kunci": array 4 label sesuai urutan pernyataan; jangan semua sama. Jangan menulis ulang keempat pernyataan di dalam "pertanyaan" (aplikasi menampilkannya sebagai tabel). Tanpa "pilihan".
+- BS (pilihan ganda kompleks model Kategori): "pertanyaan" berisi stimulus/pokok soal + perintah, misalnya "Tentukan apakah setiap pernyataan berikut Benar atau Salah!". Lalu tepat 4 "pernyataan" yang masing-masing dinilai dengan sepasang "label", salah satu dari: ["Benar","Salah"], ["Fakta","Opini"], ["Sesuai","Tidak Sesuai"], ["Tepat","Tidak Tepat"], ["Didukung","Tidak Didukung"] (didukung/tidak oleh stimulus). Pilih pasangan label yang paling cocok dengan isi soal dan ragamkan dalam satu set (jangan semua Benar/Salah bila ada lebih dari satu soal BS). Pembahasan menyebut ISI pernyataan, bukan urutannya ("pernyataan pertama", "pernyataan 2"), karena urutan pernyataan diacak aplikasi. "kunci": array 4 label sesuai urutan pernyataan; jangan semua sama. Jangan menulis ulang keempat pernyataan di dalam "pertanyaan" (aplikasi menampilkannya sebagai tabel). Tanpa "pilihan".
 - MJ (menjodohkan): "pertanyaan" berisi perintah singkat saja, misalnya "Jodohkan setiap kata di lajur kiri dengan artinya di lajur kanan!"; JANGAN menulis pasangannya di dalam "pertanyaan". "pasangan": TEPAT 5 objek {"premis":"...","jawaban":"..."}; setiap premis punya TEPAT SATU jawaban yang benar, semua premis berbeda, semua jawaban berbeda, dan seluruh pasangan memiliki hubungan sejenis (kata–arti, tokoh–peristiwa, istilah–pengertian, rumus–nama, dan sebagainya). Premis dan jawaban singkat (maks 12 kata). "pengecoh": array berisi TEPAT 1 jawaban tambahan yang sejenis tetapi TIDAK cocok dengan premis mana pun. Aplikasi yang mengacak lajur kanan dan menyusun kunci hurufnya: JANGAN menulis huruf kunci, "pilihan", ataupun "kunci". "pembahasan": satu kalimat singkat per pasangan yang menjelaskan hubungannya (sebut isinya, bukan nomor atau hurufnya). Berlaku juga untuk bahasa asing (kosakata–arti, kata–lawan kata).
 - ISIAN (isian singkat): "pertanyaan" berisi kalimat atau pertanyaan dengan SATU bagian kosong yang ditulis "...." (empat titik). "kunci": jawaban singkat yang pas mengisi bagian kosong (satu kata, istilah, angka, atau frasa maksimal 5 kata). "kunciAlt": array 0–3 penulisan lain yang juga benar (sinonim atau ejaan lain), atau []. Hanya SATU jawaban yang mungkin benar, jadi kalimat harus cukup spesifik; jawaban TIDAK BOLEH muncul di kalimat soal. Tanpa "pilihan". Berlaku juga untuk bahasa asing (kosakata, dhamir, kata tanya, terjemah).
 - URAIAN: "pertanyaan" WAJIB menyebut batasan jawaban yang jelas: jumlah hal yang diminta ("Sebutkan tiga ...", "Jelaskan dua alasan ...") atau ruang lingkupnya ("... dari segi waktu dan nisabnya"); jangan perintah luas seperti "Jelaskan tentang ...!". "kunci" berisi jawaban ideal yang lengkap untuk SEMUA bagian yang diminta. "rubrik" mengikuti batasan itu (misalnya diminta tiga hal → tiga kriteria), setiap kriteria menyebut kapan mendapat skor penuh dan kapan sebagian; "skor" = jumlah skor rubrik.`;
@@ -359,9 +360,12 @@ function kepalaPermintaan(p: Pengaturan) {
     ? `\nCatatan dari guru (PRIORITAS TERTINGGI):\n"""${p.catatan}"""\n${KUNCI_CATATAN}\n`
     : "";
   const nama = `${namaTujuan(tujuan)}${KEPANJANGAN[tujuan] ? ` (${KEPANJANGAN[tujuan]})` : ""}`;
+  // 0.19.0: rubrik kini menulis skor sebagian di teks kriteria ("3 = tiga benar"); kalau jumlahnya tidak sama dengan bobot,
+  // terapkanBobot menskalakan angka skor tetapi teksnya tidak ikut → tidak cocok. Jadi AI diberi tahu jumlah yang dituju.
+  const bobotUraian = p.jumlah?.URAIAN && p.bobot?.URAIAN ? `Jumlah skor rubrik setiap soal URAIAN harus tepat ${p.bobot.URAIAN}.\n` : "";
   return `Tujuan: ${nama}. Aturan ${namaTujuan(tujuan)}: ${ATURAN_TUJUAN[tujuan].aturan}
 Tingkat kesulitan: ${kesulitan}. Artinya: ${ATURAN_KESULITAN[kesulitan]}
-${catatanGuru}`;
+${bobotUraian}${catatanGuru}`;
 }
 
 const KUNCI_CATATAN = `Ikuti catatan guru sepenuhnya, walau berbeda dengan aturan gaya di instruksi sistem (stimulus, variasi, sebaran TP/materi/dalil, panjang pembahasan, pilihan kata, dan sebagainya), KECUALI empat hal yang tidak boleh diubah:
@@ -450,7 +454,11 @@ export function ringkasSudah(s: Soal): string {
     s.bentuk === "PG" || s.bentuk === "PGK"
       ? kunci.map((h) => s.pilihan?.["ABCDE".indexOf(h.toUpperCase())]).filter(Boolean).join("; ")
       : s.bentuk === "ISIAN" ? kunci[0] : "";
-  return `${String(s.pertanyaan ?? "").slice(0, 160)}${jawaban ? ` → jawaban: ${jawaban.slice(0, 120)}` : ""}`;
+  // 0.19.0: isi Menjodohkan & Kategori ikut dikirim; dulu hanya perintahnya ("Jodohkan ...!") sehingga AI membuat
+  // pasangan yang sama lagi (audit 2026-11-07, set 70 no. 19 & 20).
+  const isi = s.bentuk === "MJ" ? [...(s.premis ?? s.pasangan?.map((p) => p.premis) ?? []), ...(s.jawaban ?? s.pasangan?.map((p) => p.jawaban) ?? [])] : s.pernyataan ?? [];
+  const daftar = isi.length ? ` → ${s.bentuk === "MJ" ? "isi lajur" : "pernyataan"}: ${isi.map((t) => String(t).slice(0, 50)).join("; ").slice(0, 300)}` : "";
+  return `${String(s.pertanyaan ?? "").slice(0, 160)}${jawaban ? ` → jawaban: ${jawaban.slice(0, 120)}` : ""}${daftar}`;
 }
 
 /**

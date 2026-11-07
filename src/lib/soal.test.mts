@@ -318,7 +318,7 @@ test("pilihan angka diurutkan kecil → besar (format Indonesia), tidak diacak, 
 test("soal Kategori: 4 pernyataan, label resmi, kunci per pernyataan; B/S lama tetap terbaca", () => {
   const dasar: Soal = {
     bentuk: "BS", dalil_id: null, pertanyaan: "Tentukan fakta atau opini!", pernyataan: ["a", "b", "c", "d"],
-    label: ["fakta", "OPINI"], kunci: ["Fakta", "opini", "Opini", "fakta"], pembahasan: "", level: "C4", tp: "TP 3.1", skor: 3,
+    label: ["fakta", "OPINI"], kunci: ["Fakta", "opini", "Opini", "fakta"], pembahasan: "", level: "C2", tp: "TP 3.1", skor: 3,
   };
   const [s] = periksaSoal([dasar], bab);
   assert.deepEqual(s.label, ["Fakta", "Opini"]); // ejaan disamakan dengan daftar resmi
@@ -710,4 +710,48 @@ test("0.18.3: jawaban isian direncanakan di kisi-kisi, jadi kata terlarang untuk
   assert.ok(w.includes('soal nomor 1 ("hiperinflasi")'), w);
   const dua = periksaSoal([{ ...isian, pertanyaan: "Golongan inflasi paling parah adalah ...." }, isian], bab);
   assert.ok(dua[1].peringatan!.some((x) => x.includes("soal nomor 1")));
+});
+
+test("0.19.0: HOTS tanpa stimulus ditandai; Menjodohkan mirip ditandai (yang belakangan saja); ringkasan memuat isi MJ & Kategori", () => {
+  const bab = { id: "x", judul: "x", tp: [{ kode: "TP 1", teks: "x" }], dalil: [], materi: [] } as Bab;
+  const dasar = { dalil_id: null, pembahasan: "", tp: "TP 1", skor: 1 };
+  const bs = { ...dasar, bentuk: "BS", level: "C5", pertanyaan: "Tentukan apakah setiap pernyataan berikut Benar atau Salah!", pernyataan: ["a", "b", "c", "d"], label: ["Benar", "Salah"], kunci: ["Benar", "Salah", "Benar", "Salah"] } as Soal;
+  const hots = (s: Soal) => periksaSoal([s], bab)[0].peringatan!.some((w) => w.includes("tanpa stimulus"));
+  assert.ok(hots(bs));
+  assert.ok(!hots({ ...bs, level: "C2" })); // LOTS boleh tanpa stimulus
+  assert.ok(!hots({ ...bs, pertanyaan: `Data praktikum: tabung A berisi kalsium membeku 3 menit, tabung B 8 menit. ${bs.pertanyaan}` }));
+  assert.ok(!hots({ ...bs, wacana: "teks wacana grup" }));
+  const mj = (isi: string[]): Soal => ({ ...dasar, bentuk: "MJ", level: "C4", pertanyaan: "Jodohkan!", premis: isi.slice(0, 5), jawaban: isi.slice(5), kunci: ["A", "B", "C", "D", "E"] });
+  const satu = mj(["Fungsi anggaran", "Fungsi mengatur", "Fungsi stabilitas", "Fungsi redistribusi", "Pajak tidak langsung", "a", "b", "c", "d", "e", "f"]);
+  const dua = mj(["p1", "p2", "p3", "p4", "p5", "Pajak tidak langsung", "Bea meterai", "Fungsi stabilitas", "Fungsi mengatur", "Fungsi anggaran", "x"]);
+  const [a, b] = periksaSoal([satu, dua], bab);
+  assert.ok(!a.peringatan!.some((w) => w.includes("mirip")));
+  assert.ok(b.peringatan!.some((w) => w.includes("mirip soal nomor 1")));
+  assert.ok(!periksaSoal([satu, mj(["q1", "q2", "q3", "q4", "q5", "Fungsi anggaran", "Fungsi mengatur", "r1", "r2", "r3", "r4"])], bab)[1].peringatan!.some((w) => w.includes("mirip"))); // 2 sama: belum mirip
+  assert.ok(ringkasSudah(satu).includes("isi lajur: Fungsi anggaran; Fungsi mengatur"));
+  assert.ok(ringkasSudah(bs).includes("pernyataan: a; b; c; d"));
+});
+
+test("0.19.0: pernyataan Kategori diacak bersama kuncinya, kecuali pembahasan menunjuk urutan", () => {
+  const bs = { bentuk: "BS", dalil_id: null, tp: "TP 1", skor: 1, level: "C2", pertanyaan: "?", pernyataan: ["p1", "p2", "p3", "p4"], label: ["Benar", "Salah"], kunci: ["Benar", "Benar", "Benar", "Salah"], pembahasan: "Trombosit memulai pembekuan, ..." } as Soal;
+  let acak = 0;
+  const urutan = new Set<string>();
+  for (let n = 0; n < 30; n++) {
+    const s = structuredClone(bs);
+    ratakanKunci([s], () => ((acak = (acak * 9301 + 49297) % 233280) / 233280));
+    urutan.add(s.pernyataan!.join());
+    s.pernyataan!.forEach((p, i) => assert.equal((s.kunci as string[])[i], bs.kunci[bs.pernyataan!.indexOf(p)])); // kunci ikut pernyataannya
+  }
+  assert.ok(urutan.size > 3); // benar-benar teracak
+  for (const pb of ["Tiga pernyataan pertama benar.", "Pernyataan 4 salah karena ...", "pernyataan ke-2 benar"]) {
+    const s = structuredClone({ ...bs, pembahasan: pb });
+    ratakanKunci([s], () => 0.99);
+    assert.deepEqual(s.pernyataan, bs.pernyataan, pb); // menunjuk urutan → tidak diacak
+  }
+});
+
+test("0.19.0: AI diberi tahu jumlah skor rubrik uraian (= bobot), supaya teks skor sebagian tidak bergeser saat diskalakan", () => {
+  const p = bersihkanPengaturan({ babId: "materi-1", tujuan: "PAS", kesulitan: "Sedang", jumlah: { PG: 1, PGK: 0, BS: 0, MJ: 0, ISIAN: 0, URAIAN: 1 }, level: { LOTS: 30, MOTS: 40, HOTS: 30 }, bobot: { PG: 2, PGK: 5, BS: 3, MJ: 5, ISIAN: 3, URAIAN: 8 } } as Pengaturan) as Pengaturan;
+  assert.ok(buatPengguna(p, p.jumlah, []).includes("Jumlah skor rubrik setiap soal URAIAN harus tepat 8"));
+  assert.ok(!buatPengguna({ ...p, jumlah: { ...p.jumlah, URAIAN: 0 } }, p.jumlah, []).includes("Jumlah skor rubrik"));
 });

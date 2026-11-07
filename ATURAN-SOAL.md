@@ -9,6 +9,8 @@ boleh pilihan terpanjang + pemeriksa aplikasi (2b no. 7), ejaan KBBI (2c no. 5),
 dokumen ini disamakan dengan aplikasi. Versi 0.18.1: uraian berbatasan (bagian 3) dan pemeriksa pilihan terlarang (2b no. 6).
 Versi 0.18.2 (dari `AUDIT-SOAL-2026-11-07.md`): kunci PG dicocokkan dengan hasil hitung AI (2a no. 2), PG kompleks tanpa
 pilihan gabungan (2b no. 6), pembahasan tidak menunjuk urutan pilihan (10 no. 2).
+Versi 0.19.0 (sisa audit): HOTS tanpa stimulus ditandai (1c no. 3), Menjodohkan mirip ditandai (2b no. 10), pernyataan
+Kategori diacak aplikasi + label diragamkan (bagian 3), contoh rubrik dengan skor sebagian (bagian 3).
 
 Tanda di dokumen ini:
 - ✅ = sudah dijalankan aplikasi (semua aturan di file ini sudah jalan, kecuali yang diberi ⚠️ atau "ditunda")
@@ -49,7 +51,10 @@ aplikasi tetap memakai 3 kelompok karena umum di kisi-kisi madrasah.
 2. ✅ **HOTS ≠ sulit.** HOTS = menalar. Soal hafalan yang rumit tetap LOTS; soal HOTS bisa saja mudah.
    (Di aplikasi, "Tingkat kesulitan" dan "Level" adalah dua pengaturan yang berbeda.)
 3. ✅ **Soal HOTS wajib memakai stimulus** yang belum pernah dibaca siswa (kasus, data, teks, fenomena),
-   dan jawabannya harus diperoleh dengan mengolah stimulus itu.
+   dan jawabannya harus diperoleh dengan mengolah stimulus itu. Bila jawabannya langsung tertulis di stimulus atau cukup
+   diingat, soal itu LOTS, bukan HOTS. 🔍 (0.19.0) Soal C4–C6 tanpa wacana/dalil yang pertanyaannya < 80 huruf
+   ditandai "HOTS tanpa stimulus" (Menjodohkan dilewati). Batas diukur pada ±100 soal HOTS lama: hanya yang benar-benar
+   kosong yang kena. Soal hafalan yang punya stimulus tapi berlabel HOTS tidak bisa diperiksa otomatis.
 4. ✅ **Soal C1–C2 tidak perlu stimulus panjang.** Pokok soal langsung lebih baik.
 5. ✅ (0.18.0) **Tingkat kesulitan mengatur berat soal di dalam levelnya**, tidak mengubah level dan tidak menghapus
    stimulus soal HOTS. "Mudah" untuk soal HOTS = stimulus pendek dan sederhana, bukan tanpa stimulus.
@@ -94,7 +99,9 @@ Bloom revisi juga membagi jenis pengetahuan: faktual, konseptual, prosedural, me
    Aplikasi menandai PG yang kuncinya terpanjang DAN ≥ 1,5× rata-rata panjang pengecoh (kunci < 15 huruf dilewati).
 8. ✅ 🔍 **Pilihan berupa angka/tahun/urutan disusun berurutan** (kecil → besar, lama → baru), dan **tidak diacak**.
 9. ✅ Soal tidak bergantung pada jawaban soal lain.
-10. ✅ Soal dalam satu set tidak saling mirip; sebar ke semua TP dan materi.
+10. ✅ Soal dalam satu set tidak saling mirip; sebar ke semua TP dan materi. (0.19.0) Daftar "soal yang sudah dibuat"
+    yang dikirim ke AI kini memuat isi lajur Menjodohkan dan pernyataan Kategori. 🔍 Menjodohkan yang memakai 3+ isi lajur
+    sama dengan Menjodohkan sebelumnya ditandai "mirip soal nomor N" (hanya yang belakangan).
 11. ✅ **Jawaban satu soal tidak boleh tertulis di soal lain** dalam set yang sama (di pokok soal maupun pilihan),
     terutama kunci isian singkat. Contoh salah: kunci isian "ikhlas karena Allah", padahal frasa itu sudah menjadi
     pilihan di soal PG nomor 2. (Disetujui 2026-11-05; aplikasi mengirim jawaban soal tahap sebelumnya ke AI.)
@@ -122,10 +129,10 @@ Bloom revisi juga membagi jenis pengetahuan: faktual, konseptual, prosedural, me
 |---|---|---|
 | **Pilihan Ganda (PG)** | 5 pilihan (A–E), tepat 1 benar; pengecoh homogen & masuk akal | ✅ sesuai |
 | **PG Kompleks — jawaban ganda (MCMA)** | 5 pilihan, lebih dari satu benar tapi tidak semua | ✅ **2 atau 3 benar**, sesuai soal. Petunjuk: **"(Pilih semua jawaban yang tepat)"**, tanpa menyebut jumlah (sama dengan TKA) |
-| **PG Kompleks — Kategori (dulu "Benar/Salah")** | satu stimulus + **4 pernyataan**, tiap pernyataan dinilai dengan sepasang label | ✅ label: Benar/Salah, Fakta/Opini, Sesuai/Tidak Sesuai, Tepat/Tidak Tepat, atau Didukung/Tidak Didukung |
+| **PG Kompleks — Kategori (dulu "Benar/Salah")** | satu stimulus + **4 pernyataan**, tiap pernyataan dinilai dengan sepasang label | ✅ label: Benar/Salah, Fakta/Opini, Sesuai/Tidak Sesuai, Tepat/Tidak Tepat, atau Didukung/Tidak Didukung, diragamkan dalam satu set. (0.19.0) **Urutan 4 pernyataan diacak aplikasi** (kunci ikut), supaya letak pernyataan salah tidak berpola; pembahasan menyebut isi pernyataan, bukan urutannya. Soal yang pembahasannya menunjuk urutan ("pernyataan pertama") tidak diacak, supaya pembahasannya tetap benar |
 | **Menjodohkan** | 5 premis; jawaban di lajur kanan lebih banyak dari premis | ✅ (0.10.0) 5 premis + 6 jawaban (1 pengecoh). AI hanya menulis 5 pasangan benar + 1 pengecoh; **aplikasi mengacak lajur kanan dan menyusun kunci hurufnya**. Skor **per pasangan** (bobot 5 = 1 poin/pasangan). Bukan untuk Latihan TKA |
 | **Isian / jawaban singkat** | jawaban berupa kata, frasa, angka, atau simbol | ✅ (0.10.0) kalimat dengan satu bagian kosong "....", kunci: AI diminta ≤ 5 kata, aplikasi baru menandai bila > 6 kata (kelonggaran) + jawaban lain yang diterima (pegangan guru). Skor 1/0. Jawaban tidak boleh muncul di soal. Bukan untuk Latihan TKA |
-| **Uraian** | menuntut jawaban terurai; wajib ada **pedoman penskoran (rubrik)** | ✅ sesuai. (0.18.1) Soal wajib menyebut **batasan jawaban** ("Sebutkan **tiga** ...", "dari segi ... dan ..."), bukan "Jelaskan tentang ...!"; kunci lengkap untuk semua bagian; rubrik mengikuti batasan (3 hal → 3 kriteria) dan menyebut kapan skor penuh/sebagian. Hanya instruksi ke AI, tidak diperiksa aplikasi |
+| **Uraian** | menuntut jawaban terurai; wajib ada **pedoman penskoran (rubrik)** | ✅ sesuai. (0.18.1) Soal wajib menyebut **batasan jawaban** ("Sebutkan **tiga** ...", "dari segi ... dan ..."), bukan "Jelaskan tentang ...!"; kunci lengkap untuk semua bagian; rubrik mengikuti batasan (3 hal → 3 kriteria) dan menyebut kapan skor penuh/sebagian, contoh (0.19.0): "Menyebut tiga syarat (3 = tiga benar; 2 = dua benar; 1 = satu benar; 0 = tidak ada)". Hanya instruksi ke AI, tidak diperiksa aplikasi |
 
 🔍 Susunan tiap bentuk di tabel ini (jumlah pilihan/pernyataan/premis, jumlah dan bentuk kunci, bagian kosong isian)
 diperiksa aplikasi.

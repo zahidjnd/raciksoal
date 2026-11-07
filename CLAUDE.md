@@ -554,3 +554,11 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   `nomor ("potongan")` + menghitung isian lain berkunci sama; perbaikan otomatis memakai batas instruksi 800
   (`buatPenggantiPengguna(..., maksInstruksi)`). Uji laptop set 74 (Fikih: 1 tetap merah, karena kisi merencanakan PG
   no. 1 dan isian no. 10 untuk konsep sama) & 75 (Ekonomi: 0 merah, dulu 1–3).
+- 2026-11-07 (0.19.0, sisa audit): `acakPernyataan` di `ratakanKunci` (soal.ts): pernyataan Kategori + kunci diacak (ikut
+  Paket B–D), DILEWATI bila pembahasan cocok `URUTAN_PERNYATAAN` ("pernyataan pertama/2") — sengaja tanpa tanda merah,
+  karena soal lama & tulisan guru banyak memakai urutan. HOTS tanpa stimulus: C4–C6, bukan MJ, tanpa wacana/dalil,
+  pertanyaan < 80 huruf (diukur di DB laptop). `mjMirip`: 3+ isi lajur sama dengan MJ sebelumnya. `ringkasSudah` kini
+  memuat isi lajur MJ & pernyataan Kategori. Rubrik: contoh skor sebagian + `kepalaPermintaan` memberi tahu
+  "Jumlah skor rubrik setiap soal URAIAN harus tepat <bobot>" (tanpa itu `terapkanBobot` menskalakan angka, teks
+  "3 = …" tidak ikut → tidak cocok; ketahuan saat uji set 76). Uji laptop set 76–78. Temuan baru: MJ "pengelompokan"
+  (jawaban berulang) dan isian bocor dari kisi-kisi yang konsepnya bertabrakan, belum dikerjakan.

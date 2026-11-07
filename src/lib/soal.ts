@@ -486,6 +486,38 @@ function cekJawabanBenar(s: Soal): string | null {
   return null;
 }
 
+/**
+ * Menjodohkan yang memakai 3+ isi lajur (premis/jawaban) sama dengan Menjodohkan SEBELUMNYA di set: nomor soal itu, atau 0.
+ * Hanya soal yang belakangan yang ditandai, supaya perbaikan otomatis tidak mengganti keduanya (audit 2026-11-07, set 70).
+ */
+function mjMirip(soal: Soal[], i: number): number {
+  const isi = (s: Soal) => new Set([...(s.premis ?? []), ...(s.jawaban ?? [])].map((t) => polos(t).trim()).filter(Boolean));
+  const ini = isi(soal[i]);
+  const j = soal.findIndex((s, j) => j < i && s.bentuk === "MJ" && [...isi(s)].filter((t) => ini.has(t)).length >= 3);
+  return j + 1;
+}
+
+// Pembahasan Kategori yang menunjuk pernyataan dengan urutan ("pernyataan pertama", "tiga pernyataan pertama", "pernyataan 2").
+const URUTAN_PERNYATAAN = /\bpernyataan\s+(ke-?\s?[1-4]\b|nomor\s+[1-4]\b|\(?[1-4]\)?(?![\d%.,])|pertama|kedua|ketiga|keempat|terakhir)/i;
+
+/**
+ * Soal Kategori: urutan 4 pernyataan (dan kuncinya) diacak aplikasi, supaya letak pernyataan salah tidak berpola
+ * (audit 2026-11-07: tiga soal berkunci Benar, Benar, Benar, Salah). Soal yang pembahasannya menunjuk urutan TIDAK diacak,
+ * supaya pembahasannya tidak salah tunjuk (termasuk soal lama dan tulisan guru). Ikut berlaku untuk Paket B–D.
+ */
+function acakPernyataan(s: Soal, acak: () => number) {
+  const p = s.pernyataan!;
+  const k = [s.kunci].flat();
+  if (p.length !== k.length || p.length < 2 || URUTAN_PERNYATAAN.test(s.pembahasan ?? "")) return;
+  const urut = p.map((_, i) => i);
+  for (let i = urut.length - 1; i > 0; i--) {
+    const j = Math.floor(acak() * (i + 1));
+    [urut[i], urut[j]] = [urut[j], urut[i]];
+  }
+  s.pernyataan = urut.map((i) => p[i]);
+  s.kunci = urut.map((i) => k[i]);
+}
+
 /** Beri peringatan pada soal yang bermasalah. Aturan 5: teks Arab hanya boleh dari data terverifikasi. */
 export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
   const arabAsingDi = pemeriksaArab(bab, cekAyat);
@@ -525,6 +557,11 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
       const w = cekJawabanBenar(s);
       if (w) peringatan.push(w);
     }
+    // HOTS wajib stimulus (ATURAN-SOAL 1c no. 3). Batas 80 huruf diukur 2026-11-07 pada ±100 soal C4–C6 lama tanpa
+    // wacana/dalil: hanya pertanyaan yang benar-benar kosong ("Tentukan apakah setiap pernyataan berikut Benar atau Salah!")
+    // yang kena. Menjodohkan dilewati: isinya ada di pasangan, perintahnya memang pendek.
+    if (/^C[4-6]$/i.test(s.level ?? "") && s.bentuk !== "MJ" && !s.wacana && !s.dalil_id && String(s.pertanyaan ?? "").trim().length < 80)
+      peringatan.push(`Soal HOTS (${s.level}) tanpa stimulus: tambahkan kasus, data, atau teks yang harus diolah siswa untuk menjawab.`);
     if (s.bentuk === "PG" && kunciTerpanjang(s)) peringatan.push("Jawaban benar jauh lebih panjang dari semua pengecoh, jadi mudah ditebak. Samakan panjang dan kerincian pilihan.");
     if (s.bentuk === "PGK" && !KUNCI_PGK.includes(new Set([s.kunci].flat()).size)) peringatan.push("Kunci PG kompleks harus 2 atau 3 jawaban.");
     if (s.bentuk === "ISIAN") {
@@ -532,7 +569,11 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
       const di = bocorDi(soal, i);
       if (di.length) peringatan.push(`Jawaban isian sudah tertulis di soal nomor ${di.slice(0, 3).join(", ")}${di.length > 3 ? `, dan ${di.length - 3} soal lain` : ""}.`);
     }
-    if (s.bentuk === "MJ") peringatan.push(...periksaMenjodohkan(s));
+    if (s.bentuk === "MJ") {
+      peringatan.push(...periksaMenjodohkan(s));
+      const mirip = mjMirip(soal, i);
+      if (mirip) peringatan.push(`Menjodohkan ini mirip soal nomor ${mirip} (3 atau lebih isi lajur sama). Pakai pasangan dari sisi materi lain.`);
+    }
     if (kategoriBaru(s)) {
       if (s.pernyataan!.length !== JUMLAH_PERNYATAAN || s.pernyataan!.some((p) => !p)) peringatan.push(`Soal kategori harus berisi ${JUMLAH_PERNYATAAN} pernyataan.`);
       if (!cariLabel(s.label)) peringatan.push(`Label kategori tidak dikenal: ${(s.label ?? []).join(" / ") || "(kosong)"}.`);
@@ -614,6 +655,7 @@ function susunUlang(s: Soal, benar: number[], posisi: number[], acak: () => numb
  * jadi tiap huruf seimbang. Pilihan berupa angka tidak diacak, melainkan diurutkan kecil → besar.
  */
 export function ratakanKunci(soal: Soal[], acak = Math.random): void {
+  for (const s of soal) if (kategoriBaru(s)) acakPernyataan(s, acak);
   for (const s of soal) if ((s.bentuk === "PG" || s.bentuk === "PGK") && pilihanAngka(s) && indeksKunci(s)) urutkanAngka(s);
   const kelompok = [
     { bentuk: "PG", k: 1 },

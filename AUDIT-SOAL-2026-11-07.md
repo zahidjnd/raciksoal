@@ -167,7 +167,32 @@ sendiri merencanakan PG no. 1 dan isian no. 10 untuk konsep yang sama (hukum sal
 kisi-kisi daripada larangan. Hal ini tidak bisa dideteksi otomatis dengan andal. Tanda merah tetap menjadi pengaman,
 dan kini menunjuk letaknya: `soal nomor 1 ("Fardu ain")`.
 
-Masih terbuka: Temuan 3, 5, 6, 7, dan sisa **kunci isian yang bocor** (perbaikan otomatis sering gagal karena materinya
+## Tindak lanjut: versi 0.19.0 (Temuan 3, 5, 6, 7)
+
+- **Temuan 3:** soal C4–C6 tanpa wacana/dalil dengan pertanyaan < 80 huruf ditandai "HOTS tanpa stimulus" (batas diukur
+  pada ±100 soal HOTS lama; hanya yang benar-benar kosong yang kena). Instruksi: jawaban yang tertulis di stimulus = LOTS.
+- **Temuan 5:** daftar "soal yang sudah dibuat" kini memuat isi lajur Menjodohkan dan pernyataan Kategori. Menjodohkan
+  dengan 3+ isi lajur sama ditandai "mirip soal nomor N".
+- **Temuan 6:** urutan pernyataan Kategori diacak aplikasi bersama kuncinya (kecuali pembahasan menunjuk urutan); label
+  diragamkan lewat instruksi.
+- **Temuan 7:** contoh rubrik dengan skor sebagian. Ditemukan saat uji: teks skor sebagian tidak cocok dengan angka skor
+  setelah aplikasi menskalakan rubrik ke bobot (teks "3 = …", skor 5). Diperbaiki: AI diberi tahu jumlah skor rubrik =
+  bobot uraian.
+
+Uji ulang:
+
+| Set | Hasil |
+|---|---|
+| 76 Ekonomi ASAS 25 | Kategori teracak, label beragam (Benar/Salah + Tepat/Tidak Tepat); menjodohkan tidak kembar. Rubrik sempat tidak cocok (lihat Temuan 7) → diperbaiki. **Temuan baru:** kedua menjodohkan berjenis "pengelompokan" (5 pajak → lembaga pemungut, jawaban berulang), tetap merah setelah perbaikan otomatis |
+| 77 Biologi TKA 15 | 0 merah; 3 diperbaiki otomatis (termasuk "pengecoh kedua"); Kategori teracak, label Benar/Salah + Tepat/Tidak Tepat; semua HOTS berstimulus |
+| 78 Ekonomi ASAS 25 | Rubrik cocok (skor 4 = "4 / 2 / 0", jumlah 8). 3 merah: 1 PG kompleks satu kunci, 2 isian bocor |
+
+**Isian bocor masih sering** (set 75: 0, set 76: 2, set 78: 2 tetap merah). Akarnya di kisi-kisi: AI merencanakan
+isian "anggaran" sambil merencanakan PG no. 2 "membedakan fungsi anggaran dan fungsi redistribusi". Calon perbaikan
+berikutnya: aplikasi memeriksa rencana jawaban isian terhadap indikator/materi baris kisi lain (bisa menangkap kasus
+"anggaran", tetapi tidak kasus "fardu ain" yang tidak tertulis di indikator).
+
+Masih terbuka: menjodohkan "pengelompokan" (temuan baru) dan sisa **kunci isian yang bocor** (perbaikan otomatis sering gagal karena materinya
 sempit, jadi konsep yang sama terpakai di beberapa soal; calon perbaikan: menghindarinya sejak tahap kisi-kisi).
 
 ## Catatan uji
