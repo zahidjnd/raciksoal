@@ -256,8 +256,8 @@ ${bab.materi.join("\n")}`;
 }
 
 /**
- * Analisa materi baru dari halaman utama: judul, usulan TP, pokok materi, dan sumber/terjemah dalil yang tertulis
- * di teks. Hasil dicek lagi oleh terapkanAnalisa (src/lib/materi.ts): yang tidak tertulis di teks guru dibuang.
+ * Analisa materi baru dari halaman utama: judul, TP yang tertulis di teks (AI tidak merumuskan TP: tugas guru,
+ * RUJUKAN.md D), pokok materi, dan sumber/terjemah dalil yang tertulis di teks. Hasil dicek lagi oleh terapkanAnalisa (src/lib/materi.ts): yang tidak tertulis di teks guru dibuang.
  */
 export function buatAnalisaMateri(mapel: string, kelas: string, teks: string, bahasaArab: boolean) {
   const sistem = `Anda membantu guru ${mapel} kelas ${kelas} madrasah aliyah (kurikulum Kemenag) menyiapkan materi untuk menyusun soal.
@@ -271,7 +271,7 @@ ${teks.replace(/"{3,}/g, '"')}
 
 Balas JSON {"judul":"...","tp":["..."],"pokok":["..."],"dalil":[{"no":1,"sumber":"...","terjemah":"..."}],"catatan":"..."}:
 - "judul": judul bab/materi singkat (maks 10 kata); pakai judul yang tertulis di teks bila ada.
-- "tp": 3–6 Tujuan Pembelajaran gaya Kemenag, diawali "Peserta didik mampu ...", kata kerja operasional, sesuai isi teks, urut dari mudah ke sulit. Bila teks memuat TP/ATP, salin TP itu.
+- "tp": SALIN Tujuan Pembelajaran (TP) yang TERTULIS di teks (mis. bagian "Tujuan Pembelajaran" atau ATP), PERSIS kata per kata, satu TP per butir, beserta kodenya bila ada (mis. "TP 1.2: Peserta didik mampu ..."). JANGAN membuat, merumuskan, atau memperbaiki TP sendiri: TP dirumuskan guru. Kalau teks tidak memuat TP, isi [].
 - "pokok": 4–10 pokok materi yang bisa diuji (maks 15 kata per poin).
 - "dalil": untuk setiap [DALIL n]: "sumber" (mis. "HR. Bukhari dan Muslim") dan "terjemah" HANYA bila tertulis di teks di dekat dalil itu, disalin PERSIS kata per kata; kalau tidak tertulis, isi "". Jangan menerjemahkan sendiri.
 - "catatan": satu kalimat bila teks terlalu sedikit atau kurang jelas untuk dibuat soal; selain itu "".`;

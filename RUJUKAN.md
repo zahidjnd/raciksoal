@@ -98,7 +98,7 @@ karena bukan aturan soal. Pengecualian: pemisahan data guru dan kerahasiaan (bag
 |---|---|---|---|---|
 | Soal hanya dari materi yang dimasukkan guru | prompt | R3 | — | ✔ |
 | Kunci jawaban berdasar materi bab | `buatSistem` | R2 | D13 | |
-| **TP diusulkan AI** bila guru tidak menulis TP | `buatAnalisaMateri` | **R4** | ✔ D08b hlm 15–16, 21–22: TP dirumuskan **pendidik**; D05 hlm 66: perencanaan oleh guru | ⚠️ **Celah terbesar, kini terbukti**: TP adalah tugas guru. Usul: TP wajib dari guru (ATP/modul), AI hanya menyalin TP yang tertulis |
+| **TP dari guru**: AI hanya menyalin TP yang tertulis di materi guru (dicek aplikasi, kode TP dipertahankan); kalau tidak ada, kotak TP kosong + peringatan "tulis dari ATP/modul ajar" | `buatAnalisaMateri`, `terapkanAnalisa`, `KartuDraf` | **R1** | ✔ D08b hlm 15–16, 21–22: TP dirumuskan **pendidik**; D05 hlm 66: perencanaan oleh guru | ✅ diperbaiki 2026-11-07 (dulu AI mengusulkan 3–6 TP sendiri). Materi lama yang TP-nya dulu usulan AI tidak diubah: guru bisa mengeditnya di Kelola materi |
 | Kesesuaian materi dengan CP | — | **R4** | ✔ D06 Qurdis Fase F (17 tema) | Usul: simpan 17 tema CP Qurdis Fase F di aplikasi; guru memilih tema CP saat membuat materi (pilihan, bukan buatan AI). Mapel lain menyusul bila CP-nya dimasukkan |
 | Sumber materi (buku, halaman) tidak tercatat | — | **R4** | — | Usul: kolom "sumber materi" |
 | Pokok materi diringkas AI dari teks guru | `buatAnalisaMateri` | R3 | — | boleh: hanya meringkas, bisa diedit |
@@ -216,7 +216,7 @@ Semua butir di ATURAN-SOAL.md bagian 2 dan 10.
 ## 3. Celah dan perbedaan (urut kepentingan)
 
 **A. Bertentangan dengan dokumen resmi (perlu diperbaiki):**
-1. **TP dibuat AI**, padahal TP dirumuskan guru (D08b, D05). → TP wajib dari guru.
+1. ~~**TP dibuat AI**, padahal TP dirumuskan guru (D08b, D05).~~ ✅ Diperbaiki 2026-11-07: TP dari guru, AI hanya menyalin yang tertulis.
 2. **Latihan TKA berbeda dari contoh resmi** (D12): MCMA 2–3 benar (resmi 2–4), Kategori 4 pernyataan (resmi 3), petunjuk MCMA, grup satu bentuk, nama level untuk mapel bahasa.
 
 **B. Belum ada dasar, perlu keputusan madrasah (R4 → R3):**
@@ -250,7 +250,7 @@ BSKAP 2025 (D08b).
 
 ## 5. Langkah sesudahnya (diusulkan, belum dikerjakan)
 1. Setiap kali aturan soal diubah: ubah ATURAN-SOAL.md, lalu **peta ini**, baru kode. Aturan baru tanpa baris di peta ini tidak boleh masuk.
-2. Perbaiki celah A1 (TP dari guru) dan A2 (Latihan TKA disamakan dengan contoh resmi).
+2. Perbaiki celah A2 (Latihan TKA disamakan dengan contoh resmi). A1 (TP dari guru) sudah, 2026-11-07.
 3. Pemilik memutuskan celah B (3–6), lalu dicatat sebagai R3.
 4. Celah C (CP Qurdis, kolom kisi-kisi, kolom sumber).
 5. Halaman "Dasar aturan" di Panduan untuk guru, dan satu baris rujukan di Word kisi-kisi.

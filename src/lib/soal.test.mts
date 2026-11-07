@@ -405,7 +405,7 @@ test("materi di halaman utama: ayat dari mushaf, hadis jadi usulan, basmalah dib
   const hadis = "مَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الْآخِرِ فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ";
   const basmalah = "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ";
   const cari = (a: string) => (a === ayat ? { sumber: "QS. Al-Isrā' [17]: 32", arab: ayat } : null);
-  const paragraf = [basmalah, "Bab 1 Menjaga Diri", ayat, "Artinya: Dan janganlah kamu mendekati zina.", hadis, "HR. Bukhari", "x".repeat(120)];
+  const paragraf = [basmalah, "Bab 1 Menjaga Diri", "TP 3.1: Peserta didik mampu menjelaskan larangan zina", ayat, "Artinya: Dan janganlah kamu mendekati zina.", hadis, "HR. Bukhari", "x".repeat(120)];
   const { isian, untukAi } = susunDraf({ mapel: "Al-Qur'an Hadis", kelas: "XI", paragraf }, cari, (a) => a === basmalah);
   assert.deepEqual(isian.dalil.map((d) => [d.sumber, !!d.mushaf, !!d.usulan]), [["QS. Al-Isrā' [17]: 32", true, false], ["", false, true]]);
   assert.ok(!isian.isi.includes(basmalah) && !isian.isi.includes(hadis) && isian.isi.includes("Menjaga Diri"));
@@ -416,11 +416,11 @@ test("materi di halaman utama: ayat dari mushaf, hadis jadi usulan, basmalah dib
   assert.equal(arab.isian.dalil.length, 0);
   assert.ok(arab.isian.isi.includes("الطَّالِبُ"));
 
-  // AI: judul/TP/pokok dipakai; terjemah & sumber hanya bila tertulis di teks guru; Arab karangan dibuang
+  // AI: judul/pokok dipakai; TP, terjemah & sumber hanya bila tertulis di teks guru; Arab karangan dibuang
   const { isian: hasil } = terapkanAnalisa(
     {
       judul: "Menjaga Diri قَالَ",
-      tp: ["TP 1: Peserta didik mampu menjelaskan larangan zina", "Peserta didik mampu menganalisis hikmahnya"],
+      tp: ["TP 3.1: Peserta didik mampu menjelaskan larangan zina", "Peserta didik mampu menganalisis hikmahnya (karangan AI)"],
       pokok: ["Larangan mendekati zina"],
       dalil: [{ no: 1, terjemah: "Dan janganlah kamu mendekati zina." }, { no: 2, sumber: "HR. Bukhari", terjemah: "Siapa beriman hendaklah berkata baik (karangan)" }],
     },
@@ -428,7 +428,9 @@ test("materi di halaman utama: ayat dari mushaf, hadis jadi usulan, basmalah dib
     untukAi,
   );
   assert.equal(hasil.judul, "Menjaga Diri");
-  assert.equal(hasil.tp, "TP 1: Peserta didik mampu menjelaskan larangan zina\nTP 2: Peserta didik mampu menganalisis hikmahnya");
+  assert.equal(hasil.tp, "TP 3.1: Peserta didik mampu menjelaskan larangan zina"); // TP karangan AI dibuang, kode asli tetap
+  assert.equal(terapkanAnalisa({ tp: ["Peserta didik mampu menganalisis hikmahnya"] }, isian, untukAi).isian.tp, "");
+  assert.equal(terapkanAnalisa({ tp: ["peserta didik mampu menjelaskan larangan zina"] }, isian, untukAi).isian.tp, "TP 1: peserta didik mampu menjelaskan larangan zina");
   assert.equal(hasil.dalil[0].terjemah, "Dan janganlah kamu mendekati zina.");
   assert.equal(hasil.dalil[0].sumber, "QS. Al-Isrā' [17]: 32"); // sumber mushaf tidak ditimpa AI
   assert.equal(hasil.dalil[1].sumber, "HR. Bukhari");

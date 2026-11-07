@@ -568,3 +568,9 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   `kataTerpakai(soal, i)` (soal.ts: pilihan/isi lajur/kunci isian soal lain, ≤ 6 kata, maks 80), batas instruksi
   perbaikan 2000. Uji laptop set 79–80 memakai akun `guru.uji.b` + materi-10 (salinan materi-8), karena guru.uji.ayat
   kena batas 10 set/hari. Sisa: isian berjawaban angka ("10%") sama dengan hasil soal hitungan lain.
+- 2026-11-07 RUJUKAN.md (peta dasar setiap aturan: R1 resmi, R2 kaidah, R3 keputusan madrasah, R4 belum ada dasar).
+  Ubah aturan → ATURAN-SOAL.md, lalu RUJUKAN.md, baru kode. PDF rujukan di `dokumen/rujukan/` sengaja TIDAK di-commit.
+- 2026-11-07 TP DARI GURU (pemilik "gas", celah A1 RUJUKAN.md): `buatAnalisaMateri` hanya menyuruh AI MENYALIN TP yang
+  tertulis di teks; `terapkanAnalisa` membuang TP yang tidak tertulis (`tertulis`, min 15 huruf) dan mempertahankan
+  kodenya ("TP 2.1"). Tidak ada TP → kotak kosong + peringatan kuning di `KartuDraf`; simpan tetap wajib TP
+  (`rapikanMateri`). Materi lama tidak diubah. Uji laptop (guru.uji.b, Ekonomi): tanpa TP → kosong; dengan TP → tersalin persis.

@@ -184,8 +184,8 @@ export function ayatDariPdf(blok: string, cariAyat: CariAyat, basmalah: (arab: s
 const kerangka = (t: string) => t.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 
 /**
- * Pasang hasil analisa AI ke draf: judul, usulan TP, pokok materi, serta sumber/terjemah dalil. Sumber & terjemah
- * HANYA dipakai bila memang tertulis di teks guru (AI tidak boleh mengarang, aturan 5). Teks Arab dari AI di
+ * Pasang hasil analisa AI ke draf: judul, TP, pokok materi, serta sumber/terjemah dalil. TP, sumber & terjemah
+ * HANYA dipakai bila memang tertulis di teks guru (AI tidak boleh mengarang, aturan 5; TP tugas guru). Teks Arab dari AI di
  * judul/TP/pokok dibuang (kecuali mapel Bahasa Arab).
  */
 export function terapkanAnalisa(ai: unknown, draf: IsianMateri, teksGuru: string): { isian: IsianMateri; catatan: string } {
@@ -197,7 +197,12 @@ export function terapkanAnalisa(ai: unknown, draf: IsianMateri, teksGuru: string
   const daftar = (x: unknown, maks: number) =>
     (Array.isArray(x) ? x : []).map((t) => tanpaArab(teks(t)).replace(/^TP\s*[\d.]*\s*[:.\-–]?\s*/i, "").slice(0, 300)).filter(Boolean).slice(0, maks);
 
-  const tp = daftar(a.tp, 8);
+  // TP dirumuskan guru (RUJUKAN.md D): hanya TP yang memang tertulis di teks guru yang dipakai, kodenya dipertahankan.
+  const tp = (Array.isArray(a.tp) ? a.tp : [])
+    .map((t) => /^(?:TP\s*([\d.]*\d)\.?\s*[:.\-–]?\s*)?(.+)$/i.exec(teks(t).slice(0, BATAS_MATERI.teksTp)))
+    .filter((m): m is RegExpExecArray => !!m && tertulis(m[2], 15))
+    .slice(0, BATAS_MATERI.tp)
+    .map((m, i) => `TP ${m[1] ?? i + 1}: ${m[2]}`);
   const dalil = draf.dalil.map((d, i) => {
     const usul = (Array.isArray(a.dalil) ? a.dalil : []).find((x) => Number((x as { no?: unknown })?.no) === i + 1) as { sumber?: unknown; terjemah?: unknown } | undefined;
     const terjemah = teks(usul?.terjemah);
@@ -212,7 +217,7 @@ export function terapkanAnalisa(ai: unknown, draf: IsianMateri, teksGuru: string
     isian: {
       ...draf,
       judul: tanpaArab(teks(a.judul)).slice(0, BATAS_MATERI.judul) || draf.judul,
-      tp: tp.map((t, i) => `TP ${i + 1}: ${t}`).join("\n") || draf.tp,
+      tp: tp.join("\n") || draf.tp,
       pokok: daftar(a.pokok, 10),
       dalil,
     },

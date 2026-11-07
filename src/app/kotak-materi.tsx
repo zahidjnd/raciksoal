@@ -200,9 +200,20 @@ function KartuDraf({
         <input className={`${kotak} mt-1`} maxLength={150} value={draf.judul} onChange={(e) => ubah({ judul: e.target.value })} />
       </label>
       <label className="block">
-        Tujuan Pembelajaran (usulan AI, satu per baris)
-        <textarea rows={4} className={`${kotak} mt-1`} value={draf.tp} onChange={(e) => ubah({ tp: e.target.value })} />
+        Tujuan Pembelajaran (TP) dari ATP/modul ajar Bapak/Ibu, satu per baris
+        <textarea
+          rows={4}
+          className={`${kotak} mt-1`}
+          placeholder={"TP 1.1: Peserta didik mampu ...\nTP 1.2: Peserta didik mampu ..."}
+          value={draf.tp}
+          onChange={(e) => ubah({ tp: e.target.value })}
+        />
       </label>
+      {!draf.tp.trim() && (
+        <p className="rounded-lg border border-peringatan-garis bg-peringatan-muda p-2 text-peringatan">
+          TP tidak ditemukan di materi. Tulis atau tempel TP dari ATP/modul ajar Bapak/Ibu. TP disusun guru, bukan AI.
+        </p>
+      )}
       {!!draf.pokok?.length && (
         <div>
           <p>Pokok materi yang akan diuji</p>
