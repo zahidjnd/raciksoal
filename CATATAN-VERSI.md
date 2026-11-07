@@ -52,6 +52,15 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.20.0 — 7 November 2026
+- **Tujuan Pembelajaran (TP) kini diputuskan guru.** Panduan resmi menyebut TP dirumuskan guru, bukan AI.
+  - Kalau materi yang ditempel sudah memuat TP, TP itu disalin persis beserta kodenya (misalnya "TP 2.1"), kotak hijau.
+  - Kalau materi tidak memuat TP, AI mengusulkan TP (kotak kuning). Guru wajib membaca, boleh mengubah, lalu mencentang
+    "Saya sudah membaca TP ini dan sesuai dengan yang saya ajarkan" sebelum tombol **Buat soal** terbuka.
+  - Materi yang sudah tersimpan tidak perlu dicentang ulang.
+- Dokumen baru **RUJUKAN.md**: peta dasar resmi setiap aturan soal (KMA 1503/2025, CP Kepdirjen 9941/2025, POS Ujian
+  Madrasah, Kerangka TKA, dll.), beserta perbedaan yang masih harus diperbaiki dan dokumen yang masih dicari.
+
 ## 0.19.1 — 7 November 2026
 - **Menjodohkan kini wajib berpasangan satu-satu.** Dulu AI kadang membuat "pengelompokan" (misalnya lima pajak
   dijodohkan ke "pemerintah pusat/daerah"), sehingga jawabannya berulang dan soal tetap merah. Sekarang dicegah, dan
