@@ -13,7 +13,7 @@ const LANGKAH: { judul: string; isi: React.ReactNode[] }[] = [
       <>Klik <b>Set baru</b> di sidebar, lalu pilih <b>mata pelajaran</b> dan <b>kelas</b>.</>,
       <><b>Kop ujian</b> (semester, tahun, tanggal, waktu) sudah terisi otomatis. Ketuk barisnya bila ingin mengubah.</>,
       <>Masukkan <b>Materi</b>: tempel teks, atau klik <b>Lampirkan Word/PowerPoint/PDF</b>, lalu tekan <b>Analisa materi</b>. Materi yang pernah dipakai bisa dipilih lagi lewat <b>Pakai materi sebelumnya</b>.</>,
-      <>Periksa kartu materi hasil analisa: judul, tujuan pembelajaran (TP), dan kotak <b>Ayat &amp; hadis</b>. TP diambil dari materi hanya bila memang tertulis di sana; kalau kosong, tulis atau tempel TP dari ATP/modul ajar Anda (AI tidak menyusun TP). Ayat yang dikenali dari mushaf bertanda hijau. Teks Arab lain (mis. hadis) berwarna kuning: lengkapi sumbernya, periksa teksnya, lalu centang pernyataan pemeriksaan.</>,
+      <>Periksa kartu materi hasil analisa: judul, tujuan pembelajaran (TP), dan kotak <b>Ayat &amp; hadis</b>. TP yang tertulis di materi Anda disalin apa adanya (kotak hijau). Kalau materi tidak memuat TP, AI mengusulkan TP (kotak kuning): baca, ubah bila perlu, lalu centang “Saya sudah membaca TP ini…” sebelum membuat soal. Ayat yang dikenali dari mushaf bertanda hijau. Teks Arab lain (mis. hadis) berwarna kuning: lengkapi sumbernya, periksa teksnya, lalu centang pernyataan pemeriksaan.</>,
       <>Pilih jenis soal (Ulangan Harian, AFTS, ASAS, Latihan, Latihan TKA). Bila perlu, tulis <b>Catatan untuk AI</b>, atur kesulitan, dan atur jumlah soal per bentuk lewat tombol <b>… soal ▾</b>.</>,
       <>Tekan <b>Buat soal</b>. Biasanya 1–3 menit. Kisi-kisi dan soal muncul bertahap. Halaman boleh ditinggal; set tersimpan di riwayat.</>,
     ],

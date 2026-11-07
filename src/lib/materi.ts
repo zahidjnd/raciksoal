@@ -24,6 +24,10 @@ export type IsianMateri = {
   dalil: { sumber: string; arab: string; terjemah: string; usulan?: boolean; mushaf?: boolean }[];
   diverifikasi: boolean; // centang: guru sudah memeriksa teks hadis / teks Arab yang tidak ada di mushaf
   pokok?: string[]; // pokok materi hasil analisa AI (opsional)
+  // TP dirumuskan guru (RUJUKAN.md D): kalau ada TP usulan AI (tidak tertulis di teks guru), guru wajib mencentang
+  // bahwa TP sudah dibaca. Penanda diberi server saat analisa; tidak disimpan di bab.
+  tpUsulan?: boolean;
+  tpDibaca?: boolean;
 };
 
 /**
@@ -89,6 +93,7 @@ export function rapikanMateri(x: Partial<IsianMateri>, id: string, cariAyat?: Ca
   if (!barisTp.length) return "Tujuan Pembelajaran (TP) wajib diisi, satu per baris.";
   if (barisTp.length > B.tp) return `TP maksimal ${B.tp} baris.`;
   if (barisTp.some((b) => b.length > B.teksTp)) return `Satu TP maksimal ${B.teksTp} huruf.`;
+  if (x?.tpUsulan && x?.tpDibaca !== true) return "Ada TP usulan AI. Baca TP-nya, ubah bila perlu, lalu centang pernyataan bahwa TP sudah Anda baca.";
   const tp = barisTp.map((b, i) => {
     const m = /^TP\s*([\d.]+)\s*[:.\-–]?\s*(.+)$/i.exec(b);
     return m ? { kode: `TP ${m[1].replace(/\.$/, "")}`, teks: bersihkan(m[2]) } : { kode: `TP ${i + 1}`, teks: bersihkan(b) };
@@ -197,12 +202,15 @@ export function terapkanAnalisa(ai: unknown, draf: IsianMateri, teksGuru: string
   const daftar = (x: unknown, maks: number) =>
     (Array.isArray(x) ? x : []).map((t) => tanpaArab(teks(t)).replace(/^TP\s*[\d.]*\s*[:.\-–]?\s*/i, "").slice(0, 300)).filter(Boolean).slice(0, maks);
 
-  // TP dirumuskan guru (RUJUKAN.md D): hanya TP yang memang tertulis di teks guru yang dipakai, kodenya dipertahankan.
+  // TP dirumuskan guru (RUJUKAN.md D): TP yang tertulis di teks guru disalin dengan kodenya; selebihnya = usulan AI,
+  // yang wajib dibaca & dicentang guru (`tpUsulan`).
   const tp = (Array.isArray(a.tp) ? a.tp : [])
     .map((t) => /^(?:TP\s*([\d.]*\d)\.?\s*[:.\-–]?\s*)?(.+)$/i.exec(teks(t).slice(0, BATAS_MATERI.teksTp)))
-    .filter((m): m is RegExpExecArray => !!m && tertulis(m[2], 15))
-    .slice(0, BATAS_MATERI.tp)
-    .map((m, i) => `TP ${m[1] ?? i + 1}: ${m[2]}`);
+    .filter((m): m is RegExpExecArray => !!m)
+    .map((m) => ({ kode: m[1], isi: tertulis(m[2], 15) ? m[2] : tanpaArab(m[2]), usulan: !tertulis(m[2], 15) }))
+    .filter((t) => t.isi)
+    .slice(0, BATAS_MATERI.tp);
+  const tpUsulan = tp.some((t) => t.usulan);
   const dalil = draf.dalil.map((d, i) => {
     const usul = (Array.isArray(a.dalil) ? a.dalil : []).find((x) => Number((x as { no?: unknown })?.no) === i + 1) as { sumber?: unknown; terjemah?: unknown } | undefined;
     const terjemah = teks(usul?.terjemah);
@@ -217,7 +225,9 @@ export function terapkanAnalisa(ai: unknown, draf: IsianMateri, teksGuru: string
     isian: {
       ...draf,
       judul: tanpaArab(teks(a.judul)).slice(0, BATAS_MATERI.judul) || draf.judul,
-      tp: tp.join("\n") || draf.tp,
+      tp: tp.map((t, i) => `TP ${t.kode ?? i + 1}: ${t.isi}`).join("\n") || draf.tp,
+      tpUsulan,
+      tpDibaca: false,
       pokok: daftar(a.pokok, 10),
       dalil,
     },

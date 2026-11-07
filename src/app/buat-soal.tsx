@@ -282,6 +282,8 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
   const alasanTerkunci =
     !mapel || !kelas ? "Pilih mata pelajaran dan kelas dulu." :
     !pilihan.length && !draf ? "Masukkan materi dulu (tempel teks, lampirkan file, atau pakai materi sebelumnya)." :
+    draf && !draf.tp.trim() ? "Isi Tujuan Pembelajaran (TP) di kartu materi dulu." :
+    draf?.tpUsulan && !draf.tpDibaca ? "Baca TP usulan AI di kartu materi, lalu centang persetujuannya." :
     total < 1 ? "Isi jumlah soal dulu." :
     total > MAKS_SOAL ? `Jumlah soal maksimal ${MAKS_SOAL}.` :
     totalLevel !== 100 ? `Komposisi level harus 100% (sekarang ${totalLevel}%), buka Lanjutan.` :

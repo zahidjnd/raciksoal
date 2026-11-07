@@ -570,7 +570,11 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   kena batas 10 set/hari. Sisa: isian berjawaban angka ("10%") sama dengan hasil soal hitungan lain.
 - 2026-11-07 RUJUKAN.md (peta dasar setiap aturan: R1 resmi, R2 kaidah, R3 keputusan madrasah, R4 belum ada dasar).
   Ubah aturan → ATURAN-SOAL.md, lalu RUJUKAN.md, baru kode. PDF rujukan di `dokumen/rujukan/` sengaja TIDAK di-commit.
-- 2026-11-07 TP DARI GURU (pemilik "gas", celah A1 RUJUKAN.md): `buatAnalisaMateri` hanya menyuruh AI MENYALIN TP yang
-  tertulis di teks; `terapkanAnalisa` membuang TP yang tidak tertulis (`tertulis`, min 15 huruf) dan mempertahankan
-  kodenya ("TP 2.1"). Tidak ada TP → kotak kosong + peringatan kuning di `KartuDraf`; simpan tetap wajib TP
-  (`rapikanMateri`). Materi lama tidak diubah. Uji laptop (guru.uji.b, Ekonomi): tanpa TP → kosong; dengan TP → tersalin persis.
+- 2026-11-07 TP DIPUTUSKAN GURU (celah A1 RUJUKAN.md; versi "AI hanya menyalin" sempat dibuat lalu diganti atas pilihan
+  pemilik, karena guru sering membuat UH sederhana / tidak punya TP tertulis): `buatAnalisaMateri` menyuruh AI menyalin
+  TP yang tertulis, dan baru mengusulkan TP bila teks tanpa TP. `terapkanAnalisa`: TP yang `tertulis` (min 15 huruf)
+  tetap berkode asli ("TP 2.1"); selebihnya usulan → `isian.tpUsulan` (+ `tpDibaca` false). `KartuDraf`: hijau "TP dari
+  materi Anda" / kuning "usulan AI" + centang "sesuai dengan yang saya ajarkan"; tombol Buat soal terkunci
+  (`alasanTerkunci`); `rapikanMateri` menolak `tpUsulan` tanpa `tpDibaca` (penanda dikirim balik browser, bukan disimpan
+  di bab). Materi lama & form /materi tidak terpengaruh. Uji laptop (guru.uji.b, Ekonomi): tanpa TP → 4 usulan,
+  tpUsulan true; dengan TP → tersalin persis, tpUsulan false. Tampilan kartu belum dilihat (panel browser tersembunyi).

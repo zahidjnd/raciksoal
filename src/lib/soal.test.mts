@@ -428,16 +428,20 @@ test("materi di halaman utama: ayat dari mushaf, hadis jadi usulan, basmalah dib
     untukAi,
   );
   assert.equal(hasil.judul, "Menjaga Diri");
-  assert.equal(hasil.tp, "TP 3.1: Peserta didik mampu menjelaskan larangan zina"); // TP karangan AI dibuang, kode asli tetap
-  assert.equal(terapkanAnalisa({ tp: ["Peserta didik mampu menganalisis hikmahnya"] }, isian, untukAi).isian.tp, "");
-  assert.equal(terapkanAnalisa({ tp: ["peserta didik mampu menjelaskan larangan zina"] }, isian, untukAi).isian.tp, "TP 1: peserta didik mampu menjelaskan larangan zina");
+  // TP tertulis di teks guru: kode asli tetap; TP lain = usulan AI → wajib dicentang guru
+  assert.equal(hasil.tp, "TP 3.1: Peserta didik mampu menjelaskan larangan zina\nTP 2: Peserta didik mampu menganalisis hikmahnya (karangan AI)");
+  assert.ok(hasil.tpUsulan && !hasil.tpDibaca);
+  const dariGuru = terapkanAnalisa({ judul: "Menjaga Diri", tp: ["peserta didik mampu menjelaskan larangan zina"] }, isian, untukAi).isian;
+  assert.ok(dariGuru.tp === "TP 1: peserta didik mampu menjelaskan larangan zina" && !dariGuru.tpUsulan);
+  assert.match(String(rapikanMateri({ ...hasil, diverifikasi: true }, "x")), /TP usulan AI/);
+  assert.ok(typeof rapikanMateri({ ...hasil, tp: dariGuru.tp, tpUsulan: dariGuru.tpUsulan, diverifikasi: true }, "x") !== "string");
   assert.equal(hasil.dalil[0].terjemah, "Dan janganlah kamu mendekati zina.");
   assert.equal(hasil.dalil[0].sumber, "QS. Al-Isrā' [17]: 32"); // sumber mushaf tidak ditimpa AI
   assert.equal(hasil.dalil[1].sumber, "HR. Bukhari");
   assert.equal(hasil.dalil[1].terjemah, ""); // tidak tertulis di teks guru → dibuang
   // tersimpan lewat rapikanMateri: hadis tetap wajib dicentang; terjemah boleh kosong
   assert.match(String(rapikanMateri(hasil, "x")), /Centang/);
-  const r = rapikanMateri({ ...hasil, diverifikasi: true }, "x");
+  const r = rapikanMateri({ ...hasil, diverifikasi: true, tpDibaca: true }, "x");
   assert.ok(typeof r !== "string" && r.bab.pokok?.[0] === "Larangan mendekati zina" && r.bab.dalil[1].terjemah === "");
 });
 
