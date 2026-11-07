@@ -562,3 +562,9 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   "Jumlah skor rubrik setiap soal URAIAN harus tepat <bobot>" (tanpa itu `terapkanBobot` menskalakan angka, teks
   "3 = …" tidak ikut → tidak cocok; ketahuan saat uji set 76). Uji laptop set 76–78. Temuan baru: MJ "pengelompokan"
   (jawaban berulang) dan isian bocor dari kisi-kisi yang konsepnya bertabrakan, belum dikerjakan.
+- 2026-11-07 (0.19.1): MJ wajib satu-satu (`RENCANA_MJ` di kisi bila ada MJ + aturan bentuk MJ). Di perbaikan otomatis
+  (`kerjakan`): MJ dengan peringatan "Dua premis memakai jawaban yang sama"/"Ada premis atau jawaban yang sama" = `kelompok`
+  → boleh ganti sisi materi + indikator kisi diperbarui (seperti `bocor`). Isian bocor: instruksi perbaikan ditambah
+  `kataTerpakai(soal, i)` (soal.ts: pilihan/isi lajur/kunci isian soal lain, ≤ 6 kata, maks 80), batas instruksi
+  perbaikan 2000. Uji laptop set 79–80 memakai akun `guru.uji.b` + materi-10 (salinan materi-8), karena guru.uji.ayat
+  kena batas 10 set/hari. Sisa: isian berjawaban angka ("10%") sama dengan hasil soal hitungan lain.

@@ -487,6 +487,19 @@ function cekJawabanBenar(s: Soal): string | null {
 }
 
 /**
+ * Kata/frasa pendek (≤ 6 kata) yang sudah tertulis di soal LAIN: pilihan, isi lajur menjodohkan, kunci isian.
+ * Untuk perbaikan otomatis isian yang bocor (0.19.1): dulu AI hanya melihat pertanyaan + kunci soal lain, bukan pengecohnya,
+ * sehingga jawaban penggantinya sering juga sudah tertulis (set 78: "anggaran" → "redistribusi", keduanya pilihan soal 2).
+ */
+export function kataTerpakai(soal: Soal[], i: number, maks = 80): string[] {
+  const kata = soal
+    .flatMap((s, j) => (j === i ? [] : [...(s.pilihan ?? []), ...(s.premis ?? []), ...(s.jawaban ?? []), ...(s.bentuk === "ISIAN" ? [s.kunci].flat() : [])]))
+    .map((t) => String(t ?? "").trim())
+    .filter((t) => t && t.split(/\s+/).length <= 6);
+  return [...new Set(kata)].slice(0, maks);
+}
+
+/**
  * Menjodohkan yang memakai 3+ isi lajur (premis/jawaban) sama dengan Menjodohkan SEBELUMNYA di set: nomor soal itu, atau 0.
  * Hanya soal yang belakangan yang ditandai, supaya perbaikan otomatis tidak mengganti keduanya (audit 2026-11-07, set 70).
  */

@@ -192,7 +192,24 @@ isian "anggaran" sambil merencanakan PG no. 2 "membedakan fungsi anggaran dan fu
 berikutnya: aplikasi memeriksa rencana jawaban isian terhadap indikator/materi baris kisi lain (bisa menangkap kasus
 "anggaran", tetapi tidak kasus "fardu ain" yang tidak tertulis di indikator).
 
-Masih terbuka: menjodohkan "pengelompokan" (temuan baru) dan sisa **kunci isian yang bocor** (perbaikan otomatis sering gagal karena materinya
+## Tindak lanjut: versi 0.19.1 (menjodohkan pengelompokan, isian bocor)
+
+- Menjodohkan wajib satu-satu (instruksi kisi-kisi + aturan bentuk). Perbaikan otomatis untuk "jawaban berulang" boleh
+  pindah ke sisi materi lain dan memperbarui indikator kisi.
+- Perbaikan otomatis isian yang bocor diberi daftar kata/frasa pendek yang sudah tertulis di soal lain (`kataTerpakai`).
+
+Uji ulang (akun `guru.uji.b`, karena `guru.uji.ayat` sudah mencapai batas 10 set hari ini; materi-10 = salinan materi-8):
+
+| | Sebelum (set 76, 78) | Sesudah (set 79, 80) |
+|---|---|---|
+| Menjodohkan tetap merah | 2, 0 | **0, 0** (80/20 pengelompokan → diperbaiki jadi istilah–pengertian) |
+| Isian bocor tetap merah | 2, 2 | **1, 1**, keduanya jawaban angka "10%" (sengaja tidak dilarang) |
+
+Catatan mutu (lolos pemeriksa, perlu dilihat guru): AI kadang tetap memilih topik pengelompokan untuk menjodohkan,
+tetapi memaksa jawabannya berbeda ("Kebijakan fiskal tarif", "Pemerintah pusat melalui kantor pos").
+
+Masih terbuka (kecil): isian berjawaban angka yang sama dengan hasil soal hitungan lain; menjodohkan "pengelompokan
+yang dipaksakan" (perbaikan otomatis sering gagal karena materinya
 sempit, jadi konsep yang sama terpakai di beberapa soal; calon perbaikan: menghindarinya sejak tahap kisi-kisi).
 
 ## Catatan uji

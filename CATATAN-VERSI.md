@@ -52,6 +52,14 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.19.1 — 7 November 2026
+- **Menjodohkan kini wajib berpasangan satu-satu.** Dulu AI kadang membuat "pengelompokan" (misalnya lima pajak
+  dijodohkan ke "pemerintah pusat/daerah"), sehingga jawabannya berulang dan soal tetap merah. Sekarang dicegah, dan
+  kalau tetap terjadi, perbaikan otomatis boleh memakai sisi materi lain. Uji: 0 soal menjodohkan merah (dulu 2).
+- **Perbaikan otomatis soal isian yang bocor kini lebih jitu.** AI diberi daftar kata yang sudah tertulis di soal lain,
+  sehingga jawaban penggantinya tidak ikut bocor. Uji: isian yang tetap merah turun dari 2 menjadi 1 per set; sisanya
+  jawaban berupa angka (misalnya "10%").
+
 ## 0.19.0 — 7 November 2026
 Sisa perbaikan dari audit uji soal:
 - **Urutan 4 pernyataan soal Kategori kini diacak aplikasi**, sehingga letak pernyataan yang salah tidak lagi berpola

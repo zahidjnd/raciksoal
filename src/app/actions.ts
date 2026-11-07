@@ -6,7 +6,7 @@ import { hasilSoal, pemakaianAi } from "@/db/schema";
 import { daftarModel, tanyaAI } from "@/lib/ai";
 import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, laranganIsian, ringkasSudah, buatPermintaanKisi, buatSistem, buatAnalisaMateri, bersihkanIdentitas, rencanaGrup, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { BATAS_MATERI, susunDraf, terapkanAnalisa } from "@/lib/materi";
-import { bersihkanTanggapan, gabungBab, identitasBab, KELAS, LEVEL, pemeriksaArab, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, terapkanBobot, type Bab, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
+import { bersihkanTanggapan, gabungBab, identitasBab, kataTerpakai, KELAS, LEVEL, pemeriksaArab, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, terapkanBobot, type Bab, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { babDariSet, babMilik, daftarBabMilik } from "@/lib/bab";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
@@ -257,9 +257,18 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
         // Kebocoran jawaban sering berasal dari kisi-kisi (konsep yang sama diuji dua kali), jadi AI boleh menanyakan konsep
         // lain; petunjuk ini ditulis di depan karena instruksi dipotong 300 huruf.
         const bocor = s.peringatan.some((w) => w.startsWith("Jawaban isian sudah tertulis"));
-        const instruksi = `${bocor ? "Jawaban bocor: tanyakan konsep LAIN dari materi yang jawabannya belum tertulis di soal mana pun, dan tulis indikator barunya. " : ""}Perbaiki soal ini (bentuk, TP, level tetap). Masalah: ${masalah}`;
-        // Instruksi buatan aplikasi boleh lebih panjang dari batas guru (300), supaya potongan teks bocor tidak terpotong.
-        const [baru] = await tanya(`Perbaikan soal ${i + 1}`, buatPenggantiPengguna(p, s, soal, kisi[i], instruksi, 800), (d) => ambilSoal(d));
+        // 0.19.1: menjodohkan "pengelompokan" (jawaban berulang) tidak bisa diperbaiki dengan indikator yang sama → boleh ganti sisi materi.
+        const kelompok = s.bentuk === "MJ" && s.peringatan.some((w) => w.startsWith("Dua premis memakai jawaban yang sama") || w.startsWith("Ada premis atau jawaban yang sama"));
+        const awal = bocor
+          ? "Jawaban bocor: tanyakan konsep LAIN dari materi yang jawabannya belum tertulis di soal mana pun, dan tulis indikator barunya. "
+          : kelompok
+          ? "Menjodohkan ini berupa pengelompokan (jawaban berulang): pakai sisi materi LAIN yang punya 5 pasangan satu-satu dengan jawaban berbeda semua, dan tulis indikator barunya. "
+          : "";
+        // Isian bocor: daftar kata yang sudah tertulis di soal lain (termasuk pengecoh), ditaruh di AKHIR supaya pemotongan hanya memendekkan daftar.
+        const terpakai = bocor ? ` Kata/frasa yang SUDAH tertulis di soal lain, jadi TIDAK boleh menjadi jawaban baru: ${kataTerpakai(soal, i).map((k) => `"${k}"`).join(", ")}` : "";
+        const instruksi = `${awal}Perbaiki soal ini (bentuk, TP, level tetap). Masalah: ${masalah}${terpakai}`;
+        // Instruksi buatan aplikasi boleh lebih panjang dari batas guru (300), supaya potongan teks bocor dan daftar kata tidak terpotong.
+        const [baru] = await tanya(`Perbaikan soal ${i + 1}`, buatPenggantiPengguna(p, s, soal, kisi[i], instruksi, 2000), (d) => ambilSoal(d));
         const { stimulus: _s, indikator, ...isi } = susunMenjodohkan(samakanDenganKisi(baru, kisi[i]));
         void _s;
         // Diperiksa bersama seluruh set (bukan sendirian), supaya kunci isian yang masih bocor ke soal lain tetap ketahuan.
@@ -269,7 +278,7 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
           soal[i] = cek;
           // Indikator baru (konsep lain) ikut ke kisi-kisi; teks berisi Arab tak terverifikasi tidak dipakai (aturan 5).
           const ind = String(indikator ?? "").trim();
-          if (bocor && ind && !pemeriksaArab(bab, cekAyat)(ind).length) kisi[i] = { ...kisi[i], indikator: ind };
+          if ((bocor || kelompok) && ind && !pemeriksaArab(bab, cekAyat)(ind).length) kisi[i] = { ...kisi[i], indikator: ind };
           info.perbaikan.push(`Soal ${i + 1} diperbaiki otomatis: ${masalah}`);
         }
       } catch (e) {

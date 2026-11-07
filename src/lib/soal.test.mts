@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { arabTakTerverifikasi, bersihkanTanggapan, gabungBab, identitasBab, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, terapkanBobot, type Bab, type Soal } from "./soal.ts";
+import { arabTakTerverifikasi, bersihkanTanggapan, gabungBab, identitasBab, kataTerpakai, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, terapkanBobot, type Bab, type Soal } from "./soal.ts";
 import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, laranganIsian, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, semesterDari, MAKS_CATATAN, MAKS_INSTRUKSI, rencanaLevel, type Pengaturan } from "./prompt.ts";
 import { bolehAkses, rapikanUsername } from "./akses.ts";
 import { headerUnduh } from "./nama-file.ts";
@@ -754,4 +754,20 @@ test("0.19.0: AI diberi tahu jumlah skor rubrik uraian (= bobot), supaya teks sk
   const p = bersihkanPengaturan({ babId: "materi-1", tujuan: "PAS", kesulitan: "Sedang", jumlah: { PG: 1, PGK: 0, BS: 0, MJ: 0, ISIAN: 0, URAIAN: 1 }, level: { LOTS: 30, MOTS: 40, HOTS: 30 }, bobot: { PG: 2, PGK: 5, BS: 3, MJ: 5, ISIAN: 3, URAIAN: 8 } } as Pengaturan) as Pengaturan;
   assert.ok(buatPengguna(p, p.jumlah, []).includes("Jumlah skor rubrik setiap soal URAIAN harus tepat 8"));
   assert.ok(!buatPengguna({ ...p, jumlah: { ...p.jumlah, URAIAN: 0 } }, p.jumlah, []).includes("Jumlah skor rubrik"));
+});
+
+test("0.19.1: menjodohkan wajib satu-satu (bukan pengelompokan); perbaikan isian bocor diberi kata yang sudah terpakai", () => {
+  const p = { babId: "x", tujuan: "PAS", kesulitan: "Sedang", jumlah: { PG: 1, PGK: 0, BS: 0, MJ: 1, ISIAN: 0, URAIAN: 0 }, level: { LOTS: 30, MOTS: 40, HOTS: 30 } } as Pengaturan;
+  assert.ok(buatPermintaanKisi(p).includes("Materi pengelompokan"));
+  assert.ok(!buatPermintaanKisi({ ...p, jumlah: { ...p.jumlah, MJ: 0 } }).includes("Materi pengelompokan"));
+  const bab = { id: "x", judul: "x", tp: [{ kode: "TP 1", teks: "x" }], dalil: [], materi: [] } as Bab;
+  assert.ok(buatSistem(bab).includes("JANGAN menjodohkan untuk pengelompokan"));
+  const dasar = { dalil_id: null, pembahasan: "", level: "C2", tp: "TP 1", skor: 1 };
+  const soal = [
+    { ...dasar, bentuk: "PG", pertanyaan: "?", pilihan: ["anggaran", "redistribusi", "stabilitas", "mengatur", "kalimat panjang yang berisi lebih dari enam kata sekali"], kunci: "A" },
+    { ...dasar, bentuk: "MJ", pertanyaan: "Jodohkan!", premis: ["PPN"], jawaban: ["pajak pusat", "anggaran"], kunci: ["A"] },
+    { ...dasar, bentuk: "ISIAN", pertanyaan: "Fungsi pajak .... ", kunci: "anggaran" },
+  ] as Soal[];
+  const kata = kataTerpakai(soal, 2);
+  assert.deepEqual(kata, ["anggaran", "redistribusi", "stabilitas", "mengatur", "PPN", "pajak pusat"]); // tanpa dobel, tanpa kalimat panjang, tanpa soal itu sendiri
 });
