@@ -1,0 +1,145 @@
+# Audit Hasil Soal — 7 November 2026 (versi 0.18.1)
+
+Tujuan: mengecek apakah soal buatan AI sudah mengikuti [ATURAN-SOAL.md](ATURAN-SOAL.md), termasuk aturan baru 0.18.0–0.18.1.
+Uji di **laptop** (bukan hosting), akun `guru.uji.ayat`, model utama **deepseek-flash**, materi ditulis khusus untuk uji
+(tanpa ayat/hadis). Semua soal dibaca satu per satu.
+
+## Set yang diuji
+
+| Set | Mapel & materi | Jenis | Isi | Waktu | Perbaikan otomatis |
+|---|---|---|---|---|---|
+| 69 | Fikih XI — Salat Jumat (materi-7) | Ulangan Harian, Mudah | 12 soal: 5 PG, 2 PGK, 2 Kategori, 2 Isian, 1 Uraian | 20 dtk | tidak ada soal merah |
+| 70 | Ekonomi XI — Pajak & Inflasi (materi-8) | ASAS, Sedang | 25 soal: 12 PG, 3 PGK, 3 Kategori, 2 Menjodohkan, 3 Isian, 2 Uraian | 56 dtk | 2 diperbaiki, **1 tetap merah** (no. 23) |
+| 71 | Biologi XI — Peredaran Darah (materi-9) | Latihan TKA, Sulit | 15 soal: 8 PG, 4 PGK, 3 Kategori; 3 soal grup | 41 dtk | 1 diperbaiki (no. 4, kunci terpanjang) |
+
+## Kesimpulan singkat
+
+- **Aturan baru 0.18 berjalan.** Khilafiyah, ejaan KBBI, nama tokoh, HOTS tetap berstimulus walau "Mudah", uraian
+  berbatasan: semua terlihat di hasil.
+- **Pemeriksa aplikasi bekerja.** Kunci isian bocor tertangkap, menjodohkan dobel tertangkap, kunci terpanjang tertangkap,
+  dan semuanya diperbaiki otomatis. Satu soal tetap merah untuk diperiksa guru, dan itu memang sesuai rancangan.
+- **Masalah terbesar: 3 dari 52 soal kuncinya SALAH** (6%). Aplikasi tidak menandainya, jadi guru yang harus
+  menemukannya sendiri.
+- Ada 4 pembahasan yang menunjuk "pengecoh kedua". Setelah pilihan diacak aplikasi, tunjukan itu salah.
+
+## Hasil per aturan
+
+| Aturan (ATURAN-SOAL.md) | Hasil | Bukti |
+|---|---|---|
+| 1b/7 Komposisi level per nomor | ✅ tepat | 69: 5/5/2 · 70: 8/10/7 · 71: 3/6/6 |
+| 1c.1 Level = proses berpikir, bukan kata kerja | ⚠️ sering terlalu tinggi | 69/4 (hafalan, berlabel C3), 71/8, 71/13, 71/14, 71/15 (hafalan atau jawabannya disebut di wacana, berlabel C3–C5) |
+| 1c.3 HOTS wajib stimulus | ⚠️ 1 melanggar | 71/14 C5 tanpa stimulus sama sekali; kisi-kisinya menulis "Disajikan skema" tapi skemanya tidak ada |
+| 1c.5 (baru) "Mudah" tidak menghapus stimulus HOTS | ✅ | 69/5 (kasus khutbah), 69/9 (data dua masjid) |
+| 2a.2 Kunci benar | ❌ **3 soal salah** | 70/6, 70/7, 71/3 (rincian di Temuan 1) |
+| 2a.6 (baru) Khilafiyah | ✅ sangat baik | 69/4 & 69/5 menyebut "menurut mazhab Syafi'i"; 69/9 menguji perbedaan Syafi'i/Hanafi/Maliki dengan data |
+| 2b.2 Pokok soal tidak memberi petunjuk | ⚠️ 1 | 71/8: wacana sudah menulis "infeksi bakteri", jadi jawaban (neutrofil) langsung terlihat |
+| 2b.5 / tidak bermakna ganda | ⚠️ 3 | 70/13 (Temuan 4), 70/19 (dua jawaban cocok), 69/6 (syarat wajib dipecah jadi pilihan terpisah) |
+| 2b.6 (0.18.1) "semua benar", "A dan B benar" | ✅ tidak muncul | — |
+| 2b.7 (0.18.0) Kunci bukan pilihan terpanjang | ✅ membaik | kunci terpanjang 10 dari 25 PG (40%; sebelumnya 60%, acak = 20%). Yang mencolok hanya 71/4, sudah diperbaiki otomatis |
+| 2b.8 Pilihan angka urut | ✅ | 70/5–8 |
+| 2b.10 Soal tidak saling mirip | ⚠️ 1 pasang | 70/19 dan 70/20 hampir sama (Temuan 5) |
+| 2b.11 Jawaban tidak tertulis di soal lain | ✅ dijaga | 70/21 bocor → diperbaiki; 70/23 ("sedang", ada di pilihan 70/9) → tetap merah |
+| 2c.5 (baru) Ejaan KBBI, tanpa huruf bertitik | ✅ | salat, zuhur, fardu ain, Swt.; tidak ada ā/ḥ; tidak ada "shalat/dzuhur" |
+| 3 PG Kompleks 2–3 kunci | ✅ | semua 2 atau 3 |
+| 3 Kategori: label bervariasi | ⚠️ | 6 dari 8 soal memakai Benar/Salah; ketiga soal di 71 berpola kunci sama (B, B, B, S) |
+| 3 Uraian (0.18.1) batasan jawaban | ✅ sebagian | ketiganya berbatasan ("dua hal", "satu contoh masing-masing", hitungan) dan rubrik per bagian, tetapi **tidak ada yang menulis kapan skor sebagian** |
+| 4.5 Tanpa "perhatikan gambar" | ✅ | 71/3 menyebut "diagram alur", tapi alurnya ditulis dengan kata |
+| 4.6 (baru) Nama tokoh beragam | ✅ | Rania, Farhan, Ningsih, Surya, Harun, Rasyid, Rizki; tidak ada nama nabi/sahabat untuk tokoh yang salah |
+| 5 Hitungan: langkah hitung di pembahasan | ✅ | 70/5–8, 70/22, 70/25 |
+| 9 TKA: tanpa uraian/isian/menjodohkan, soal grup | ✅ bentuk · ⚠️ isi grup | grup terbentuk (5–6, 7–8, 11–12), tapi isinya kurang nyambung (Temuan 3) |
+| 9 TKA: hampir semua soal berstimulus | ⚠️ | 71/1, 2, 9, 13, 14 tanpa stimulus |
+| 10.2 Pembahasan menjelaskan tiap pengecoh | ✅ isi · ❌ cara menunjuk | lengkap, tetapi 4 soal menunjuk dengan urutan (Temuan 2) |
+
+## Temuan (urut dari yang paling penting)
+
+### 1. Kunci salah — 3 soal ❌
+- **70/6**: pembahasan menghitung PKP = Rp82.500.000 (benar), tetapi kunci yang ditandai Rp87.000.000.
+- **70/7**: pembahasan menghitung PPh = Rp44.000.000 (benar), tetapi angka itu **tidak ada** di pilihan. Kuncinya
+  Rp37.500.000.
+- **71/3**: alur bilik kanan → paru-paru → serambi kiri hanya melewati arteri pulmonalis dan vena pulmonalis. Kuncinya
+  "arteri pulmonalis, vena pulmonalis, **aorta**", padahal aorta tidak dilewati. Tidak ada pilihan yang benar.
+
+Sebabnya **AI, bukan aplikasi**. Jawaban mentah AI (`jawaban_ai`) sudah salah sejak awal. AI menulis isian JSON
+berurutan: pilihan dan kunci dulu, baru menghitung di pembahasan. Jadi kunci terlanjur ditulis sebelum hitungannya
+selesai. Pola ini sama dengan kasus PGK 4 kunci di 0.17.0.
+
+**Usulan:**
+- Minta AI menulis **"jawaban_benar"** (isi jawabannya, dan langkah hitung untuk soal hitungan) **sebelum**
+  "pilihan" dan "kunci".
+- Aplikasi mencocokkan isi itu dengan pilihan yang ditandai kunci. Kalau tidak cocok, soal ditandai merah, lalu masuk
+  perbaikan otomatis.
+- Ukuran kerja: sedang. Tidak butuh panggilan AI tambahan.
+
+### 2. Pembahasan menunjuk "pengecoh kedua" — 4 soal ❌
+70/11, 70/12, 70/14, 70/15. Contoh 70/12: pembahasan menulis "Pengecoh kedua salah karena kebijakan ini tidak
+menambah subsidi", padahal pilihan B yang tampil adalah soal kementerian keuangan. Urutan pilihan diacak aplikasi,
+jadi "kedua", "ketiga", dan seterusnya selalu berisiko salah tunjuk. Aturan sekarang hanya melarang menyebut huruf.
+
+**Usulan:** tambah larangan menyebut urutan di instruksi AI, plus pemeriksa aplikasi (pola "pengecoh/pilihan
+pertama…kelima" di pembahasan PG/PGK). Ukuran kerja: kecil.
+
+### 3. Level terlalu tinggi dan soal grup kurang nyambung ⚠️
+- Soal hafalan berlabel C3–C5: 69/4, 71/13, 71/14, 71/15. 71/14 (C5) bahkan tanpa stimulus, padahal kisi-kisinya
+  menjanjikan "disajikan skema".
+- 71/5: soal grup tentang **hipertensi** Rizki, tetapi pertanyaannya tentang **katup jantung**. Jawabannya tidak
+  diambil dari wacana.
+- 71/7–8: satu wacana dijahit dari dua topik yang tidak berhubungan (praktikum pembekuan darah + data leukosit
+  pasien). Di 71/8, jawabannya sudah disebut di wacana.
+
+**Usulan:**
+- Pemeriksa sederhana: soal C4–C6 yang tidak punya wacana dan pertanyaannya pendek (tanpa kasus/data) ditandai
+  "HOTS tanpa stimulus".
+- Instruksi: setiap soal grup harus bisa dijawab HANYA dengan mengolah wacananya, dan satu wacana = satu topik.
+- Ukuran kerja: kecil–sedang.
+
+### 4. PG Kompleks dengan pilihan gabungan ⚠️
+70/13: pilihan berbentuk "(2) dan (3)", "(1)", "(2)", "(4)", "(3)", dengan kunci (2) dan (3) terpisah. Siswa yang
+memilih "(2) dan (3)" sebenarnya benar isinya, tetapi dinilai salah.
+
+**Usulan:** pemeriksa 0.18.1 diperluas. Di PG Kompleks, pilihan yang menggabungkan nomor ("(2) dan (3)") ditandai
+merah. Ukuran kerja: kecil.
+
+### 5. Dua soal menjodohkan hampir sama ⚠️
+70/19 dan 70/20 sama-sama menjodohkan fungsi pajak. 70/20 adalah hasil perbaikan otomatis, dan perbaikan otomatis
+tidak diberi tahu isi soal lain (keterbatasan yang sudah tercatat di 0.17.3). Selain itu:
+- Kedua soal mencampur "pajak tidak langsung" (jenis pajak) dengan fungsi pajak, padahal aturannya hubungan harus
+  sejenis.
+- Di 70/19, jawaban B dan C sama-sama cocok untuk "fungsi anggaran".
+
+**Usulan:** perbaikan otomatis diberi ringkasan soal lain di set itu (fungsi `ringkasSudah` sudah ada). Ukuran kerja:
+kecil.
+
+### 6. Soal Kategori kurang bervariasi ⚠️
+6 dari 8 soal memakai label Benar/Salah. Ketiga soal Kategori di set 71 berpola kunci sama: tiga Benar, lalu Salah di
+pernyataan terakhir. Siswa bisa menebak polanya.
+
+**Usulan:** instruksi agar letak pernyataan salah dan label diragamkan. Mengacak urutan pernyataan di aplikasi juga
+mungkin, tapi pembahasan Kategori sekarang menyebut "pernyataan pertama", jadi aturan Temuan 2 harus berlaku dulu.
+
+### 7. Rubrik uraian belum menyebut skor sebagian ⚠️
+Ketiga soal uraian sudah berbatasan, tetapi rubriknya hanya "Menyebut …: 4". Belum ada keterangan seperti "skor 2 bila
+hanya menyebut tanpa alasan". Aturan 0.18.1 sudah memintanya, tapi AI belum mengikuti.
+
+**Usulan:** contoh rubrik di format JSON diberi contoh skor sebagian. Ukuran kerja: kecil.
+
+### 8. Lain-lain (kecil)
+- 71/11: dua pilihan bertanda kunci memakai alasan yang keliru ("dapat menerima karena plasma pasien mengandung
+  aglutinin beta"). Alasan yang benar adalah eritrosit O tidak punya aglutinogen.
+- 71/12: salah ketik "eritrosin" (seharusnya eritrosit).
+- 69/1: pengecoh "syarat sah" bukan jenis hukum, jadi tidak homogen.
+- 71/9–12: indikator kisi-kisi ikut berisi "(Pilih semua jawaban yang tepat)".
+
+Hal-hal ini tidak bisa diperiksa otomatis dengan andal, dan tetap menjadi bagian dari "wajib diperiksa guru".
+
+## Urutan perbaikan yang disarankan
+1. **Temuan 1** (kunci salah): paling berbahaya karena tidak terlihat merah.
+2. **Temuan 2 + 4** (urutan di pembahasan, pilihan gabungan PGK): kecil, bisa sekaligus.
+3. **Temuan 3 + 5** (HOTS tanpa stimulus, perbaikan otomatis tahu soal lain).
+4. **Temuan 6 + 7** (instruksi saja).
+
+## Catatan uji
+- Materi uji 7, 8, 9 dan set 69, 70, 71 ada di database **laptop** (akun `guru.uji.ayat`). Bisa dihapus bila pemilik
+  setuju.
+- Biaya: 3 set dengan deepseek-flash, kira-kira Rp1.000.
+- Isi materi Fikih, Ekonomi, dan Biologi ditulis untuk uji. Audit ini menilai **kepatuhan aturan**; ketepatan isi
+  hanya dinilai sejauh kesalahannya jelas (Temuan 1, 8).

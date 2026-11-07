@@ -530,3 +530,15 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   `ambilSoal` kini menerima `"soal": {...}` atau soal tanpa pembungkus. Uji set 68: 2 bocor → 2 diperbaiki, 0 merah,
   tapi soal 9 & 10 hasil perbaikan mirip satu sama lain. Uji lewat skrip (panel browser tersembunyi): server action
   `mulaiBuatSoal` dipanggil seperti di uji-pemisahan.mts.
+- 2026-11-07 (0.18.0 + 0.18.1, pemilik "gas") REVISI ATURAN SOAL: "Mudah" tidak menghapus stimulus HOTS; khilafiyah =
+  madrasah merujuk SEMUA mazhab (soal sebut pendapat siapa / tanyakan perbedaannya, pendapat sah lain bukan pengecoh);
+  ejaan KBBI + transliterasi tanpa ā/ḥ kecuali mode Bahasa Arab (nama surah tetap gaya Kemenag dari data mushaf);
+  nama tokoh beragam; uraian wajib berbatasan + rubrik ikut. Pemeriksa baru di `periksaSoal`: `kunciTerpanjang` (PG,
+  kunci terpanjang & >= 1,5x rata-rata pengecoh, kunci < 15 huruf dilewati; diukur 274 PG lama: 60% kunci terpanjang)
+  dan `PILIHAN_TERLARANG` (PG/PGK: "semua benar/salah", "tidak ada yang benar", pilihan yang HANYA huruf "A dan B").
+  ATURAN-SOAL.md: tanda 🆕 dihapus, 🔍 = juga diperiksa aplikasi.
+  AUDIT `AUDIT-SOAL-2026-11-07.md`: set laptop 69 (Fikih), 70 (Ekonomi ASAS 25), 71 (Biologi TKA), materi 7–9, dibuat
+  lewat skrip server action (cara uji-pemisahan.mts; materi dimasukkan langsung ke tabel `materi`). Temuan utama:
+  3/52 kunci SALAH dari AI sendiri (`jawaban_ai` sudah salah: AI menulis pilihan & kunci sebelum menghitung di
+  pembahasan); 4 pembahasan menunjuk "pengecoh kedua" (salah setelah diacak). Usulan perbaikan urut prioritas ada di
+  file audit, MENUNGGU keputusan pemilik.
