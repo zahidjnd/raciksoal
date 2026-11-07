@@ -60,7 +60,7 @@ test("instruksi AI universal: mapel & kelas dari bab, aturan dalil hanya bila ma
   assert.ok(fisika.includes("soal Fisika kelas X ") && fisika.includes("Mata pelajaran: Fisika, kelas X"));
   assert.ok(!fisika.includes("Perhatikan firman Allah") && !fisika.includes("Dalil:"));
   assert.ok(fisika.includes('Selalu isi "dalil_id": null')); // aturan 5 tetap: dilarang mengutip ayat/hadis
-  for (const kaidah of ["negatif ganda", "SARA", "BUKAN oleh kata kerja","HOTS bukan berarti sulit", "setiap pengecoh salah", "langkah hitung", "Panca Cinta"])
+  for (const kaidah of ["negatif ganda", "SARA", "BUKAN oleh kata kerja","HOTS bukan berarti sulit", "setiap pengecoh salah", "langkah hitung", "Panca Cinta", "khilafiyah", "paling panjang", "Nama tokoh", "KBBI", "TANPA huruf bergaris", "tidak menghapus stimulus soal HOTS"])
     assert.ok(fisika.includes(kaidah), kaidah);
 });
 
@@ -256,6 +256,16 @@ test("ratakanKunci: PG kompleks 3 kunci disebar ke gabungan ABC..CDE; kunci 2/3 
   assert.deepEqual(periksaSoal([dasar], bab)[0].peringatan, []);
   assert.equal(periksaSoal([{ ...dasar, kunci: ["A"] }], bab)[0].peringatan!.length, 1);
   assert.equal(periksaSoal([{ ...dasar, kunci: ["A", "B", "C", "D"] }], bab)[0].peringatan!.length, 1);
+});
+
+test("periksaSoal: kunci PG yang jauh lebih panjang dari semua pengecoh ditandai", () => {
+  const pengecoh = ["menjaga pandangan di jalan", "berpuasa sunah tiap pekan", "membaca buku di kamar", "bersedekah kepada tetangga"];
+  const pg = (kunci: string): Soal => ({ bentuk: "PG", dalil_id: null, pertanyaan: "?", pilihan: [kunci, ...pengecoh], kunci: "A", pembahasan: "", level: "C2", tp: "TP 3.1", skor: 2 });
+  const tanda = (s: Soal) => periksaSoal([s], bab)[0].peringatan!.some((w) => w.includes("mudah ditebak"));
+  assert.ok(tanda(pg("menjauhi segala perbuatan yang mengarah kepada zina, termasuk khalwat")));
+  assert.ok(!tanda(pg("menjauhi khalwat dengan lawan jenis"))); // sedikit lebih panjang: wajar
+  assert.ok(!tanda({ ...pg("menjauhi segala perbuatan yang mengarah kepada zina, termasuk khalwat"), kunci: "B" })); // kunci bukan yang terpanjang
+  assert.ok(!tanda({ ...pg("salat duha"), pilihan: ["salat duha", "puasa", "zakat", "haji", "infak"] })); // kunci pendek dilewati
 });
 
 test("pilihan angka diurutkan kecil → besar (format Indonesia), tidak diacak, kunci ikut", () => {

@@ -52,6 +52,21 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.18.0 — 7 November 2026
+Revisi aturan soal (ATURAN-SOAL.md):
+- **Kunci PG yang mencolok panjangnya kini ditandai merah** dan diperbaiki otomatis. Di soal lama, 6 dari 10 soal PG
+  kuncinya adalah pilihan terpanjang, sehingga siswa bisa menebak tanpa paham. Yang ditandai hanya yang mencolok
+  (kunci terpanjang dan 1,5 kali rata-rata pengecoh). AI juga diminta membuat pengecoh sama panjang dan sama rinci.
+- **Tingkat kesulitan "Mudah" tidak lagi membuat soal HOTS kehilangan stimulus.** Dulu kedua aturan ini berlawanan.
+- **Masalah khilafiyah**: soal tidak memihak satu mazhab. Soal menyebut pendapat siapa yang ditanyakan, atau
+  menanyakan perbedaannya.
+- **Ejaan istilah keagamaan sesuai KBBI** (salat, wudu, Allah Swt., Nabi Muhammad saw.), dan transliterasi tanpa
+  huruf bergaris/bertitik ("hissi", bukan "ḥissī"), kecuali di mapel Bahasa Arab.
+- **Nama tokoh dalam cerita lebih beragam**, seimbang putra dan putri. Tokoh yang berbuat salah tidak memakai nama
+  nabi atau sahabat.
+- Dokumen aturan dirapikan: semua aturan yang sudah jalan diberi tanda yang benar, catatan guru punya 4 hal yang
+  dikunci (bukan 3), dan bobot Menjodohkan/Isian dicatat.
+
 ## 0.17.3 — 5 November 2026
 - **Kunci isian yang bocor kini ditandai merah**: kalau jawaban soal isian sudah tertulis di pertanyaan atau pilihan soal
   lain (misalnya kunci "ḥissī" padahal "mukjizat ḥissī" sudah jadi pilihan di soal PG), soal isian itu ditandai, lalu

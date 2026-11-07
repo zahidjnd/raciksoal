@@ -416,6 +416,19 @@ function bocorDi(soal: Soal[], i: number): number[] {
   );
 }
 
+/**
+ * PG yang kuncinya pilihan TERPANJANG dan >= 1,5x rata-rata pengecoh (ATURAN-SOAL 2b no. 7): bisa ditebak tanpa paham.
+ * Batas 1,5 diukur 2026-11-07 pada 274 PG lama: 60% kunci terpanjang (acak = 20%); 1,5x menandai 9%, semuanya
+ * memang mencolok. Kunci < 15 huruf (satu-dua kata) dilewati: selisih kata pendek tidak berarti.
+ */
+function kunciTerpanjang(s: Soal) {
+  const k = HURUF.indexOf(String(s.kunci ?? "").trim().toUpperCase());
+  const pj = (s.pilihan ?? []).map((p) => String(p ?? "").trim().length);
+  if (k < 0 || pj.length !== 5 || pj[k] < 15) return false;
+  const lain = pj.filter((_, i) => i !== k);
+  return pj[k] > Math.max(...lain) && pj[k] >= 1.5 * (lain.reduce((a, b) => a + b, 0) / lain.length);
+}
+
 /** Beri peringatan pada soal yang bermasalah. Aturan 5: teks Arab hanya boleh dari data terverifikasi. */
 export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
   const arabAsingDi = pemeriksaArab(bab, cekAyat);
@@ -445,6 +458,7 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
       peringatan.push(`${bab.teksArab === "bahasa" ? "Teks Arab mirip ayat Al-Qur'an tetapi" : "Teks Arab"} tidak cocok dengan data terverifikasi: ${arabAsing.join(" | ")}`);
     if (s.dalil_id && !dalilAda.has(s.dalil_id)) peringatan.push(`Dalil "${s.dalil_id}" tidak ada di data bab.`);
     if ((s.bentuk === "PG" || s.bentuk === "PGK") && s.pilihan?.length !== 5) peringatan.push("Jumlah pilihan bukan 5.");
+    if (s.bentuk === "PG" && kunciTerpanjang(s)) peringatan.push("Jawaban benar jauh lebih panjang dari semua pengecoh, jadi mudah ditebak. Samakan panjang dan kerincian pilihan.");
     if (s.bentuk === "PGK" && !KUNCI_PGK.includes(new Set([s.kunci].flat()).size)) peringatan.push("Kunci PG kompleks harus 2 atau 3 jawaban.");
     if (s.bentuk === "ISIAN") {
       peringatan.push(...periksaIsian(s));

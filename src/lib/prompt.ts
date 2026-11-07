@@ -32,7 +32,8 @@ export const ATURAN_TUJUAN: Record<(typeof TUJUAN)[number], { aturan: string; le
 };
 
 export const ATURAN_KESULITAN: Record<(typeof KESULITAN)[number], string> = {
-  Mudah: "Pokok soal langsung dan pendek, cukup satu langkah berpikir, tanpa stimulus panjang. Pengecoh jelas berbeda dari jawaban benar.",
+  // ATURAN-SOAL 1c: kesulitan mengatur berat soal DI DALAM levelnya; soal HOTS tetap wajib stimulus (dulu "tanpa stimulus panjang" bertabrakan).
+  Mudah: "Pokok soal pendek dan lugas. Soal LOTS tanpa stimulus panjang; soal yang wajib memakai stimulus (HOTS) cukup diberi stimulus pendek dan sederhana dengan sedikit langkah berpikir. Pengecoh jelas berbeda dari jawaban benar.",
   Sedang: "Pokok soal menuntut pemahaman konsep, boleh memakai stimulus pendek. Pengecoh masuk akal dan mirip dengan jawaban benar.",
   Sulit: "Gunakan stimulus kasus, data, atau perbandingan dua konsep/kondisi yang menuntut beberapa langkah berpikir. Pengecoh sangat homogen dan hanya berbeda tipis, tetapi tetap jelas salah bagi siswa yang memahami materi.",
 };
@@ -191,11 +192,13 @@ ISI YANG DILARANG: SARA, politik praktis, pornografi, propaganda, kekerasan, mer
 KAIDAH MATERI:
 - Soal sesuai indikator kisi-kisi; konsep benar; untuk PG kunci hanya satu.
 - Jangan menyalin kalimat materi mentah-mentah (mendorong hafalan); gunakan redaksi baru.
+- Masalah yang diperselisihkan ulama (khilafiyah, misalnya perbedaan mazhab): jangan memihak satu pendapat sebagai satu-satunya yang benar. Sebut jelas pendapat siapa yang ditanyakan ("Menurut mazhab Syafi'i, ...") atau tanyakan perbedaannya. Pendapat ulama/mazhab lain yang sah tidak boleh dijadikan pengecoh, kecuali soal sudah menyebut jelas pendapat siapa yang ditanyakan.
 
 KAIDAH KONSTRUKSI:
 - Pokok soal jelas, tegas, tidak bermakna ganda, hanya memuat yang perlu, dan tidak memberi petunjuk ke jawaban benar.
 - Tidak ada negatif ganda (misalnya "yang tidak benar, kecuali"). Kata negatif di pokok soal ditulis kapital: BUKAN, KECUALI, TIDAK.
 - Pengecoh masuk akal, homogen, panjang pilihan relatif seimbang. Hindari pilihan "semua benar" / "semua salah".
+- Jawaban benar TIDAK BOLEH menjadi pilihan yang paling panjang atau paling lengkap/rinci. Buat pengecoh sama panjang dan sama rincinya.
 - Pilihan berupa angka, tahun, atau urutan ditulis berurutan (kecil → besar, lama → baru).
 - Setiap soal berdiri sendiri: tidak bergantung pada jawaban soal lain.
 - Jawaban satu soal TIDAK BOLEH tertulis di soal lain dalam set ini (di pokok soal maupun pilihan), terutama kunci isian singkat.
@@ -206,12 +209,15 @@ KAIDAH KONSTRUKSI:
 KAIDAH BAHASA:
 - Bahasa Indonesia baku, efektif, komunikatif, sesuai usia siswa MA. Tanpa bahasa daerah atau bahasa gaul (kecuali kutipan stimulus yang memang perlu).
 - Mapel bahasa asing (Bahasa Arab, Bahasa Inggris, dll.): soal boleh ditulis dalam bahasa tersebut.
+- Istilah keagamaan ditulis sesuai KBBI: salat, zakat, wudu, hadis, Al-Qur'an, Allah Swt., Nabi Muhammad saw., Rasulullah saw. Nama surah ditulis persis seperti sumber dalil di DATA BAB.
+- ${bahasaArab ? "Transliterasi Latin boleh memakai tanda baca ilmiah (ā, ḥ, ṣ) bila memang bagian pelajaran." : 'Transliterasi Latin TANPA huruf bergaris/bertitik (tulis "hissi", "mahall", bukan "ḥissī", "maḥall").'}
 
 LEVEL KOGNITIF (taksonomi Bloom revisi):
 - C1 mengingat, C2 memahami, C3 menerapkan, C4 menganalisis, C5 mengevaluasi, C6 mencipta. LOTS = C1–C2, MOTS = C3, HOTS = C4–C6.
 - Level ditentukan oleh proses berpikir yang dibutuhkan siswa, BUKAN oleh kata kerja di soal. Soal "Analisislah ..." yang jawabannya bisa dihafal tetap C1.
 - HOTS bukan berarti sulit: HOTS = menalar. Soal HOTS WAJIB memakai stimulus baru (kasus, data, teks, fenomena) dan jawabannya diperoleh dengan mengolah stimulus itu, bukan hafalan.
 - Soal C1–C2 cukup pokok soal langsung, tanpa stimulus panjang.
+- Tingkat kesulitan mengatur berat soal DI DALAM levelnya: tidak mengubah level dan tidak menghapus stimulus soal HOTS.
 
 STIMULUS (berlaku untuk seluruh set soal, lintas bentuk soal):
 - Kontekstual dan dekat dengan kehidupan siswa MA (madrasah, pesantren, keluarga, masyarakat, media sosial).
@@ -220,6 +226,7 @@ STIMULUS (berlaku untuk seluruh set soal, lintas bentuk soal):
 - Susunan baris: percakapan/dialog/hiwar ditulis SATU PENUTUR PER BARIS dengan format "Nama: ucapan", baris dipisah baris baru (\\n di dalam teks JSON). Daftar bernomor, langkah prosedur, puisi/syair, dan surat/pesan singkat juga satu bagian per baris. Kalimat pengantar ("Perhatikan percakapan berikut!") dan perintah soal ditulis di baris sendiri. TANPA baris kosong di antara baris-baris (satu \\n saja). Bagian rumpang ditulis "..." atau "(1) ..." di dalam baris ucapan. Teks cerita atau uraian biasa tetap satu paragraf. Berlaku untuk "pertanyaan", "wacana", "pilihan", dan "pernyataan".
 - Pola "dua orang/kelompok berdebat atau berbeda pendapat" paling banyak 2 kali dalam satu set.
 - Satu skenario atau kasus hanya boleh dipakai SEKALI dalam satu set.
+- Nama tokoh beragam (jangan selalu Ahmad atau Fatimah), seimbang putra dan putri. Tokoh yang berbuat salah atau keliru TIDAK memakai nama nabi, sahabat, atau tokoh mulia dalam Islam.
 - Boleh menyisipkan nilai Panca Cinta (Cinta Allah dan Rasul-Nya, Cinta Ilmu, Cinta Lingkungan, Cinta Diri dan Sesama, Cinta Tanah Air) secara wajar pada tokoh/cerita, tanpa menggurui dan tanpa mengubah kunci. Tidak wajib di setiap soal.
 
 PENGECOH DAN PEMBAHASAN:
