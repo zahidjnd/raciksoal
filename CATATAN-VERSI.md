@@ -52,6 +52,15 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.22.1 — 8 November 2026
+- **Tampilan halaman Buat soal dirapikan:**
+  - Judul berhuruf Arab di riwayat (sidebar, Riwayat, Semua set) kini terbaca dari kanan dan tidak mengacak urutan
+    tulisan di sekitarnya.
+  - Tombol yang belum bisa ditekan kini abu-abu (dulu hijau pucat, terlihat seperti rusak).
+  - Alasan tombol **Buat soal** terkunci kini tampil tepat di bawah tombolnya.
+  - Kotak "Catatan untuk AI" lebih kecil dan petunjuknya lebih singkat.
+  - Kalimat keterangan di bawah tombol format ASAS dipersingkat.
+
 ## 0.22.0 — 8 November 2026
 - **Format ASAS MA Al-Fatah** (sesuai surat Kepala MA, 7 November 2026). Memilih kartu **ASAS** langsung mengisi:
   - **Eksak** (Matematika, Fisika, Kimia, Biologi): 20 PG, 5 PG kompleks, 5 Benar/Salah, 5 esai = 35 soal;
