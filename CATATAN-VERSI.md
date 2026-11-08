@@ -52,6 +52,14 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.23.0 — 8 November 2026
+- **Sapaan di halaman Set baru kini berganti-ganti** setiap halaman dibuka, seperti aplikasi AI: campuran formal dan
+  santai ("Kopi dulu, baru racik soal ☕", "Jumat berkah"), menyesuaikan pagi/siang/sore/malam (WIB), hari, dan musim
+  ujian, dengan nama depan guru.
+- **Ikon panah dropdown kini seragam** di semua pilihan dan tombol panel (Mapel, Kelas, Kop ujian, Kesulitan, jumlah
+  soal, Lanjutan, dan lainnya), dan berbalik ke atas saat panelnya terbuka.
+- **Tombol Buat soal kini sejajar** dengan tombol di sebelahnya (sama tinggi, seperti Analisa materi).
+
 ## 0.22.1 — 8 November 2026
 - **Tampilan halaman Buat soal dirapikan:**
   - Judul berhuruf Arab di riwayat (sidebar, Riwayat, Semua set) kini terbaca dari kanan dan tidak mengacak urutan
