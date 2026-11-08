@@ -104,7 +104,7 @@ function TabelKisi({ kisi }: { kisi: BarisKisi[] }) {
   );
 }
 
-export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: number | null; awalMateri: string[] }) {
+export function BuatSoal({ sapaan, awalId, awalMateri }: { sapaan: string; awalId: number | null; awalMateri: string[] }) {
   const router = useRouter();
   const [p, setP] = useState<Pengaturan>({
     babId: "",
@@ -305,7 +305,7 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
       {tampilForm && (
         <section className="space-y-3 pt-4 md:pt-12">
           <div className="pb-2 text-center">
-            <h1 className="text-3xl md:text-4xl">Assalamu&apos;alaikum, {nama}</h1>
+            <h1 className="text-3xl md:text-4xl">{sapaan}</h1>
             <p className="mt-1 text-sm text-pudar">Pilih mapel dan kelas, masukkan materi, lalu pilih jenis soal.</p>
           </div>
 

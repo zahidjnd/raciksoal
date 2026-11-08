@@ -1,4 +1,5 @@
 import { wajibMasuk } from "@/lib/sesi";
+import { pilihSapaan } from "@/lib/sapaan";
 import { BuatSoal } from "./buat-soal";
 import { Kerangka } from "./kepala";
 
@@ -12,7 +13,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ i
   const materi = String(q.materi ?? "").split(",").filter((m) => /^materi-\d+$/.test(m)).slice(0, 5);
   return (
     <Kerangka p={p} lebar setAktif={id}>
-      <BuatSoal nama={p.nama} awalId={id} awalMateri={materi} />
+      {/* Sapaan dipilih di server tiap halaman dibuka (berganti-ganti, sesuai jam WIB); tidak diacak di browser. */}
+      <BuatSoal sapaan={pilihSapaan(p.nama)} awalId={id} awalMateri={materi} />
     </Kerangka>
   );
 }
