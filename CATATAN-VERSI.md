@@ -52,6 +52,19 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.21.0 — 8 November 2026
+- **Latihan TKA kini mengikuti contoh soal resmi Pusmendik:**
+  - PG kompleks boleh 2, 3, atau 4 jawaban benar, dengan petunjuk baku "Pilihlah jawaban yang benar! Jawaban benar
+    lebih dari satu."
+  - Soal Kategori berisi 3 pernyataan, dengan label resmi (Benar/Salah, Tepat/Tidak Tepat, Sesuai/Tidak Sesuai,
+    Setuju/Tidak Setuju, Logis/Tidak Logis).
+  - Nama level untuk mapel bahasa mengikuti TKA: Bahasa Arab = Pemahaman Literal / Reorganisasi / Pemahaman
+    Inferensial; Bahasa Indonesia & Inggris = Pemahaman Tekstual / Pemahaman Inferensial / Evaluasi dan Apresiasi.
+- **Jumlah jawaban benar PG kompleks kini lebih beragam di semua jenis soal.** Dulu AI sering memberi jumlah yang sama
+  di setiap soal; sekarang aplikasi yang merencanakannya per nomor di kisi-kisi.
+- Jenis lain (Ulangan Harian, AFTS, ASAS, Latihan) tetap seperti biasa: PG kompleks 2–3 jawaban benar, Kategori 4
+  pernyataan.
+
 ## 0.20.0 — 7 November 2026
 - **Tujuan Pembelajaran (TP) kini diputuskan guru.** Panduan resmi menyebut TP dirumuskan guru, bukan AI.
   - Kalau materi yang ditempel sudah memuat TP, TP itu disalin persis beserta kodenya (misalnya "TP 2.1"), kotak hijau.
