@@ -26,7 +26,10 @@ export function TautanMenu({ href, kelas, children }: { href: string; kelas: str
  * Tautan sengaja <a> biasa (muat penuh), lihat komentar di kepala.tsx.
  */
 // aktif: set ini yang sedang dibuka → latar sorot tetap + judul tebal (TANDA_AKTIF, dipakai juga menu admin).
-export function BarisRiwayat({ id, label, nama, keterangan, gagal, aktif, kelas }: { id: number; label: string; nama: string | null; keterangan: string; gagal: boolean; aktif: boolean; kelas: string }) {
+// awalan ("ASAS ·") dan label (judul materi / nama set) ditulis terpisah: judul berhuruf Arab ditampilkan kanan-ke-kiri
+// dengan potongan "…" di ujung kirinya, tanpa mengacak urutan awalan (audit tampilan 2026-11-08).
+export function BarisRiwayat({ id, awalan = "", label: judul, nama, keterangan, gagal, aktif, kelas }: { id: number; awalan?: string; label: string; nama: string | null; keterangan: string; gagal: boolean; aktif: boolean; kelas: string }) {
+  const label = awalan ? `${awalan} ${judul}` : judul;
   const router = useRouter();
   const [menu, setMenu] = useState(false);
   const [ketik, setKetik] = useState<string | null>(null); // null = tidak sedang mengganti nama
@@ -105,7 +108,10 @@ export function BarisRiwayat({ id, label, nama, keterangan, gagal, aktif, kelas 
           setMenu(true);
         }}
       >
-        <span className={`block truncate ${gagal ? "text-bahaya" : ""}`}>{label}</span>
+        <span className={`flex min-w-0 gap-1 ${gagal ? "text-bahaya" : ""}`}>
+          {awalan && <span className="shrink-0">{awalan}</span>}
+          <span dir="auto" className="min-w-0 truncate">{judul}</span>
+        </span>
         <span className="block text-xs font-normal text-pudar">{keterangan}</span>
       </a>
       <button

@@ -59,7 +59,7 @@ export default async function SemuaSet({ searchParams }: { searchParams: Promise
             >
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <span>
-                  <span className="font-semibold">{s.guru ?? "(tanpa pemilik)"}</span> · {namaTujuan(pg.tujuan, s.mapel)} · {bab} · {pg.kesulitan}
+                  <span className="font-semibold">{s.guru ?? "(tanpa pemilik)"}</span> · {namaTujuan(pg.tujuan, s.mapel)} · <bdi>{bab}</bdi> · {pg.kesulitan}
                   {s.status === "selesai" && <span className="text-pudar"> · {s.jumlahSoal} soal</span>}
                 </span>
                 <span className="text-xs text-pudar">

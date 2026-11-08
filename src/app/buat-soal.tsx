@@ -385,12 +385,13 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
           )}
 
           <div className="rounded-2xl border bg-kartu p-3 shadow-sm focus-within:border-hijau focus-within:ring-2 focus-within:ring-hijau">
+            {/* Kotak opsional: huruf seukuran isian lain supaya tidak lebih menonjol dari langkah wajib (audit tampilan 2026-11-08). */}
             <textarea
-              className="w-full resize-none p-1 outline-none"
-              rows={3}
+              className="w-full resize-none p-1 text-sm outline-none"
+              rows={2}
               maxLength={MAKS_CATATAN}
               aria-label="Catatan untuk AI (opsional)"
-              placeholder="Catatan untuk AI (opsional), bebas seperti chat. Mis. soal cerita tentang kehidupan pesantren; bahasa sederhana; dan lain-lain"
+              placeholder="Catatan untuk AI (opsional), mis. soal cerita kehidupan pesantren, bahasa sederhana"
               value={p.catatan ?? ""}
               onChange={(e) => setP({ ...p, catatan: e.target.value })}
             />
@@ -412,6 +413,8 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
                 {menyiapkan ? "Menyimpan materi..." : "Buat soal"}
               </button>
             </div>
+            {/* Alasan tombol terkunci tepat di bawah tombolnya (dulu di luar kotak, jauh dari tombol). */}
+            {alasanTerkunci && <p className="mt-2 text-right text-xs text-peringatan" role="status">{alasanTerkunci}</p>}
 
             {buka === "jumlah" && (
               <fieldset className="mt-3 border-t pt-3">
@@ -484,7 +487,6 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
             )}
           </div>
 
-          {alasanTerkunci && <p className="text-center text-sm text-peringatan">{alasanTerkunci}</p>}
           <p className="text-center text-xs text-pudar">
             {jatah &&
               (jatah.batas

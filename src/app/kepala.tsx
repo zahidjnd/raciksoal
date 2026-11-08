@@ -156,12 +156,14 @@ export async function Kerangka({ p, lebar = false, setAktif = null, children }: 
           {riwayat.length === 0 && <p className="px-3 text-xs text-pudar">Belum ada set soal.</p>}
           {riwayat.map((s) => {
             const pg = s.pengaturan as Pengaturan;
-            const label = s.nama ?? `${namaTujuan(pg.tujuan, s.mapel)} ·${judulPendek(s.judulBab, s.babId)}`;
+            // Nama set buatan guru dipakai utuh; selain itu "ASAS ·" + judul materi (judul bisa berhuruf Arab).
+            const awalan = s.nama ? "" : `${namaTujuan(pg.tujuan, s.mapel)} ·`;
+            const label = s.nama ?? judulPendek(s.judulBab, s.babId);
             // Baris kedua (tanggal · jumlah soal): set dengan judul sama bisa dibedakan (audit 2026-11-04).
             const tanggal = s.dibuat.toLocaleDateString("id-ID", { day: "numeric", month: "short", timeZone: "Asia/Jakarta" });
             const keterangan = s.status === "gagal" ? "gagal" : s.status === "proses" ? "sedang dibuat" : `${s.jumlahSoal} soal`;
             // Menu ⋯ / klik kanan (Ganti nama, Hapus) ala claude.ai: BarisRiwayat (komponen browser).
-            return <BarisRiwayat key={s.id} id={s.id} label={label} nama={s.nama} keterangan={`${tanggal} · ${keterangan}`} gagal={s.status === "gagal"} aktif={s.id === setAktif} kelas={tautan} />;
+            return <BarisRiwayat key={s.id} id={s.id} awalan={awalan} label={label} nama={s.nama} keterangan={`${tanggal} · ${keterangan}`} gagal={s.status === "gagal"} aktif={s.id === setAktif} kelas={tautan} />;
           })}
           {/* Selalu tampil (bila ada set): halaman Riwayat punya pencarian & saringan. */}
           {riwayat.length > 0 && (

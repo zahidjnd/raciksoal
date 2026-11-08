@@ -140,6 +140,16 @@ body:has(#halaman-masuk) > footer {
   }
 }
 
+/* Tombol utama (hijau) yang belum bisa ditekan: abu-abu dengan tulisan gelap, bukan hijau pucat (audit tampilan
+   2026-11-08: hijau pucat + tulisan putih sulit dibaca dan terlihat seperti tombol rusak). Sengaja di luar @layer
+   supaya mengalahkan utilitas disabled:opacity-* dan hover:bg-hijau-tua di semua tombol. */
+button.bg-hijau:disabled {
+  background-color: var(--color-krem-sorot);
+  color: var(--color-pudar);
+  opacity: 1;
+  cursor: not-allowed;
+}
+
 /* Cetak dari web (Ctrl+P / tombol Cetak, audit 2026-11-04): hanya isi halaman. Sidebar, bilah unduh, deret nomor,
    tab, dan semua tombol disembunyikan (elemen ber-`print:hidden` + aturan di bawah); kartu soal tidak terpotong. */
 @media print {

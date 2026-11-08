@@ -41,8 +41,9 @@ export default async function Riwayat({ searchParams }: { searchParams: Promise<
               className="flex flex-wrap items-baseline justify-between gap-2 px-4 py-3 hover:bg-krem"
             >
               <span>
-                {s.nama && <span className="font-semibold">{s.nama} · </span>}
-                <span className={s.nama ? "" : "font-semibold"}>{namaTujuan(pg.tujuan, s.mapel)}</span> · {bab} · {pg.kesulitan}
+                {/* bdi: judul/nama berhuruf Arab tidak mengacak urutan teks di sekitarnya */}
+                {s.nama && <span className="font-semibold"><bdi>{s.nama}</bdi> · </span>}
+                <span className={s.nama ? "" : "font-semibold"}>{namaTujuan(pg.tujuan, s.mapel)}</span> · <bdi>{bab}</bdi> · {pg.kesulitan}
                 {s.status === "selesai" && <span className="text-pudar"> · {s.jumlahSoal} soal</span>}
                 {s.status !== "selesai" && (
                   <span className={`ml-1 rounded px-1 text-xs ${s.status === "gagal" ? "bg-bahaya-muda text-bahaya" : "bg-peringatan-muda"}`}>
