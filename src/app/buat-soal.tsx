@@ -379,7 +379,7 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
                 );
               })}
               <span className="w-full text-xs text-pudar">
-                Eksak = Matematika, Fisika, Kimia, Biologi. Menjodohkan + Benar/Salah total 5 nomor, boleh dicampur lewat tombol jumlah soal (menjodohkan minimal 3).
+                Eksak = Matematika, Fisika, Kimia, Biologi.
               </span>
             </div>
           )}
