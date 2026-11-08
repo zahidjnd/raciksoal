@@ -623,3 +623,9 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   `%APPDATA%\Docker\settings-store.json`) → folder data baru kosong, semua kontainer "hilang". Dipulihkan dengan mengembalikan
   nilai itu ke "wsl2" (cadangan: `settings-store.json.cadangan-sebelum-wsl2`); data lama di `%LOCALAPPDATA%\Docker\wsl\disk`
   utuh (80 set, 10 materi, 5 akun). Kalau kontainer hilang lagi setelah update, cek nilai itu dulu.
+- 2026-11-08 DOCKER LAPTOP TANPA TUKAR-TUKARAN (permintaan pemilik): `raciksoal-db` dibuat ulang di **127.0.0.1:5440**
+  (volume `raciksoal-db` yang sama, `--restart unless-stopped`); kontainer lama diganti nama `raciksoal-db-lama` (mati,
+  boleh dihapus bila pemilik setuju). `datainduk-db-1` (5432) & `halaqoh-db` (5433) tetap menyala bersamaan.
+  `.env.development.local` (tidak di-commit, hanya `DATABASE_URL` ke 5440) mengalahkan `.env` saat `npm run dev`.
+  CATATAN DOCKER LAMA (stop datainduk / start raciksoal-db) SUDAH TIDAK PERLU. Docker Desktop AutoStart = mati: kalau
+  `docker ps` error, jalankan `docker desktop start` dulu. Akses psql: `docker exec raciksoal-db psql -U <POSTGRES_USER>`.
