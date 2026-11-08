@@ -585,6 +585,10 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   `LABEL_KATEGORI`). `namaLevelTka(mapel)`: Bahasa Arab / Bahasa Indonesia & Inggris punya nama level sendiri (form Lanjutan +
   teks aturan TKA). Pemeriksa dilonggarkan untuk SEMUA jenis: `KUNCI_PGK` [2,3,4], `PERNYATAAN_BOLEH` [3,4] (jenis lain tetap
   diminta 2–3 kunci & 4 pernyataan lewat BENTUK_SOAL). BELUM: grup campur bentuk (Word per bagian bentuk).
-  Uji AI sungguhan BELUM: Docker laptop bermasalah 2026-11-08 ("Docker Desktop is unable to start", setelah dinyalakan
-  ulang daftar kontainer/volume KOSONG, padahal `docker_data.vhdx` ±5 GB masih ada). Jangan membuat kontainer baru
-  sebelum pemilik memeriksa Docker. Skrip uji: `uji-tka.mts` di scratchpad (buat set TKA lewat server action).
+  Uji laptop set 81 (guru.uji.b, materi-10, TKA 2 PG + 4 PGK + 4 Kategori): petunjuk baku di semua PGK, Kategori 3
+  pernyataan, label resmi, 0 merah. TAPI keempat PGK berkunci 2 (AI tidak meragamkan 2–4) → calon perbaikan: jumlah kunci
+  per nomor ditentukan aplikasi (seperti `rencanaLevel`).
+  DOCKER LAPTOP 2026-11-08: update Docker Desktop (15.56) mengganti mesin ke "docker-vmm" (`EngineTypeWindows` di
+  `%APPDATA%\Docker\settings-store.json`) → folder data baru kosong, semua kontainer "hilang". Dipulihkan dengan mengembalikan
+  nilai itu ke "wsl2" (cadangan: `settings-store.json.cadangan-sebelum-wsl2`); data lama di `%LOCALAPPDATA%\Docker\wsl\disk`
+  utuh (80 set, 10 materi, 5 akun). Kalau kontainer hilang lagi setelah update, cek nilai itu dulu.
