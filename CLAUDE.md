@@ -578,3 +578,13 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   (`alasanTerkunci`); `rapikanMateri` menolak `tpUsulan` tanpa `tpDibaca` (penanda dikirim balik browser, bukan disimpan
   di bab). Materi lama & form /materi tidak terpengaruh. Uji laptop (guru.uji.b, Ekonomi): tanpa TP → 4 usulan,
   tpUsulan true; dengan TP → tersalin persis, tpUsulan false. Tampilan kartu belum dilihat (panel browser tersembunyi).
+  Dirilis 0.20.0.
+- 2026-11-08 LATIHAN TKA = CONTOH RESMI (celah A2 RUJUKAN.md, pemilik "gas"): `ATURAN_TKA` (prompt.ts) masuk lewat
+  `kepalaPermintaan` hanya bila tujuan TKA (kisi, soal, ganti/ubah, perbaikan otomatis): MCMA 2–4 benar + petunjuk baku
+  "Pilihlah jawaban yang benar! Jawaban benar lebih dari satu.", Kategori 3 pernyataan, label resmi (+ Setuju, Logis di
+  `LABEL_KATEGORI`). `namaLevelTka(mapel)`: Bahasa Arab / Bahasa Indonesia & Inggris punya nama level sendiri (form Lanjutan +
+  teks aturan TKA). Pemeriksa dilonggarkan untuk SEMUA jenis: `KUNCI_PGK` [2,3,4], `PERNYATAAN_BOLEH` [3,4] (jenis lain tetap
+  diminta 2–3 kunci & 4 pernyataan lewat BENTUK_SOAL). BELUM: grup campur bentuk (Word per bagian bentuk).
+  Uji AI sungguhan BELUM: Docker laptop bermasalah 2026-11-08 ("Docker Desktop is unable to start", setelah dinyalakan
+  ulang daftar kontainer/volume KOSONG, padahal `docker_data.vhdx` ±5 GB masih ada). Jangan membuat kontainer baru
+  sebelum pemilik memeriksa Docker. Skrip uji: `uji-tka.mts` di scratchpad (buat set TKA lewat server action).

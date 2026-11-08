@@ -8,6 +8,22 @@ export const namaTujuan = (t: string) => NAMA_TUJUAN[t] ?? t;
 /** ATURAN-SOAL.md bagian 9: TKA hanya PG, PG kompleks, Kategori (tanpa uraian), memakai soal grup. */
 export const TKA = "Latihan TKA";
 export const NAMA_LEVEL_TKA = { LOTS: "Pemahaman", MOTS: "Penerapan", HOTS: "Penalaran" } as const;
+type NamaLevel = { LOTS: string; MOTS: string; HOTS: string };
+/** Mapel bahasa di TKA memakai kompetensi membaca, bukan Pemahaman/Penerapan/Penalaran (Perka BSKAP 045/2025, RUJUKAN.md I2). */
+const LEVEL_TKA_BAHASA: [string, RegExp, NamaLevel][] = [
+  ["Bahasa Arab", /bahasa\s+arab/i, { LOTS: "Pemahaman Literal", MOTS: "Reorganisasi", HOTS: "Pemahaman Inferensial" }],
+  ["Bahasa Indonesia dan Bahasa Inggris", /bahasa\s+(indonesia|inggris)|english/i, { LOTS: "Pemahaman Tekstual", MOTS: "Pemahaman Inferensial", HOTS: "Evaluasi dan Apresiasi" }],
+];
+export const namaLevelTka = (mapel = ""): NamaLevel => LEVEL_TKA_BAHASA.find(([, pola]) => pola.test(mapel))?.[2] ?? NAMA_LEVEL_TKA;
+const sebutLevel = (n: NamaLevel) => `${n.LOTS} (= LOTS), ${n.MOTS} (= MOTS), dan ${n.HOTS} (= HOTS)`;
+
+/**
+ * Latihan TKA mengikuti contoh soal resmi Pusmendik (Perka BSKAP 045/2025, RUJUKAN.md I2). Dikirim di setiap
+ * permintaan TKA (kisi-kisi, soal, ganti/ubah, perbaikan otomatis) dan mengalahkan BENTUK SOAL di instruksi sistem.
+ */
+const ATURAN_TKA = `KHUSUS LATIHAN TKA (mengikuti contoh soal resmi Pusmendik; bila berbeda dengan BENTUK SOAL di instruksi sistem, ikuti ini):
+- PGK (MCMA): 5 pilihan, jawaban benar 2, 3, ATAU 4 (tidak semua), sesuai isi soal; ragamkan jumlahnya dalam satu set. "kunci": array 2–4 huruf. Akhiri pertanyaan dengan kalimat persis "Pilihlah jawaban yang benar! Jawaban benar lebih dari satu." (BUKAN "(Pilih semua jawaban yang tepat)").
+- BS (Kategori): TEPAT 3 pernyataan, "kunci" array 3 label. Pasangan label HANYA salah satu dari: ["Benar","Salah"], ["Tepat","Tidak Tepat"], ["Sesuai","Tidak Sesuai"], ["Setuju","Tidak Setuju"], ["Logis","Tidak Logis"].`;
 export const KESULITAN = ["Mudah", "Sedang", "Sulit"] as const;
 
 const ATURAN_UJIAN = "Gaya soal ujian resmi madrasah (seperti asesmen tengah/akhir semester). Sebar soal merata ke semua TP dan materi (dan semua dalil bila ada). Bahasa baku. Pembahasan ringkas: alasan kunci benar + alasan singkat tiap pengecoh salah.";
@@ -26,7 +42,7 @@ export const ATURAN_TUJUAN: Record<(typeof TUJUAN)[number], { aturan: string; le
   PAS: { aturan: ATURAN_UJIAN, level: { LOTS: 30, MOTS: 40, HOTS: 30 } },
   "Latihan TKA": {
     aturan:
-      "Gaya Tes Kemampuan Akademik (TKA) SMA/MA dari pusat: level kognitif disebut Pemahaman (= LOTS), Penerapan (= MOTS), dan Penalaran (= HOTS); hampir semua soal berbasis stimulus (bacaan, data/tabel, kasus, hasil percobaan) yang harus diolah, bukan hafalan. Sebagian soal berupa SOAL GRUP (beberapa soal memakai satu wacana bersama). Pembahasan mendidik: alasan kunci benar + alasan tiap pengecoh salah.",
+      `Gaya Tes Kemampuan Akademik (TKA) SMA/MA dari pusat: level kognitif disebut ${sebutLevel(NAMA_LEVEL_TKA)}; ${LEVEL_TKA_BAHASA.map(([nama, , n]) => `untuk ${nama}: ${sebutLevel(n)}`).join("; ")}. Hampir semua soal berbasis stimulus (bacaan, data/tabel, kasus, hasil percobaan) yang harus diolah, bukan hafalan. Sebagian soal berupa SOAL GRUP (beberapa soal memakai satu wacana bersama). Pembahasan mendidik: alasan kunci benar + alasan tiap pengecoh salah.`,
     level: { LOTS: 20, MOTS: 40, HOTS: 40 },
   },
 };
@@ -364,7 +380,7 @@ function kepalaPermintaan(p: Pengaturan) {
   // terapkanBobot menskalakan angka skor tetapi teksnya tidak ikut → tidak cocok. Jadi AI diberi tahu jumlah yang dituju.
   const bobotUraian = p.jumlah?.URAIAN && p.bobot?.URAIAN ? `Jumlah skor rubrik setiap soal URAIAN harus tepat ${p.bobot.URAIAN}.\n` : "";
   return `Tujuan: ${nama}. Aturan ${namaTujuan(tujuan)}: ${ATURAN_TUJUAN[tujuan].aturan}
-Tingkat kesulitan: ${kesulitan}. Artinya: ${ATURAN_KESULITAN[kesulitan]}
+${tujuan === TKA ? `${ATURAN_TKA}\n` : ""}Tingkat kesulitan: ${kesulitan}. Artinya: ${ATURAN_KESULITAN[kesulitan]}
 ${bobotUraian}${catatanGuru}`;
 }
 

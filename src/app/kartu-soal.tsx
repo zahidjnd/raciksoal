@@ -341,7 +341,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
   const kunciPgk = [s.kunci].flat();
 
   async function simpan() {
-    if (s.bentuk === "PGK" && !KUNCI_PGK.includes(kunciPgk.length)) return setError("Pilih 2 atau 3 kunci jawaban.");
+    if (s.bentuk === "PGK" && !KUNCI_PGK.includes(kunciPgk.length)) return setError("Pilih 2 sampai 4 kunci jawaban.");
     if (kategoriBaru(s) && (s.pernyataan ?? []).some((_, i) => !s.label?.includes(kunciPgk[i]))) return setError("Pilih kunci untuk setiap pernyataan.");
     setMenyimpan(true);
     setError((await onSimpan(s)) ?? "");

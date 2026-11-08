@@ -100,15 +100,22 @@ const URUTAN_BENTUK: Bentuk[] = ["PG", "PGK", "BS", "MJ", "ISIAN", "URAIAN"]; //
 
 export const KELAS = ["X", "XI", "XII"];
 
-/** Pasangan label soal Kategori (ATURAN-SOAL.md bagian 3 & 9) dan jumlah pernyataannya (MA kelas 10–12: 4). */
+/**
+ * Pasangan label soal Kategori (ATURAN-SOAL.md bagian 3 & 9) dan jumlah pernyataannya: 4 untuk soal madrasah,
+ * 3 untuk Latihan TKA (semua contoh resmi Perka BSKAP 045/2025; versi web kadang 4), jadi keduanya sah (RUJUKAN.md I2).
+ * Setuju/Logis = label contoh resmi TKA; Fakta/Opini & Didukung = variasi madrasah.
+ */
 export const LABEL_KATEGORI = [
   ["Benar", "Salah"],
   ["Fakta", "Opini"],
   ["Sesuai", "Tidak Sesuai"],
   ["Tepat", "Tidak Tepat"],
   ["Didukung", "Tidak Didukung"],
+  ["Setuju", "Tidak Setuju"],
+  ["Logis", "Tidak Logis"],
 ];
-export const JUMLAH_PERNYATAAN = 4;
+export const JUMLAH_PERNYATAAN = 4; // paling banyak
+export const PERNYATAAN_BOLEH = [3, 4];
 /** Soal Kategori model baru (bukan B/S satu pernyataan dari set lama). */
 export const kategoriBaru = (s: Pick<Soal, "bentuk" | "pernyataan">) => s.bentuk === "BS" && Array.isArray(s.pernyataan);
 
@@ -576,7 +583,7 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
     if (/^C[4-6]$/i.test(s.level ?? "") && s.bentuk !== "MJ" && !s.wacana && !s.dalil_id && String(s.pertanyaan ?? "").trim().length < 80)
       peringatan.push(`Soal HOTS (${s.level}) tanpa stimulus: tambahkan kasus, data, atau teks yang harus diolah siswa untuk menjawab.`);
     if (s.bentuk === "PG" && kunciTerpanjang(s)) peringatan.push("Jawaban benar jauh lebih panjang dari semua pengecoh, jadi mudah ditebak. Samakan panjang dan kerincian pilihan.");
-    if (s.bentuk === "PGK" && !KUNCI_PGK.includes(new Set([s.kunci].flat()).size)) peringatan.push("Kunci PG kompleks harus 2 atau 3 jawaban.");
+    if (s.bentuk === "PGK" && !KUNCI_PGK.includes(new Set([s.kunci].flat()).size)) peringatan.push("Kunci PG kompleks harus 2 sampai 4 jawaban (tidak semua pilihan).");
     if (s.bentuk === "ISIAN") {
       peringatan.push(...periksaIsian(s));
       const di = bocorDi(soal, i);
@@ -588,7 +595,7 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
       if (mirip) peringatan.push(`Menjodohkan ini mirip soal nomor ${mirip} (3 atau lebih isi lajur sama). Pakai pasangan dari sisi materi lain.`);
     }
     if (kategoriBaru(s)) {
-      if (s.pernyataan!.length !== JUMLAH_PERNYATAAN || s.pernyataan!.some((p) => !p)) peringatan.push(`Soal kategori harus berisi ${JUMLAH_PERNYATAAN} pernyataan.`);
+      if (!PERNYATAAN_BOLEH.includes(s.pernyataan!.length) || s.pernyataan!.some((p) => !p)) peringatan.push("Soal kategori harus berisi 3 atau 4 pernyataan (tidak boleh kosong).");
       if (!cariLabel(s.label)) peringatan.push(`Label kategori tidak dikenal: ${(s.label ?? []).join(" / ") || "(kosong)"}.`);
       const kunci = [s.kunci].flat();
       if (kunci.length !== s.pernyataan!.length || kunci.some((k) => !s.label?.includes(k))) peringatan.push("Kunci kategori harus satu label untuk setiap pernyataan.");
@@ -602,9 +609,12 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
 }
 
 const HURUF = "ABCDE";
-/** PG kompleks (MCMA, ATURAN-SOAL.md bagian 3): 2 atau 3 jawaban benar dari 5. */
-export const KUNCI_PGK = [2, 3];
-// Semua gabungan k posisi dari 5: k=2 → AB, AC, ... DE (10); k=3 → ABC, ... CDE (10)
+/**
+ * PG kompleks (MCMA, ATURAN-SOAL.md bagian 3): 2–4 jawaban benar dari 5. Soal madrasah diminta 2–3; Latihan TKA 2–4
+ * seperti contoh resmi (RUJUKAN.md I2).
+ */
+export const KUNCI_PGK = [2, 3, 4];
+// Semua gabungan k posisi dari 5: k=2 → AB, AC, ... DE (10); k=3 → ABC, ... CDE (10); k=4 → ABCD, ... BCDE (5)
 const gabungan = (k: number, mulai = 0): number[][] =>
   k === 0 ? [[]] : [0, 1, 2, 3, 4].filter((i) => i >= mulai).flatMap((i) => gabungan(k - 1, i + 1).map((g) => [i, ...g]));
 

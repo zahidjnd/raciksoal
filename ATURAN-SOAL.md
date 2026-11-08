@@ -242,6 +242,15 @@ dokumen resmi Pusmendik tidak bisa dibuka dari sini).
    Penyederhanaan (2026-10-20): satu grup hanya berisi soal **berbentuk sama** (lembar soal tetap per bagian bentuk),
    dan nomor grup ditentukan aplikasi (separuh soal tiap bentuk, di akhir bagian, 2–3 soal per grup), karena AI
    mengabaikan perintah "kira-kira separuh". AI hanya menulis wacananya.
+7. ✅ (2026-11-08, disamakan dengan contoh resmi Perka BSKAP 045/2025, RUJUKAN.md I2; hanya untuk Latihan TKA):
+   - PG kompleks MCMA: **2, 3, atau 4** jawaban benar dari 5; pertanyaan diakhiri petunjuk baku
+     **"Pilihlah jawaban yang benar! Jawaban benar lebih dari satu."**
+   - Kategori: **3 pernyataan**; label hanya Benar/Salah, Tepat/Tidak Tepat, Sesuai/Tidak Sesuai, Setuju/Tidak Setuju,
+     Logis/Tidak Logis (Fakta/Opini & Didukung tidak ada di contoh resmi, tetap boleh di jenis lain).
+   - Nama level mapel bahasa: Bahasa Arab = Pemahaman Literal / Reorganisasi / Pemahaman Inferensial;
+     Bahasa Indonesia & Inggris = Pemahaman Tekstual / Pemahaman Inferensial / Evaluasi dan Apresiasi.
+   - Pemeriksa aplikasi kini menerima PGK 2–4 kunci dan Kategori 3 atau 4 pernyataan untuk semua jenis (jenis lain
+     tetap diminta 2–3 kunci dan 4 pernyataan). Grup campur bentuk BELUM (perlu ubah tata letak Word per bagian bentuk).
 
 ## 10. Aturan tambahan dari contoh try out TKA Biologi (disetujui 2026-10-20)
 

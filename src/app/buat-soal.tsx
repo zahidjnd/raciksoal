@@ -10,7 +10,7 @@ import { StepAngka } from "./step-angka";
 import { skorOtomatis } from "@/lib/skor";
 import { kunciRingkas } from "@/lib/kunci";
 import { PAKET, susunPaket, type Paket } from "@/lib/paket";
-import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_SOAL, NAMA_BENTUK, NAMA_LEVEL_TKA, namaTujuan, semesterDari, TKA, TUJUAN, WAKTU_BAWAAN, type Identitas, type Pengaturan } from "@/lib/prompt";
+import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_SOAL, NAMA_BENTUK, namaLevelTka, namaTujuan, semesterDari, TKA, TUJUAN, WAKTU_BAWAAN, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { KELAS, pilihanAngka, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { DAFTAR_MAPEL, type IsianMateri } from "@/lib/materi";
 import { useRouter } from "next/navigation";
@@ -424,9 +424,9 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
                 <fieldset className="space-y-2">
                   <legend className="mb-1 text-sm font-semibold">Komposisi level (total {totalLevel}%)</legend>
                   <p className="text-xs text-pudar">Terisi otomatis sesuai tujuan soal, boleh diubah.</p>
-                  <Angka label={`${tka ? `${NAMA_LEVEL_TKA.LOTS} / ` : ""}LOTS (C1–C2) %`} nilai={p.level.LOTS} ubah={(n) => setP({ ...p, level: { ...p.level, LOTS: n } })} />
-                  <Angka label={`${tka ? `${NAMA_LEVEL_TKA.MOTS} / ` : ""}MOTS (C3) %`} nilai={p.level.MOTS} ubah={(n) => setP({ ...p, level: { ...p.level, MOTS: n } })} />
-                  <Angka label={`${tka ? `${NAMA_LEVEL_TKA.HOTS} / ` : ""}HOTS (C4–C6) %`} nilai={p.level.HOTS} ubah={(n) => setP({ ...p, level: { ...p.level, HOTS: n } })} />
+                  <Angka label={`${tka ? `${namaLevelTka(mapel).LOTS} / ` : ""}LOTS (C1–C2) %`} nilai={p.level.LOTS} ubah={(n) => setP({ ...p, level: { ...p.level, LOTS: n } })} />
+                  <Angka label={`${tka ? `${namaLevelTka(mapel).MOTS} / ` : ""}MOTS (C3) %`} nilai={p.level.MOTS} ubah={(n) => setP({ ...p, level: { ...p.level, MOTS: n } })} />
+                  <Angka label={`${tka ? `${namaLevelTka(mapel).HOTS} / ` : ""}HOTS (C4–C6) %`} nilai={p.level.HOTS} ubah={(n) => setP({ ...p, level: { ...p.level, HOTS: n } })} />
                 </fieldset>
                 {/* Daftar model hanya dikirim server untuk admin; guru tidak melihat pilihan ini. */}
                 {daftarModel.length > 0 && (

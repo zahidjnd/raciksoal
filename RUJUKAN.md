@@ -154,12 +154,12 @@ Semua butir di ATURAN-SOAL.md bagian 2 dan 10.
 | Hanya PG, PGK MCMA, PGK Kategori; tanpa uraian | `TKA` | ✔ D12 hlm 8–9; D12b hlm 29 | **sesuai** |
 | Soal tunggal dan soal grup | `rencanaGrup` | ✔ D12 hlm 8 | **sesuai** |
 | Bahasa Arab termasuk mapel TKA; tidak ada mapel agama | — | ✔ D12 hlm 7–8 | **sesuai** |
-| MCMA: **2–3** jawaban benar | `KUNCI_PGK` | contoh resmi: **2–4** benar (mis. Matematika, Biologi), 5 pernyataan | ⚠️ **beda** |
-| Petunjuk MCMA "(Pilih semua jawaban yang tepat)" | `buatSistem` | baku resmi: "Pilihlah jawaban yang benar! Jawaban benar lebih dari satu." | ⚠️ **beda** redaksi |
-| Kategori: **4 pernyataan** | `JUMLAH_PERNYATAAN` | semua 37 contoh di D12: **3 pernyataan** (versi web kadang 4) | ⚠️ **beda** |
-| Label Kategori termasuk Fakta/Opini | `LABEL_KATEGORI` | contoh resmi: Benar/Salah, Tepat/Tidak Tepat, Sesuai/Tidak Sesuai, Setuju/Tidak Setuju, Logis/Tidak Logis; **Fakta/Opini tidak muncul** | boleh tetap (variasi), tapi bukan dari contoh resmi |
+| MCMA: **2–4** jawaban benar | `ATURAN_TKA`, `KUNCI_PGK` | contoh resmi: **2–4** benar (mis. Matematika, Biologi), 5 pernyataan | ✅ **sesuai** (2026-11-08) |
+| Petunjuk MCMA "Pilihlah jawaban yang benar! Jawaban benar lebih dari satu." | `ATURAN_TKA` | baku resmi, sama | ✅ **sesuai** (2026-11-08) |
+| Kategori: **3 pernyataan** | `ATURAN_TKA`, `PERNYATAAN_BOLEH` | semua 37 contoh di D12: **3 pernyataan** (versi web kadang 4) | ✅ **sesuai** (2026-11-08) |
+| Label Kategori TKA: Benar/Salah, Tepat/Tidak Tepat, Sesuai/Tidak Sesuai, Setuju/Tidak Setuju, Logis/Tidak Logis | `ATURAN_TKA`, `LABEL_KATEGORI` | contoh resmi sama; Fakta/Opini & Didukung hanya untuk jenis lain | ✅ **sesuai** (2026-11-08) |
 | Satu grup = **satu bentuk** saja | `rencanaGrup` | contoh resmi: satu grup **boleh campur bentuk** (BI: PG + Kategori + Kategori) | ⚠️ **beda** (penyederhanaan aplikasi) |
-| Level: Pemahaman / Penerapan / Penalaran untuk semua mapel | `NAMA_LEVEL_TKA` | berlaku untuk mapel IPA/IPS/Matematika. **Mapel bahasa memakai kompetensi lain**: Bahasa Arab = Pemahaman Literal / Reorganisasi / Pemahaman Inferensial (D12 hlm 85–86); Bahasa Indonesia & Inggris = Pemahaman Tekstual / Inferensial / Evaluasi dan Apresiasi (hlm 10–11) | ⚠️ **beda untuk mapel bahasa** |
+| Level: Pemahaman / Penerapan / Penalaran; mapel bahasa memakai kompetensi membaca | `namaLevelTka` | IPA/IPS/Matematika: Pemahaman / Penerapan / Penalaran. Bahasa Arab = Pemahaman Literal / Reorganisasi / Pemahaman Inferensial (D12 hlm 85–86); Bahasa Indonesia & Inggris = Pemahaman Tekstual / Inferensial / Evaluasi dan Apresiasi (hlm 10–11) | ✅ **sesuai** (2026-11-08) |
 | Teks Bahasa Arab TKA | prompt mode Bahasa Arab | fusha, tingkat dasar; paragraf 25–50 kosakata (2–4 baris); dialog 5–6 tanya jawab; topik keseharian (D12 hlm 84–86) | belum dipakai aplikasi |
 
 ### J. Stimulus dan nilai
@@ -217,7 +217,7 @@ Semua butir di ATURAN-SOAL.md bagian 2 dan 10.
 
 **A. Bertentangan dengan dokumen resmi (perlu diperbaiki):**
 1. ~~**TP dibuat AI**, padahal TP dirumuskan guru (D08b, D05).~~ ✅ Diperbaiki 2026-11-07: TP dari materi guru disalin; TP usulan AI wajib dibaca & dicentang guru.
-2. **Latihan TKA berbeda dari contoh resmi** (D12): MCMA 2–3 benar (resmi 2–4), Kategori 4 pernyataan (resmi 3), petunjuk MCMA, grup satu bentuk, nama level untuk mapel bahasa.
+2. ~~**Latihan TKA berbeda dari contoh resmi** (D12)~~ ✅ Disamakan 2026-11-08: MCMA 2–4, Kategori 3 pernyataan, petunjuk baku, label resmi, level mapel bahasa. **Sisa: grup campur bentuk** (resmi boleh; aplikasi masih satu bentuk per grup karena lembar Word disusun per bagian bentuk).
 
 **B. Belum ada dasar, perlu keputusan madrasah (R4 → R3):**
 3. Komposisi level bawaan dan jumlah soal bawaan.
@@ -250,7 +250,7 @@ BSKAP 2025 (D08b).
 
 ## 5. Langkah sesudahnya (diusulkan, belum dikerjakan)
 1. Setiap kali aturan soal diubah: ubah ATURAN-SOAL.md, lalu **peta ini**, baru kode. Aturan baru tanpa baris di peta ini tidak boleh masuk.
-2. Perbaiki celah A2 (Latihan TKA disamakan dengan contoh resmi). A1 (TP dari guru) sudah, 2026-11-07.
+2. A1 (TP dari guru) sudah 2026-11-07; A2 (Latihan TKA) sudah 2026-11-08 kecuali grup campur bentuk.
 3. Pemilik memutuskan celah B (3–6), lalu dicatat sebagai R3.
 4. Celah C (CP Qurdis, kolom kisi-kisi, kolom sumber).
 5. Halaman "Dasar aturan" di Panduan untuk guru, dan satu baris rujukan di Word kisi-kisi.

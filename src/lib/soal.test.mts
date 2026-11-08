@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { arabTakTerverifikasi, bersihkanTanggapan, gabungBab, identitasBab, kataTerpakai, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, terapkanBobot, type Bab, type Soal } from "./soal.ts";
-import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, laranganIsian, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, semesterDari, MAKS_CATATAN, MAKS_INSTRUKSI, rencanaLevel, type Pengaturan } from "./prompt.ts";
+import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, laranganIsian, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, semesterDari, MAKS_CATATAN, MAKS_INSTRUKSI, namaLevelTka, rencanaLevel, type Pengaturan } from "./prompt.ts";
 import { bolehAkses, rapikanUsername } from "./akses.ts";
 import { headerUnduh } from "./nama-file.ts";
 import { keIsian, rapikanMateri, susunDraf, terapkanAnalisa } from "./materi.ts";
@@ -244,7 +244,7 @@ test("ratakanKunci menyebar pasangan kunci PG kompleks merata tanpa mengubah jaw
   });
 });
 
-test("ratakanKunci: PG kompleks 3 kunci disebar ke gabungan ABC..CDE; kunci 2/3 valid, 1/4 ditandai", () => {
+test("ratakanKunci: PG kompleks 3 kunci disebar ke gabungan ABC..CDE; kunci 2–4 valid, 1/5 ditandai", () => {
   const soal: Soal[] = Array.from({ length: 10 }, (_, i) => ({
     bentuk: "PGK", dalil_id: null, pertanyaan: `soal ${i}`, kunci: ["A", "B", "C"],
     pilihan: [`b1 ${i}`, `b2 ${i}`, `b3 ${i}`, "x", "y"], pembahasan: "", level: "C2", tp: "TP 3.1", skor: 1,
@@ -255,7 +255,12 @@ test("ratakanKunci: PG kompleks 3 kunci disebar ke gabungan ABC..CDE; kunci 2/3 
   const dasar = { ...soal[0], kunci: ["A", "B", "C"] };
   assert.deepEqual(periksaSoal([dasar], bab)[0].peringatan, []);
   assert.equal(periksaSoal([{ ...dasar, kunci: ["A"] }], bab)[0].peringatan!.length, 1);
-  assert.equal(periksaSoal([{ ...dasar, kunci: ["A", "B", "C", "D"] }], bab)[0].peringatan!.length, 1);
+  assert.deepEqual(periksaSoal([{ ...dasar, kunci: ["A", "B", "C", "D"] }], bab)[0].peringatan, []); // TKA resmi: sampai 4
+  assert.equal(periksaSoal([{ ...dasar, kunci: ["A", "B", "C", "D", "E"] }], bab)[0].peringatan!.length, 1);
+  // 4 kunci ikut diratakan ke gabungan ABCD..BCDE
+  const empat = Array.from({ length: 5 }, (_, i) => ({ ...soal[0], pertanyaan: `e ${i}`, kunci: ["A", "B", "C", "D"], pilihan: [`k1 ${i}`, `k2 ${i}`, `k3 ${i}`, `k4 ${i}`, "x"] }));
+  ratakanKunci(empat);
+  assert.equal(new Set(empat.map((s) => (s.kunci as string[]).join(""))).size, 5);
 });
 
 test("periksaSoal: kunci PG yang jauh lebih panjang dari semua pengecoh ditandai", () => {
@@ -324,7 +329,8 @@ test("soal Kategori: 4 pernyataan, label resmi, kunci per pernyataan; B/S lama t
   assert.deepEqual(s.label, ["Fakta", "Opini"]); // ejaan disamakan dengan daftar resmi
   assert.deepEqual(s.kunci, ["Fakta", "Opini", "Opini", "Fakta"]);
   assert.deepEqual(s.peringatan, []);
-  assert.equal(periksaSoal([{ ...dasar, pernyataan: ["a", "b", "c"], kunci: ["Fakta", "Opini", "Opini"] }], bab)[0].peringatan!.length, 1);
+  assert.deepEqual(periksaSoal([{ ...dasar, pernyataan: ["a", "b", "c"], kunci: ["Fakta", "Opini", "Opini"] }], bab)[0].peringatan, []); // 3 = gaya TKA resmi
+  assert.equal(periksaSoal([{ ...dasar, pernyataan: ["a", "b"], kunci: ["Fakta", "Opini"] }], bab)[0].peringatan!.length, 1);
   assert.equal(periksaSoal([{ ...dasar, label: ["Ya", "Tidak"] }], bab)[0].peringatan!.length, 2); // label & kunci tak dikenal
   assert.equal(periksaSoal([{ ...dasar, kunci: ["Fakta", "Opini", "Benar", "Fakta"] }], bab)[0].peringatan!.length, 1);
   // teks Arab di pernyataan ikut dijaga (aturan 5)
@@ -348,6 +354,26 @@ test("Latihan TKA: tanpa uraian, kisi-kisi meminta soal grup + wacana; grup sah 
   assert.match(String(bersihkanPengaturan({ ...p, jumlah: { ...p.jumlah, ISIAN: 1 } })), /hanya memakai pilihan ganda/);
   assert.ok(buatPermintaanKisi(p).includes("SOAL GRUP") && buatPermintaanKisi(p).includes('"wacana"'));
   assert.ok(!buatPermintaanKisi({ ...p, tujuan: "PAS" }).includes("SOAL GRUP"));
+  // contoh resmi TKA (RUJUKAN.md I2): MCMA 2–4 benar + petunjuk baku, Kategori 3 pernyataan; jenis lain tidak berubah
+  for (const teks of [buatPermintaanKisi(p), buatPengguna(p, p.jumlah, [])])
+    assert.ok(teks.includes("Jawaban benar lebih dari satu.") && teks.includes("TEPAT 3 pernyataan") && teks.includes("Pemahaman Literal"));
+  assert.ok(!buatPengguna({ ...p, tujuan: "PAS" }, p.jumlah, []).includes("KHUSUS LATIHAN TKA"));
+  assert.equal(namaLevelTka("Bahasa Arab").MOTS, "Reorganisasi");
+  assert.equal(namaLevelTka("Bahasa Inggris").HOTS, "Evaluasi dan Apresiasi");
+  assert.equal(namaLevelTka("Biologi").LOTS, "Pemahaman");
+  // pemeriksa: PGK 4 kunci & Kategori 3 pernyataan sah; PGK 5 kunci & Kategori 2 pernyataan ditandai
+  const dasar = { pertanyaan: "Pilihlah jawaban yang benar! Jawaban benar lebih dari satu.", pembahasan: "p", tp: "TP 3.1", level: "C2", dalil_id: null };
+  const [pgk4, pgk5, kat3, kat2] = periksaSoal(
+    [
+      { ...dasar, bentuk: "PGK", pilihan: ["a1", "b2", "c3", "d4", "e5"], kunci: ["A", "B", "C", "D"] },
+      { ...dasar, bentuk: "PGK", pilihan: ["a1", "b2", "c3", "d4", "e5"], kunci: ["A", "B", "C", "D", "E"] },
+      { ...dasar, bentuk: "BS", pernyataan: ["x", "y", "z"], label: ["Logis", "Tidak Logis"], kunci: ["Logis", "Tidak Logis", "Logis"] },
+      { ...dasar, bentuk: "BS", pernyataan: ["x", "y"], label: ["Setuju", "Tidak Setuju"], kunci: ["Setuju", "Tidak Setuju"] },
+    ] as Soal[],
+    bab,
+  );
+  assert.ok(!pgk4.peringatan?.length && !kat3.peringatan?.length, JSON.stringify([pgk4.peringatan, kat3.peringatan]));
+  assert.ok(pgk5.peringatan?.some((x) => /2 sampai 4/.test(x)) && kat2.peringatan?.some((x) => /3 atau 4/.test(x)));
   // grup ditentukan aplikasi: separuh nomor di akhir tiap bentuk, grup 2–3 soal
   assert.deepEqual(rencanaGrup({ PG: 4, PGK: 1, BS: 1, URAIAN: 0 }), [null, null, 1, 1, null, null]);
   const r25 = rencanaGrup({ PG: 15, PGK: 5, BS: 5, URAIAN: 0 });
