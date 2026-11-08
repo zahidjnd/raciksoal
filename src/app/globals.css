@@ -140,6 +140,23 @@ body:has(#halaman-masuk) > footer {
   }
 }
 
+/* Panah kotak pilihan (<select>): chevron garis tipis yang SAMA dengan komponen Panah (src/app/panah.tsx), bukan panah
+   bawaan browser yang beda-beda tiap HP (audit tampilan 2026-11-08). Di luar @layer supaya ruang kanan untuk panah
+   tidak tertimpa utilitas px-*. Warna garis = token pudar (mode gelap di bawah). */
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235f5e5a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.6rem center;
+  background-size: 16px 16px;
+  padding-right: 2.1rem;
+}
+@media screen {
+  [data-tema="gelap"] select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b5b3aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  }
+}
+
 /* Tombol utama (hijau) yang belum bisa ditekan: abu-abu dengan tulisan gelap, bukan hijau pucat (audit tampilan
    2026-11-08: hijau pucat + tulisan putih sulit dibaca dan terlihat seperti tombol rusak). Sengaja di luar @layer
    supaya mengalahkan utilitas disabled:opacity-* dan hover:bg-hijau-tua di semua tombol. */

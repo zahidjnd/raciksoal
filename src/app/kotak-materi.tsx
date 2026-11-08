@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { analisaMateri } from "./actions";
+import { Panah } from "./panah";
 import type { IsianMateri } from "@/lib/materi";
 import { MAKS_GABUNG } from "@/lib/soal";
 
@@ -136,8 +137,8 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
                 Analisa materi
               </button>
               {sesuai.length > 0 && (
-                <button className="h-8 rounded-lg border bg-kartu px-3 text-sm hover:bg-krem max-md:min-h-11" aria-expanded={lihatLama} onClick={() => setLihatLama(!lihatLama)}>
-                  Pakai materi sebelumnya ▾
+                <button className="inline-flex h-8 items-center gap-1 rounded-lg border bg-kartu px-3 text-sm hover:bg-krem max-md:min-h-11" aria-expanded={lihatLama} onClick={() => setLihatLama(!lihatLama)}>
+                  Pakai materi sebelumnya <Panah buka={lihatLama} />
                 </button>
               )}
             </div>

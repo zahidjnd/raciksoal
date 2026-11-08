@@ -7,6 +7,7 @@ import { KartuSoal, Teks, TeksPeringatan, TulisSoalSendiri } from "./kartu-soal"
 import { KotakMateri, type MateriLama } from "./kotak-materi";
 import { FormIdentitas, ringkasIdentitas } from "./form-identitas";
 import { StepAngka } from "./step-angka";
+import { Panah } from "./panah";
 import { skorOtomatis } from "@/lib/skor";
 import { kunciRingkas } from "@/lib/kunci";
 import { PAKET, susunPaket, type Paket } from "@/lib/paket";
@@ -294,8 +295,8 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
     tka && TANPA_TKA.some((b) => p.jumlah[b]) ? "Latihan TKA hanya memakai PG, PG kompleks, dan Kategori." :
     p.jumlah.MJ > 0 && p.jumlah.MJ < 3 ? PESAN_MJ_MIN : "";
   // Pilihan dan aksi sama-sama kotak bersudut lembut seperti claude.ai (DESIGN.md).
-  const chip = "inline-flex items-center rounded-lg border bg-kartu h-8 px-3 text-sm hover:bg-krem max-md:min-h-11";
-  const aksi2 = "inline-flex items-center rounded-lg border bg-kartu h-8 px-3 text-sm hover:bg-krem max-md:min-h-11";
+  const chip = "inline-flex items-center gap-1 rounded-lg border bg-kartu h-8 px-3 text-sm hover:bg-krem max-md:min-h-11";
+  const aksi2 = "inline-flex items-center gap-1 rounded-lg border bg-kartu h-8 px-3 text-sm hover:bg-krem max-md:min-h-11";
   const chipPanel = (b: typeof buka) => `${chip} ${buka === b ? "border-hijau bg-hijau-muda text-hijau-teks" : ""}`;
 
   return (
@@ -311,11 +312,11 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
           <PilihMapel mapel={mapel} kelas={kelas} ubah={pilihMapel} />
           {/* Identitas ujian (kop Word) di bawah mapel & kelas (pilihan pemilik), terisi otomatis. Dilipat supaya
               di HP guru cepat sampai ke Materi (audit 2026-11-04); ringkasannya tetap terlihat. */}
-          <details className="rounded-xl border bg-kartu px-3 text-sm">
+          <details className="group rounded-xl border bg-kartu px-3 text-sm">
             <summary className="flex min-h-10 cursor-pointer items-center gap-2 py-2 max-md:min-h-11">
               <span className="shrink-0 font-semibold">Kop ujian</span>
               <span className="min-w-0 truncate text-pudar">{ringkasIdentitas(p.identitas ?? {})}</span>
-              <span className="ml-auto text-pudar" aria-hidden>▾</span>
+              <span className="ml-auto"><Panah kelas="group-open:rotate-180" /></span>
             </summary>
             <div className="pb-3">
               <FormIdentitas nilai={p.identitas ?? {}} ubah={(identitas) => setP({ ...p, identitas })} />
@@ -400,13 +401,14 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
                 {KESULITAN.map((k) => <option key={k} value={k}>Kesulitan: {k}</option>)}
               </select>
               <button className={chipPanel("jumlah")} aria-expanded={buka === "jumlah"} onClick={() => setBuka(buka === "jumlah" ? null : "jumlah")}>
-                {total} soal ▾
+                {total} soal <Panah buka={buka === "jumlah"} />
               </button>
               <button className={chipPanel("lanjutan")} aria-expanded={buka === "lanjutan"} onClick={() => setBuka(buka === "lanjutan" ? null : "lanjutan")}>
-                Lanjutan ▾
+                Lanjutan <Panah buka={buka === "lanjutan"} />
               </button>
               <button
-                className="ml-auto h-10 rounded-lg bg-hijau px-4 font-semibold text-white hover:bg-hijau-tua disabled:opacity-40"
+                // Sejajar dengan tombol sebarisnya (h-8, huruf kecil) seperti "Analisa materi"; tetap hijau = aksi utama.
+                className="ml-auto h-8 rounded-lg bg-hijau px-3 text-sm font-semibold text-white hover:bg-hijau-tua max-md:min-h-11"
                 disabled={proses || menyiapkan || jatahHabis || !!alasanTerkunci}
                 onClick={buat}
               >
@@ -452,7 +454,7 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
                   <span className="flex gap-2">
                     {aturSkor && totalSkor !== 100 && <button type="button" className={aksi2} onClick={() => setP({ ...p, bobot: skorOtomatis(p.jumlah, bobot).bobot })}>Pas-kan 100</button>}
                     <button type="button" className={aksi2} onClick={() => { if (!aturSkor) setP({ ...p, bobot: otomatis.bobot }); setAturSkor(!aturSkor); }}>
-                      {aturSkor ? "Skor otomatis" : "Atur skor ▾"}
+                      {aturSkor ? "Skor otomatis" : <>Atur skor <Panah /></>}
                     </button>
                   </span>
                 </div>
@@ -946,8 +948,8 @@ function IdentitasHasil({ id, awal }: { id: number; awal: Identitas }) {
   }
   return (
     <div className="rounded-xl border bg-kartu p-3 text-sm">
-      <button className="font-semibold" aria-expanded={buka} onClick={() => setBuka(!buka)}>
-        Identitas ujian di kop Word {buka ? "▴" : "▾"}
+      <button className="inline-flex items-center gap-1 font-semibold" aria-expanded={buka} onClick={() => setBuka(!buka)}>
+        Identitas ujian di kop Word <Panah buka={buka} />
       </button>
       {buka && (
         <div className="mt-3 space-y-3">
