@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { arabTakTerverifikasi, bersihkanTanggapan, gabungBab, identitasBab, kataTerpakai, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, terapkanBobot, type Bab, type Soal } from "./soal.ts";
-import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, laranganIsian, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, semesterDari, MAKS_CATATAN, MAKS_INSTRUKSI, namaLevelTka, rencanaLevel, type Pengaturan } from "./prompt.ts";
+import { arabTakTerverifikasi, bersihkanTanggapan, gabungBab, identitasBab, kataTerpakai, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, terapkanBobot, type Bab, type BarisKisi, type Soal } from "./soal.ts";
+import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, laranganIsian, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, semesterDari, MAKS_CATATAN, MAKS_INSTRUKSI, namaLevelTka, pasangKunciPgk, rencanaLevel, type Pengaturan } from "./prompt.ts";
 import { bolehAkses, rapikanUsername } from "./akses.ts";
 import { headerUnduh } from "./nama-file.ts";
 import { keIsian, rapikanMateri, susunDraf, terapkanAnalisa } from "./materi.ts";
@@ -361,6 +361,15 @@ test("Latihan TKA: tanpa uraian, kisi-kisi meminta soal grup + wacana; grup sah 
   assert.equal(namaLevelTka("Bahasa Arab").MOTS, "Reorganisasi");
   assert.equal(namaLevelTka("Bahasa Inggris").HOTS, "Evaluasi dan Apresiasi");
   assert.equal(namaLevelTka("Biologi").LOTS, "Pemahaman");
+  // jumlah kunci PGK ditentukan aplikasi dan ikut ke permintaan soal (set 81: AI sendiri selalu memberi 2)
+  const kisiPgk = pasangKunciPgk([{ bentuk: "PG" }, { bentuk: "PGK" }, { bentuk: "PGK" }, { bentuk: "PGK" }, { bentuk: "PGK" }] as BarisKisi[], true);
+  assert.deepEqual(kisiPgk.map((k) => k.kunciPgk), [undefined, 2, 3, 4, 2]);
+  assert.deepEqual(pasangKunciPgk([{ bentuk: "BS" }] as BarisKisi[], true)[0].jumlahPernyataan, 3);
+  assert.deepEqual(pasangKunciPgk([{ bentuk: "BS" }] as BarisKisi[], false)[0].jumlahPernyataan, 4);
+  assert.ok(!buatSistem(bab).includes("2 ATAU 3") && !buatSistem(bab).includes('tepat 4 "pernyataan"')); // tidak bertabrakan dengan kisi
+  assert.deepEqual(pasangKunciPgk([{ bentuk: "PGK" }, { bentuk: "PGK" }, { bentuk: "PGK" }] as BarisKisi[], false).map((k) => k.kunciPgk), [2, 3, 2]);
+  const barisPgk = { no: 2, bentuk: "PGK", tp: "TP 3.1", materi: "m", indikator: "i", level: "C3", dalil_id: null, stimulus: "s", kunciPgk: 4 } as BarisKisi;
+  assert.ok(buatPengguna(p, p.jumlah, [], "", [barisPgk]).includes("Jumlah jawaban benar: 4"));
   // pemeriksa: PGK 4 kunci & Kategori 3 pernyataan sah; PGK 5 kunci & Kategori 2 pernyataan ditandai
   const dasar = { pertanyaan: "Pilihlah jawaban yang benar! Jawaban benar lebih dari satu.", pembahasan: "p", tp: "TP 3.1", level: "C2", dalil_id: null };
   const [pgk4, pgk5, kat3, kat2] = periksaSoal(

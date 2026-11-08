@@ -586,8 +586,13 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   teks aturan TKA). Pemeriksa dilonggarkan untuk SEMUA jenis: `KUNCI_PGK` [2,3,4], `PERNYATAAN_BOLEH` [3,4] (jenis lain tetap
   diminta 2–3 kunci & 4 pernyataan lewat BENTUK_SOAL). BELUM: grup campur bentuk (Word per bagian bentuk).
   Uji laptop set 81 (guru.uji.b, materi-10, TKA 2 PG + 4 PGK + 4 Kategori): petunjuk baku di semua PGK, Kategori 3
-  pernyataan, label resmi, 0 merah. TAPI keempat PGK berkunci 2 (AI tidak meragamkan 2–4) → calon perbaikan: jumlah kunci
-  per nomor ditentukan aplikasi (seperti `rencanaLevel`).
+  pernyataan, label resmi, 0 merah. TAPI keempat PGK berkunci 2 (AI tidak meragamkan 2–4).
+  PERBAIKAN (pemilik "perbaiki dulu"): `pasangKunciPgk(kisi, tka)` (prompt.ts, dites) dipanggil di `kerjakan` setelah
+  kisi-kisi: PGK `kunciPgk` bergiliran 2,3,4 (TKA) / 2,3 (lain); BS `jumlahPernyataan` 3 (TKA) / 4. `tulisKisi` menulis
+  "Jumlah jawaban benar: N" / "Jumlah pernyataan: N"; ganti soal juga. BENTUK_SOAL di `buatSistem` TIDAK BOLEH lagi
+  menulis angka tetap ("2 ATAU 3", "tepat 4 pernyataan"): set 82 membuktikan angka sistem mengalahkan aturan TKA & kisi.
+  Uji laptop: set 83 TKA → rencana 2,3,4,2, hasil 3,3,4,3 (AI enggan 2; sengaja tidak dipaksa lewat perbaikan otomatis,
+  karena semua tetap sah 2–4), Kategori 3 semua; set 84 ASAS → PGK 2,3,2,3 persis, Kategori 4, petunjuk madrasah.
   DOCKER LAPTOP 2026-11-08: update Docker Desktop (15.56) mengganti mesin ke "docker-vmm" (`EngineTypeWindows` di
   `%APPDATA%\Docker\settings-store.json`) → folder data baru kosong, semua kontainer "hilang". Dipulihkan dengan mengembalikan
   nilai itu ke "wsl2" (cadangan: `settings-store.json.cadangan-sebelum-wsl2`); data lama di `%LOCALAPPDATA%\Docker\wsl\disk`

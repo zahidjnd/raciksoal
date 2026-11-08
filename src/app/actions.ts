@@ -4,7 +4,7 @@ import { and, eq, gte, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { hasilSoal, pemakaianAi } from "@/db/schema";
 import { daftarModel, tanyaAI } from "@/lib/ai";
-import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, laranganIsian, ringkasSudah, buatPermintaanKisi, buatSistem, buatAnalisaMateri, bersihkanIdentitas, rencanaGrup, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
+import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, laranganIsian, ringkasSudah, buatPermintaanKisi, buatSistem, buatAnalisaMateri, bersihkanIdentitas, pasangKunciPgk, rencanaGrup, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { BATAS_MATERI, susunDraf, terapkanAnalisa } from "@/lib/materi";
 import { bersihkanTanggapan, gabungBab, identitasBab, kataTerpakai, KELAS, LEVEL, pemeriksaArab, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, terapkanBobot, type Bab, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { babDariSet, babMilik, daftarBabMilik } from "@/lib/bab";
@@ -224,7 +224,10 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
       // Wacana soal grup hanya untuk Latihan TKA; jenis lain: semua soal tunggal.
       // Nomor grup dari rencana aplikasi (rencanaGrup), bukan dari AI; AI hanya menulis wacananya.
       const grup = p.tujuan === TKA ? rencanaGrup(p.jumlah) : [];
-      const kisi = pasangWacana(periksaKisi(isi?.kisi, p.jumlah, bab, cekAyat).map((k, i) => ({ ...k, grup: grup[i] ?? null })), p.tujuan === TKA ? isi?.wacana : null, bab, cekAyat);
+      const kisi = pasangKunciPgk(
+        pasangWacana(periksaKisi(isi?.kisi, p.jumlah, bab, cekAyat).map((k, i) => ({ ...k, grup: grup[i] ?? null })), p.tujuan === TKA ? isi?.wacana : null, bab, cekAyat),
+        p.tujuan === TKA,
+      );
       return { kisi, tanggapan: p.catatan ? bersihkanTanggapan(isi?.tanggapan, bab, cekAyat) : "" };
     });
     if (tanggapan) info.tanggapan = tanggapan;

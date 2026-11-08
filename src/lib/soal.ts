@@ -94,6 +94,8 @@ export type BarisKisi = {
   // ISIAN (0.18.3): rencana jawaban dari tahap kisi-kisi. Dikirim ke tahap soal lain sebagai kata terlarang (laranganIsian),
   // karena soal isian ditulis paling akhir dan jawabannya dulu sering sudah terpakai sebagai pengecoh soal PG.
   jawaban?: string;
+  kunciPgk?: number; // PGK: jumlah jawaban benar, ditentukan aplikasi (pasangKunciPgk, prompt.ts)
+  jumlahPernyataan?: number; // Kategori: 3 (TKA) atau 4, ditentukan aplikasi (pasangKunciPgk)
 };
 
 const URUTAN_BENTUK: Bentuk[] = ["PG", "PGK", "BS", "MJ", "ISIAN", "URAIAN"]; // harus sama dengan urutan NAMA_BENTUK (prompt.ts)

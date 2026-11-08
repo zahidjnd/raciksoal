@@ -22,8 +22,8 @@ const sebutLevel = (n: NamaLevel) => `${n.LOTS} (= LOTS), ${n.MOTS} (= MOTS), da
  * permintaan TKA (kisi-kisi, soal, ganti/ubah, perbaikan otomatis) dan mengalahkan BENTUK SOAL di instruksi sistem.
  */
 const ATURAN_TKA = `KHUSUS LATIHAN TKA (mengikuti contoh soal resmi Pusmendik; bila berbeda dengan BENTUK SOAL di instruksi sistem, ikuti ini):
-- PGK (MCMA): 5 pilihan, jawaban benar 2, 3, ATAU 4 (tidak semua), sesuai isi soal; ragamkan jumlahnya dalam satu set. "kunci": array 2–4 huruf. Akhiri pertanyaan dengan kalimat persis "Pilihlah jawaban yang benar! Jawaban benar lebih dari satu." (BUKAN "(Pilih semua jawaban yang tepat)").
-- BS (Kategori): TEPAT 3 pernyataan, "kunci" array 3 label. Pasangan label HANYA salah satu dari: ["Benar","Salah"], ["Tepat","Tidak Tepat"], ["Sesuai","Tidak Sesuai"], ["Setuju","Tidak Setuju"], ["Logis","Tidak Logis"].`;
+- PGK (MCMA): 5 pilihan, jawaban benar 2, 3, ATAU 4 (tidak semua): ikuti "Jumlah jawaban benar" di kisi-kisi bila tertulis. "kunci": array 2–4 huruf. Akhiri pertanyaan dengan kalimat persis "Pilihlah jawaban yang benar! Jawaban benar lebih dari satu." (BUKAN "(Pilih semua jawaban yang tepat)").
+- BS (Kategori): TEPAT 3 pernyataan (lihat "Jumlah pernyataan" di kisi-kisi), "kunci" array 3 label. Pasangan label HANYA salah satu dari: ["Benar","Salah"], ["Tepat","Tidak Tepat"], ["Sesuai","Tidak Sesuai"], ["Setuju","Tidak Setuju"], ["Logis","Tidak Logis"].`;
 export const KESULITAN = ["Mudah", "Sedang", "Sulit"] as const;
 
 const ATURAN_UJIAN = "Gaya soal ujian resmi madrasah (seperti asesmen tengah/akhir semester). Sebar soal merata ke semua TP dan materi (dan semua dalil bila ada). Bahasa baku. Pembahasan ringkas: alasan kunci benar + alasan singkat tiap pengecoh salah.";
@@ -296,8 +296,8 @@ Balas JSON {"judul":"...","tp":["..."],"pokok":["..."],"dalil":[{"no":1,"sumber"
 
 const BENTUK_SOAL = `BENTUK SOAL:
 - PG: 5 pilihan, tepat 1 benar. Tulis berurutan: "pertanyaan", lalu "langkah" (langkah hitung atau alasan singkat untuk menemukan jawaban benar; wajib lengkap untuk soal hitungan), lalu "jawaban_benar" (isi jawaban benar hasil langkah itu), BARU "pilihan" (salah satunya salinan PERSIS "jawaban_benar") dan "kunci" ("A".."E", huruf pilihan yang sama dengan "jawaban_benar"). Periksa ulang hitungan sebelum menulis pilihan.
-- PGK (pilihan ganda kompleks, model jawaban ganda/MCMA): 5 pilihan, 2 ATAU 3 benar (tidak semua), sesuai isi soal; ragamkan jumlahnya dalam satu set. Setiap pilihan satu pernyataan utuh; JANGAN pilihan gabungan seperti "(2) dan (3)" atau "1, 2, dan 4". "kunci": array berisi 2 atau 3 huruf jawaban benar. Akhiri pertanyaan dengan "(Pilih semua jawaban yang tepat)" tanpa menyebut jumlah jawaban benar.
-- BS (pilihan ganda kompleks model Kategori): "pertanyaan" berisi stimulus/pokok soal + perintah, misalnya "Tentukan apakah setiap pernyataan berikut Benar atau Salah!". Lalu tepat 4 "pernyataan" yang masing-masing dinilai dengan sepasang "label", salah satu dari: ["Benar","Salah"], ["Fakta","Opini"], ["Sesuai","Tidak Sesuai"], ["Tepat","Tidak Tepat"], ["Didukung","Tidak Didukung"] (didukung/tidak oleh stimulus). Pilih pasangan label yang paling cocok dengan isi soal dan ragamkan dalam satu set (jangan semua Benar/Salah bila ada lebih dari satu soal BS). Pembahasan menyebut ISI pernyataan, bukan urutannya ("pernyataan pertama", "pernyataan 2"), karena urutan pernyataan diacak aplikasi. "kunci": array 4 label sesuai urutan pernyataan; jangan semua sama. Jangan menulis ulang keempat pernyataan di dalam "pertanyaan" (aplikasi menampilkannya sebagai tabel). Tanpa "pilihan".
+- PGK (pilihan ganda kompleks, model jawaban ganda/MCMA): 5 pilihan, lebih dari satu benar tetapi tidak semua. Jumlah jawaban benar WAJIB sama dengan "Jumlah jawaban benar" di baris kisi-kisinya (bila tidak tertulis: 2 atau 3). Setiap pilihan satu pernyataan utuh; JANGAN pilihan gabungan seperti "(2) dan (3)" atau "1, 2, dan 4". "kunci": array huruf jawaban benar, sebanyak jumlah itu. Akhiri pertanyaan dengan "(Pilih semua jawaban yang tepat)" tanpa menyebut jumlah jawaban benar.
+- BS (pilihan ganda kompleks model Kategori): "pertanyaan" berisi stimulus/pokok soal + perintah, misalnya "Tentukan apakah setiap pernyataan berikut Benar atau Salah!". Lalu "pernyataan" sebanyak "Jumlah pernyataan" di baris kisi-kisinya (bila tidak tertulis: 4) yang masing-masing dinilai dengan sepasang "label", salah satu dari: ["Benar","Salah"], ["Fakta","Opini"], ["Sesuai","Tidak Sesuai"], ["Tepat","Tidak Tepat"], ["Didukung","Tidak Didukung"] (didukung/tidak oleh stimulus). Pilih pasangan label yang paling cocok dengan isi soal dan ragamkan dalam satu set (jangan semua Benar/Salah bila ada lebih dari satu soal BS). Pembahasan menyebut ISI pernyataan, bukan urutannya ("pernyataan pertama", "pernyataan 2"), karena urutan pernyataan diacak aplikasi. "kunci": array label, satu untuk setiap pernyataan sesuai urutan sesuai urutan pernyataan; jangan semua sama. Jangan menulis ulang keempat pernyataan di dalam "pertanyaan" (aplikasi menampilkannya sebagai tabel). Tanpa "pilihan".
 - MJ (menjodohkan): "pertanyaan" berisi perintah singkat saja, misalnya "Jodohkan setiap kata di lajur kiri dengan artinya di lajur kanan!"; JANGAN menulis pasangannya di dalam "pertanyaan". "pasangan": TEPAT 5 objek {"premis":"...","jawaban":"..."}; setiap premis punya TEPAT SATU jawaban yang benar, semua premis berbeda, semua jawaban berbeda, dan seluruh pasangan memiliki hubungan sejenis (kata–arti, tokoh–peristiwa, istilah–pengertian, rumus–nama, dan sebagainya). Hubungannya SATU-SATU: kelima jawaban berbeda isi. JANGAN menjodohkan untuk pengelompokan, yaitu beberapa hal masuk ke kelompok yang sama (pajak pusat/daerah, kebijakan moneter/fiskal, benda hidup/mati), karena jawabannya pasti berulang. Premis dan jawaban singkat (maks 12 kata). "pengecoh": array berisi TEPAT 1 jawaban tambahan yang sejenis tetapi TIDAK cocok dengan premis mana pun. Aplikasi yang mengacak lajur kanan dan menyusun kunci hurufnya: JANGAN menulis huruf kunci, "pilihan", ataupun "kunci". "pembahasan": satu kalimat singkat per pasangan yang menjelaskan hubungannya (sebut isinya, bukan nomor atau hurufnya). Berlaku juga untuk bahasa asing (kosakata–arti, kata–lawan kata).
 - ISIAN (isian singkat): "pertanyaan" berisi kalimat atau pertanyaan dengan SATU bagian kosong yang ditulis "...." (empat titik). "kunci": jawaban singkat yang pas mengisi bagian kosong (satu kata, istilah, angka, atau frasa maksimal 5 kata). "kunciAlt": array 0–3 penulisan lain yang juga benar (sinonim atau ejaan lain), atau []. Hanya SATU jawaban yang mungkin benar, jadi kalimat harus cukup spesifik; jawaban TIDAK BOLEH muncul di kalimat soal. Tanpa "pilihan". Berlaku juga untuk bahasa asing (kosakata, dhamir, kata tanya, terjemah).
 - URAIAN: "pertanyaan" WAJIB menyebut batasan jawaban yang jelas: jumlah hal yang diminta ("Sebutkan tiga ...", "Jelaskan dua alasan ...") atau ruang lingkupnya ("... dari segi waktu dan nisabnya"); jangan perintah luas seperti "Jelaskan tentang ...!". "kunci" berisi jawaban ideal yang lengkap untuk SEMUA bagian yang diminta. "rubrik" mengikuti batasan itu (misalnya diminta tiga hal → tiga kriteria), setiap kriteria menyebut kapan mendapat skor penuh dan kapan sebagian; "skor" = jumlah skor rubrik.`;
@@ -363,6 +363,20 @@ export function rencanaGrup(jumlah: Record<Bentuk, number>): (number | null)[] {
     for (const u of ukuran) hasil.push(...Array<number>(u).fill(++nomor));
   }
   return hasil;
+}
+
+/**
+ * Jumlah jawaban benar tiap soal PGK, ditentukan APLIKASI dan dicatat di kisi-kisi (`kunciPgk`), karena AI tidak
+ * meragamkannya sendiri (uji set 81: keempat PGK berkunci 2 walau diminta 2–4). TKA 2–4 (contoh resmi), jenis lain 2–3.
+ */
+export function pasangKunciPgk<T extends { bentuk: Bentuk }>(kisi: T[], tka: boolean): (T & { kunciPgk?: number; jumlahPernyataan?: number })[] {
+  const pola = tka ? [2, 3, 4] : [2, 3];
+  let n = 0;
+  return kisi.map((k) =>
+    k.bentuk === "PGK" ? { ...k, kunciPgk: pola[n++ % pola.length] }
+    : k.bentuk === "BS" ? { ...k, jumlahPernyataan: tka ? 3 : 4 } // Kategori: TKA 3 (contoh resmi), madrasah 4
+    : k,
+  );
 }
 
 const urutanBentuk = (jumlah: Record<Bentuk, number>) => (Object.keys(NAMA_BENTUK) as Bentuk[]).filter((b) => jumlah[b] > 0);
@@ -439,7 +453,7 @@ const RENCANA_MJ = `- Baris MJ (menjodohkan): pilih materi yang punya 5 pasangan
 
 /** Baris kisi-kisi dalam bentuk ringkas untuk permintaan soal. */
 const tulisKisi = (k: BarisKisi) =>
-  `- Nomor ${k.no} | ${k.bentuk} | ${k.tp} | ${k.level} | dalil_id: ${k.dalil_id ?? "null"} | Indikator: ${k.indikator} | Stimulus: ${k.grup && k.wacana ? `WACANA GRUP ${k.grup}` : k.stimulus}${k.jawaban ? ` | Jawaban (kunci): ${k.jawaban}` : ""}`;
+  `- Nomor ${k.no} | ${k.bentuk} | ${k.tp} | ${k.level} | dalil_id: ${k.dalil_id ?? "null"} | Indikator: ${k.indikator} | Stimulus: ${k.grup && k.wacana ? `WACANA GRUP ${k.grup}` : k.stimulus}${k.jawaban ? ` | Jawaban (kunci): ${k.jawaban}` : ""}${k.kunciPgk ? ` | Jumlah jawaban benar: ${k.kunciPgk}` : ""}${k.jumlahPernyataan ? ` | Jumlah pernyataan: ${k.jumlahPernyataan}` : ""}`;
 
 /**
  * Daftar jawaban isian rencana kisi-kisi yang TIDAK boleh tertulis di soal lain (ATURAN-SOAL 2b no. 11), untuk setiap
@@ -517,10 +531,11 @@ Kembalikan tepat 1 soal hasil perubahan. Bagian yang tidak diminta untuk diubah 
 Tambahkan field "indikator" (indikator soal gaya Kemenag yang sesuai dengan soal hasil perubahan) dan "stimulus" (jenis + skenario, maks 15 kata, atau "tanpa stimulus").\n`;
     return buatPengguna(p, jumlah, semua.filter((s) => s !== lama).map(ringkasSudah), tambahan);
   }
+  const kunciPgk = kisi?.kunciPgk ? `, dengan tepat ${kisi.kunciPgk} jawaban benar` : kisi?.jumlahPernyataan ? `, dengan tepat ${kisi.jumlahPernyataan} pernyataan` : "";
   const sasaran = kisi?.grup && lama.wacana
-    ? `dengan bentuk ${kisi.bentuk}, ${kisi.tp}, level ${kisi.level}, tetap mengukur indikator: "${kisi.indikator}", dan tetap memakai WACANA GRUP ${lama.grup} di bawah (soal grup), dengan pokok soal yang berbeda dari soal yang diganti`
+    ? `dengan bentuk ${kisi.bentuk}${kunciPgk}, ${kisi.tp}, level ${kisi.level}, tetap mengukur indikator: "${kisi.indikator}", dan tetap memakai WACANA GRUP ${lama.grup} di bawah (soal grup), dengan pokok soal yang berbeda dari soal yang diganti`
     : kisi
-    ? `dengan bentuk ${kisi.bentuk}, ${kisi.tp}, level ${kisi.level}, tetap mengukur indikator: "${kisi.indikator}". Skenario lama ("${kisi.stimulus}") JANGAN dipakai lagi; pilih skenario baru yang belum ada di set ini. Tambahkan field "stimulus" pada soal berisi jenis + skenario baru (maks 15 kata) atau "tanpa stimulus"`
+    ? `dengan bentuk ${kisi.bentuk}${kunciPgk}, ${kisi.tp}, level ${kisi.level}, tetap mengukur indikator: "${kisi.indikator}". Skenario lama ("${kisi.stimulus}") JANGAN dipakai lagi; pilih skenario baru yang belum ada di set ini. Tambahkan field "stimulus" pada soal berisi jenis + skenario baru (maks 15 kata) atau "tanpa stimulus"`
     : `${lama.bentuk} pengganti dengan level ${lama.level} dan ${lama.tp} (abaikan komposisi level di atas)`;
   const tambahan = `\nIni permintaan MENGGANTI soal berikut (guru tidak memakainya): "${lama.pertanyaan.slice(0, 300)}"
 Buat tepat 1 soal ${sasaran}. Gunakan ${kisi?.grup && lama.wacana ? "" : "skenario, "}sudut pandang dan redaksi yang berbeda dari soal yang diganti maupun soal lain di daftar.\n${kisi?.grup ? tulisWacana([lama]) : ""}`;
