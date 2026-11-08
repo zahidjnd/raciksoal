@@ -20,7 +20,7 @@ import {
   WidthType,
   type ParagraphChild,
 } from "docx";
-import { hariTanggal, NAMA_BENTUK, semesterDari, WAKTU_BAWAAN, type Pengaturan } from "./prompt";
+import { hariTanggal, mapelTka, NAMA_BENTUK, semesterDari, TKA, WAKTU_BAWAAN, type Pengaturan } from "./prompt";
 import { identitasBab, JUMLAH_PREMIS, kategoriBaru, paragrafArab, pecahBaris, POLA_ARAB, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
 
 const PERINGATAN = "Soal dibuat AI, wajib diperiksa guru sebelum dipakai.";
@@ -124,10 +124,11 @@ function butirBaris(label: string, isi: string, kiri = 400, opsi: Partial<Constr
 }
 
 /** Judul ujian & tahun pelajaran: dari identitas ujian (diisi guru), selain itu dari tanggal pembuatan set. */
-function judulAsesmen(p: Pengaturan, tanggal: Date) {
+function judulAsesmen(p: Pengaturan, tanggal: Date, bab: Bab) {
   const awal = semesterDari(tanggal);
   const semester = (p.identitas?.semester ?? awal.semester).toUpperCase();
-  const judul = JUDUL[p.tujuan] ?? "SOAL";
+  // Mapel di luar TKA (mis. Qurdis): jangan menyebut "Tes Kemampuan Akademik" di dokumen.
+  const judul = p.tujuan === TKA && !mapelTka(identitasBab(bab).mapel) ? "LATIHAN SOAL GAYA TKA" : (JUDUL[p.tujuan] ?? "SOAL");
   return { judul: p.tujuan === "PTS" || p.tujuan === "PAS" ? `${judul} ${semester}` : judul, tp: p.identitas?.tahun ?? awal.tahun };
 }
 
@@ -182,7 +183,7 @@ export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tangga
     }
   });
 
-  const { judul, tp } = judulAsesmen(p, tanggal);
+  const { judul, tp } = judulAsesmen(p, tanggal, bab);
   const { mapel, kelas } = identitasBab(bab);
   return patchDocument({
     outputType: "nodebuffer",
@@ -275,7 +276,7 @@ function tabelKategori(s: Soal) {
  * soal paket ini dengan Paket A (asal[i] = indeks soal di Paket A), supaya kisi-kisi (urutan Paket A) tetap terpakai.
  */
 export function buatWordKunci(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Date, paket?: string, asal?: number[]) {
-  const { judul, tp } = judulAsesmen(p, tanggal);
+  const { judul, tp } = judulAsesmen(p, tanggal, bab);
   const total = soal.reduce((n, s) => n + (Number(s.skor) || 0), 0);
   const tengah = (t: string, size = UKURAN, bold = true) => par([new TextRun({ text: t, bold, size })], { alignment: AlignmentType.CENTER, spacing: { after: 0 } });
   const kecil = (t: string) => par([new TextRun({ text: t, size: 18, color: "666666" })], { indent: { left: 400 }, spacing: { after: 0 } });
@@ -375,7 +376,7 @@ const KATEGORI = (level: string) => (["C1", "C2"].includes(level) ? "LOTS" : lev
 
 /** Kisi-kisi untuk guru (langkah 6): A4 mendatar, satu baris per soal, baris judul diulang di tiap halaman. */
 export function buatWordKisi(kisi: BarisKisi[], bab: Bab, p: Pengaturan, tanggal: Date) {
-  const { judul, tp } = judulAsesmen(p, tanggal);
+  const { judul, tp } = judulAsesmen(p, tanggal, bab);
   const tengah = (t: string, size = UKURAN, bold = true) => par([r(t, { bold, size })], { alignment: AlignmentType.CENTER, spacing: { after: 0 } });
   const isiSel = (anak: ParagraphChild[], rata: (typeof AlignmentType)[keyof typeof AlignmentType] = AlignmentType.LEFT) =>
     [par(anak, { alignment: rata, spacing: { after: 0 } })];

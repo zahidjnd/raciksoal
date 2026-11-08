@@ -593,6 +593,13 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   menulis angka tetap ("2 ATAU 3", "tepat 4 pernyataan"): set 82 membuktikan angka sistem mengalahkan aturan TKA & kisi.
   Uji laptop: set 83 TKA → rencana 2,3,4,2, hasil 3,3,4,3 (AI enggan 2; sengaja tidak dipaksa lewat perbaikan otomatis,
   karena semua tetap sah 2–4), Kategori 3 semua; set 84 ASAS → PGK 2,3,2,3 persis, Kategori 4, petunjuk madrasah.
+  Dirilis 0.21.0.
+- 2026-11-08 (0.21.1, pilihan pemilik) LATIHAN GAYA TKA: `mapelTka(mapel)` (prompt.ts, daftar Kepmendikdasmen 56/2026;
+  "Sejarah Kebudayaan Islam" sengaja TIDAK cocok) + `namaTujuan(t, mapel?)` → "Latihan Gaya TKA" untuk mapel di luar TKA.
+  Dipakai di kartu jenis (keterangan "Mapel ini tidak diujikan di TKA..."), sidebar/riwayat/admin set (kolom SQL
+  `mapel` = coalesce(bab->>'mapel', Qurdis)), nama file & judul Word (`judulAsesmen(p, tanggal, bab)` →
+  "LATIHAN SOAL GAYA TKA"). Kode tujuan tetap "Latihan TKA" (aturan soal sama). Kop lembar soal ada di header Word:
+  periksa word/header*.xml, bukan hanya document.xml.
   DOCKER LAPTOP 2026-11-08: update Docker Desktop (15.56) mengganti mesin ke "docker-vmm" (`EngineTypeWindows` di
   `%APPDATA%\Docker\settings-store.json`) → folder data baru kosong, semua kontainer "hilang". Dipulihkan dengan mengembalikan
   nilai itu ke "wsl2" (cadangan: `settings-store.json.cadangan-sebelum-wsl2`); data lama di `%LOCALAPPDATA%\Docker\wsl\disk`

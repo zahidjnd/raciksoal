@@ -52,6 +52,13 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.21.1 — 8 November 2026
+- **Mapel yang tidak diujikan di TKA kini memakai nama "Latihan Gaya TKA".** Menurut aturan resmi (Kepmendikdasmen
+  56/2026), mapel agama (Qurdis, Fikih, Akidah Akhlak, SKI, dan lainnya) serta Informatika tidak diujikan di TKA.
+  Untuk mapel-mapel itu, kartu jenis soal, riwayat, nama file, dan judul Word kini bertuliskan "Latihan Gaya TKA" /
+  "LATIHAN SOAL GAYA TKA", bukan "Tes Kemampuan Akademik". Isi dan aturan soalnya tetap sama (bergaya TKA).
+  Mapel TKA (Biologi, Bahasa Arab, Matematika, dll.) tetap "Latihan TKA".
+
 ## 0.21.0 — 8 November 2026
 - **Latihan TKA kini mengikuti contoh soal resmi Pusmendik:**
   - PG kompleks boleh 2, 3, atau 4 jawaban benar, dengan petunjuk baku "Pilihlah jawaban yang benar! Jawaban benar

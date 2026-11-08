@@ -26,6 +26,7 @@ export default async function SemuaSet({ searchParams }: { searchParams: Promise
       status: hasilSoal.status,
       babId: hasilSoal.babId,
       judulBab: sql<string | null>`${hasilSoal.bab}->>'judul'`,
+      mapel: sql<string>`coalesce(${hasilSoal.bab}->>'mapel', 'Al-Qur''an Hadis')`,
       pengaturan: hasilSoal.pengaturan,
       model: hasilSoal.model,
       pesan: hasilSoal.pesan,
@@ -58,7 +59,7 @@ export default async function SemuaSet({ searchParams }: { searchParams: Promise
             >
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <span>
-                  <span className="font-semibold">{s.guru ?? "(tanpa pemilik)"}</span> · {namaTujuan(pg.tujuan)} · {bab} · {pg.kesulitan}
+                  <span className="font-semibold">{s.guru ?? "(tanpa pemilik)"}</span> · {namaTujuan(pg.tujuan, s.mapel)} · {bab} · {pg.kesulitan}
                   {s.status === "selesai" && <span className="text-pudar"> · {s.jumlahSoal} soal</span>}
                 </span>
                 <span className="text-xs text-pudar">

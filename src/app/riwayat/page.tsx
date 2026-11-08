@@ -42,7 +42,7 @@ export default async function Riwayat({ searchParams }: { searchParams: Promise<
             >
               <span>
                 {s.nama && <span className="font-semibold">{s.nama} · </span>}
-                <span className={s.nama ? "" : "font-semibold"}>{namaTujuan(pg.tujuan)}</span> · {bab} · {pg.kesulitan}
+                <span className={s.nama ? "" : "font-semibold"}>{namaTujuan(pg.tujuan, s.mapel)}</span> · {bab} · {pg.kesulitan}
                 {s.status === "selesai" && <span className="text-pudar"> · {s.jumlahSoal} soal</span>}
                 {s.status !== "selesai" && (
                   <span className={`ml-1 rounded px-1 text-xs ${s.status === "gagal" ? "bg-bahaya-muda text-bahaya" : "bg-peringatan-muda"}`}>

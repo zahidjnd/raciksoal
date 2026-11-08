@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { arabTakTerverifikasi, bersihkanTanggapan, gabungBab, identitasBab, kataTerpakai, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, terapkanBobot, type Bab, type BarisKisi, type Soal } from "./soal.ts";
-import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, laranganIsian, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, semesterDari, MAKS_CATATAN, MAKS_INSTRUKSI, namaLevelTka, pasangKunciPgk, rencanaLevel, type Pengaturan } from "./prompt.ts";
+import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, laranganIsian, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, semesterDari, MAKS_CATATAN, MAKS_INSTRUKSI, namaLevelTka, namaTujuan, pasangKunciPgk, rencanaLevel, type Pengaturan } from "./prompt.ts";
 import { bolehAkses, rapikanUsername } from "./akses.ts";
 import { headerUnduh } from "./nama-file.ts";
 import { keIsian, rapikanMateri, susunDraf, terapkanAnalisa } from "./materi.ts";
@@ -361,6 +361,11 @@ test("Latihan TKA: tanpa uraian, kisi-kisi meminta soal grup + wacana; grup sah 
   assert.equal(namaLevelTka("Bahasa Arab").MOTS, "Reorganisasi");
   assert.equal(namaLevelTka("Bahasa Inggris").HOTS, "Evaluasi dan Apresiasi");
   assert.equal(namaLevelTka("Biologi").LOTS, "Pemahaman");
+  // mapel di luar TKA (Kepmendikdasmen 56/2026) → "Latihan Gaya TKA"; SKI tidak tertukar dengan Sejarah
+  for (const m of ["Biologi", "Bahasa Arab", "Sejarah", "Pendidikan Pancasila", "Matematika"]) assert.equal(namaTujuan("Latihan TKA", m), "Latihan TKA", m);
+  for (const m of ["Al-Qur'an Hadis", "Fikih", "Sejarah Kebudayaan Islam", "Informatika", "Ilmu Tafsir"]) assert.equal(namaTujuan("Latihan TKA", m), "Latihan Gaya TKA", m);
+  assert.equal(namaTujuan("Latihan TKA"), "Latihan TKA"); // mapel belum dipilih
+  assert.equal(namaTujuan("PAS", "Fikih"), "ASAS");
   // jumlah kunci PGK ditentukan aplikasi dan ikut ke permintaan soal (set 81: AI sendiri selalu memberi 2)
   const kisiPgk = pasangKunciPgk([{ bentuk: "PG" }, { bentuk: "PGK" }, { bentuk: "PGK" }, { bentuk: "PGK" }, { bentuk: "PGK" }] as BarisKisi[], true);
   assert.deepEqual(kisiPgk.map((k) => k.kunciPgk), [undefined, 2, 3, 4, 2]);

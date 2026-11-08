@@ -6,7 +6,7 @@ import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
 import { ambilNamaMadrasah } from "@/lib/sekolah";
 import { namaTujuan, type Pengaturan } from "@/lib/prompt";
-import type { BarisKisi, Soal } from "@/lib/soal";
+import { identitasBab, type BarisKisi, type Soal } from "@/lib/soal";
 import { buatWordKisi, buatWordKunci, buatWordSoal } from "@/lib/word";
 import { headerUnduh } from "@/lib/nama-file";
 import { bacaPaket, susunPaket } from "@/lib/paket";
@@ -42,7 +42,7 @@ export async function GET(req: Request) {
       : jenis === "kunci"
         ? await buatWordKunci(susunan.soal, bab, p, h.dibuat, adaPaket ? paket : undefined, susunan.asal)
         : await buatWordSoal(susunan.soal, bab, p, h.dibuat, await ambilNamaMadrasah(), adaPaket ? paket : undefined);
-  const nama = `${NAMA_FILE[jenis]}${adaPaket ? ` Paket ${paket}` : ""} ${h.nama ?? `${namaTujuan(p.tujuan)} ${bab.judul.split(":")[0]}`} (set ${id}).docx`;
+  const nama = `${NAMA_FILE[jenis]}${adaPaket ? ` Paket ${paket}` : ""} ${h.nama ?? `${namaTujuan(p.tujuan, identitasBab(bab).mapel)} ${bab.judul.split(":")[0]}`} (set ${id}).docx`;
 
   return new Response(new Uint8Array(isi), {
     headers: {

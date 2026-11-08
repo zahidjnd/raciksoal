@@ -153,7 +153,7 @@ Semua butir di ATURAN-SOAL.md bagian 2 dan 10.
 |---|---|---|---|
 | Hanya PG, PGK MCMA, PGK Kategori; tanpa uraian | `TKA` | ✔ D12 hlm 8–9; D12b hlm 29 | **sesuai** |
 | Soal tunggal dan soal grup | `rencanaGrup` | ✔ D12 hlm 8 | **sesuai** |
-| Bahasa Arab termasuk mapel TKA; tidak ada mapel agama | — | ✔ D12 hlm 7–8 | **sesuai** |
+| Bahasa Arab termasuk mapel TKA; tidak ada mapel agama | `mapelTka`, `namaTujuan` | ✔ D12 hlm 7–8; D12b (daftar 3 mapel wajib + mapel pilihan) | **sesuai**: mapel di luar daftar (agama, Informatika) tampil sebagai "Latihan Gaya TKA" / Word "LATIHAN SOAL GAYA TKA" (2026-11-08) |
 | MCMA: **2–4** jawaban benar | `ATURAN_TKA`, `KUNCI_PGK` | contoh resmi: **2–4** benar (mis. Matematika, Biologi), 5 pernyataan | ✅ **sesuai** (2026-11-08) |
 | Petunjuk MCMA "Pilihlah jawaban yang benar! Jawaban benar lebih dari satu." | `ATURAN_TKA` | baku resmi, sama | ✅ **sesuai** (2026-11-08) |
 | Kategori: **3 pernyataan** | `ATURAN_TKA`, `PERNYATAAN_BOLEH` | semua 37 contoh di D12: **3 pernyataan** (versi web kadang 4) | ✅ **sesuai** (2026-11-08) |

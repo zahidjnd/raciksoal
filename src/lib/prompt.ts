@@ -4,7 +4,15 @@ export const TUJUAN = ["Ulangan Harian", "PTS", "PAS", "Latihan", "Latihan TKA"]
 /** Nama yang tampil (pilihan pemilik 2026-10-20: AFTS & ASAS sesuai istilah madrasah). Kode "PTS"/"PAS" tetap disimpan agar set lama terbaca. */
 const NAMA_TUJUAN: Record<string, string> = { PTS: "AFTS", PAS: "ASAS" };
 const KEPANJANGAN: Record<string, string> = { PTS: "Asesmen Formatif Tengah Semester", PAS: "Asesmen Sumatif Akhir Semester" };
-export const namaTujuan = (t: string) => NAMA_TUJUAN[t] ?? t;
+/**
+ * Mapel yang diujikan TKA SMA/MA (Kepmendikdasmen 56/2026: wajib B. Indonesia, Matematika, B. Inggris + 19 pilihan).
+ * Mapel agama, Informatika, dll. tidak ada di TKA: jenisnya tampil sebagai "Latihan Gaya TKA" (soal tetap bergaya TKA),
+ * supaya aplikasi tidak menyebut "TKA" untuk mapel yang tidak diujikan (RUJUKAN.md I2).
+ */
+const MAPEL_TKA = /bahasa\s+(indonesia|inggris|arab|jerman|prancis|perancis|jepang|korea|mandarin)|matematika|fisika|kimia|biologi|ekonomi|sosiologi|geografi|antropologi|ppkn|pancasila|kewirausahaan|^sejarah(\s+indonesia)?$/i;
+export const mapelTka = (mapel: string) => MAPEL_TKA.test(mapel.trim());
+/** `mapel` diisi bila diketahui: Latihan TKA untuk mapel di luar TKA → "Latihan Gaya TKA". */
+export const namaTujuan = (t: string, mapel?: string) => (t === TKA && mapel && !mapelTka(mapel) ? "Latihan Gaya TKA" : (NAMA_TUJUAN[t] ?? t));
 /** ATURAN-SOAL.md bagian 9: TKA hanya PG, PG kompleks, Kategori (tanpa uraian), memakai soal grup. */
 export const TKA = "Latihan TKA";
 export const NAMA_LEVEL_TKA = { LOTS: "Pemahaman", MOTS: "Penerapan", HOTS: "Penalaran" } as const;

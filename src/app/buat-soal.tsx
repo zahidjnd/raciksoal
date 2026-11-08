@@ -10,7 +10,7 @@ import { StepAngka } from "./step-angka";
 import { skorOtomatis } from "@/lib/skor";
 import { kunciRingkas } from "@/lib/kunci";
 import { PAKET, susunPaket, type Paket } from "@/lib/paket";
-import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_SOAL, NAMA_BENTUK, namaLevelTka, namaTujuan, semesterDari, TKA, TUJUAN, WAKTU_BAWAAN, type Identitas, type Pengaturan } from "@/lib/prompt";
+import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_SOAL, mapelTka, NAMA_BENTUK, namaLevelTka, namaTujuan, semesterDari, TKA, TUJUAN, WAKTU_BAWAAN, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { KELAS, pilihanAngka, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { DAFTAR_MAPEL, type IsianMateri } from "@/lib/materi";
 import { useRouter } from "next/navigation";
@@ -339,8 +339,10 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
                   className={`rounded-xl border bg-kartu p-3 text-left hover:border-pudar/40 ${pilih ? "border-hijau bg-hijau-muda/50 ring-1 ring-hijau" : ""}`}
                 >
                   <span className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-hijau-muda text-hijau-teks">{j.ikon}</span>
-                  <span className="block text-sm font-semibold">{namaTujuan(j.tujuan)}</span>
-                  <span className="mt-0.5 block text-xs leading-snug text-pudar">{j.ket}</span>
+                  <span className="block text-sm font-semibold">{namaTujuan(j.tujuan, mapel)}</span>
+                  <span className="mt-0.5 block text-xs leading-snug text-pudar">
+                    {j.tujuan === TKA && mapel && !mapelTka(mapel) ? "Mapel ini tidak diujikan di TKA. Soal bergaya TKA (bacaan/kasus, soal grup) untuk melatih nalar." : j.ket}
+                  </span>
                 </button>
               );
             })}

@@ -89,6 +89,7 @@ export function ambilRiwayat(guruId: string, batas: number, saring?: SQL) {
       status: hasilSoal.status,
       babId: hasilSoal.babId,
       judulBab: sql<string | null>`${hasilSoal.bab}->>'judul'`,
+      mapel: sql<string>`coalesce(${hasilSoal.bab}->>'mapel', 'Al-Qur''an Hadis')`, // set lama tanpa mapel = Qurdis
       nama: hasilSoal.nama,
       pengaturan: hasilSoal.pengaturan,
       jumlahSoal: sql<number>`coalesce(jsonb_array_length(${hasilSoal.soal}), 0)::int`,
@@ -155,7 +156,7 @@ export async function Kerangka({ p, lebar = false, setAktif = null, children }: 
           {riwayat.length === 0 && <p className="px-3 text-xs text-pudar">Belum ada set soal.</p>}
           {riwayat.map((s) => {
             const pg = s.pengaturan as Pengaturan;
-            const label = s.nama ?? `${namaTujuan(pg.tujuan)} · ${judulPendek(s.judulBab, s.babId)}`;
+            const label = s.nama ?? `${namaTujuan(pg.tujuan, s.mapel)} ·${judulPendek(s.judulBab, s.babId)}`;
             // Baris kedua (tanggal · jumlah soal): set dengan judul sama bisa dibedakan (audit 2026-11-04).
             const tanggal = s.dibuat.toLocaleDateString("id-ID", { day: "numeric", month: "short", timeZone: "Asia/Jakarta" });
             const keterangan = s.status === "gagal" ? "gagal" : s.status === "proses" ? "sedang dibuat" : `${s.jumlahSoal} soal`;
