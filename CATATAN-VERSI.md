@@ -52,6 +52,23 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.22.0 — 8 November 2026
+- **Format ASAS MA Al-Fatah** (sesuai surat Kepala MA, 7 November 2026). Memilih kartu **ASAS** langsung mengisi:
+  - **Eksak** (Matematika, Fisika, Kimia, Biologi): 20 PG, 5 PG kompleks, 5 Benar/Salah, 5 esai = 35 soal;
+    HOTS 8, MOTS 15, LOTS 12.
+  - **Non-Eksak** (mapel lain): 30 PG, 5 PG kompleks, 5 Benar/Salah, 5 esai = 45 soal; HOTS 10, MOTS 20, LOTS 15.
+  - Skor total otomatis 100. Ada dua tombol "Eksak (35 soal)" dan "Non-Eksak (45 soal)" untuk berpindah.
+  - Menjodohkan + Benar/Salah boleh dicampur (total 5, menjodohkan minimal 3), lewat tombol jumlah soal.
+- **Batas soal per set naik dari 40 ke 50.**
+- **Benar/Salah dan Menjodohkan kembali ke gaya Al-Fatah** (semua jenis soal kecuali Latihan TKA):
+  - Benar/Salah: satu nomor satu pernyataan, dijawab A (Benar) atau B (Salah). Kunci Benar/Salah diatur aplikasi supaya
+    seimbang.
+  - Menjodohkan: satu nomor satu pernyataan; beberapa nomor dijodohkan dengan satu daftar jawaban (ada satu pengecoh).
+    Diperbaiki lewat **Edit** (tidak bisa diganti AI per nomor, karena daftar jawabannya dipakai bersama).
+  - Kedua bentuk ini tidak diberi level HOTS; HOTS dipindah ke PG, PG kompleks, atau esai, jumlah totalnya tetap.
+- **Komposisi level kini selalu persis** dengan yang diminta (dulu bisa meleset 1–2 soal karena AI menulis level sendiri).
+- Menu **Lanjutan** menampilkan jumlah soal tiap level, mis. "LOTS 12, MOTS 15, HOTS 8 soal".
+
 ## 0.21.1 — 8 November 2026
 - **Mapel yang tidak diujikan di TKA kini memakai nama "Latihan Gaya TKA".** Menurut aturan resmi (Kepmendikdasmen
   56/2026), mapel agama (Qurdis, Fikih, Akidah Akhlak, SKI, dan lainnya) serta Informatika tidak diujikan di TKA.

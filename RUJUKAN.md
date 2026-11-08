@@ -64,6 +64,7 @@ karena bukan aturan soal. Pengecualian: pemisahan data guru dan kerahasiaan (bag
 | D19 | UU 27/2022 Pelindungan Data Pribadi | data guru | ◐ |
 | D20 | Panduan Pemanfaatan Kecerdasan Artifisial untuk Guru (Kemendikdasmen) | prinsip pemakaian AI | ◐ panduan Kemenag belum ditemukan |
 | D21 | Kalender Pendidikan Madrasah (Kanwil, per tahun) | semester di kop | ◐ |
+| **D22** | **Surat Kepala MA Al-Fatah No. 433/P/MA/PP.006/SPb/11/2026** (7 Nov 2026) tentang ASAS Ganjil (foto dari pemilik) | jumlah soal per bentuk & komposisi HOTS/MOTS/LOTS ASAS eksak/non-eksak; soal & kisi-kisi dibuat guru mapel | ✔ (R3, dokumen resmi madrasah) |
 
 ---
 
@@ -117,7 +118,8 @@ karena bukan aturan soal. Pengecualian: pemisahan data guru dan kerahasiaan (bag
 | Level C1–C6 | `LEVEL` | R2 | D14; ✔ D08b hlm 16, 77–78 | |
 | LOTS = C1–C2, MOTS = C3, HOTS = C4–C6 | `KATEGORI` | R2 | D15 | ◐ istilah tidak ada di dokumen resmi yang sudah dibaca. Padanan resmi terdekat: level TKA Pemahaman/Penerapan/Penalaran |
 | Kata kerja bukan penentu level; HOTS wajib stimulus | `buatSistem` | R2 | D14, D15 | |
-| **Komposisi level bawaan** (40/40/20, 30/40/30, 20/40/40) | `ATURAN_TUJUAN` | **R4** | ✔ tidak ada di D05, D06, D08b, D09b, D12 | perlu keputusan madrasah, atau tunggu D08/D09 |
+| **Komposisi level & jumlah soal ASAS** (eksak 35: 8/15/12; non-eksak 45: 10/20/15) | `ASAS_ALFATAH` | **R3** | ✔ D22 | ✅ 2026-11-08. Bentuk "Menjodohkan/BS" gaya lama Al-Fatah (satu nomor = satu pernyataan) dan skor total 100 = keputusan pemilik |
+| **Komposisi level bawaan** jenis lain (UH 40/40/20, AFTS 30/40/30, TKA 20/40/40) | `ATURAN_TUJUAN` | **R4** | ✔ tidak ada di D05, D06, D08b, D09b, D12 | perlu keputusan madrasah, atau tunggu D08/D09 |
 | Komposisi dihitung aplikasi, bukan AI | `rencanaLevel` | R3 | — | ✔ |
 | Tingkat kesulitan mengatur berat soal di dalam levelnya | `ATURAN_KESULITAN` | R2 + R3 | D15; D08b hlm 13–14 (tingkat kesulitan sesuai kemampuan murid) | |
 
@@ -220,7 +222,7 @@ Semua butir di ATURAN-SOAL.md bagian 2 dan 10.
 2. ~~**Latihan TKA berbeda dari contoh resmi** (D12)~~ ✅ Disamakan 2026-11-08: MCMA 2–4, Kategori 3 pernyataan, petunjuk baku, label resmi, level mapel bahasa. **Sisa: grup campur bentuk** (resmi boleh; aplikasi masih satu bentuk per grup karena lembar Word disusun per bagian bentuk).
 
 **B. Belum ada dasar, perlu keputusan madrasah (R4 → R3):**
-3. Komposisi level bawaan dan jumlah soal bawaan.
+3. Komposisi level bawaan dan jumlah soal bawaan. **ASAS sudah (D22, 2026-11-08)**; UH, AFTS, Latihan belum.
 4. Skor PGK & Kategori (0/penuh atau sebagian), bobot Menjodohkan & Isian.
 5. Transliterasi (ikut SKB 1987 atau tetap tanpa tanda).
 6. Istilah AFTS/ASAS (tetap, sebagai istilah madrasah).
@@ -242,7 +244,7 @@ TKA sudah lengkap (D12, D12b, D12c dari situs Pusmendik, tidak perlu diunduh sat
 - [ ] **D08** Pedoman/Juknis **Pembelajaran dan Asesmen MADRASAH** dari **Dirjen Pendis** (turunan KMA 1503/2025). Kalau ada versi lama (turunan KMA 450/2024 atau 347/2022) juga berguna
 - [ ] **D09** **POS Asesmen Madrasah** (sumatif semester PAI & Bahasa Arab, bukan Ujian Madrasah kelas XII) TP 2025/2026, beserta kisi-kisinya
 - [ ] **D13** **Panduan penulisan soal** Puspendik/Pusmendik (sering beredar di pelatihan penulisan soal / MGMP)
-- [ ] **Aturan internal Al Fatah** bila ada: pedoman AFTS/ASAS, komposisi level, penskoran
+- [ ] **Aturan internal Al Fatah** bila ada: pedoman AFTS, UH, penskoran (ASAS sudah: D22)
 - [ ] (nanti, saat mapel umum dipakai) D07 Keputusan Kepala BSKAP **046/H/KR/2025** tentang CP
 
 File yang sudah ada tetap di `dokumen/rujukan/`. Nama `1755668120_manage_file.pdf` = Panduan Pembelajaran dan Asesmen

@@ -600,6 +600,25 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   `mapel` = coalesce(bab->>'mapel', Qurdis)), nama file & judul Word (`judulAsesmen(p, tanggal, bab)` →
   "LATIHAN SOAL GAYA TKA"). Kode tujuan tetap "Latihan TKA" (aturan soal sama). Kop lembar soal ada di header Word:
   periksa word/header*.xml, bukan hanya document.xml.
+- 2026-11-08 (0.22.0, pemilik "gas") ASAS AL-FATAH (surat Kepala MA 433/.../11/2026 = RUJUKAN D22; ASAS 30 Nov–10 Des,
+  soal ke TU paling lambat 20 Nov): `MAKS_SOAL` 50. `ASAS_ALFATAH` + `MAPEL_EKSAK` (prompt.ts): kartu ASAS langsung mengisi
+  eksak 35 (PG20 PGK5 BS5 Esai5, level 34/43/23 → 8/15/12) / non-eksak 45 (PG30, level 33/45/22 → 10/20/15) + dua tombol;
+  skor 100 dari `skorOtomatis` (BOBOT_BAWAAN.MJ kini 3). Lanjutan menampilkan jumlah soal per level (`hitungLevel`).
+  GAYA LAMA AL-FATAH untuk semua jenis KECUALI TKA (`buatSistem(bab, tka)` memilih BS_LAMA/MJ_LAMA vs BS_KATEGORI):
+  BS = satu pernyataan per nomor, kunci "Benar"/"Salah" DIRENCANAKAN aplikasi (`kunciBs` di kisi, seimbang acak).
+  MJ = satu nomor = satu pernyataan (`pertanyaan`), blok nomor ber-`grup` sama (TANPA wacana) berbagi `jawaban`, `kunci` satu
+  huruf; `mjLama(s)` = MJ tanpa `premis`. AI menulis `jodoh` (+`pengecoh` di nomor terakhir blok) → `susunMjLama` menyusun &
+  mengacak daftar. `blokMj` (maks 5/blok, min 3), `bagiTahap` tidak membelah blok, `pasangKunciPgk` memberi grup blok.
+  `rencanaLevel(..., tanpaHots)` memindah HOTS dari BS/MJ ke bentuk lain (total tetap). MJ: Ganti/Ubah/Tambah AI & tulis
+  sendiri DITOLAK (server + tombol disembunyikan), perbaikan otomatis dilewati; Edit menyinkronkan daftar jawaban ke blok
+  (`simpanSoalDi`). Word: satu tabel per blok bernomor soal (`tabelMenjodohkan(s, nomor)`), kunci per nomor. Kategori &
+  MJ model 0.10.0 tetap terbaca di set lama. `namaBentuk(b, tka)`: BS = "Benar/Salah" / "Kategori (PG Kompleks)".
+  LEVEL KISI DIKUNCI: `rencanaLevelSet(p)` + `sesuaikanLevel` di `kerjakan` (dulu AI bebas menulis level kisi; set 86 jadi
+  17/19/9 padahal surat 15/20/10). Setiap nomor MJ wajib menulis `pengecoh` (set 87: AI lupa → daftar tanpa pengecoh, merah).
+  Uji laptop (guru.uji.ayat): set 85 eksak Biologi 35 (12/15/8, BS 3 Benar 2 Salah, PGK 2,3,2,3,2, 2 PG merah dari aturan
+  lama), set 88 non-eksak Qurdis 45 MJ4+BS1 (15/20/10, skor 100, 0 merah, daftar MJ 5 jawaban). 3 Word OK. Catatan mutu:
+  isi blok MJ kadang campur jenis (nabi + istilah) walau diminta sejenis. Tampilan web belum dilihat (panel tersembunyi).
+  Skrip uji: `uji-asas.mts` di scratchpad (kirim bobot dari skorOtomatis seperti form).
   DOCKER LAPTOP 2026-11-08: update Docker Desktop (15.56) mengganti mesin ke "docker-vmm" (`EngineTypeWindows` di
   `%APPDATA%\Docker\settings-store.json`) → folder data baru kosong, semua kontainer "hilang". Dipulihkan dengan mengembalikan
   nilai itu ke "wsl2" (cadangan: `settings-store.json.cadangan-sebelum-wsl2`); data lama di `%LOCALAPPDATA%\Docker\wsl\disk`

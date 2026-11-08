@@ -21,7 +21,7 @@ import {
   type ParagraphChild,
 } from "docx";
 import { hariTanggal, mapelTka, NAMA_BENTUK, semesterDari, TKA, WAKTU_BAWAAN, type Pengaturan } from "./prompt";
-import { identitasBab, JUMLAH_PREMIS, kategoriBaru, paragrafArab, pecahBaris, POLA_ARAB, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
+import { identitasBab, JUMLAH_PREMIS, kategoriBaru, mjLama, paragrafArab, pecahBaris, POLA_ARAB, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
 
 const PERINGATAN = "Soal dibuat AI, wajib diperiksa guru sebelum dipakai.";
 
@@ -160,6 +160,15 @@ export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tangga
     isi.push(par([r(`${ROMAWI[k]}. ${kategori ? "PILIHAN GANDA KOMPLEKS KATEGORI" : NAMA_BAGIAN[bentuk]}`, { bold: true })], { keepNext: true, spacing: { before: k ? 200 : 0, after: 40 } }));
     isi.push(par([r(kategori ? PETUNJUK_KATEGORI : PETUNJUK[bentuk], { italics: true })], { keepNext: true, spacing: { after: 120 } }));
     for (const [j, { s, no }] of butir.entries()) {
+      // Menjodohkan gaya lama: satu tabel per blok (pernyataan bernomor soal + daftar jawaban bersama), dicetak sekali.
+      if (mjLama(s)) {
+        if (s.grup && mjLama(butir[j - 1]?.s ?? s) && butir[j - 1]?.s.grup === s.grup) continue;
+        const blok = [butir[j]];
+        while (s.grup && butir[j + blok.length] && mjLama(butir[j + blok.length].s) && butir[j + blok.length].s.grup === s.grup) blok.push(butir[j + blok.length]);
+        isi.push(tabelMenjodohkan({ ...s, premis: blok.map((x) => x.s.pertanyaan) }, blok.map((x) => x.no)));
+        isi.push(par([], { spacing: { after: 80 } }));
+        continue;
+      }
       // Soal grup: wacana bersama sekali, sebelum soal pertama grupnya.
       if (s.grup && s.wacana && butir[j - 1]?.s.grup !== s.grup) {
         const akhir = butir.slice(j).findLast((x) => x.s.grup === s.grup)!.no;
@@ -218,8 +227,11 @@ const parSel = (isi: string, opsi: Partial<ConstructorParameters<typeof Paragrap
     ? par(teks(isi), { bidirectional: true, alignment: AlignmentType.START, spacing: { after: 0 }, ...opsi })
     : par(teks(isi), { spacing: { after: 0 }, ...opsi });
 
-/** Soal Menjodohkan di lembar siswa: premis di kiri (dengan kolom kosong untuk huruf jawaban), jawaban A–F di kanan. */
-function tabelMenjodohkan(s: Soal) {
+/**
+ * Soal Menjodohkan di lembar siswa: premis di kiri (dengan kolom kosong untuk huruf jawaban), jawaban A–F di kanan.
+ * `nomor`: nomor soal tiap premis (menjodohkan gaya lama: satu premis = satu nomor soal); tanpa itu 1, 2, 3, ...
+ */
+function tabelMenjodohkan(s: Soal, nomor?: number[]) {
   const premis = s.premis ?? [];
   const jawaban = s.jawaban ?? [];
   const kecil = (t: string) => par([r(t, { bold: true, size: 18 })], { alignment: AlignmentType.CENTER, spacing: { after: 0 } });
@@ -239,7 +251,7 @@ function tabelMenjodohkan(s: Soal) {
       ...Array.from({ length: n }, (_, i) =>
         baris([
           [par([], { spacing: { after: 0 } })],
-          [i < premis.length ? tengah(String(i + 1)) : par([])],
+          [i < premis.length ? tengah(String(nomor?.[i] ?? i + 1)) : par([])],
           [i < premis.length ? parSel(premis[i]) : par([])],
           [i < jawaban.length ? tengah(`${HURUF[i]}.`) : par([])],
           [i < jawaban.length ? parSel(jawaban[i]) : par([])],
@@ -291,14 +303,18 @@ export function buatWordKunci(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Da
   const rekap: string[] = [];
   kelompok(soal).forEach(({ bentuk, butir }, k) => {
     const skor = butir.reduce((n, x) => n + (Number(x.s.skor) || 0), 0);
-    rekap.push(`${NAMA_BENTUK[bentuk]} (${skor})`);
-    isi.push(par([new TextRun({ text: `${HURUF[k]}. KUNCI BAGIAN ${ROMAWI[k]}: ${NAMA_BENTUK[bentuk].toUpperCase()} (${butir.length} soal, skor ${skor})`, bold: true })], { spacing: { before: 200, after: 80 } }));
+    const nama = bentuk === "BS" && butir.some((x) => kategoriBaru(x.s)) ? "PG Kompleks Kategori" : NAMA_BENTUK[bentuk];
+    rekap.push(`${nama} (${skor})`);
+    isi.push(par([new TextRun({ text: `${HURUF[k]}. KUNCI BAGIAN ${ROMAWI[k]}: ${nama.toUpperCase()} (${butir.length} soal, skor ${skor})`, bold: true })], { spacing: { before: 200, after: 80 } }));
     if (bentuk === "PGK") {
       const penuh = Number(butir[0].s.skor) || 0;
       // ATURAN-SOAL.md bagian 3: penskoran resmi PG kompleks 1/0 per butir (seperti TKA).
       isi.push(par([r(`Penskoran per soal: memilih SEMUA jawaban benar tanpa pilihan salah = ${penuh} poin; selain itu = 0 poin.`, { italics: true })]));
     }
-    if (bentuk === "MJ") {
+    if (bentuk === "MJ" && mjLama(butir[0].s)) {
+      const penuh = Number(butir[0].s.skor) || 0;
+      isi.push(par([r(`Penskoran per nomor: pasangan tepat = ${penuh} poin; selain itu = 0 poin.`, { italics: true })]));
+    } else if (bentuk === "MJ") {
       const penuh = Number(butir[0].s.skor) || 0;
       const perPasangan = Math.round((penuh / JUMLAH_PREMIS) * 100) / 100;
       isi.push(par([r(`Penskoran per soal: tiap pasangan yang benar = ${String(perPasangan).replace(".", ",")} poin (5 pasangan benar = ${penuh} poin); pasangan yang salah = 0 poin.`, { italics: true })]));
@@ -310,6 +326,9 @@ export function buatWordKunci(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Da
     if (bentuk === "BS" && butir.some((x) => kategoriBaru(x.s))) {
       const penuh = Number(butir[0].s.skor) || 0;
       isi.push(par([r(`Penskoran per soal: SEMUA pernyataan dikategorikan dengan benar = ${penuh} poin; selain itu = 0 poin.`, { italics: true })]));
+    } else if (bentuk === "BS") {
+      const penuh = Number(butir[0].s.skor) || 0;
+      isi.push(par([r(`Penskoran per nomor: jawaban tepat = ${penuh} poin; selain itu = 0 poin.`, { italics: true })]));
     }
 
     for (const { s, no } of butir) {
@@ -322,6 +341,9 @@ export function buatWordKunci(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Da
         isi.push(bernomor(`${no}.`, [new TextRun({ text: "Kunci: ", bold: true }), ...teks((s.pernyataan ?? []).map((p, i) => `(${i + 1}) ${kunci[i] ?? "?"}`).join("; "))]));
       } else if (bentuk === "BS") {
         isi.push(bernomor(`${no}.`, [new TextRun({ text: "Kunci: ", bold: true }), new TextRun(kunci[0] === "Benar" ? "A (Benar)" : "B (Salah)")]));
+      } else if (mjLama(s)) {
+        const h = String(kunci[0] ?? "?").toUpperCase();
+        isi.push(bernomor(`${no}.`, [new TextRun({ text: "Kunci: ", bold: true }), ...teks(`${h} (${s.jawaban?.[HURUF.indexOf(h)] ?? "?"})`)]));
       } else if (bentuk === "MJ") {
         const huruf = (h: string) => HURUF.indexOf(String(h).trim().toUpperCase());
         isi.push(bernomor(`${no}.`, [new TextRun({ text: "Kunci: ", bold: true }), ...teks(kunci.map((h, i) => `${i + 1}-${h}`).join(", "))]));

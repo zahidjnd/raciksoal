@@ -18,10 +18,15 @@ export type Soal = {
   // Bentuk MJ = Menjodohkan (0.10.0): premis (lajur kiri, 5), jawaban (lajur kanan, 6 = 5 benar + 1 pengecoh, SUDAH
   // diacak aplikasi), kunci = array huruf jawaban untuk tiap premis. `pasangan` + `pengecoh` hanya format jawaban AI
   // (pasangan benar); diubah jadi premis/jawaban/kunci oleh susunMenjodohkan dan tidak pernah disimpan.
+  // MENJODOHKAN GAYA LAMA (0.22.0, gaya Al-Fatah, semua jenis kecuali TKA): SATU NOMOR = satu pernyataan lajur kiri
+  // (`pertanyaan`), tanpa `premis`. Nomor-nomor satu blok (`grup` sama, tanpa wacana) memakai daftar `jawaban` yang SAMA
+  // (lajur kanan, satu pengecoh); `kunci` = satu huruf. `jodoh` = pasangan benar di jawaban AI, disusun jadi daftar
+  // bersama oleh susunMjLama dan tidak pernah disimpan. Lihat mjLama().
   premis?: string[];
   jawaban?: string[];
   pasangan?: { premis: string; jawaban: string }[];
   pengecoh?: string[];
+  jodoh?: string;
   rubrik?: { kriteria: string; skor: number }[];
   pembahasan: string;
   level: string;
@@ -95,7 +100,8 @@ export type BarisKisi = {
   // karena soal isian ditulis paling akhir dan jawabannya dulu sering sudah terpakai sebagai pengecoh soal PG.
   jawaban?: string;
   kunciPgk?: number; // PGK: jumlah jawaban benar, ditentukan aplikasi (pasangKunciPgk, prompt.ts)
-  jumlahPernyataan?: number; // Kategori: 3 (TKA) atau 4, ditentukan aplikasi (pasangKunciPgk)
+  jumlahPernyataan?: number; // Kategori (TKA): 3, ditentukan aplikasi (pasangKunciPgk)
+  kunciBs?: string; // Benar/Salah gaya lama: "Benar"/"Salah", ditentukan aplikasi supaya seimbang (pasangKunciPgk)
 };
 
 const URUTAN_BENTUK: Bentuk[] = ["PG", "PGK", "BS", "MJ", "ISIAN", "URAIAN"]; // harus sama dengan urutan NAMA_BENTUK (prompt.ts)
@@ -166,6 +172,49 @@ export function susunMenjodohkan(s: Soal, acak: () => number = Math.random): Soa
   if (semua.length >= 3 && sejajar(jawaban)) jawaban = [...semua.slice(1), semua[0]];
   const kunci = benar.map((b) => HURUF_MJ[jawaban.indexOf(b)] ?? "");
   return { ...sisa, premis: pas.map((p) => p.premis), jawaban, kunci };
+}
+
+/** Menjodohkan gaya lama: satu nomor = satu pernyataan, daftar jawaban dipakai bersama satu blok (`grup`). */
+export const mjLama = (s: Pick<Soal, "bentuk" | "premis">) => s.bentuk === "MJ" && !Array.isArray(s.premis);
+
+/**
+ * Menjodohkan gaya lama yang dibagi aplikasi: jumlah nomor MJ → ukuran blok (masing-masing maks 5, min 3 bila lebih
+ * dari 5), mis. 5 → [5], 7 → [4, 3]. Satu blok = satu daftar jawaban bersama, selalu di satu tahap AI.
+ */
+export function blokMj(n: number): number[] {
+  if (n <= 0) return [];
+  const k = Math.ceil(n / JUMLAH_PREMIS);
+  return Array.from({ length: k }, (_, i) => Math.floor(n / k) + (i < n % k ? 1 : 0));
+}
+
+/**
+ * Menjodohkan gaya lama dari jawaban AI: tiap nomor MJ ber-`grup` membawa `jodoh` (pasangan benarnya) dan salah satu
+ * membawa `pengecoh`. Per blok disusun SATU daftar jawaban (benar + 1 pengecoh) yang diacak aplikasi (tidak sejajar
+ * dengan urutan nomor), lalu setiap nomor mendapat daftar itu + huruf kuncinya. Soal lain dikembalikan apa adanya.
+ */
+export function susunMjLama(soal: Soal[], acak: () => number = Math.random): Soal[] {
+  const teks = (x: unknown) => String(x ?? "").trim();
+  const hasil = soal.map((s) => ({ ...s }));
+  const blok = new Map<number, number[]>();
+  hasil.forEach((s, i) => {
+    if (mjLama(s) && s.grup && typeof s.jodoh === "string") blok.set(s.grup, [...(blok.get(s.grup) ?? []), i]);
+  });
+  for (const idx of blok.values()) {
+    const benar = idx.map((i) => teks(hasil[i].jodoh));
+    const pengecoh = idx.flatMap((i) => (Array.isArray(hasil[i].pengecoh) ? hasil[i].pengecoh! : [])).map(teks).filter((x) => x && !benar.includes(x)).slice(0, 1);
+    const semua = [...benar, ...pengecoh];
+    const sejajar = (j: string[]) => benar.every((x, k) => j[k] === x);
+    let daftar = [...semua];
+    for (let n = 0; n < 10 && sejajar(daftar); n++) daftar = kocok([...semua], acak);
+    if (semua.length >= 3 && sejajar(daftar)) daftar = [...semua.slice(1), semua[0]];
+    idx.forEach((i, k) => {
+      const { jodoh: _j, pengecoh: _p, ...s } = hasil[i];
+      void _j;
+      void _p;
+      hasil[i] = { ...s, jawaban: daftar, kunci: HURUF_MJ[daftar.indexOf(benar[k])] ?? "" };
+    });
+  }
+  return hasil;
 }
 
 /** Kebalikan susunMenjodohkan, untuk "Ubah soal": soal MJ dikirim ke AI dalam format pasangan + pengecoh. */
@@ -264,9 +313,20 @@ export function samakanDenganKisi(soal: Soal, k: BarisKisi): Soal {
   const { grup, wacana, ...isi } = soal; // grup & wacana hanya dari kisi-kisi, bukan dari jawaban AI
   void grup;
   void wacana;
-  const s: Soal = { ...isi, bentuk: k.bentuk, tp: k.tp || soal.tp, level: LEVEL.includes(k.level) ? k.level : soal.level, ...(k.grup && k.wacana ? { grup: k.grup, wacana: k.wacana } : {}) };
-  // Soal BS baru wajib model Kategori; kalau AI memberi B/S satu pernyataan, pernyataan kosong → ditandai periksaSoal.
-  return s.bentuk === "BS" && !Array.isArray(s.pernyataan) ? { ...s, pernyataan: [] } : s;
+  const s: Soal = {
+    ...isi,
+    bentuk: k.bentuk,
+    tp: k.tp || soal.tp,
+    level: LEVEL.includes(k.level) ? k.level : soal.level,
+    // grup = wacana bersama (TKA) atau blok menjodohkan gaya lama (tanpa wacana)
+    ...(k.grup && k.wacana ? { grup: k.grup, wacana: k.wacana } : k.grup && k.bentuk === "MJ" ? { grup: k.grup } : {}),
+  };
+  if (s.bentuk !== "BS") return s;
+  // Kategori (TKA, kisi menulis jumlahPernyataan): kalau AI memberi B/S satu pernyataan, pernyataan kosong → ditandai.
+  if (k.jumlahPernyataan) return Array.isArray(s.pernyataan) ? s : { ...s, pernyataan: [] };
+  // Benar/Salah gaya lama: kunci dirapikan ("benar"/"B" → "Benar").
+  const kunci = String([s.kunci].flat()[0] ?? "").trim();
+  return { ...s, kunci: /^b(enar)?$/i.test(kunci) ? "Benar" : /^s(alah)?$/i.test(kunci) ? "Salah" : kunci };
 }
 
 const HURUF_ARAB ="؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿";
@@ -328,6 +388,7 @@ export function rapikanSoal(s: Partial<Soal>, bentuk: Bentuk): Soal {
   const premis = (Array.isArray(s.premis) ? s.premis : []).slice(0, JUMLAH_PREMIS).map(teks);
   const jawaban = (Array.isArray(s.jawaban) ? s.jawaban : []).slice(0, JUMLAH_PREMIS + 2).map(teks);
   const kunciMj = [s.kunci].flat().slice(0, premis.length).map((h) => teks(h).toUpperCase());
+  const lamaMj = bentuk === "MJ" && !Array.isArray(s.premis); // menjodohkan gaya lama: satu nomor, kunci satu huruf
   return {
     bentuk,
     dalil_id: s.dalil_id ? teks(s.dalil_id) : null,
@@ -339,11 +400,11 @@ export function rapikanSoal(s: Partial<Soal>, bentuk: Bentuk): Soal {
           label: (Array.isArray(s.label) ? s.label : []).slice(0, 2).map(teks),
         }
       : {}),
-    kunci: bentuk === "PGK" ? kunci : bentuk === "MJ" ? kunciMj : kategori ? [s.kunci].flat().slice(0, JUMLAH_PERNYATAAN).map(teks) : (kunci[0] ?? ""),
+    kunci: bentuk === "PGK" ? kunci : lamaMj ? (kunci[0] ?? "").toUpperCase() : bentuk === "MJ" ? kunciMj : kategori ? [s.kunci].flat().slice(0, JUMLAH_PERNYATAAN).map(teks) : (kunci[0] ?? ""),
     ...(bentuk === "URAIAN" ? { rubrik } : {}),
     ...(bentuk === "ISIAN" ? { kunciAlt: alt } : {}),
-    ...(bentuk === "MJ" ? { premis, jawaban } : {}),
-    ...(Number.isInteger(s.grup) && s.grup! > 0 && teks(s.wacana) ? { grup: s.grup, wacana: teks(s.wacana).slice(0, 3000) } : {}),
+    ...(lamaMj ? { jawaban } : bentuk === "MJ" ? { premis, jawaban } : {}),
+    ...(Number.isInteger(s.grup) && s.grup! > 0 && (teks(s.wacana) || lamaMj) ? { grup: s.grup, ...(teks(s.wacana) && { wacana: teks(s.wacana).slice(0, 3000) }) } : {}),
     pembahasan: teks(s.pembahasan),
     level: teks(s.level),
     tp: teks(s.tp),
@@ -406,6 +467,27 @@ function periksaMenjodohkan(s: Soal): string[] {
   if (kunci.length !== premis.length || kunci.some((h) => !h || !sah.includes(h))) w.push("Kunci menjodohkan harus satu huruf jawaban untuk setiap premis.");
   else if (new Set(kunci).size !== kunci.length) w.push("Dua premis memakai jawaban yang sama.");
   if (new Set(premis.map(norm)).size !== premis.length || new Set(jawaban.map(norm)).size !== jawaban.length) w.push("Ada premis atau jawaban yang sama persis.");
+  return w;
+}
+
+/**
+ * Menjodohkan gaya lama (satu nomor): pernyataan terisi, kunci satu huruf dari daftar jawaban, daftar tanpa kembar.
+ * Bila seluruh set ikut diperiksa: dalam satu blok tiap nomor memakai jawaban berbeda dan daftar punya pengecoh.
+ */
+function periksaMjLama(soal: Soal[], i: number, s: Soal): string[] {
+  const w: string[] = [];
+  const jawaban = s.jawaban ?? [];
+  const huruf = (x: Soal) => String([x.kunci].flat()[0] ?? "").trim().toUpperCase();
+  const k = huruf(s);
+  if (!String(s.pertanyaan ?? "").trim()) w.push("Pernyataan menjodohkan kosong.");
+  if (jawaban.length < 3 || jawaban.some((j) => !j)) w.push("Daftar jawaban menjodohkan harus terisi (minimal 3).");
+  if (!k || HURUF_MJ.indexOf(k) < 0 || HURUF_MJ.indexOf(k) >= jawaban.length) w.push("Kunci menjodohkan harus satu huruf dari daftar jawaban.");
+  if (new Set(jawaban.map(norm)).size !== jawaban.length) w.push("Ada jawaban yang sama persis di daftar menjodohkan.");
+  const blok = s.grup ? soal.filter((x, j) => j !== i && mjLama(x) && x.grup === s.grup) : [];
+  if (blok.length) {
+    if (k && blok.some((x) => huruf(x) === k)) w.push("Dua nomor menjodohkan memakai jawaban yang sama.");
+    if (jawaban.length <= blok.length + 1) w.push("Daftar jawaban harus lebih banyak dari jumlah nomor menjodohkan (satu pengecoh).");
+  }
   return w;
 }
 
@@ -591,7 +673,8 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
       const di = bocorDi(soal, i);
       if (di.length) peringatan.push(`Jawaban isian sudah tertulis di soal nomor ${di.slice(0, 3).join(", ")}${di.length > 3 ? `, dan ${di.length - 3} soal lain` : ""}.`);
     }
-    if (s.bentuk === "MJ") {
+    if (mjLama(s)) peringatan.push(...periksaMjLama(soal, i, s));
+    else if (s.bentuk === "MJ") {
       peringatan.push(...periksaMenjodohkan(s));
       const mirip = mjMirip(soal, i);
       if (mirip) peringatan.push(`Menjodohkan ini mirip soal nomor ${mirip} (3 atau lebih isi lajur sama). Pakai pasangan dari sisi materi lain.`);
@@ -601,11 +684,17 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
       if (!cariLabel(s.label)) peringatan.push(`Label kategori tidak dikenal: ${(s.label ?? []).join(" / ") || "(kosong)"}.`);
       const kunci = [s.kunci].flat();
       if (kunci.length !== s.pernyataan!.length || kunci.some((k) => !s.label?.includes(k))) peringatan.push("Kunci kategori harus satu label untuk setiap pernyataan.");
+    } else if (s.bentuk === "BS") {
+      // Benar/Salah gaya lama: satu pernyataan per nomor.
+      if (!["Benar", "Salah"].includes(String([s.kunci].flat()[0] ?? ""))) peringatan.push('Kunci benar/salah harus "Benar" atau "Salah".');
+      if (String(s.pertanyaan ?? "").trim().endsWith("?")) peringatan.push("Soal benar/salah harus berupa pernyataan, bukan pertanyaan.");
     }
     // langkah & jawaban_benar hanya untuk pemeriksaan di atas: tidak disimpan (kalau disimpan, Edit guru membuatnya basi).
-    const { langkah: _l, jawaban_benar: _j, ...simpan } = s;
+    // jodoh = format jawaban AI menjodohkan gaya lama yang tidak tersusun (mis. tanpa blok): juga tidak disimpan.
+    const { langkah: _l, jawaban_benar: _j, jodoh: _o, ...simpan } = s;
     void _l;
     void _j;
+    void _o;
     return { ...simpan, peringatan };
   });
 }

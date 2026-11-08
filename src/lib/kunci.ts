@@ -6,7 +6,9 @@ import type { Bentuk, Soal } from "./soal.ts";
 export function kunciSatu(s: Soal): string {
   const k = [s.kunci].flat().map((x) => String(x ?? "").trim());
   if (s.bentuk === "URAIAN") return "(uraian, lihat rubrik)";
-  if (s.bentuk === "MJ") return k.map((h, i) => `${i + 1}-${h}`).join(" ");
+  if (s.bentuk === "MJ" && Array.isArray(s.premis)) return k.map((h, i) => `${i + 1}-${h}`).join(" "); // menjodohkan model 0.10.0
+  // Benar/Salah gaya lama: sama dengan lembar soal Word ("A. Benar   B. Salah").
+  if (s.bentuk === "BS" && !Array.isArray(s.pernyataan)) return k[0] === "Benar" ? "A (Benar)" : k[0] === "Salah" ? "B (Salah)" : k[0];
   return k.join(", ");
 }
 

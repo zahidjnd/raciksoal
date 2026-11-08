@@ -12,7 +12,7 @@ test("kunciRingkas: PG sebaris, bentuk lain per nomor, nomor global ikut urutan 
       s({ bentuk: "PG", kunci: "C" }),
       s({ bentuk: "PGK", kunci: ["A", "D"] }),
       s({ bentuk: "BS", kunci: ["Benar", "Salah", "Benar", "Salah"], pernyataan: ["a", "b", "c", "d"], label: ["Benar", "Salah"] }),
-      s({ bentuk: "MJ", kunci: ["B", "A", "E", "C", "D"] }),
+      s({ bentuk: "MJ", kunci: ["B", "A", "E", "C", "D"], premis: ["a", "b", "c", "d", "e"] }), // model 0.10.0
       s({ bentuk: "ISIAN", kunci: "Madinah" }),
       s({ bentuk: "URAIAN", kunci: "panjang" }),
     ],
@@ -26,7 +26,7 @@ test("kunciRingkas: PG sebaris, bentuk lain per nomor, nomor global ikut urutan 
       "Pilihan Ganda: 1. A  2. C",
       "Pilihan Ganda Kompleks:",
       "  3. A, D",
-      "Kategori (Benar/Salah):",
+      "Benar/Salah:",
       "  4. Benar, Salah, Benar, Salah",
       "Menjodohkan:",
       "  5. 1-B 2-A 3-E 4-C 5-D",
@@ -36,4 +36,15 @@ test("kunciRingkas: PG sebaris, bentuk lain per nomor, nomor global ikut urutan 
       "  7. (uraian, lihat rubrik)",
     ].join("\n"),
   );
+});
+
+test("kunciRingkas gaya Al-Fatah (0.22.0): Benar/Salah satu pernyataan dan menjodohkan satu nomor", () => {
+  const daftar = ["tajwid", "fikih", "tafsir", "hadis"];
+  const teks = kunciRingkas([
+    s({ bentuk: "BS", kunci: "Benar" }),
+    s({ bentuk: "BS", kunci: "Salah" }),
+    s({ bentuk: "MJ", kunci: "C", jawaban: daftar, grup: 1 }),
+    s({ bentuk: "MJ", kunci: "A", jawaban: daftar, grup: 1 }),
+  ]);
+  assert.equal(teks, ["Benar/Salah:", "  1. A (Benar)", "  2. B (Salah)", "Menjodohkan:", "  3. C", "  4. A"].join("\n"));
 });

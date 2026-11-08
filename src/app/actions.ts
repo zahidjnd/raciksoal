@@ -4,9 +4,9 @@ import { and, eq, gte, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { hasilSoal, pemakaianAi } from "@/db/schema";
 import { daftarModel, tanyaAI } from "@/lib/ai";
-import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, laranganIsian, ringkasSudah, buatPermintaanKisi, buatSistem, buatAnalisaMateri, bersihkanIdentitas, pasangKunciPgk, rencanaGrup, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
+import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, laranganIsian, ringkasSudah, buatPermintaanKisi, buatSistem, buatAnalisaMateri, bersihkanIdentitas, pasangKunciPgk, rencanaGrup, rencanaLevelSet, sesuaikanLevel, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { BATAS_MATERI, susunDraf, terapkanAnalisa } from "@/lib/materi";
-import { bersihkanTanggapan, gabungBab, identitasBab, kataTerpakai, KELAS, LEVEL, pemeriksaArab, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, terapkanBobot, type Bab, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
+import { bersihkanTanggapan, gabungBab, identitasBab, kataTerpakai, KELAS, LEVEL, mjLama, pemeriksaArab, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { babDariSet, babMilik, daftarBabMilik } from "@/lib/bab";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
@@ -183,7 +183,7 @@ export async function mulaiBuatSoal(input: Pengaturan) {
  * lalu buat soal bertahap (maks 10 per panggilan supaya jawaban AI tidak terpotong) mengikuti potongan kisi-kisinya.
  */
 async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
-  const sistem = buatSistem(bab);
+  const sistem = buatSistem(bab, p.tujuan === TKA);
   const tahap = bagiTahap(p.jumlah);
   const permintaan: string[] = [];
   const mentah: string[] = [];
@@ -224,8 +224,10 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
       // Wacana soal grup hanya untuk Latihan TKA; jenis lain: semua soal tunggal.
       // Nomor grup dari rencana aplikasi (rencanaGrup), bukan dari AI; AI hanya menulis wacananya.
       const grup = p.tujuan === TKA ? rencanaGrup(p.jumlah) : [];
+      // Level tiap baris dikunci ke kategori rencana aplikasi (komposisi LOTS/MOTS/HOTS harus persis, mis. surat ASAS).
+      const rencana = rencanaLevelSet(p);
       const kisi = pasangKunciPgk(
-        pasangWacana(periksaKisi(isi?.kisi, p.jumlah, bab, cekAyat).map((k, i) => ({ ...k, grup: grup[i] ?? null })), p.tujuan === TKA ? isi?.wacana : null, bab, cekAyat),
+        pasangWacana(periksaKisi(isi?.kisi, p.jumlah, bab, cekAyat).map((k, i) => ({ ...k, grup: grup[i] ?? null, level: sesuaikanLevel(k.level, rencana[i]) })), p.tujuan === TKA ? isi?.wacana : null, bab, cekAyat),
         p.tujuan === TKA,
       );
       return { kisi, tanggapan: p.catatan ? bersihkanTanggapan(isi?.tanggapan, bab, cekAyat) : "" };
@@ -242,7 +244,8 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
       await simpan({ pesan: `Tahap ${i + 1} dari ${tahap.length}` });
       const pengguna = buatPengguna(p, jumlah, semua.map(ringkasSudah), laranganIsian(kisi), baris);
       const soal = await tanya(`Tahap ${i + 1}`, pengguna, (d) => ambilSoal(d, baris.length));
-      semua.push(...soal.map((s, j) => susunMenjodohkan(samakanDenganKisi(s, baris[j])))); // Menjodohkan: lajur kanan diacak aplikasi
+      // Menjodohkan gaya lama: daftar jawaban bersama per blok disusun & diacak aplikasi (susunMjLama).
+      semua.push(...susunMjLama(soal.map((s, j) => samakanDenganKisi(s, baris[j]))).map((s) => susunMenjodohkan(s)));
       // Draf untuk tampilan bertahap (status tetap "proses"): sudah lewat penjaga ayat, tetapi kunci belum
       // diratakan dan skor belum diisi; keduanya baru di akhir untuk seluruh set.
       await simpan({ soal: periksaSoal(semua, bab, cekAyat) });
@@ -252,7 +255,8 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
     // ULANG oleh aplikasi (aturan 5: AI menulis, aplikasi yang memeriksa). Dipakai hanya kalau bersih; kalau tidak,
     // soal lama (tetap merah) dibiarkan untuk guru. Tidak memakai jatah Ganti/Ubah.
     for (const [i, s] of soal.entries()) {
-      if (!s.peringatan?.length) continue;
+      // Menjodohkan gaya lama memakai daftar jawaban bersama: tidak bisa diperbaiki AI satu nomor saja (guru: Edit).
+      if (!s.peringatan?.length || mjLama(s)) continue;
       const masalah = s.peringatan.join("; ");
       info.perbaikan ??= [];
       await simpan({ pesan: `Memperbaiki soal ${i + 1}` });
@@ -361,6 +365,8 @@ async function simpanSoalDi(set: IsiSet, no: number, isian: Soal, tx: Tx) {
         if (kisi?.[i]) kisi[i] = { ...kisi[i], wacana: soal.wacana };
       });
     }
+    // Menjodohkan gaya lama: daftar jawaban dipakai bersama satu blok, editannya ikut ke nomor lain di blok itu.
+    if (mjLama(soal) && soal.grup) set.soal.forEach((s, i) => mjLama(s) && s.grup === soal.grup && (set.soal[i] = { ...s, jawaban: soal.jawaban }));
     await tx.update(hasilSoal).set({ soal: set.soal, kisi }).where(eq(hasilSoal.id, set.h.id));
     return soal;
   }
@@ -372,9 +378,8 @@ function kurangLengkap(s: Soal): string {
   if (!s.pertanyaan) return "Tulis pertanyaannya dulu.";
   if ((s.bentuk === "PG" || s.bentuk === "PGK") && kosong(s.pilihan)) return "Isi kelima pilihan jawaban.";
   if (s.bentuk === "PG" && !"ABCDE".includes(String(s.kunci) || "?")) return "Pilih kunci jawabannya.";
-  if (s.bentuk === "BS" && kosong(s.pernyataan)) return "Isi keempat pernyataan.";
-  if (s.bentuk === "MJ" && (kosong(s.premis) || (s.jawaban ?? []).filter(Boolean).length < (s.premis?.length ?? 0) + 1))
-    return "Isi kelima premis dan keenam jawaban (satu jawaban sebagai pengecoh).";
+  if (s.bentuk === "BS" && Array.isArray(s.pernyataan) && kosong(s.pernyataan)) return "Isi semua pernyataan.";
+  if (s.bentuk === "BS" && !Array.isArray(s.pernyataan) && !["Benar", "Salah"].includes(String(s.kunci))) return "Pilih kuncinya: Benar atau Salah.";
   if ((s.bentuk === "ISIAN" || s.bentuk === "URAIAN") && !String(s.kunci)) return "Isi kunci jawabannya.";
   return "";
 }
@@ -391,6 +396,8 @@ export async function tambahSoalManual(id: number, isian: Soal) {
     const r = await denganSetTerkunci(id, 0, async (set, tx) => {
       const p = set.h.pengaturan as Pengaturan;
       if (p.tujuan === TKA && ["MJ", "ISIAN", "URAIAN"].includes(bentuk)) return "Latihan TKA hanya memakai PG, PG kompleks, dan Kategori.";
+      // Menjodohkan gaya lama memakai daftar jawaban bersama satu blok: dibuat lewat "Buat soal", diperbaiki lewat Edit.
+      if (bentuk === "MJ") return "Soal menjodohkan tidak bisa ditulis satu per satu. Buat lewat Buat soal, atau perbaiki nomor menjodohkan yang ada lewat Edit.";
       if (set.soal.length >= MAKS_SOAL) return `Satu set maksimal ${MAKS_SOAL} soal.`;
       const rapi = rapikanSoal({ ...isian, grup: undefined, wacana: undefined }, bentuk);
       const kurang = kurangLengkap(rapi);
@@ -479,9 +486,11 @@ async function soalBaruDariAI(id: number, no: number, mode: "ganti" | "ubah" | "
     if (mode === "tambah" && set.soal.length >= MAKS_SOAL) return gagal(`Satu set maksimal ${MAKS_SOAL} soal.`);
 
     const lama = set.soal[no];
+    // Menjodohkan (gaya lama: daftar jawaban dipakai bersama satu blok) tidak diganti/diubah/ditambah AI per nomor.
+    if (lama.bentuk === "MJ") return gagal("Soal menjodohkan tidak bisa diganti, diubah, atau ditambah AI per nomor karena daftar jawabannya dipakai bersama. Perbaiki lewat Edit.");
     const kisi = h.kisi as BarisKisi[] | null; // set lama: tanpa kisi-kisi
     const baris = kisi?.[no];
-    const sistem = buatSistem(bab);
+    const sistem = buatSistem(bab, (h.pengaturan as Pengaturan).tujuan === TKA);
     const pengguna = buatPenggantiPengguna(h.pengaturan as Pengaturan, lama, set.soal, baris, instruksi);
     const p = h.pengaturan as Pengaturan;
     // Model utama sama dengan set; cadangan dipakai kalau gagal (kecuali set hasil "Bandingkan semua model").
@@ -647,12 +656,13 @@ export async function cekHasil(id: number, denganBab = true) {
   const catatan = (pengaturan as Pengaturan).catatan || null;
   const tanggapan = (h.info as { tanggapan?: string } | null)?.tanggapan || null;
   const identitas = (pengaturan as Pengaturan).identitas ?? {}; // kop Word, bisa diubah di halaman hasil
+  const tka = (pengaturan as Pengaturan).tujuan === TKA; // gaya bentuk BS (Kategori vs Benar/Salah gaya lama)
   // Data bab (untuk menampilkan ayat & form edit): saat selesai, dan sekali saja selama proses (untuk draf soal).
   const bab = h.status === "selesai" || (h.status === "proses" && denganBab) ? (babDariSet(h) ?? null) : null;
   if (saya.peran !== "admin") {
     // Guru tidak menerima info teknis (model, waktu, token, catatan cadangan) maupun rincian error penyedia AI.
     // (halaman sudah menambahkan awalan "Gagal membuat soal:")
-    return { ...isi, soal, kisi, bab, catatan, tanggapan, identitas, jatahUbah, model: null, info: null, pesan: h.status === "gagal" ? SARAN_GURU : h.pesan };
+    return { ...isi, soal, kisi, bab, catatan, tanggapan, identitas, tka, jatahUbah, model: null, info: null, pesan: h.status === "gagal" ? SARAN_GURU : h.pesan };
   }
-  return { ...isi, soal, kisi, bab, catatan, tanggapan, identitas, jatahUbah, info: h.info as { detik: number; tokenMasuk: number; tokenKeluar: number; catatan?: string[]; perbaikan?: string[] } | null };
+  return { ...isi, soal, kisi, bab, catatan, tanggapan, identitas, tka, jatahUbah, info: h.info as { detik: number; tokenMasuk: number; tokenKeluar: number; catatan?: string[]; perbaikan?: string[] } | null };
 }

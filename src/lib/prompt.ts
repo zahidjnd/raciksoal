@@ -1,4 +1,6 @@
-import { identitasBab, keFormatAI, MAKS_GABUNG, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal.ts";
+import { blokMj, identitasBab, keFormatAI, kocok, MAKS_GABUNG, mjLama, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal.ts";
+
+export const PESAN_MJ_MIN = "Menjodohkan minimal 3 nomor (atau 0), supaya daftar jawabannya masuk akal.";
 
 export const TUJUAN = ["Ulangan Harian", "PTS", "PAS", "Latihan", "Latihan TKA"] as const;
 /** Nama yang tampil (pilihan pemilik 2026-10-20: AFTS & ASAS sesuai istilah madrasah). Kode "PTS"/"PAS" tetap disimpan agar set lama terbaca. */
@@ -64,23 +66,36 @@ export const ATURAN_KESULITAN: Record<(typeof KESULITAN)[number], string> = {
 export const NAMA_BENTUK: Record<Bentuk, string> = {
   PG: "Pilihan Ganda",
   PGK: "Pilihan Ganda Kompleks",
-  BS: "Kategori (Benar/Salah)", // kode "BS" dipertahankan agar set lama tetap terbaca
+  // Kode "BS" dipertahankan agar set lama terbaca. Jenis madrasah: Benar/Salah gaya lama (0.22.0); Latihan TKA: Kategori.
+  BS: "Benar/Salah",
   MJ: "Menjodohkan",
   ISIAN: "Isian Singkat",
   URAIAN: "Uraian",
 };
-export const MAKS_SOAL = 40;
+/** Nama bentuk untuk tampilan: di Latihan TKA "BS" adalah PG kompleks Kategori. */
+export const namaBentuk = (b: Bentuk, tka: boolean) => (b === "BS" && tka ? "Kategori (PG Kompleks)" : NAMA_BENTUK[b]);
+// 0.22.0: 50 (dulu 40) supaya ASAS non-eksak Al-Fatah (45 soal) bisa dibuat.
+export const MAKS_SOAL = 50;
 // Satu jawaban AI maks ±8.000 token. 10 soal Latihan+Sulit ≈ 14.000 huruf, aman di bawah batas.
 export const MAKS_PER_TAHAP = 10;
 /** Jumlah semua soal dari rincian per bentuk. SATU-SATUNYA penjumlah: jangan menyebut bentuk satu per satu (bentuk baru terlewat). */
 export const jumlahSoal = (j: Record<Bentuk, number>) => (Object.keys(NAMA_BENTUK) as Bentuk[]).reduce((n, b) => n + (j[b] ?? 0), 0);
 
-// Satu soal Menjodohkan memuat 12 potong teks (5 pasangan + pengecoh), jadi dihitung seberat 2 soal biasa per tahap.
-const BERAT_TAHAP: Partial<Record<Bentuk, number>> = { MJ: 2 };
-
 // Skor per soal seperti format AFTS madrasah (10 PG + 5 PGK + 5 B/S + 5 uraian = 100).
-// Menjodohkan: bobot = skor SATU soal (5 pasangan); tiap pasangan benar mendapat 1/5-nya (penskoran per pasangan).
-export const BOBOT_BAWAAN: Record<Bentuk, number> = { PG: 2, PGK: 5, BS: 3, MJ: 5, ISIAN: 3, URAIAN: 8 };
+// Menjodohkan gaya lama (0.22.0): satu nomor = satu pasangan, jadi bobotnya setara satu nomor Benar/Salah.
+export const BOBOT_BAWAAN: Record<Bentuk, number> = { PG: 2, PGK: 5, BS: 3, MJ: 3, ISIAN: 3, URAIAN: 8 };
+
+/**
+ * ASAS MA Al-Fatah (surat Kepala MA 433/P/MA/PP.006/SPb/11/2026, 7 Nov 2026): eksak = Matematika, Fisika, Kimia,
+ * Biologi (pilihan pemilik). "Menjodohkan/BS" 5 nomor, boleh campur (bawaan: Benar/Salah 5). Persen level dipilih
+ * supaya hitungLevel menghasilkan PERSIS jumlah di surat (dites): eksak 8/15/12 HOTS/MOTS/LOTS, non-eksak 10/20/15.
+ * Skor total 100 diisi skorOtomatis (src/lib/skor.ts).
+ */
+export const MAPEL_EKSAK = /^(matematika|fisika|kimia|biologi)\b/i;
+export const ASAS_ALFATAH = {
+  eksak: { nama: "Eksak", jumlah: { PG: 20, PGK: 5, BS: 5, MJ: 0, ISIAN: 0, URAIAN: 5 }, level: { LOTS: 34, MOTS: 43, HOTS: 23 } },
+  nonEksak: { nama: "Non-Eksak", jumlah: { PG: 30, PGK: 5, BS: 5, MJ: 0, ISIAN: 0, URAIAN: 5 }, level: { LOTS: 33, MOTS: 45, HOTS: 22 } },
+} as const;
 
 export type Pengaturan = {
   babId: string;
@@ -143,6 +158,7 @@ export function bersihkanPengaturan(p: Pengaturan): Pengaturan | string {
   if (level.LOTS + level.MOTS + level.HOTS !== 100) return "Komposisi LOTS + MOTS + HOTS harus 100%.";
   if (!(TUJUAN as readonly string[]).includes(p?.tujuan)) return "Tujuan soal tidak dikenal.";
   if (p.tujuan === TKA && (jumlah.URAIAN || jumlah.ISIAN || jumlah.MJ)) return "Latihan TKA hanya memakai pilihan ganda, pilihan ganda kompleks, dan kategori. Kosongkan jumlah menjodohkan, isian, dan uraian.";
+  if (jumlah.MJ > 0 && jumlah.MJ < 3) return PESAN_MJ_MIN;
   if (!(KESULITAN as readonly string[]).includes(p?.kesulitan)) return "Tingkat kesulitan tidak dikenal.";
   const bobotDari = (b: Bentuk) => angka(p?.bobot?.[b] ?? BOBOT_BAWAAN[b]);
   const bobot = { PG: bobotDari("PG"), PGK: bobotDari("PGK"), BS: bobotDari("BS"), MJ: bobotDari("MJ"), ISIAN: bobotDari("ISIAN"), URAIAN: bobotDari("URAIAN") };
@@ -162,17 +178,26 @@ export function bersihkanPengaturan(p: Pengaturan): Pengaturan | string {
 export function bagiTahap(jumlah: Record<Bentuk, number>, maks = MAKS_PER_TAHAP) {
   const tahap: Record<Bentuk, number>[] = [];
   let isi = 0;
+  const baru = () => {
+    tahap.push({ PG: 0, PGK: 0, BS: 0, MJ: 0, ISIAN: 0, URAIAN: 0 });
+    isi = 0;
+  };
   for (const b of Object.keys(NAMA_BENTUK) as Bentuk[]) {
-    const berat = BERAT_TAHAP[b] ?? 1;
+    if (b === "MJ") {
+      // Menjodohkan gaya lama: satu blok (daftar jawaban bersama) tidak boleh terbelah ke dua tahap.
+      for (const u of blokMj(jumlah.MJ ?? 0)) {
+        if (!tahap.length || maks - isi < u) baru();
+        tahap[tahap.length - 1].MJ += u;
+        isi += u;
+      }
+      continue;
+    }
     let sisa = jumlah[b] ?? 0; // set lama tidak punya kunci bentuk baru
     while (sisa > 0) {
-      if (!tahap.length || maks - isi < berat) {
-        tahap.push({ PG: 0, PGK: 0, BS: 0, MJ: 0, ISIAN: 0, URAIAN: 0 });
-        isi = 0;
-      }
-      const ambil = Math.min(sisa, Math.floor((maks - isi) / berat));
+      if (!tahap.length || isi >= maks) baru();
+      const ambil = Math.min(sisa, maks - isi);
       tahap[tahap.length - 1][b] += ambil;
-      isi += ambil * berat;
+      isi += ambil;
       sisa -= ambil;
     }
   }
@@ -180,7 +205,7 @@ export function bagiTahap(jumlah: Record<Bentuk, number>, maks = MAKS_PER_TAHAP)
 }
 
 /** Instruksi utama: aturan + data bab. Sama untuk semua tahap (DeepSeek memberi harga murah untuk bagian yang berulang). */
-export function buatSistem(bab: Bab) {
+export function buatSistem(bab: Bab, tka = false) {
   const dalil = bab.dalil
     .map((d) => {
       const mufradat = d.mufradat.map((m) => `${m.arab} = ${m.arti}`).join("; ");
@@ -259,12 +284,11 @@ PENGECOH DAN PEMBAHASAN:
 - Pembahasan menjelaskan mengapa kunci benar DAN mengapa setiap pengecoh salah, dengan menyebut isinya (bukan hurufnya).
 - Jika soal memuat perhitungan, pembahasan WAJIB memuat langkah hitung lengkap sampai hasil akhir.
 
-${BENTUK_SOAL}
+${bentukSoal(tka)}
 
 FORMAT JAWABAN (kecuali permintaan menyebut format lain): hanya JSON (tanpa teks lain), dengan bentuk:
 {"soal":[{"bentuk":"PG","dalil_id":null,"pertanyaan":"...","langkah":"...","jawaban_benar":"...","pilihan":["...","...","...","...","..."],"kunci":"B","pembahasan":"...","level":"C2","tp":"TP 3.2","skor":1}]}
-Untuk BS: {"bentuk":"BS","dalil_id":null,"pertanyaan":"...","pernyataan":["...","...","...","..."],"label":["Fakta","Opini"],"kunci":["Fakta","Opini","Opini","Fakta"],"pembahasan":"...","level":"C4","tp":"TP 3.2","skor":1}
-Untuk MJ: {"bentuk":"MJ","dalil_id":null,"pertanyaan":"Jodohkan setiap kata di lajur kiri dengan artinya di lajur kanan!","pasangan":[{"premis":"...","jawaban":"..."}],"pengecoh":["..."],"pembahasan":"...","level":"C1","tp":"TP 3.2","skor":1} ("pasangan" berisi TEPAT 5 objek)
+${formatBsMj(tka)}
 Untuk ISIAN: {"bentuk":"ISIAN","dalil_id":null,"pertanyaan":"Kata yang menunjukkan tempat adalah ....","kunci":"mahall","kunciAlt":[],"pembahasan":"...","level":"C1","tp":"TP 3.2","skor":1}
 Untuk URAIAN tambahkan "rubrik", setiap kriteria menyebut skor penuh DAN skor sebagian dengan skala yang SAMA dengan "skor" kriteria itu; contoh bila jumlah skor rubrik 5: [{"kriteria":"Menyebut tiga syarat sah salat Jumat (3 = tiga benar; 2 = dua benar; 1 = satu benar; 0 = tidak ada yang benar)","skor":3},{"kriteria":"Menjelaskan alasan dengan tepat (2 = alasan tepat dan lengkap; 1 = alasan kurang lengkap; 0 = salah atau kosong)","skor":2}]. "tp" diisi kode TP yang paling sesuai.
 
@@ -302,11 +326,29 @@ Balas JSON {"judul":"...","tp":["..."],"pokok":["..."],"dalil":[{"no":1,"sumber"
   return { sistem, pengguna };
 }
 
+/**
+ * Bentuk soal di instruksi sistem. `tka`: BS = PG kompleks Kategori (contoh resmi TKA). Jenis madrasah (0.22.0, gaya
+ * Al-Fatah): BS = Benar/Salah satu pernyataan per nomor, MJ = menjodohkan gaya lama (satu nomor = satu pasangan).
+ */
+const bentukSoal = (tka: boolean) =>
+  BENTUK_SOAL.replace("{{BS}}", tka ? BS_KATEGORI : BS_LAMA).replace("{{MJ}}\n", tka ? "" : `${MJ_LAMA}\n`);
+const formatBsMj = (tka: boolean) =>
+  tka
+    ? `Untuk BS: {"bentuk":"BS","dalil_id":null,"pertanyaan":"...","pernyataan":["...","...","..."],"label":["Benar","Salah"],"kunci":["Benar","Salah","Salah"],"pembahasan":"...","level":"C4","tp":"TP 3.2","skor":1}`
+    : `Untuk BS: {"bentuk":"BS","dalil_id":null,"pertanyaan":"Salat Jumat wajib bagi laki-laki muslim yang mukim.","kunci":"Benar","pembahasan":"...","level":"C2","tp":"TP 3.2","skor":1}
+Untuk MJ (satu objek per nomor): {"bentuk":"MJ","dalil_id":null,"pertanyaan":"Ilmu tentang cara membaca Al-Qur'an dengan benar","jodoh":"Ilmu tajwid","pengecoh":["Ilmu falak"],"pembahasan":"...","level":"C1","tp":"TP 3.2","skor":1}`;
+
+const BS_KATEGORI = `- BS (pilihan ganda kompleks model Kategori): "pertanyaan" berisi stimulus/pokok soal + perintah, misalnya "Tentukan apakah setiap pernyataan berikut Benar atau Salah!". Lalu "pernyataan" sebanyak "Jumlah pernyataan" di baris kisi-kisinya (bila tidak tertulis: 4) yang masing-masing dinilai dengan sepasang "label", salah satu dari: ["Benar","Salah"], ["Fakta","Opini"], ["Sesuai","Tidak Sesuai"], ["Tepat","Tidak Tepat"], ["Didukung","Tidak Didukung"] (didukung/tidak oleh stimulus). Pilih pasangan label yang paling cocok dengan isi soal dan ragamkan dalam satu set (jangan semua Benar/Salah bila ada lebih dari satu soal BS). Pembahasan menyebut ISI pernyataan, bukan urutannya ("pernyataan pertama", "pernyataan 2"), karena urutan pernyataan diacak aplikasi. "kunci": array label, satu untuk setiap pernyataan sesuai urutan; jangan semua sama. Jangan menulis ulang pernyataan di dalam "pertanyaan" (aplikasi menampilkannya sebagai tabel). Tanpa "pilihan".`;
+
+const BS_LAMA = `- BS (benar/salah): SATU nomor = SATU pernyataan. "pertanyaan" berisi satu kalimat pernyataan utuh yang bisa dinilai benar atau salah (bukan kalimat tanya, tanpa "Benar atau salah?"). "kunci": "Benar" atau "Salah", WAJIB sama dengan "Kunci" di baris kisi-kisinya bila tertulis. Pernyataan salah dibuat dengan mengubah SATU konsep kunci dari pernyataan benar (bukan sekadar menambah kata "tidak"). Tanpa "pilihan" dan tanpa "pernyataan". "pembahasan": mengapa pernyataan itu benar atau salah.`;
+
+const MJ_LAMA = `- MJ (menjodohkan): SATU nomor = SATU pasangan. Nomor-nomor MJ dengan "Blok MJ" yang sama di kisi-kisi dijodohkan dengan SATU daftar jawaban bersama yang disusun aplikasi. Untuk setiap nomor MJ: "pertanyaan" = pernyataan lajur kiri (maks 15 kata; istilah, tokoh, kosakata, atau deskripsi singkat, tanpa titik-titik), "jodoh" = pasangannya yang benar (maks 12 kata). Semua nomor dalam satu blok berhubungan sejenis (istilah–pengertian, tokoh–karya, kata–arti, dan sebagainya), hubungannya SATU-SATU, dan semua "jodoh" berbeda isi; JANGAN pengelompokan (beberapa nomor berjodoh sama). SETIAP nomor MJ WAJIB juga punya "pengecoh": array berisi TEPAT 1 jawaban sejenis yang TIDAK cocok dengan pernyataan mana pun di bloknya (aplikasi memilih satu sebagai jawaban tambahan di daftar). JANGAN menulis huruf, "pilihan", "kunci", "pasangan", ataupun "premis". "pembahasan": satu kalimat tentang hubungan pasangan itu (sebut isinya).`;
+
 const BENTUK_SOAL = `BENTUK SOAL:
 - PG: 5 pilihan, tepat 1 benar. Tulis berurutan: "pertanyaan", lalu "langkah" (langkah hitung atau alasan singkat untuk menemukan jawaban benar; wajib lengkap untuk soal hitungan), lalu "jawaban_benar" (isi jawaban benar hasil langkah itu), BARU "pilihan" (salah satunya salinan PERSIS "jawaban_benar") dan "kunci" ("A".."E", huruf pilihan yang sama dengan "jawaban_benar"). Periksa ulang hitungan sebelum menulis pilihan.
 - PGK (pilihan ganda kompleks, model jawaban ganda/MCMA): 5 pilihan, lebih dari satu benar tetapi tidak semua. Jumlah jawaban benar WAJIB sama dengan "Jumlah jawaban benar" di baris kisi-kisinya (bila tidak tertulis: 2 atau 3). Setiap pilihan satu pernyataan utuh; JANGAN pilihan gabungan seperti "(2) dan (3)" atau "1, 2, dan 4". "kunci": array huruf jawaban benar, sebanyak jumlah itu. Akhiri pertanyaan dengan "(Pilih semua jawaban yang tepat)" tanpa menyebut jumlah jawaban benar.
-- BS (pilihan ganda kompleks model Kategori): "pertanyaan" berisi stimulus/pokok soal + perintah, misalnya "Tentukan apakah setiap pernyataan berikut Benar atau Salah!". Lalu "pernyataan" sebanyak "Jumlah pernyataan" di baris kisi-kisinya (bila tidak tertulis: 4) yang masing-masing dinilai dengan sepasang "label", salah satu dari: ["Benar","Salah"], ["Fakta","Opini"], ["Sesuai","Tidak Sesuai"], ["Tepat","Tidak Tepat"], ["Didukung","Tidak Didukung"] (didukung/tidak oleh stimulus). Pilih pasangan label yang paling cocok dengan isi soal dan ragamkan dalam satu set (jangan semua Benar/Salah bila ada lebih dari satu soal BS). Pembahasan menyebut ISI pernyataan, bukan urutannya ("pernyataan pertama", "pernyataan 2"), karena urutan pernyataan diacak aplikasi. "kunci": array label, satu untuk setiap pernyataan sesuai urutan sesuai urutan pernyataan; jangan semua sama. Jangan menulis ulang keempat pernyataan di dalam "pertanyaan" (aplikasi menampilkannya sebagai tabel). Tanpa "pilihan".
-- MJ (menjodohkan): "pertanyaan" berisi perintah singkat saja, misalnya "Jodohkan setiap kata di lajur kiri dengan artinya di lajur kanan!"; JANGAN menulis pasangannya di dalam "pertanyaan". "pasangan": TEPAT 5 objek {"premis":"...","jawaban":"..."}; setiap premis punya TEPAT SATU jawaban yang benar, semua premis berbeda, semua jawaban berbeda, dan seluruh pasangan memiliki hubungan sejenis (kata–arti, tokoh–peristiwa, istilah–pengertian, rumus–nama, dan sebagainya). Hubungannya SATU-SATU: kelima jawaban berbeda isi. JANGAN menjodohkan untuk pengelompokan, yaitu beberapa hal masuk ke kelompok yang sama (pajak pusat/daerah, kebijakan moneter/fiskal, benda hidup/mati), karena jawabannya pasti berulang. Premis dan jawaban singkat (maks 12 kata). "pengecoh": array berisi TEPAT 1 jawaban tambahan yang sejenis tetapi TIDAK cocok dengan premis mana pun. Aplikasi yang mengacak lajur kanan dan menyusun kunci hurufnya: JANGAN menulis huruf kunci, "pilihan", ataupun "kunci". "pembahasan": satu kalimat singkat per pasangan yang menjelaskan hubungannya (sebut isinya, bukan nomor atau hurufnya). Berlaku juga untuk bahasa asing (kosakata–arti, kata–lawan kata).
+{{BS}}
+{{MJ}}
 - ISIAN (isian singkat): "pertanyaan" berisi kalimat atau pertanyaan dengan SATU bagian kosong yang ditulis "...." (empat titik). "kunci": jawaban singkat yang pas mengisi bagian kosong (satu kata, istilah, angka, atau frasa maksimal 5 kata). "kunciAlt": array 0–3 penulisan lain yang juga benar (sinonim atau ejaan lain), atau []. Hanya SATU jawaban yang mungkin benar, jadi kalimat harus cukup spesifik; jawaban TIDAK BOLEH muncul di kalimat soal. Tanpa "pilihan". Berlaku juga untuk bahasa asing (kosakata, dhamir, kata tanya, terjemah).
 - URAIAN: "pertanyaan" WAJIB menyebut batasan jawaban yang jelas: jumlah hal yang diminta ("Sebutkan tiga ...", "Jelaskan dua alasan ...") atau ruang lingkupnya ("... dari segi waktu dan nisabnya"); jangan perintah luas seperti "Jelaskan tentang ...!". "kunci" berisi jawaban ideal yang lengkap untuk SEMUA bagian yang diminta. "rubrik" mengikuti batasan itu (misalnya diminta tiga hal → tiga kriteria), setiap kriteria menyebut kapan mendapat skor penuh dan kapan sebagian; "skor" = jumlah skor rubrik.`;
 
@@ -327,7 +369,7 @@ const RENTANG: Record<Kategori, string> = { LOTS: "C1–C2", MOTS: "C3", HOTS: "
  * Kategori level untuk setiap nomor, ditentukan APLIKASI (AI tidak pandai menghitung komposisi).
  * Dibagi merata ke semua bentuk (round-robin berbobot), lalu di dalam tiap bentuk diurutkan mudah → sulit.
  */
-export function rencanaLevel(jumlah: Record<Bentuk, number>, level: Pengaturan["level"]): Kategori[] {
+export function rencanaLevel(jumlah: Record<Bentuk, number>, level: Pengaturan["level"], tanpaHots: Bentuk[] = []): Kategori[] {
   const urutan = urutanBentuk(jumlah);
   const total = urutan.reduce((n, b) => n + jumlah[b], 0);
   const target = hitungLevel(total, level);
@@ -340,12 +382,36 @@ export function rencanaLevel(jumlah: Record<Bentuk, number>, level: Pengaturan["
     dipakai[k]++;
     semua.push(k);
   }
+  // Bentuk `tanpaHots` (Benar/Salah & Menjodohkan gaya lama: satu kalimat pendek, tanpa stimulus) tidak diberi HOTS:
+  // HOTS-nya ditukar dengan LOTS/MOTS bentuk lain, jadi komposisi total tetap persis.
+  const bentukNo = urutan.flatMap((b) => Array<Bentuk>(jumlah[b]).fill(b));
+  for (let i = 0; i < total; i++) {
+    if (semua[i] !== "HOTS" || !tanpaHots.includes(bentukNo[i])) continue;
+    const j = semua.findIndex((k, x) => k !== "HOTS" && !tanpaHots.includes(bentukNo[x]));
+    if (j < 0) break;
+    [semua[i], semua[j]] = [semua[j], semua[i]];
+  }
   let awal = 0;
   return urutan.flatMap((b) => {
     const bagian = semua.slice(awal, awal + jumlah[b]);
     awal += jumlah[b];
     return bagian.sort((x, y) => kategori.indexOf(x) - kategori.indexOf(y));
   });
+}
+
+/**
+ * Rencana kategori level per nomor satu set: dipakai permintaan kisi-kisi DAN koreksi level kisi (sesuaikanLevel).
+ * Benar/Salah & Menjodohkan gaya lama = satu kalimat pendek: HOTS-nya dipindah ke bentuk lain (jumlah total tetap).
+ */
+export const rencanaLevelSet = (p: Pengaturan) => rencanaLevel(p.jumlah, p.level, p.tujuan === TKA ? [] : ["BS", "MJ"]);
+
+/**
+ * Level kisi dari AI disesuaikan dengan kategori rencananya. Uji 2026-11-08 (set 86, ASAS 45): AI menulis C2 untuk
+ * baris MOTS/HOTS, komposisi jadi 17/19/9 padahal surat 15/20/10. Level di luar kategori → C2 / C3 / C4.
+ */
+export function sesuaikanLevel(level: string, k: Kategori): string {
+  const boleh: Record<Kategori, string[]> = { LOTS: ["C1", "C2"], MOTS: ["C3"], HOTS: ["C4", "C5", "C6"] };
+  return boleh[k].includes(level) ? level : { LOTS: "C2", MOTS: "C3", HOTS: "C4" }[k];
 }
 
 /**
@@ -377,14 +443,30 @@ export function rencanaGrup(jumlah: Record<Bentuk, number>): (number | null)[] {
  * Jumlah jawaban benar tiap soal PGK, ditentukan APLIKASI dan dicatat di kisi-kisi (`kunciPgk`), karena AI tidak
  * meragamkannya sendiri (uji set 81: keempat PGK berkunci 2 walau diminta 2–4). TKA 2–4 (contoh resmi), jenis lain 2–3.
  */
-export function pasangKunciPgk<T extends { bentuk: Bentuk }>(kisi: T[], tka: boolean): (T & { kunciPgk?: number; jumlahPernyataan?: number })[] {
+export function pasangKunciPgk<T extends { bentuk: Bentuk; grup?: number | null }>(kisi: T[], tka: boolean, acak: () => number = Math.random): (T & { kunciPgk?: number; jumlahPernyataan?: number; kunciBs?: string })[] {
   const pola = tka ? [2, 3, 4] : [2, 3];
   let n = 0;
-  return kisi.map((k) =>
-    k.bentuk === "PGK" ? { ...k, kunciPgk: pola[n++ % pola.length] }
-    : k.bentuk === "BS" ? { ...k, jumlahPernyataan: tka ? 3 : 4 } // Kategori: TKA 3 (contoh resmi), madrasah 4
-    : k,
-  );
+  // Benar/Salah gaya lama (0.22.0): kunci tiap nomor ditentukan aplikasi, separuh Benar separuh Salah, urutan acak
+  // (AI cenderung membuat semua "Benar").
+  const nBs = kisi.filter((k) => k.bentuk === "BS").length;
+  const kunciBs = tka ? [] : kocok(Array.from({ length: nBs }, (_, i) => (i % 2 ? "Salah" : "Benar")), acak);
+  // Menjodohkan gaya lama: nomor MJ dibagi ke blok (blokMj); nomor grup dilanjutkan setelah grup wacana yang ada.
+  const ukuran = blokMj(kisi.filter((k) => k.bentuk === "MJ").length);
+  let grup = Math.max(0, ...kisi.map((k) => k.grup ?? 0));
+  let sisaBlok = 0;
+  return kisi.map((k) => {
+    if (k.bentuk === "PGK") return { ...k, kunciPgk: pola[n++ % pola.length] };
+    if (k.bentuk === "BS") return tka ? { ...k, jumlahPernyataan: 3 } : { ...k, kunciBs: kunciBs.shift() };
+    if (k.bentuk === "MJ" && !tka) {
+      if (sisaBlok === 0) {
+        grup++;
+        sisaBlok = ukuran.shift() ?? 1;
+      }
+      sisaBlok--;
+      return { ...k, grup };
+    }
+    return k;
+  });
 }
 
 const urutanBentuk = (jumlah: Record<Bentuk, number>) => (Object.keys(NAMA_BENTUK) as Bentuk[]).filter((b) => jumlah[b] > 0);
@@ -420,7 +502,7 @@ export function buatPermintaanKisi(p: Pengaturan, bab?: Pick<Bab, "teksArab">) {
   const total = urutan.reduce((n, b) => n + p.jumlah[b], 0);
   // Rencana per nomor, diringkas jadi rentang: "Nomor 1–6: PG, LOTS (C1–C2)".
   const bentukNo = urutan.flatMap((b) => Array<Bentuk>(p.jumlah[b]).fill(b));
-  const kategori = rencanaLevel(p.jumlah, p.level);
+  const kategori = rencanaLevelSet(p);
   const grup = p.tujuan === TKA ? rencanaGrup(p.jumlah) : [];
   const rentang: string[] = [];
   for (let i = 0; i < total; ) {
@@ -457,11 +539,12 @@ const TANGGAPAN = `Isi juga "tanggapan": balasan singkat untuk guru (maks 3 kali
 const RENCANA_ISIAN = `- "jawaban" (HANYA baris ISIAN): rencana jawaban soal isian itu (1–5 kata). Pilih istilah/konsep yang TIDAK akan menjadi kunci, pengecoh, atau data di soal lain dalam kisi-kisi ini, dan berbeda antarbaris isian. Jangan berupa angka yang juga dipakai sebagai data soal lain (misalnya tarif yang diberikan di soal hitungan).`;
 
 // 0.19.1: menjodohkan "pengelompokan" (5 pajak → pusat/daerah) membuat jawaban berulang dan gagal diperbaiki (audit set 76).
-const RENCANA_MJ = `- Baris MJ (menjodohkan): pilih materi yang punya 5 pasangan SATU-SATU yang jawabannya semua berbeda (istilah–pengertian, tokoh–karya, kata–arti). Materi pengelompokan (beberapa hal masuk ke kelompok yang sama) jangan dijadikan MJ.`;
+// 0.22.0: menjodohkan gaya lama (satu baris = satu pasangan); baris MJ berurutan dijodohkan dengan satu daftar jawaban.
+const RENCANA_MJ = `- Baris MJ (menjodohkan): setiap baris = SATU pasangan (satu pernyataan lajur kiri dan jodohnya). Baris-baris MJ yang berurutan dijodohkan bersama dengan satu daftar jawaban, jadi pilih SATU jenis hubungan untuk semuanya (istilah–pengertian, tokoh–karya, kata–arti) dengan pasangan berbeda di setiap baris dan jodoh yang semuanya berbeda. Materi pengelompokan (beberapa hal masuk ke kelompok yang sama) jangan dijadikan MJ. "stimulus" baris MJ: "tanpa stimulus".`;
 
 /** Baris kisi-kisi dalam bentuk ringkas untuk permintaan soal. */
 const tulisKisi = (k: BarisKisi) =>
-  `- Nomor ${k.no} | ${k.bentuk} | ${k.tp} | ${k.level} | dalil_id: ${k.dalil_id ?? "null"} | Indikator: ${k.indikator} | Stimulus: ${k.grup && k.wacana ? `WACANA GRUP ${k.grup}` : k.stimulus}${k.jawaban ? ` | Jawaban (kunci): ${k.jawaban}` : ""}${k.kunciPgk ? ` | Jumlah jawaban benar: ${k.kunciPgk}` : ""}${k.jumlahPernyataan ? ` | Jumlah pernyataan: ${k.jumlahPernyataan}` : ""}`;
+  `- Nomor ${k.no} | ${k.bentuk} | ${k.tp} | ${k.level} | dalil_id: ${k.dalil_id ?? "null"} | Indikator: ${k.indikator} | Stimulus: ${k.grup && k.wacana ? `WACANA GRUP ${k.grup}` : k.stimulus}${k.jawaban ? ` | Jawaban (kunci): ${k.jawaban}` : ""}${k.kunciPgk ? ` | Jumlah jawaban benar: ${k.kunciPgk}` : ""}${k.jumlahPernyataan ? ` | Jumlah pernyataan: ${k.jumlahPernyataan}` : ""}${k.kunciBs ? ` | Kunci: ${k.kunciBs}` : ""}${k.bentuk === "MJ" && k.grup && !k.wacana ? ` | Blok MJ ${k.grup}` : ""}`;
 
 /**
  * Daftar jawaban isian rencana kisi-kisi yang TIDAK boleh tertulis di soal lain (ATURAN-SOAL 2b no. 11), untuk setiap
@@ -494,10 +577,11 @@ export function ringkasSudah(s: Soal): string {
   const jawaban =
     s.bentuk === "PG" || s.bentuk === "PGK"
       ? kunci.map((h) => s.pilihan?.["ABCDE".indexOf(h.toUpperCase())]).filter(Boolean).join("; ")
-      : s.bentuk === "ISIAN" ? kunci[0] : "";
+      : s.bentuk === "ISIAN" || (s.bentuk === "BS" && !Array.isArray(s.pernyataan)) ? kunci[0]
+      : mjLama(s) ? (s.jawaban?.["ABCDEFG".indexOf(String(kunci[0] ?? "").toUpperCase())] ?? "") : "";
   // 0.19.0: isi Menjodohkan & Kategori ikut dikirim; dulu hanya perintahnya ("Jodohkan ...!") sehingga AI membuat
-  // pasangan yang sama lagi (audit 2026-11-07, set 70 no. 19 & 20).
-  const isi = s.bentuk === "MJ" ? [...(s.premis ?? s.pasangan?.map((p) => p.premis) ?? []), ...(s.jawaban ?? s.pasangan?.map((p) => p.jawaban) ?? [])] : s.pernyataan ?? [];
+  // pasangan yang sama lagi (audit 2026-11-07, set 70 no. 19 & 20). Menjodohkan gaya lama: jodohnya sudah di "jawaban".
+  const isi = mjLama(s) ? [] : s.bentuk === "MJ" ? [...(s.premis ?? s.pasangan?.map((p) => p.premis) ?? []), ...(s.jawaban ?? s.pasangan?.map((p) => p.jawaban) ?? [])] : s.pernyataan ?? [];
   const daftar = isi.length ? ` → ${s.bentuk === "MJ" ? "isi lajur" : "pernyataan"}: ${isi.map((t) => String(t).slice(0, 50)).join("; ").slice(0, 300)}` : "";
   return `${String(s.pertanyaan ?? "").slice(0, 160)}${jawaban ? ` → jawaban: ${jawaban.slice(0, 120)}` : ""}${daftar}`;
 }

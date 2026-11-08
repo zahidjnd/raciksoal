@@ -10,8 +10,8 @@ import { StepAngka } from "./step-angka";
 import { skorOtomatis } from "@/lib/skor";
 import { kunciRingkas } from "@/lib/kunci";
 import { PAKET, susunPaket, type Paket } from "@/lib/paket";
-import { ATURAN_TUJUAN, BOBOT_BAWAAN, KESULITAN, MAKS_CATATAN, MAKS_SOAL, mapelTka, NAMA_BENTUK, namaLevelTka, namaTujuan, semesterDari, TKA, TUJUAN, WAKTU_BAWAAN, type Identitas, type Pengaturan } from "@/lib/prompt";
-import { KELAS, pilihanAngka, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
+import { ASAS_ALFATAH, ATURAN_TUJUAN, BOBOT_BAWAAN, hitungLevel, jumlahSoal, KESULITAN, MAKS_CATATAN, MAKS_SOAL, MAPEL_EKSAK, mapelTka, NAMA_BENTUK, namaBentuk, namaLevelTka, namaTujuan, PESAN_MJ_MIN, semesterDari, TKA, TUJUAN, WAKTU_BAWAAN, type Identitas, type Pengaturan } from "@/lib/prompt";
+import { KELAS, mjLama, pilihanAngka, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { DAFTAR_MAPEL, type IsianMateri } from "@/lib/materi";
 import { useRouter } from "next/navigation";
 
@@ -47,10 +47,13 @@ const TANPA_TKA: Bentuk[] = ["MJ", "ISIAN", "URAIAN"];
 
 type Hasil = NonNullable<Awaited<ReturnType<typeof cekHasil>>>;
 
-/** Soal grup: "4–6" bila soal ke-i adalah soal pertama grupnya (wacana tampil di atasnya), selain itu null. */
+/**
+ * Soal grup: "4–6" bila soal ke-i adalah soal pertama grupnya (wacana tampil di atasnya), selain itu null.
+ * Juga untuk blok menjodohkan gaya lama (daftar jawaban bersama tampil di atasnya).
+ */
 function nomorGrup(soal: Soal[], i: number) {
   const g = soal[i].grup;
-  if (!g || !soal[i].wacana || soal[i - 1]?.grup === g) return null;
+  if (!g || !(soal[i].wacana || mjLama(soal[i])) || soal[i - 1]?.grup === g) return null;
   let j = i;
   while (soal[j + 1]?.grup === g) j++;
   return j > i ? `${i + 1}–${j + 1}` : `${i + 1}`;
@@ -160,6 +163,7 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
   const bobot = aturSkor ? p.bobot ?? BOBOT_BAWAAN : otomatis.bobot;
   const totalSkor = BENTUK.reduce((s, b) => s + p.jumlah[b] * bobot[b], 0);
   const totalLevel = p.level.LOTS + p.level.MOTS + p.level.HOTS;
+  const perLevel = hitungLevel(total, p.level); // jumlah soal tiap level (dihitung sama persis dengan server)
   const memuat = id !== null && !hasil; // set dibuka, data belum terbaca (bisa set lama yang sudah selesai)
   const proses = hasil?.status === "proses";
 
@@ -287,7 +291,8 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
     total < 1 ? "Isi jumlah soal dulu." :
     total > MAKS_SOAL ? `Jumlah soal maksimal ${MAKS_SOAL}.` :
     totalLevel !== 100 ? `Komposisi level harus 100% (sekarang ${totalLevel}%), buka Lanjutan.` :
-    tka && TANPA_TKA.some((b) => p.jumlah[b]) ? "Latihan TKA hanya memakai PG, PG kompleks, dan Kategori." : "";
+    tka && TANPA_TKA.some((b) => p.jumlah[b]) ? "Latihan TKA hanya memakai PG, PG kompleks, dan Kategori." :
+    p.jumlah.MJ > 0 && p.jumlah.MJ < 3 ? PESAN_MJ_MIN : "";
   // Pilihan dan aksi sama-sama kotak bersudut lembut seperti claude.ai (DESIGN.md).
   const chip = "inline-flex items-center rounded-lg border bg-kartu h-8 px-3 text-sm hover:bg-krem max-md:min-h-11";
   const aksi2 = "inline-flex items-center rounded-lg border bg-kartu h-8 px-3 text-sm hover:bg-krem max-md:min-h-11";
@@ -327,15 +332,18 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
                   key={j.tujuan}
                   role="radio"
                   aria-checked={pilih}
-                  onClick={() =>
+                  onClick={() => {
+                    // ASAS: langsung format ASAS MA Al-Fatah sesuai mapel (eksak/non-eksak), skor otomatis 100.
+                    const asas = j.tujuan === "PAS" ? ASAS_ALFATAH[MAPEL_EKSAK.test(mapel) ? "eksak" : "nonEksak"] : null;
+                    if (asas) setAturSkor(false);
                     setP({
                       ...p,
                       tujuan: j.tujuan,
-                      level: ATURAN_TUJUAN[j.tujuan].level,
+                      level: asas ? { ...asas.level } : ATURAN_TUJUAN[j.tujuan].level,
                       // masuk TKA: komposisi bentuk gaya TKA; keluar dari TKA: kembali ke komposisi bawaan
-                      ...(j.tujuan === TKA ? { jumlah: JUMLAH_TKA } : p.tujuan === TKA ? { jumlah: JUMLAH_AWAL } : {}),
-                    })
-                  }
+                      ...(asas ? { jumlah: { ...asas.jumlah } } : j.tujuan === TKA ? { jumlah: JUMLAH_TKA } : p.tujuan === TKA ? { jumlah: JUMLAH_AWAL } : {}),
+                    });
+                  }}
                   className={`rounded-xl border bg-kartu p-3 text-left hover:border-pudar/40 ${pilih ? "border-hijau bg-hijau-muda/50 ring-1 ring-hijau" : ""}`}
                 >
                   <span className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-hijau-muda text-hijau-teks">{j.ikon}</span>
@@ -348,6 +356,33 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
             })}
           </div>
 
+          {/* Format ASAS dari surat Kepala MA Al-Fatah (7 Nov 2026): satu klik mengisi jumlah, level, dan skor 100. */}
+          {p.tujuan === "PAS" && (
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-pudar">Format ASAS MA Al-Fatah:</span>
+              {(["eksak", "nonEksak"] as const).map((k) => {
+                const a = ASAS_ALFATAH[k];
+                const j = p.jumlah;
+                const aktif = j.PG === a.jumlah.PG && j.PGK === a.jumlah.PGK && j.URAIAN === a.jumlah.URAIAN && j.BS + j.MJ === 5 && !j.ISIAN && p.level.HOTS === a.level.HOTS && p.level.MOTS === a.level.MOTS;
+                return (
+                  <button
+                    key={k}
+                    aria-pressed={aktif}
+                    className={`${chip} ${aktif ? "border-hijau bg-hijau-muda text-hijau-teks" : ""}`}
+                    onClick={() => {
+                      setAturSkor(false);
+                      setP({ ...p, jumlah: { ...a.jumlah }, level: { ...a.level } });
+                    }}
+                  >
+                    {a.nama} ({jumlahSoal(a.jumlah)} soal)
+                  </button>
+                );
+              })}
+              <span className="w-full text-xs text-pudar">
+                Eksak = Matematika, Fisika, Kimia, Biologi. Menjodohkan + Benar/Salah total 5 nomor, boleh dicampur lewat tombol jumlah soal (menjodohkan minimal 3).
+              </span>
+            </div>
+          )}
 
           <div className="rounded-2xl border bg-kartu p-3 shadow-sm focus-within:border-hijau focus-within:ring-2 focus-within:ring-hijau">
             <textarea
@@ -388,17 +423,17 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
                     return (
                       <div key={b} className="flex flex-col gap-1 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                         <span className={n ? "" : "text-pudar"}>
-                          {NAMA_BENTUK[b]}
+                          {namaBentuk(b, tka)}
                           {!aturSkor && n > 0 && <span className="ml-2 text-xs text-pudar">{bobot[b]} poin/soal</span>}
                         </span>
                         <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
                           {aturSkor && n > 0 && (
                             <span className="flex items-center gap-1 text-xs text-pudar">
                               poin
-                              <StepAngka label={`Skor per soal ${NAMA_BENTUK[b]}`} nilai={bobot[b]} ubah={(v) => setP({ ...p, bobot: { ...bobot, [b]: v } })} max={100} />
+                              <StepAngka label={`Skor per soal ${namaBentuk(b, tka)}`} nilai={bobot[b]} ubah={(v) => setP({ ...p, bobot: { ...bobot, [b]: v } })} max={100} />
                             </span>
                           )}
-                          <StepAngka label={`Jumlah ${NAMA_BENTUK[b]}`} nilai={n} ubah={(v) => setP({ ...p, jumlah: { ...p.jumlah, [b]: v } })} max={MAKS_SOAL} />
+                          <StepAngka label={`Jumlah ${namaBentuk(b, tka)}`} nilai={n} ubah={(v) => setP({ ...p, jumlah: { ...p.jumlah, [b]: v } })} max={MAKS_SOAL} />
                         </span>
                       </div>
                     );
@@ -425,7 +460,10 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
               <div className="mt-3 space-y-3 border-t pt-3">
                 <fieldset className="space-y-2">
                   <legend className="mb-1 text-sm font-semibold">Komposisi level (total {totalLevel}%)</legend>
-                  <p className="text-xs text-pudar">Terisi otomatis sesuai tujuan soal, boleh diubah.</p>
+                  <p className="text-xs text-pudar">
+                    Terisi otomatis sesuai tujuan soal, boleh diubah.
+                    {totalLevel === 100 && total > 0 && ` Untuk ${total} soal: LOTS ${perLevel.LOTS}, MOTS ${perLevel.MOTS}, HOTS ${perLevel.HOTS} soal.`}
+                  </p>
                   <Angka label={`${tka ? `${namaLevelTka(mapel).LOTS} / ` : ""}LOTS (C1–C2) %`} nilai={p.level.LOTS} ubah={(n) => setP({ ...p, level: { ...p.level, LOTS: n } })} />
                   <Angka label={`${tka ? `${namaLevelTka(mapel).MOTS} / ` : ""}MOTS (C3) %`} nilai={p.level.MOTS} ubah={(n) => setP({ ...p, level: { ...p.level, MOTS: n } })} />
                   <Angka label={`${tka ? `${namaLevelTka(mapel).HOTS} / ` : ""}HOTS (C4–C6) %`} nilai={p.level.HOTS} ubah={(n) => setP({ ...p, level: { ...p.level, HOTS: n } })} />
@@ -624,7 +662,7 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
           ) : (
             BENTUK.filter((b) => soal.some((s) => s.bentuk === b)).map((b) => (
               <div key={b} className="space-y-4">
-                <h2>{NAMA_BENTUK[b]}</h2>
+                <h2>{namaBentuk(b, !!hasil.tka)}</h2>
                 {soal.map(
                   (s, i) =>
                     s.bentuk === b && (
@@ -656,14 +694,14 @@ export function BuatSoal({ nama, awalId, awalMateri }: { nama: string; awalId: n
                 )}
                 {/* Soal tulisan guru sendiri (tanpa AI), disisipkan di akhir bagian ini. */}
                 <div className="print:hidden">
-                  <TulisSoalSendiri hasilId={id!} bentuk={b} bab={bab} skorBawaan={skorBawaan} onSelesai={muatUlangLalu} />
+                  <TulisSoalSendiri hasilId={id!} bentuk={b} bab={bab} tka={!!hasil.tka} skorBawaan={skorBawaan} onSelesai={muatUlangLalu} />
                 </div>
               </div>
             ))
           )}
           {tab === "soal" && (
             <div className="print:hidden">
-              <TulisSoalSendiri hasilId={id!} bentukLain={BENTUK.filter((b) => !soal.some((s) => s.bentuk === b))} bab={bab} skorBawaan={skorBawaan} onSelesai={muatUlangLalu} />
+              <TulisSoalSendiri hasilId={id!} bentukLain={BENTUK.filter((b) => !soal.some((s) => s.bentuk === b))} bab={bab} tka={!!hasil.tka} skorBawaan={skorBawaan} onSelesai={muatUlangLalu} />
             </div>
           )}
 

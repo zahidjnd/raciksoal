@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { gantiSatuSoal, hapusSoal, pindahSoal, simpanSoal, tambahSoalManual, tambahSoalSerupa } from "./actions";
 import { StepAngka } from "./step-angka";
-import { kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, pecahBaris, POLA_ARAB, type Bab, type Bentuk, type Soal } from "@/lib/soal";
-import { MAKS_INSTRUKSI, NAMA_BENTUK } from "@/lib/prompt";
+import { kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, type Bab, type Bentuk, type Soal } from "@/lib/soal";
+import { MAKS_INSTRUKSI, namaBentuk } from "@/lib/prompt";
 
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
 const HURUF = ["A", "B", "C", "D", "E", "F", "G"];
@@ -124,6 +124,14 @@ function TabelKategori({ s, kunci }: { s: Soal; kunci: boolean }) {
   );
 }
 
+/** Teks kunci di kotak kunci & pembahasan. */
+function kunciTampil(s: Soal) {
+  const k = [s.kunci].flat();
+  if (mjLama(s)) return `${k[0] ?? "?"} (${s.jawaban?.[HURUF.indexOf(String(k[0] ?? "").toUpperCase())] ?? "?"})`;
+  if (s.bentuk === "MJ") return k.map((h, i) => `${i + 1}-${h}`).join(", ");
+  return k.join(", ");
+}
+
 // nomorGrup: diisi ("4–6") hanya untuk soal pertama sebuah soal grup → wacana bersama tampil di atasnya.
 // draf: soal yang sudah jadi selama set masih diproses; hanya dibaca (kunci & urutan pilihan belum final, server
 // juga menolak edit/ganti sebelum selesai).
@@ -216,6 +224,19 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
   const dalil = bab.dalil.find((d) => d.id === s.dalil_id);
   return (
     <>
+    {nomorGrup && mjLama(s) && (
+      <section className="space-y-1 rounded-xl border border-hijau/40 bg-hijau-muda/40 p-4 text-sm" aria-label={`Daftar jawaban menjodohkan nomor ${nomorGrup}`}>
+        <p className="font-semibold">Pasangkan pernyataan nomor {nomorGrup} dengan jawaban yang tepat!</p>
+        <ol className="space-y-1">
+          {(s.jawaban ?? []).map((j, i) => (
+            <li key={i} className="flex gap-2">
+              <span className="w-5 shrink-0 font-semibold">{HURUF[i]}.</span>
+              <span><TeksBaris teks={j} /></span>
+            </li>
+          ))}
+        </ol>
+      </section>
+    )}
     {nomorGrup && s.wacana && (
       <section className="space-y-1 rounded-xl border border-hijau/40 bg-hijau-muda/40 p-4 text-sm" aria-label={`Wacana soal nomor ${nomorGrup}`}>
         <p className="font-semibold">Bacalah teks berikut untuk menjawab soal nomor {nomorGrup}!</p>
@@ -240,11 +261,11 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
           {s.pilihan.map((o, i) => <li key={i}><TeksBaris teks={o} /></li>)}
         </ol>
       )}
-      {s.bentuk === "MJ" && <TabelJodoh s={s} kunci={tampilKunci} />}
+      {s.bentuk === "MJ" && !mjLama(s) && <TabelJodoh s={s} kunci={tampilKunci} />}
       {kategoriBaru(s) && <TabelKategori s={s} kunci={tampilKunci} />}
       {tampilKunci && (
       <div className="space-y-1 rounded bg-hijau-muda p-3 text-sm">
-        {!kategoriBaru(s) && <p><span className="font-semibold">Kunci:</span> <Teks teks={s.bentuk === "MJ" ? [s.kunci].flat().map((h, i) => `${i + 1}-${h}`).join(", ") : [s.kunci].flat().join(", ")} /></p>}
+        {!kategoriBaru(s) && <p><span className="font-semibold">Kunci:</span> <Teks teks={kunciTampil(s)} /></p>}
         {!!s.kunciAlt?.length && <p><span className="font-semibold">Jawaban lain yang diterima:</span> <Teks teks={s.kunciAlt.join("; ")} /></p>}
         {s.rubrik && (
           <ul className="list-disc pl-5">
@@ -274,7 +295,17 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
           </span>
         )}
       </div>
-      {lainnya && (
+      {lainnya && s.bentuk === "MJ" && (
+      <div className="space-y-2 rounded-lg border bg-krem p-3">
+        <p className="text-xs text-pudar">Daftar jawaban menjodohkan dipakai bersama, jadi nomor ini tidak bisa diganti atau diubah AI. Perbaiki lewat Edit.</p>
+        {onSetBerubah && (
+          <button className={`${tombol} text-bahaya`} disabled={mengganti} onClick={() => ubahJumlah("hapus")}>
+            {proses === "hapus" ? "Menghapus..." : "Hapus soal ini"}
+          </button>
+        )}
+      </div>
+      )}
+      {lainnya && s.bentuk !== "MJ" && (
       <div className="space-y-2 rounded-lg border bg-krem p-3">
       <div className="flex flex-wrap gap-2">
         <button className={tombol} disabled={mengganti || !!habisAI} onClick={() => ganti("ganti")}>
@@ -373,7 +404,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
       )}
 
       <label className="block">
-        Pertanyaan
+        {mjLama(s) ? "Pernyataan (lajur kiri)" : s.bentuk === "BS" && !kategoriBaru(s) ? "Pernyataan (dinilai benar atau salah)" : "Pertanyaan"}
         <textarea dir="auto" rows={4} className={kotak} value={s.pertanyaan} onChange={(e) => ubah({ pertanyaan: e.target.value })} />
       </label>
 
@@ -387,7 +418,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
 
       {s.pilihan && (
         <fieldset className="space-y-1">
-          <legend>Pilihan jawaban (centang kunci{s.bentuk === "PGK" ? ", 2 atau 3" : ""})</legend>
+          <legend>Pilihan jawaban (centang kunci{s.bentuk === "PGK" ? ", 2 sampai 4" : ""})</legend>
           {s.pilihan.map((o, i) => (
             <div key={i} className="flex items-center gap-2">
               <input
@@ -455,7 +486,26 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
         </fieldset>
       )}
 
-      {s.bentuk === "MJ" && (
+      {mjLama(s) && (
+        <fieldset className="space-y-2">
+          <label className="block">
+            Kunci (huruf jawaban)
+            <select className={kotak} value={String(s.kunci)} onChange={(e) => ubah({ kunci: e.target.value })}>
+              <option value="">(kunci)</option>
+              {(s.jawaban ?? []).map((_, j) => <option key={j}>{HURUF[j]}</option>)}
+            </select>
+          </label>
+          <p className="pt-1">Daftar jawaban (dipakai bersama nomor menjodohkan lain di blok ini; perubahan ikut ke nomor lain)</p>
+          {(s.jawaban ?? []).map((jw, j) => (
+            <div key={j} className="flex items-center gap-2">
+              <span className="w-4 font-semibold">{HURUF[j]}</span>
+              <input dir="auto" className={kotak} aria-label={`Jawaban ${HURUF[j]}`} value={jw} onChange={(e) => ubah({ jawaban: s.jawaban!.map((x, k) => (k === j ? e.target.value : x)) })} />
+            </div>
+          ))}
+        </fieldset>
+      )}
+
+      {s.bentuk === "MJ" && !mjLama(s) && (
         <fieldset className="space-y-2">
           <legend>Premis (lajur kiri) dan kunci hurufnya</legend>
           {(s.premis ?? []).map((pm, i) => (
@@ -548,11 +598,12 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
 }
 
 /** Soal kosong untuk "Tulis soal sendiri": bentuk sama dengan formulir Edit, TP pertama bab, skor bawaan bentuknya. */
-function soalKosong(bentuk: Bentuk, bab: Bab, skor: number): Soal {
+function soalKosong(bentuk: Bentuk, bab: Bab, skor: number, tka: boolean): Soal {
   const dasar = { bentuk, dalil_id: null, pertanyaan: "", pembahasan: "", level: "C2", tp: bab.tp[0]?.kode ?? "", skor } as Soal;
   if (bentuk === "PG") return { ...dasar, pilihan: ["", "", "", "", ""], kunci: "A" };
   if (bentuk === "PGK") return { ...dasar, pilihan: ["", "", "", "", ""], kunci: ["A", "B"] };
-  if (bentuk === "BS") return { ...dasar, pernyataan: ["", "", "", ""], label: [...LABEL_KATEGORI[0]], kunci: ["", "", "", ""] };
+  // Benar/Salah: gaya lama Al-Fatah (satu pernyataan) untuk jenis madrasah; Kategori 3 pernyataan untuk Latihan TKA.
+  if (bentuk === "BS") return tka ? { ...dasar, pernyataan: ["", "", ""], label: [...LABEL_KATEGORI[0]], kunci: ["", "", ""] } : { ...dasar, kunci: "Benar" };
   if (bentuk === "MJ") return { ...dasar, premis: ["", "", "", "", ""], jawaban: ["", "", "", "", "", ""], kunci: ["", "", "", "", ""] };
   if (bentuk === "ISIAN") return { ...dasar, kunci: "", kunciAlt: [] };
   return { ...dasar, kunci: "", rubrik: [{ kriteria: "", skor }] };
@@ -563,14 +614,14 @@ function soalKosong(bentuk: Bentuk, bab: Bab, skor: number): Soal {
  * (atau pilihan bentuk lain bila `bentukLain` diisi); formulir = formulir Edit dengan isi kosong. Server
  * (`tambahSoalManual`) menyisipkannya di akhir bagian bentuk itu dan tetap memeriksanya dengan penjaga ayat.
  */
-export function TulisSoalSendiri({ hasilId, bentuk, bentukLain, bab, skorBawaan, onSelesai }: { hasilId: number; bentuk?: Bentuk; bentukLain?: Bentuk[]; bab: Bab; skorBawaan: (b: Bentuk) => number; onSelesai: (no: number) => void }) {
+export function TulisSoalSendiri({ hasilId, bentuk, bentukLain, bab, tka, skorBawaan, onSelesai }: { hasilId: number; bentuk?: Bentuk; bentukLain?: Bentuk[]; bab: Bab; tka: boolean; skorBawaan: (b: Bentuk) => number; onSelesai: (no: number) => void }) {
   const [pilih, setPilih] = useState<Bentuk | null>(null);
   if (pilih)
     return (
       <FormSoal
         no={0}
-        judul={`Soal baru (tulis sendiri): ${NAMA_BENTUK[pilih]}`}
-        awal={soalKosong(pilih, bab, skorBawaan(pilih))}
+        judul={`Soal baru (tulis sendiri): ${namaBentuk(pilih, tka)}`}
+        awal={soalKosong(pilih, bab, skorBawaan(pilih), tka)}
         bab={bab}
         onBatal={() => setPilih(null)}
         onSimpan={async (isian) => {
@@ -582,14 +633,15 @@ export function TulisSoalSendiri({ hasilId, bentuk, bentukLain, bab, skorBawaan,
       />
     );
   const gaya = "h-10 rounded-lg border border-dashed bg-transparent px-4 text-sm text-pudar hover:border-hijau hover:text-hijau-teks max-md:min-h-11";
-  if (bentuk) return <button className={gaya} onClick={() => setPilih(bentuk)}>+ Tulis soal {NAMA_BENTUK[bentuk]} sendiri</button>;
+  if (bentuk === "MJ") return null; // menjodohkan (daftar jawaban bersama) tidak ditulis satu per satu
+  if (bentuk) return <button className={gaya} onClick={() => setPilih(bentuk)}>+ Tulis soal {namaBentuk(bentuk, tka)} sendiri</button>;
   if (!bentukLain?.length) return null;
   return (
     <label className="flex flex-wrap items-center gap-2 text-sm text-pudar">
       + Tulis soal bentuk lain:
       <select className="h-10 rounded-lg border bg-kartu px-2 text-sm text-tinta max-md:min-h-11" value="" onChange={(e) => e.target.value && setPilih(e.target.value as Bentuk)}>
         <option value="">Pilih bentuk…</option>
-        {bentukLain.map((b) => <option key={b} value={b}>{NAMA_BENTUK[b]}</option>)}
+        {bentukLain.filter((b) => b !== "MJ").map((b) => <option key={b} value={b}>{namaBentuk(b, tka)}</option>)}
       </select>
     </label>
   );

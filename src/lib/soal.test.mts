@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { arabTakTerverifikasi, bersihkanTanggapan, gabungBab, identitasBab, kataTerpakai, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, terapkanBobot, type Bab, type BarisKisi, type Soal } from "./soal.ts";
+import { arabTakTerverifikasi, bersihkanTanggapan, gabungBab, identitasBab, blokMj, kataTerpakai, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Soal } from "./soal.ts";
 import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, laranganIsian, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, semesterDari, MAKS_CATATAN, MAKS_INSTRUKSI, namaLevelTka, namaTujuan, pasangKunciPgk, rencanaLevel, type Pengaturan } from "./prompt.ts";
 import { bolehAkses, rapikanUsername } from "./akses.ts";
 import { headerUnduh } from "./nama-file.ts";
@@ -335,10 +335,15 @@ test("soal Kategori: 4 pernyataan, label resmi, kunci per pernyataan; B/S lama t
   assert.equal(periksaSoal([{ ...dasar, kunci: ["Fakta", "Opini", "Benar", "Fakta"] }], bab)[0].peringatan!.length, 1);
   // teks Arab di pernyataan ikut dijaga (aturan 5)
   assert.equal(periksaSoal([{ ...dasar, pernyataan: ["قَالَ رَسُولُ اللَّهِ", "b", "c", "d"] }], bab)[0].peringatan!.length, 1);
-  // set baru: AI memberi B/S satu pernyataan → dipaksa Kategori dan ditandai
+  // set TKA baru (kisi menulis jumlahPernyataan): AI memberi B/S satu pernyataan → dipaksa Kategori dan ditandai
   const [k] = periksaKisi([{ bentuk: "BS", tp: "TP 3.1", materi: "m", indikator: "i", level: "C2", dalil_id: null, stimulus: "s" }], { PG: 0, PGK: 0, BS: 1, URAIAN: 0 }, bab);
   const lamaGaya: Soal = { bentuk: "BS", dalil_id: null, pertanyaan: "Zina dosa besar.", kunci: "Benar", pembahasan: "", level: "C1", tp: "TP 3.1", skor: 3 };
-  assert.ok(periksaSoal([samakanDenganKisi(lamaGaya, k)], bab)[0].peringatan!.length > 0);
+  assert.ok(periksaSoal([samakanDenganKisi(lamaGaya, { ...k, jumlahPernyataan: 3 })], bab)[0].peringatan!.length > 0);
+  // jenis madrasah (0.22.0): Benar/Salah gaya lama sah; kunci dirapikan; kalimat tanya ditandai
+  assert.deepEqual(periksaSoal([samakanDenganKisi({ ...lamaGaya, kunci: "salah" }, k)], bab)[0].kunci, "Salah");
+  assert.deepEqual(periksaSoal([samakanDenganKisi(lamaGaya, k)], bab)[0].peringatan, []);
+  assert.equal(periksaSoal([{ ...lamaGaya, pertanyaan: "Apakah zina dosa besar?" }], bab)[0].peringatan!.length, 1);
+  assert.equal(periksaSoal([{ ...lamaGaya, kunci: "Ya" }], bab)[0].peringatan!.length, 1);
   // set lama (tanpa kisi-kisi) tidak diubah dan tidak ditandai
   assert.deepEqual(periksaSoal([lamaGaya], bab)[0].peringatan, []);
   // editan guru
@@ -370,7 +375,12 @@ test("Latihan TKA: tanpa uraian, kisi-kisi meminta soal grup + wacana; grup sah 
   const kisiPgk = pasangKunciPgk([{ bentuk: "PG" }, { bentuk: "PGK" }, { bentuk: "PGK" }, { bentuk: "PGK" }, { bentuk: "PGK" }] as BarisKisi[], true);
   assert.deepEqual(kisiPgk.map((k) => k.kunciPgk), [undefined, 2, 3, 4, 2]);
   assert.deepEqual(pasangKunciPgk([{ bentuk: "BS" }] as BarisKisi[], true)[0].jumlahPernyataan, 3);
-  assert.deepEqual(pasangKunciPgk([{ bentuk: "BS" }] as BarisKisi[], false)[0].jumlahPernyataan, 4);
+  // jenis madrasah: Benar/Salah gaya lama, kunci seimbang ditentukan aplikasi; menjodohkan dibagi blok (grup)
+  const kisiBs = pasangKunciPgk(Array.from({ length: 5 }, () => ({ bentuk: "BS" })) as BarisKisi[], false);
+  assert.ok(kisiBs.every((k) => !k.jumlahPernyataan) && kisiBs.filter((k) => k.kunciBs === "Benar").length === 3 && kisiBs.filter((k) => k.kunciBs === "Salah").length === 2);
+  const kisiMj = pasangKunciPgk([{ bentuk: "PG", grup: null }, ...Array.from({ length: 7 }, () => ({ bentuk: "MJ" }))] as BarisKisi[], false);
+  assert.deepEqual(kisiMj.map((k) => k.grup ?? null), [null, 1, 1, 1, 1, 2, 2, 2]);
+  assert.ok(buatPengguna({ ...p, tujuan: "PAS" }, p.jumlah, [], "", [{ ...kisiBs[0], no: 1, tp: "TP 3.1", materi: "m", indikator: "i", level: "C2", dalil_id: null, stimulus: "s" }]).includes(`Kunci: ${kisiBs[0].kunciBs}`));
   assert.ok(!buatSistem(bab).includes("2 ATAU 3") && !buatSistem(bab).includes('tepat 4 "pernyataan"')); // tidak bertabrakan dengan kisi
   assert.deepEqual(pasangKunciPgk([{ bentuk: "PGK" }, { bentuk: "PGK" }, { bentuk: "PGK" }] as BarisKisi[], false).map((k) => k.kunciPgk), [2, 3, 2]);
   const barisPgk = { no: 2, bentuk: "PGK", tp: "TP 3.1", materi: "m", indikator: "i", level: "C3", dalil_id: null, stimulus: "s", kunciPgk: 4 } as BarisKisi;
@@ -684,11 +694,14 @@ test("Menjodohkan: peringatan jumlah, kunci, jawaban kembar; hasil edit guru dir
   assert.match(String(bersihkanPengaturan({ babId: "x", tujuan: "Latihan TKA", kesulitan: "Sedang", level: { LOTS: 30, MOTS: 40, HOTS: 30 }, jumlah: { PG: 10, PGK: 0, BS: 0, MJ: 1, ISIAN: 0, URAIAN: 0 } } as Pengaturan)), /hanya memakai pilihan ganda/);
 });
 
-test("bagiTahap: satu Menjodohkan dihitung seberat 2 soal biasa per tahap", () => {
+test("bagiTahap: blok menjodohkan gaya lama tidak terbelah ke dua tahap (0.22.0)", () => {
   const nol = { PG: 0, PGK: 0, BS: 0, MJ: 0, ISIAN: 0, URAIAN: 0 };
-  assert.deepEqual(bagiTahap({ ...nol, PG: 6, MJ: 3 }), [{ ...nol, PG: 6, MJ: 2 }, { ...nol, MJ: 1 }]);
-  assert.deepEqual(bagiTahap({ ...nol, MJ: 5 }), [{ ...nol, MJ: 5 }]);
-  assert.deepEqual(bagiTahap({ ...nol, MJ: 6 }), [{ ...nol, MJ: 5 }, { ...nol, MJ: 1 }]);
+  assert.deepEqual(bagiTahap({ ...nol, PG: 6, MJ: 3 }), [{ ...nol, PG: 6, MJ: 3 }]);
+  assert.deepEqual(bagiTahap({ ...nol, PG: 8, MJ: 3 }), [{ ...nol, PG: 8 }, { ...nol, MJ: 3 }]);
+  assert.deepEqual(bagiTahap({ ...nol, MJ: 7 }), [{ ...nol, MJ: 7 }]); // blok 4 + 3, muat satu tahap
+  assert.deepEqual(bagiTahap({ ...nol, PG: 5, MJ: 7 }), [{ ...nol, PG: 5, MJ: 4 }, { ...nol, MJ: 3 }]);
+  // ASAS non-eksak 45 soal: 5 tahap, tiap tahap maks 10
+  assert.deepEqual(bagiTahap({ ...nol, PG: 30, PGK: 5, BS: 2, MJ: 3, URAIAN: 5 }).map((t) => Object.values(t).reduce((a, b) => a + b, 0)), [10, 10, 10, 10, 5]);
   // jumlah dari set lama tanpa kunci bentuk baru tidak merusak pembagian
   assert.deepEqual(bagiTahap({ PG: 3, PGK: 0, BS: 0, URAIAN: 0 } as never), [{ ...nol, PG: 3 }]);
 });
@@ -807,7 +820,7 @@ test("0.19.1: menjodohkan wajib satu-satu (bukan pengelompokan); perbaikan isian
   assert.ok(buatPermintaanKisi(p).includes("Materi pengelompokan"));
   assert.ok(!buatPermintaanKisi({ ...p, jumlah: { ...p.jumlah, MJ: 0 } }).includes("Materi pengelompokan"));
   const bab = { id: "x", judul: "x", tp: [{ kode: "TP 1", teks: "x" }], dalil: [], materi: [] } as Bab;
-  assert.ok(buatSistem(bab).includes("JANGAN menjodohkan untuk pengelompokan"));
+  assert.ok(buatSistem(bab).includes("JANGAN pengelompokan"));
   const dasar = { dalil_id: null, pembahasan: "", level: "C2", tp: "TP 1", skor: 1 };
   const soal = [
     { ...dasar, bentuk: "PG", pertanyaan: "?", pilihan: ["anggaran", "redistribusi", "stabilitas", "mengatur", "kalimat panjang yang berisi lebih dari enam kata sekali"], kunci: "A" },
@@ -816,4 +829,69 @@ test("0.19.1: menjodohkan wajib satu-satu (bukan pengelompokan); perbaikan isian
   ] as Soal[];
   const kata = kataTerpakai(soal, 2);
   assert.deepEqual(kata, ["anggaran", "redistribusi", "stabilitas", "mengatur", "PPN", "pajak pusat"]); // tanpa dobel, tanpa kalimat panjang, tanpa soal itu sendiri
+});
+
+test("0.22.0 ASAS Al-Fatah: komposisi persis surat, HOTS tidak jatuh ke Benar/Salah & Menjodohkan, menjodohkan min 3", async () => {
+  const { ASAS_ALFATAH, MAPEL_EKSAK } = await import("./prompt.ts");
+  const nol = { PG: 0, PGK: 0, BS: 0, MJ: 0, ISIAN: 0, URAIAN: 0 };
+  assert.deepEqual(hitungLevel(35, ASAS_ALFATAH.eksak.level), { LOTS: 12, MOTS: 15, HOTS: 8 });
+  assert.deepEqual(hitungLevel(45, ASAS_ALFATAH.nonEksak.level), { LOTS: 15, MOTS: 20, HOTS: 10 });
+  assert.equal(jumlahSoal(ASAS_ALFATAH.eksak.jumlah), 35);
+  assert.equal(jumlahSoal(ASAS_ALFATAH.nonEksak.jumlah), 45);
+  assert.ok(["Matematika", "Fisika", "Kimia", "Biologi"].every((m) => MAPEL_EKSAK.test(m)) && !MAPEL_EKSAK.test("Ekonomi") && !MAPEL_EKSAK.test("Fikih"));
+  for (const [nama, a] of Object.entries(ASAS_ALFATAH)) {
+    const jumlah = { ...a.jumlah, BS: 2, MJ: 3 };
+    const k = rencanaLevel(jumlah, a.level, ["BS", "MJ"]);
+    const bentukNo = (["PG", "PGK", "BS", "MJ", "ISIAN", "URAIAN"] as const).flatMap((b) => Array(jumlah[b]).fill(b));
+    assert.deepEqual({ LOTS: k.filter((x) => x === "LOTS").length, MOTS: k.filter((x) => x === "MOTS").length, HOTS: k.filter((x) => x === "HOTS").length }, hitungLevel(jumlahSoal(jumlah), a.level), nama);
+    assert.ok(!k.some((x, i) => x === "HOTS" && ["BS", "MJ"].includes(bentukNo[i])), nama);
+  }
+  const p = { babId: "materi-1", tujuan: "PAS", kesulitan: "Sedang", jumlah: { ...nol, PG: 30, PGK: 5, BS: 3, MJ: 2, URAIAN: 5 }, level: ASAS_ALFATAH.nonEksak.level } as Pengaturan;
+  assert.match(String(bersihkanPengaturan(p)), /Menjodohkan minimal 3/);
+  assert.equal(typeof bersihkanPengaturan({ ...p, jumlah: { ...p.jumlah, BS: 2, MJ: 3 } }), "object"); // 45 soal sah (maks 50)
+  // instruksi sistem: jenis madrasah = Benar/Salah & menjodohkan gaya lama; TKA = Kategori tanpa menjodohkan
+  assert.ok(buatSistem(bab).includes("SATU nomor = SATU pernyataan") && buatSistem(bab).includes('"jodoh"') && !buatSistem(bab).includes('"label":["Benar","Salah"],"kunci":["Benar"'));
+  assert.ok(buatSistem(bab, true).includes("model Kategori") && !buatSistem(bab, true).includes('"jodoh"'));
+});
+
+test("0.22.0 menjodohkan gaya lama: daftar bersama per blok, kunci satu huruf, diperiksa per blok, Edit tetap satu blok", () => {
+  const dasar = { dalil_id: null, pembahasan: "p", level: "C1", tp: "TP 3.1", skor: 2, bentuk: "MJ" as const };
+  const ai: Soal[] = [
+    { ...dasar, pertanyaan: "Membaca dengan dengung", jodoh: "Ikhfa", grup: 1, kunci: "" },
+    { ...dasar, pertanyaan: "Membaca jelas", jodoh: "Izhar", grup: 1, kunci: "" },
+    { ...dasar, pertanyaan: "Melebur ke huruf berikutnya", jodoh: "Idgam", grup: 1, kunci: "", pengecoh: ["Qalqalah"] },
+  ];
+  const urut = [0.1, 0.9, 0.5, 0.3];
+  let n = 0;
+  const jadi = susunMjLama(ai, () => urut[n++ % urut.length]);
+  assert.equal(jadi[0].jawaban!.length, 4);
+  assert.ok(jadi.every((s) => JSON.stringify(s.jawaban) === JSON.stringify(jadi[0].jawaban) && !("jodoh" in s) && !("pengecoh" in s)));
+  jadi.forEach((s, i) => assert.equal(s.jawaban!["ABCDEFG".indexOf(String(s.kunci))], ai[i].jodoh));
+  assert.ok(!jadi.every((s, i) => s.kunci === "ABC"[i])); // tidak sejajar dengan urutan nomor
+  assert.deepEqual(periksaSoal(jadi, bab).map((s) => s.peringatan), [[], [], []]);
+  // dua nomor berkunci sama & tanpa pengecoh ditandai
+  const salah = jadi.map((s) => ({ ...s, kunci: jadi[0].kunci, jawaban: s.jawaban!.slice(0, 3) }));
+  assert.ok(periksaSoal(salah, bab)[1].peringatan!.some((w) => w.includes("jawaban yang sama")));
+  // Edit guru: rapikanSoal mempertahankan blok (grup tanpa wacana) dan kunci satu huruf
+  const edit = rapikanSoal({ ...jadi[1], kunci: "b" }, "MJ");
+  assert.equal(edit.grup, 1);
+  assert.equal(edit.kunci, "B");
+  assert.ok(!("premis" in edit));
+  assert.deepEqual(blokMj(5), [5]);
+  assert.deepEqual(blokMj(6), [3, 3]);
+  assert.deepEqual(blokMj(11), [4, 4, 3]);
+});
+
+test("0.22.0 level kisi dikunci ke kategori rencana (set 86: AI menulis C2 untuk baris MOTS/HOTS)", async () => {
+  const { sesuaikanLevel, rencanaLevelSet, ASAS_ALFATAH } = await import("./prompt.ts");
+  assert.equal(sesuaikanLevel("C2", "MOTS"), "C3");
+  assert.equal(sesuaikanLevel("C1", "HOTS"), "C4");
+  assert.equal(sesuaikanLevel("C5", "HOTS"), "C5");
+  assert.equal(sesuaikanLevel("C4", "LOTS"), "C2");
+  const p = { babId: "x", tujuan: "PAS", kesulitan: "Sedang", jumlah: { ...ASAS_ALFATAH.nonEksak.jumlah, BS: 2, MJ: 3 }, level: ASAS_ALFATAH.nonEksak.level } as Pengaturan;
+  const r = rencanaLevelSet(p);
+  const levelAi = r.map(() => "C2"); // AI menulis C2 semua
+  const jadi = levelAi.map((l, i) => sesuaikanLevel(l, r[i]));
+  const kat = (l: string) => (["C1", "C2"].includes(l) ? "LOTS" : l === "C3" ? "MOTS" : "HOTS");
+  assert.deepEqual({ LOTS: jadi.filter((l) => kat(l) === "LOTS").length, MOTS: jadi.filter((l) => kat(l) === "MOTS").length, HOTS: jadi.filter((l) => kat(l) === "HOTS").length }, { LOTS: 15, MOTS: 20, HOTS: 10 });
 });

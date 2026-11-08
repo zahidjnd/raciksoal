@@ -134,8 +134,10 @@ Bloom revisi juga membagi jenis pengetahuan: faktual, konseptual, prosedural, me
 |---|---|---|
 | **Pilihan Ganda (PG)** | 5 pilihan (A–E), tepat 1 benar; pengecoh homogen & masuk akal | ✅ sesuai |
 | **PG Kompleks — jawaban ganda (MCMA)** | 5 pilihan, lebih dari satu benar tapi tidak semua | ✅ **2 atau 3 benar**, sesuai soal. Petunjuk: **"(Pilih semua jawaban yang tepat)"**, tanpa menyebut jumlah (sama dengan TKA) |
-| **PG Kompleks — Kategori (dulu "Benar/Salah")** | satu stimulus + **4 pernyataan**, tiap pernyataan dinilai dengan sepasang label | ✅ label: Benar/Salah, Fakta/Opini, Sesuai/Tidak Sesuai, Tepat/Tidak Tepat, atau Didukung/Tidak Didukung, diragamkan dalam satu set. (0.19.0) **Urutan 4 pernyataan diacak aplikasi** (kunci ikut), supaya letak pernyataan salah tidak berpola; pembahasan menyebut isi pernyataan, bukan urutannya. Soal yang pembahasannya menunjuk urutan ("pernyataan pertama") tidak diacak, supaya pembahasannya tetap benar |
-| **Menjodohkan** | 5 premis; jawaban di lajur kanan lebih banyak dari premis | ✅ (0.10.0) 5 premis + 6 jawaban (1 pengecoh). AI hanya menulis 5 pasangan benar + 1 pengecoh; **aplikasi mengacak lajur kanan dan menyusun kunci hurufnya**. Skor **per pasangan** (bobot 5 = 1 poin/pasangan). Bukan untuk Latihan TKA. (0.19.1) Hubungan **satu-satu**, bukan pengelompokan (mis. 5 pajak → pusat/daerah: jawabannya pasti berulang; materi seperti itu lebih cocok untuk Kategori/PG kompleks). 🔍 Jawaban berulang ditandai; perbaikan otomatis boleh pindah ke sisi materi lain dan memperbarui indikator kisi |
+| **Benar/Salah gaya Al-Fatah** (0.22.0, semua jenis kecuali Latihan TKA) | satu nomor = **satu pernyataan**, siswa memilih A (Benar) / B (Salah) | ✅ AI menulis satu kalimat pernyataan (bukan kalimat tanya); **kunci tiap nomor ditentukan aplikasi** (separuh Benar, separuh Salah, urutan acak) lewat kisi-kisi. Pernyataan salah = ubah satu konsep. Tidak diberi level HOTS (kalimat pendek tanpa stimulus; HOTS dipindah ke bentuk lain, jumlah total tetap). 🔍 kunci harus Benar/Salah, kalimat tanya ditandai |
+| **Menjodohkan gaya Al-Fatah** (0.22.0, semua jenis kecuali Latihan TKA) | satu nomor = **satu pernyataan** lajur kiri; beberapa nomor berurutan dijodohkan dengan **satu daftar jawaban** (satu pengecoh) | ✅ minimal 3 nomor; blok maks 5 nomor (6–10 nomor dibagi dua blok). AI menulis pernyataan + jodohnya per nomor (+1 pengecoh); **aplikasi menyusun & mengacak daftar jawaban dan huruf kuncinya**. Tidak diberi level HOTS. Tidak bisa diganti/diubah/ditambah AI per nomor (daftar dipakai bersama): perbaiki lewat Edit (daftar jawaban yang diedit ikut ke nomor lain di blok). Skor per nomor. 🔍 kunci satu huruf, dua nomor tidak boleh berkunci sama, daftar harus punya pengecoh |
+| **PG Kompleks — Kategori (dulu "Benar/Salah")** — kini hanya **Latihan TKA** | satu stimulus + **4 pernyataan**, tiap pernyataan dinilai dengan sepasang label | ✅ label: Benar/Salah, Fakta/Opini, Sesuai/Tidak Sesuai, Tepat/Tidak Tepat, atau Didukung/Tidak Didukung, diragamkan dalam satu set. (0.19.0) **Urutan 4 pernyataan diacak aplikasi** (kunci ikut), supaya letak pernyataan salah tidak berpola; pembahasan menyebut isi pernyataan, bukan urutannya. Soal yang pembahasannya menunjuk urutan ("pernyataan pertama") tidak diacak, supaya pembahasannya tetap benar |
+| **Menjodohkan model 0.10.0** (set lama; soal baru memakai gaya Al-Fatah di atas) | 5 premis; jawaban di lajur kanan lebih banyak dari premis | ✅ (0.10.0) 5 premis + 6 jawaban (1 pengecoh). AI hanya menulis 5 pasangan benar + 1 pengecoh; **aplikasi mengacak lajur kanan dan menyusun kunci hurufnya**. Skor **per pasangan** (bobot 5 = 1 poin/pasangan). Bukan untuk Latihan TKA. (0.19.1) Hubungan **satu-satu**, bukan pengelompokan (mis. 5 pajak → pusat/daerah: jawabannya pasti berulang; materi seperti itu lebih cocok untuk Kategori/PG kompleks). 🔍 Jawaban berulang ditandai; perbaikan otomatis boleh pindah ke sisi materi lain dan memperbarui indikator kisi |
 | **Isian / jawaban singkat** | jawaban berupa kata, frasa, angka, atau simbol | ✅ (0.10.0) kalimat dengan satu bagian kosong "....", kunci: AI diminta ≤ 5 kata, aplikasi baru menandai bila > 6 kata (kelonggaran) + jawaban lain yang diterima (pegangan guru). Skor 1/0. Jawaban tidak boleh muncul di soal. Bukan untuk Latihan TKA |
 | **Uraian** | menuntut jawaban terurai; wajib ada **pedoman penskoran (rubrik)** | ✅ sesuai. (0.18.1) Soal wajib menyebut **batasan jawaban** ("Sebutkan **tiga** ...", "dari segi ... dan ..."), bukan "Jelaskan tentang ...!"; kunci lengkap untuk semua bagian; rubrik mengikuti batasan (3 hal → 3 kriteria) dan menyebut kapan skor penuh/sebagian, contoh (0.19.0): "Menyebut tiga syarat (3 = tiga benar; 2 = dua benar; 1 = satu benar; 0 = tidak ada)". Hanya instruksi ke AI, tidak diperiksa aplikasi |
 
@@ -147,6 +149,18 @@ Penskoran resmi: PG, PGK, menjodohkan, isian = 1/0 per butir. ✅ Aplikasi memak
 karena sesuai format madrasah.
 
 ---
+
+### 3a. Format ASAS MA Al-Fatah (surat Kepala MA No. 433/P/MA/PP.006/SPb/11/2026, 7 November 2026)
+
+| | Eksak (Matematika, Fisika, Kimia, Biologi) | Non-Eksak |
+|---|---|---|
+| PG / PG kompleks / Menjodohkan+Benar-Salah / Esai | 20 / 5 / 5 / 5 = **35** | 30 / 5 / 5 / 5 = **45** |
+| HOTS / MOTS / LOTS | 8 / 15 / 12 | 10 / 20 / 15 |
+| Skor (otomatis, total 100) | PG 2, PGK 4, MJ/BS 2, Esai 6 | PG 1, PGK 4, MJ/BS 2, Esai 8 |
+
+✅ (0.22.0) Kartu ASAS langsung mengisi format sesuai mapel; dua tombol "Eksak (35 soal)" / "Non-Eksak (45 soal)".
+"Menjodohkan/BS 5" = total 5 nomor, boleh campur (menjodohkan minimal 3). Skor = keputusan pemilik (surat tidak
+mengatur skor). Persen level dipilih supaya jumlahnya persis surat (34/43/23 dan 33/45/22).
 
 ## 4. Stimulus
 
