@@ -101,13 +101,13 @@ async function tanyaDenganCadangan<T>(sistem: string, pengguna: string, slotUtam
 }
 
 /** Ambil daftar soal dari JSON jawaban AI; `perlu` = jumlah minimal (kelebihan dibuang). */
-function ambilSoal(data: unknown, perlu = 1): Soal[] {
+function ambilSoal(data: unknown, perlu = 1, maks = perlu): Soal[] {
   // Sebagian jawaban satu soal datang tanpa dibungkus daftar ("soal": {...} atau soalnya langsung) → dibungkus di sini.
   const mentah = (data as { soal?: unknown })?.soal ?? ((data as { pertanyaan?: unknown })?.pertanyaan ? data : undefined);
   const soal = mentah && !Array.isArray(mentah) && typeof mentah === "object" ? [mentah] : mentah;
   if (!Array.isArray(soal) || !soal.length) throw new Error("daftar soal tidak ditemukan.");
   if (soal.length < perlu) throw new Error(`hanya ${soal.length} dari ${perlu} soal.`);
-  return (soal as Soal[]).slice(0, Math.max(perlu, 1));
+  return (soal as Soal[]).slice(0, Math.max(maks, 1));
 }
 
 /** Pilihan bab di form: bab bawaan + materi milik guru yang sedang masuk. */
@@ -275,18 +275,26 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
         const terpakai = bocor ? ` Kata/frasa yang SUDAH tertulis di soal lain, jadi TIDAK boleh menjadi jawaban baru: ${kataTerpakai(soal, i).map((k) => `"${k}"`).join(", ")}` : "";
         const instruksi = `${awal}Perbaiki soal ini (bentuk, TP, level tetap). Masalah: ${masalah}${terpakai}`;
         // Instruksi buatan aplikasi boleh lebih panjang dari batas guru (300), supaya potongan teks bocor dan daftar kata tidak terpotong.
-        const [baru] = await tanya(`Perbaikan soal ${i + 1}`, buatPenggantiPengguna(p, s, soal, kisi[i], instruksi, 2000), (d) => ambilSoal(d));
-        const { stimulus: _s, indikator, ...isi } = susunMenjodohkan(samakanDenganKisi(baru, kisi[i]));
-        void _s;
+        // Isian bocor: 3 calon sekaligus, aplikasi memakai yang pertama bersih. Satu calon saja sering gagal karena konsep
+        // penggantinya juga sudah tertulis di soal lain (set 93: "fungsi anggaran", "fungsi mengatur"); 14 dari 17 isian bocor
+        // di data laptop memang konsep yang ditanyakan dua kali, jadi isiannya harus pindah konsep.
+        const calon = bocor ? 3 : 1;
+        const daftar = await tanya(`Perbaikan soal ${i + 1}`, buatPenggantiPengguna(p, s, soal, kisi[i], instruksi, 2000, calon), (d) => ambilSoal(d, 1, calon));
         // Diperiksa bersama seluruh set (bukan sendirian), supaya kunci isian yang masih bocor ke soal lain tetap ketahuan.
-        const cek = periksaSoal(soal.map((x, j) => (j === i ? isi : x)), bab, cekAyat)[i];
-        if (cek.peringatan?.length) info.perbaikan.push(`Soal ${i + 1}: perbaikan otomatis masih melanggar aturan (${cek.peringatan.join("; ")}), soal awal dipakai.`);
+        const hasil = daftar.map((baru) => {
+          const { stimulus: _s, indikator, ...isi } = susunMenjodohkan(samakanDenganKisi(baru, kisi[i]));
+          void _s;
+          return { indikator, cek: periksaSoal(soal.map((x, j) => (j === i ? isi : x)), bab, cekAyat)[i] };
+        });
+        const bersih = hasil.findIndex((h) => !h.cek.peringatan?.length);
+        const { indikator, cek } = hasil[Math.max(bersih, 0)];
+        if (cek.peringatan?.length) info.perbaikan.push(`Soal ${i + 1}: perbaikan otomatis masih melanggar aturan (${cek.peringatan.join("; ")})${hasil.length > 1 ? `, ${hasil.length} calon semuanya gagal` : ""}, soal awal dipakai.`);
         else {
           soal[i] = cek;
           // Indikator baru (konsep lain) ikut ke kisi-kisi; teks berisi Arab tak terverifikasi tidak dipakai (aturan 5).
           const ind = String(indikator ?? "").trim();
           if ((bocor || kelompok) && ind && !pemeriksaArab(bab, cekAyat)(ind).length) kisi[i] = { ...kisi[i], indikator: ind };
-          info.perbaikan.push(`Soal ${i + 1} diperbaiki otomatis: ${masalah}`);
+          info.perbaikan.push(`Soal ${i + 1} diperbaiki otomatis${hasil.length > 1 ? ` (calon ${bersih + 1} dari ${hasil.length})` : ""}: ${masalah}`);
         }
       } catch (e) {
         info.perbaikan.push(`Soal ${i + 1}: perbaikan otomatis gagal (${pesanError(e)}), soal awal dipakai.`);

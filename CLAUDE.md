@@ -667,3 +667,9 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   (guru.uji.ayat, materi-8 Ekonomi, ASAS 25: PG12 PGK3 BS5 ISIAN3 URAIAN2): pasangan mirip tanpa Uraian 0 (set lama
   sejenis 69–80: 5 pasangan di 4/9 set); sisa 2 pasangan PG–Uraian PPh (dibolehkan). Langkah 2 (deteksi + perbaikan kisi
   oleh aplikasi) BELUM perlu. Set 93: 2 isian merah = masalah lama isian bocor (kata), perbaikan otomatis gagal.
+- 2026-11-09 ISIAN BOCOR: 3 CALON (pemilik "gas"): perbaikan otomatis isian bocor kini meminta 3 calon sekaligus
+  (`buatPenggantiPengguna(..., calon)`, `ambilSoal(d, 1, calon)`), aplikasi memakai calon pertama yang lolos `periksaSoal`
+  terhadap seluruh set; `info.perbaikan` menulis "(calon N dari 3)". Sebab: 1 calon sering pindah ke konsep yang juga sudah
+  tertulis (set 93: "fungsi anggaran", "fungsi mengatur"); ukur data laptop: 14 dari 17 isian bocor = konsep ditanya dua kali
+  (kunci/pokok soal lain), 3 hanya di pengecoh. Uji laptop set 94 & 95 (materi-8 Ekonomi, ASAS 25 seperti set 93): kedua
+  isian bocor diperbaiki dengan calon 2 dari 3 (cara lama = tetap merah), 0 merah. Belum di-push.
