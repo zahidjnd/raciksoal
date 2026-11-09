@@ -52,6 +52,15 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.26.0 — 9 November 2026
+- **Istilah Arab pendek tidak perlu diverifikasi lagi.** Tulisan Arab paling banyak 3 kata di materi (misalnya
+  مُعْجِزَةٌ, خُلُقٌ, atau huruf ق) kini dipakai apa adanya: tidak dibuang, tidak masuk kotak ayat & hadis, dan tidak perlu
+  dicentang. Daftarnya terlihat di kartu materi. Huruf ق juga tidak lagi dianggap ayat (QS. Qaf).
+- **Tombol "Bukan ayat/hadis".** Teks Arab yang lebih panjang dan tidak ada di mushaf (misalnya kata mutiara/mahfuzhat)
+  cukup diklik "Bukan ayat/hadis": tidak perlu menulis sumber dan tidak perlu centang. AI tidak akan menyebutnya hadis,
+  dan lembar soal tidak lagi mencetak keterangan "(Bukan ayat/hadis)". Materi lama yang sumbernya ditulis
+  "bukan ayat/hadis" otomatis dikenali.
+
 ## 0.25.0 — 9 November 2026
 - **Kisi-kisi diperiksa ulang sebelum soal ditulis.** Setelah kisi-kisi disusun, AI memeriksanya sekali lagi untuk
   mencari nomor yang menguji hal yang sama di bentuk berbeda (misalnya PG dan isian sama-sama menghitung inflasi).
