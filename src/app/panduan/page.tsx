@@ -51,7 +51,15 @@ const LANGKAH: { judul: string; isi: React.ReactNode[] }[] = [
     ],
   },
   {
-    judul: "5. Aturan penting",
+    judul: "5. Materi saya",
+    isi: [
+      <>Materi bisa ditambah dengan dua cara: langsung di <b>Set baru</b> (tersimpan otomatis saat menekan <b>Buat soal</b>), atau lewat menu <b>Materi saya</b> → <b>+ Tambah materi</b> → <b>Analisa materi</b> → <b>Simpan materi</b>. Cara kedua cocok untuk menyiapkan beberapa bab sekaligus di awal semester.</>,
+      <>Di <b>Materi saya</b>, materi dikelompokkan per mapel dan kelas. Tekan <b>Ubah</b> untuk membetulkan judul, TP, isi, atau ayat &amp; hadis; <b>Buat soal</b> untuk langsung membuat soal dari materi itu; <b>Hapus</b> untuk materi yang dobel. Set soal yang sudah dibuat tidak ikut berubah atau terhapus.</>,
+      <>Di kotak <b>Ayat &amp; hadis</b>, ketik rujukan (mis. <b>QS An-Nur: 2</b>) lalu tekan <b>Ambil ayat</b>: teksnya diambil dari data mushaf. Hadis ditambah lewat <b>+ Tambah hadis</b>, lalu centang pernyataan pemeriksaan.</>,
+    ],
+  },
+  {
+    judul: "6. Aturan penting",
     isi: [
       <>Ayat Al-Qur’an diambil dari data mushaf di aplikasi, bukan dikarang AI. Hadis hanya dari teks yang Anda tempel dan centang sendiri.</>,
       <>Dari file PDF, teks Arab yang bukan ayat dibuang (teks Arab PDF sering rusak). Tempel hadis langsung dari sumber terpercaya.</>,
@@ -59,7 +67,7 @@ const LANGKAH: { judul: string; isi: React.ReactNode[] }[] = [
     ],
   },
   {
-    judul: "6. Kalau ada masalah",
+    judul: "7. Kalau ada masalah",
     isi: [
       <>Muat ulang halaman (tarik ke bawah di HP, atau tekan F5 di laptop), lalu coba lagi.</>,
       <>Bila masih bermasalah, hubungi admin dan sebutkan nomor versi yang tertulis di bawah nama Anda di sidebar.</>,

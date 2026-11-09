@@ -3,262 +3,82 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { BATAS_MATERI, DAFTAR_MAPEL, type IsianMateri } from "@/lib/materi";
-import { KELAS } from "@/lib/soal";
-import { NAMA_SURAH } from "@/lib/surah";
-import { ambilAyat, cocokkanAyat, hapusMateri, simpanMateri } from "./actions";
+import { KartuMateri, KotakMateri, PilihMapel } from "../kotak-materi";
+import { modeArab, type IsianMateri } from "@/lib/materi";
+import { hapusMateri, simpanMateri } from "./actions";
 
-const kotak = "mt-1 w-full rounded-lg border p-2 text-sm";
-const DALIL_KOSONG = { sumber: "", arab: "", terjemah: "" };
-const BATAS_FILE = 30 * 1024 * 1024; // dibaca di browser, jadi boleh besar (PPT berisi gambar)
+const TERSIMPAN = "Materi tersimpan. Bisa dipilih lewat “Pakai materi sebelumnya” saat membuat soal.";
 
-/** Form tambah/ubah materi sendiri (langkah 8a). */
-export function FormMateri({ id: idAwal, awal }: { id: number | null; awal: IsianMateri }) {
+/**
+ * Tambah/ubah materi di halaman Materi saya. Memakai kotak & kartu yang SAMA dengan Set baru (kotak-materi.tsx):
+ * materi baru = tempel/lampirkan → Analisa materi → kartu → Simpan materi (tanpa membuat soal).
+ */
+export function FormMateri({ id: idAwal, awal, tersimpan = false }: { id: number | null; awal: IsianMateri | null; tersimpan?: boolean }) {
+  const router = useRouter();
   const [id, setId] = useState(idAwal);
-  const [m, setM] = useState<IsianMateri>(awal);
+  const [draf, setDraf] = useState<IsianMateri | null>(awal);
+  const [mapel, setMapel] = useState(awal?.mapel ?? "");
+  const [kelas, setKelas] = useState(awal?.kelas ?? "");
   const [menyimpan, setMenyimpan] = useState(false);
-  const [pesan, setPesan] = useState<{ ok: boolean; teks: string; dihapus?: string[] } | null>(null);
-  const [membaca, setMembaca] = useState<{ ok: boolean; teks: string } | null>(null);
-  const ubah = (sebagian: Partial<IsianMateri>) => setM({ ...m, ...sebagian });
-  const ubahDalil = (i: number, sebagian: Partial<IsianMateri["dalil"][number]>) =>
-    ubah({ dalil: m.dalil.map((d, j) => (j === i ? { ...d, ...sebagian } : d)) });
-  const [rujukan, setRujukan] = useState("");
-  const [ayat, setAyat] = useState<{ proses: boolean; pesan?: string }>({ proses: false });
+  const [pesan, setPesan] = useState<{ ok: boolean; teks: string; dihapus?: string[] } | null>(tersimpan ? { ok: true, teks: TERSIMPAN } : null);
 
-  /** Langkah 9: ambil teks ayat dari data mushaf (tidak diketik guru). */
-  async function ambil() {
-    if (!rujukan.trim()) return;
-    if (m.dalil.length >= BATAS_MATERI.dalil) return setAyat({ proses: false, pesan: `Kotak ayat sudah penuh (maks ${BATAS_MATERI.dalil}).` });
-    setAyat({ proses: true });
-    const r = await ambilAyat(rujukan).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
-    if (!r.ok) return setAyat({ proses: false, pesan: r.pesan });
-    if (m.dalil.some((d) => d.arab === r.arab)) return setAyat({ proses: false, pesan: `${r.sumber} sudah ada di daftar.` });
-    ubah({ dalil: [...m.dalil, { sumber: r.sumber, arab: r.arab, terjemah: "", mushaf: true }] });
-    setRujukan("");
-    setAyat({ proses: false });
+  function pilihMapel(m: string, k: string) {
+    setMapel(m);
+    setKelas(k);
+    setPesan(null);
+    // Materi tersimpan: mode teks Arab hanya ikut berubah bila mapelnya diganti (materi lama bisa memilih mode sendiri).
+    if (id && draf) setDraf({ ...draf, mapel: m, kelas: k, ...(m !== draf.mapel && { teksArab: modeArab(m) }) });
+    else setDraf(null); // materi baru: analisa bergantung pada mapel, jadi diulang (sama seperti Set baru)
   }
-  const perluCentang = m.dalil.some((d) => !d.mushaf);
 
-  /** Langkah 8b: ambil teks dari file Word/PowerPoint di browser (file tidak diunggah ke hosting). */
-  async function ambilFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0];
-    e.target.value = ""; // supaya file yang sama bisa dipilih lagi
-    if (!f) return;
-    if (f.size > BATAS_FILE) return setMembaca({ ok: false, teks: `File terlalu besar (maks ${BATAS_FILE / 1024 / 1024} MB).` });
-    setMembaca({ ok: true, teks: `Membaca ${f.name}...` });
-    try {
-      const { bacaFileOffice } = await import("@/lib/office"); // dimuat hanya saat dipakai
-      const r = await bacaFileOffice(await f.arrayBuffer(), f.name);
-      // Langkah 9: teks Arab dicocokkan ke mushaf di server. Ayat → teks resmi; basmalah → dibuang; sisanya usulan.
-      const cocok = await cocokkanAyat(r.arab);
-      if (!cocok) throw new Error("Sesi masuk sudah berakhir. Muat ulang halaman lalu masuk lagi.");
-      const ada = new Set(m.dalil.map((d) => d.arab.trim()));
-      const hasil: IsianMateri["dalil"] = [];
-      const arabIsi: string[] = []; // mode Bahasa Arab: teks Arab bukan ayat = isi pelajaran, masuk ke Isi materi
-      r.arab.forEach((arab, i) => {
-        const c = cocok[i];
-        if (!c && m.teksArab === "bahasa") return void arabIsi.push(arab);
-        const d = c === "basmalah" ? null : c ? { ...c, terjemah: "", mushaf: true } : { sumber: "", arab, terjemah: "", usulan: true };
-        if (d && !ada.has(d.arab)) {
-          hasil.push(d);
-          ada.add(d.arab);
-        }
-      });
-      const baru = hasil.slice(0, Math.max(0, BATAS_MATERI.dalil - m.dalil.length));
-      const nAyat = baru.filter((d) => d.mushaf).length;
-      const nUsulan = baru.length - nAyat;
-      setM({
-        ...m,
-        judul: m.judul || f.name.replace(/\.(docx|pptx)$/i, ""),
-        isi: [m.isi.trim(), [...r.teks, ...arabIsi].join("\n")].filter(Boolean).join("\n\n"),
-        dalil: [...m.dalil, ...baru],
-        // Aturan 5: ada usulan teks Arab baru (bukan ayat mushaf) → guru wajib memeriksa & mencentang ulang.
-        diverifikasi: nUsulan ? false : m.diverifikasi,
-      });
-      setMembaca({
-        ok: true,
-        teks:
-          `Dari ${f.name}: ${r.teks.length} paragraf teks ditambahkan ke Isi materi (silakan rapikan/hapus yang tidak perlu).` +
-          (nAyat ? ` ${nAyat} ayat ditemukan di mushaf (kotak hijau, teks diganti teks mushaf): tinggal isi terjemahnya.` : "") +
-          (nUsulan ? ` ${nUsulan} teks Arab lain (hadis/doa?) diusulkan (kotak kuning): lengkapi sumber & terjemahnya, periksa harakatnya, hapus yang tidak perlu.` : "") +
-          (hasil.length > baru.length ? ` ${hasil.length - baru.length} teks Arab lain tidak dimasukkan karena kotak ayat sudah penuh (maks ${BATAS_MATERI.dalil}).` : ""),
-      });
-    } catch (err) {
-      setMembaca({ ok: false, teks: (err as Error).message || "File tidak bisa dibaca." });
-    }
-  }
+  const alasan =
+    !mapel || !kelas ? "Pilih mata pelajaran dan kelas dulu." :
+    !draf ? "Tempel teks atau lampirkan file, lalu tekan Analisa materi." :
+    !draf.tp.trim() ? "Isi Tujuan Pembelajaran (TP) di kartu materi dulu." :
+    draf.tpUsulan && !draf.tpDibaca ? "Baca TP usulan AI di kartu materi, lalu centang persetujuannya." : "";
 
   async function simpan() {
+    if (!draf || alasan) return;
     setMenyimpan(true);
     setPesan(null);
-    const r = await simpanMateri(id, m).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
+    const r = await simpanMateri(id, { ...draf, mapel, kelas }).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
     setMenyimpan(false);
     if (!r.ok) return setPesan({ ok: false, teks: r.pesan });
-    setM(r.isian); // tampilkan isi yang benar-benar tersimpan
-    if (!id) history.replaceState(history.state, "", `/materi/${r.id}`); // history.state: lihat catatan di buat-soal.tsx
+    setDraf(r.isian); // tampilkan isi yang benar-benar tersimpan
+    // Alamat jadi /materi/<id> supaya muat ulang tidak membuka form kosong (replaceState ditimpa Next setelah revalidatePath).
+    // Halaman dimuat ulang oleh Next, jadi pesan "tersimpan" dibawa lewat alamat (kecuali ada teks Arab dibuang: pesannya tetap di sini).
+    if (!id && !r.dihapus.length) return router.replace(`/materi/${r.id}?tersimpan=1`, { scroll: false });
     setId(r.id);
-    setPesan({ ok: true, teks: "Materi tersimpan. Sekarang bisa dipilih di form Buat Soal.", dihapus: r.dihapus });
+    setPesan({ ok: true, teks: TERSIMPAN, dihapus: r.dihapus });
   }
 
   return (
-    <section className="space-y-5 rounded-xl border bg-kartu p-4">
+    <section className="space-y-4">
+      <Link href="/materi" className="text-sm text-pudar underline">← Materi saya</Link>
       <h1 className="text-2xl">{id ? "Ubah materi" : "Tambah materi"}</h1>
+      <PilihMapel mapel={mapel} kelas={kelas} ubah={pilihMapel} />
+      {id && draf ? (
+        <KartuMateri draf={draf} setDraf={setDraf} judul="Isi materi (semua bisa diubah)" />
+      ) : (
+        <KotakMateri mapel={mapel} kelas={kelas} daftar={[]} pilihan={[]} setPilihan={() => {}} draf={draf} setDraf={setDraf} gabung={false} />
+      )}
 
-      <div className="space-y-1 rounded-lg border border-dashed border-hijau p-3 text-sm">
-        <p className="font-semibold">Ambil dari file Word/PowerPoint (opsional)</p>
-        <label className="inline-flex h-10 cursor-pointer items-center rounded-lg border border-hijau max-md:min-h-11 bg-kartu px-4 font-semibold text-hijau-teks hover:bg-hijau-muda focus-within:ring-2 focus-within:ring-hijau">
-          Pilih file Word/PowerPoint
-          <input type="file" accept=".docx,.pptx" className="sr-only" onChange={ambilFile} />
-        </label>
-        <p className="text-xs text-pudar">
-          File .docx / .pptx dibaca di perangkat Anda (tidak diunggah). Teksnya ditambahkan ke Isi materi; teks Arabnya hanya menjadi
-          USULAN ayat/hadis yang wajib Anda periksa. PDF tidak didukung.
-        </p>
-        {membaca && <p className={membaca.ok ? "text-hijau-teks" : "text-bahaya"}>{membaca.teks}</p>}
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-[1fr_8rem]">
-        <label className="block text-sm">
-          Mata pelajaran
-          <input
-            className={kotak}
-            list="daftar-mapel"
-            maxLength={BATAS_MATERI.mapel}
-            placeholder="Contoh: Fikih"
-            value={m.mapel}
-            onChange={(e) => ubah({ mapel: e.target.value, ...(/bahasa arab/i.test(e.target.value) && { teksArab: "bahasa" as const }) })}
-          />
-          <datalist id="daftar-mapel">
-            {DAFTAR_MAPEL.map((n) => <option key={n} value={n} />)}
-          </datalist>
-        </label>
-        <label className="block text-sm">
-          Kelas
-          <select className={kotak} value={m.kelas} onChange={(e) => ubah({ kelas: e.target.value })}>
-            <option value="">Pilih</option>
-            {KELAS.map((k) => <option key={k} value={k}>{k}</option>)}
-          </select>
-        </label>
-      </div>
-
-      <fieldset className="space-y-1 text-sm">
-        <legend>Teks Arab di materi ini</legend>
-        {(
-          [
-            ["dalil", "Dalil (ayat & hadis)", "Semua teks Arab dijaga ketat: hanya yang ada di kotak Ayat & Hadis Terverifikasi. Untuk Qurdis, Fikih, Akidah Akhlak, SKI, dan mapel umum."],
-            ["bahasa", "Bahasa Arab", "Teks Arab adalah isi pelajaran: AI boleh menulis kosakata dan kalimat Arab. Ayat Al-Qur'an tetap dijaga (yang mirip ayat tapi tidak ada di kotak terverifikasi ditandai merah)."],
-          ] as const
-        ).map(([nilai, judul, ket]) => (
-          <label key={nilai} className="flex items-start gap-2">
-            <input type="radio" name="teks-arab" className="mt-1" checked={m.teksArab === nilai} onChange={() => ubah({ teksArab: nilai })} />
-            <span>
-              <span className="font-semibold">{judul}</span>
-              <span className="block text-xs text-pudar">{ket}</span>
-            </span>
-          </label>
-        ))}
-      </fieldset>
-
-      <label className="block text-sm">
-        Judul materi
-        <input className={kotak} maxLength={BATAS_MATERI.judul} placeholder="Contoh: Bab I: Berbakti kepada Orang Tua" value={m.judul} onChange={(e) => ubah({ judul: e.target.value })} />
-      </label>
-
-      <label className="block text-sm">
-        Tujuan Pembelajaran (TP), satu per baris
-        <textarea
-          className={kotak}
-          rows={4}
-          placeholder={"TP 1.1: Peserta didik mampu ...\nTP 1.2: Peserta didik mampu ..."}
-          value={m.tp}
-          onChange={(e) => ubah({ tp: e.target.value })}
-        />
-        <span className="text-xs text-pudar">Boleh diawali kode (mis. TP 1.1:); tanpa kode diberi nomor otomatis. Maks {BATAS_MATERI.tp} TP.</span>
-      </label>
-
-      <label className="block text-sm">
-        Isi materi
-        <textarea dir="auto" className={kotak} rows={12} placeholder="Tempel ringkasan materi di sini (dari buku, modul, atau PPT)." value={m.isi} onChange={(e) => ubah({ isi: e.target.value })} />
-        <span className={`text-xs ${m.isi.length > BATAS_MATERI.isi ? "font-semibold text-bahaya" : "text-pudar"}`}>
-          {m.isi.length.toLocaleString("id-ID")}/{BATAS_MATERI.isi.toLocaleString("id-ID")} huruf.{" "}
-          {m.teksArab === "bahasa"
-            ? "Teks Arab di sini dipakai sebagai isi pelajaran (jangan menempel ayat/hadis di sini; taruh di kotak bawah)."
-            : "Teks Arab di sini hanya dipakai bila sama persis dengan ayat/hadis di kotak bawah; selebihnya dibuang otomatis."}
-        </span>
-      </label>
-
-      <fieldset className="space-y-3 rounded-lg border border-hijau/40 bg-hijau-muda/40 p-3">
-        <legend className="px-1 text-sm font-semibold">Ayat & Hadis Terverifikasi</legend>
-        <p className="text-xs text-pudar">
-          AI tidak boleh mengarang ayat/hadis. Hanya teks Arab di kotak ini yang boleh muncul di soal. Ayat Al-Qur&apos;an diambil otomatis dari
-          data mushaf; hadis disalin dari kitab/sumber terpercaya (bukan dari PDF) dan wajib Anda periksa. Mapel tanpa ayat/hadis: biarkan kosong.
-        </p>
-        <div className="flex flex-wrap items-center gap-2">
-          <input
-            className="w-64 rounded-lg border p-2 text-sm"
-            list="daftar-surah"
-            placeholder="Ketik ayat, mis. QS An-Nur: 2 atau 24:2-3"
-            value={rujukan}
-            onChange={(e) => setRujukan(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && ambil()}
-          />
-          <datalist id="daftar-surah">
-            {NAMA_SURAH.map((n, i) => (
-              <option key={n} value={`QS ${n}: `}>{`${i + 1}. ${n}`}</option>
-            ))}
-          </datalist>
-          <button className="rounded-lg bg-hijau h-10 px-3 text-sm font-semibold text-white disabled:opacity-50" disabled={ayat.proses || !rujukan.trim()} onClick={ambil}>
-            {ayat.proses ? "Mengambil..." : "Ambil ayat"}
-          </button>
-          {ayat.pesan && <span className="text-sm text-bahaya">{ayat.pesan}</span>}
-        </div>
-        {m.dalil.map((d, i) => (
-          <div key={i} className={`space-y-2 rounded-lg border p-3 ${d.mushaf ? "border-hijau bg-kartu" : d.usulan ? "border-peringatan-garis bg-peringatan-muda" : "bg-kartu"}`}>
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-semibold">
-                Dalil {i + 1}
-                {d.mushaf && <span className="ml-2 font-normal text-hijau-teks">✓ teks dari mushaf, tinggal isi terjemah</span>}
-                {d.usulan && <span className="ml-2 font-normal text-peringatan">usulan dari file, tidak ditemukan di mushaf: periksa harakat & lengkapi sumber/terjemah</span>}
-              </span>
-              <button className="rounded-lg border px-2 text-sm" aria-label={`Hapus dalil ${i + 1}`} onClick={() => ubah({ dalil: m.dalil.filter((_, j) => j !== i) })}>
-                ✕ Hapus
-              </button>
-            </div>
-            <input className={kotak} readOnly={d.mushaf} placeholder="Sumber hadis, mis. HR. Bukhari dan Muslim" value={d.sumber} onChange={(e) => ubahDalil(i, { sumber: e.target.value })} />
-            <textarea dir="rtl" lang="ar" rows={3} readOnly={d.mushaf} className={`${kotak} font-arab text-2xl ${d.mushaf ? "bg-krem" : ""}`} placeholder="نص الحديث" value={d.arab} onChange={(e) => ubahDalil(i, { arab: e.target.value })} />
-            <textarea rows={2} className={kotak} placeholder="Terjemah" value={d.terjemah} onChange={(e) => ubahDalil(i, { terjemah: e.target.value })} />
-          </div>
-        ))}
-        {m.dalil.length < BATAS_MATERI.dalil && (
-          <button className="rounded-lg border bg-kartu h-8 px-3 text-sm" onClick={() => ubah({ dalil: [...m.dalil, DALIL_KOSONG] })}>
-            + Tambah hadis (ketik/tempel sendiri)
-          </button>
-        )}
-        {perluCentang && (
-          <label className="flex items-start gap-2 text-sm">
-            <input type="checkbox" className="mt-1" checked={m.diverifikasi} onChange={(e) => ubah({ diverifikasi: e.target.checked })} />
-            Saya sudah memeriksa teks Arab, harakat, dan terjemah hadis/teks di atas yang bukan dari mushaf sesuai kitab sumbernya.
-            (Ayat Al-Qur&apos;an yang ditempel sendiri akan dicocokkan otomatis ke mushaf saat disimpan.)
-          </label>
-        )}
-        <p className="text-xs text-pudar">
-          Teks Al-Qur&apos;an: <a className="underline" href="https://tanzil.net" target="_blank" rel="noreferrer">Tanzil Project (tanzil.net)</a>. Terjemah diisi guru.
-        </p>
-      </fieldset>
-
-      <div className="flex flex-wrap gap-2">
-        <button className="rounded-lg bg-hijau h-10 px-4 font-semibold text-white disabled:opacity-50" disabled={menyimpan} onClick={simpan}>
+      <div className="flex flex-wrap items-center gap-2">
+        <button className="h-10 rounded-lg bg-hijau px-4 font-semibold text-white disabled:opacity-40 max-md:min-h-11" disabled={menyimpan || !!alasan} onClick={simpan}>
           {menyimpan ? "Menyimpan..." : "Simpan materi"}
         </button>
-        <Link href="/materi" className="inline-flex items-center rounded-lg border h-10 px-4 max-md:min-h-11">Kembali</Link>
-        {id && <Link href="/" className="inline-flex items-center rounded-lg border h-10 px-4 max-md:min-h-11">Buat soal dari materi ini</Link>}
+        {id && (
+          // <a> biasa (muat penuh): Buat Soal membaca ?materi= hanya saat dimuat
+          <a href={`/?materi=materi-${id}`} className="inline-flex h-10 items-center rounded-lg border px-4 text-sm max-md:min-h-11">Buat soal dari materi ini</a>
+        )}
       </div>
+      {alasan && <p className="text-xs text-pudar">{alasan}</p>}
       {pesan && (
-        <div className={`text-sm ${pesan.ok ? "text-hijau-teks" : "text-bahaya"}`}>
+        <div className={`text-sm ${pesan.ok ? "text-hijau-teks" : "text-bahaya"}`} role={pesan.ok ? "status" : "alert"}>
           <p>{pesan.teks}</p>
           {!!pesan.dihapus?.length && (
             <p className="mt-1 rounded-lg border border-peringatan-garis bg-peringatan-muda p-2 text-peringatan">
-              ⚠️ {pesan.dihapus.length} potongan teks Arab dibuang dari judul/TP/isi karena tidak ada di kotak Ayat & Hadis Terverifikasi:{" "}
+              ⚠️ {pesan.dihapus.length} potongan teks Arab dibuang dari judul/TP/isi karena tidak ada di kotak Ayat &amp; hadis:{" "}
               <span dir="rtl" lang="ar" className="font-arab text-lg">{pesan.dihapus.join(" | ")}</span>. Bila perlu, tambahkan ayat/hadis lengkapnya ke kotak itu.
             </p>
           )}

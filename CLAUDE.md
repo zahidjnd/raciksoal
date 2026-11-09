@@ -629,3 +629,14 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   `.env.development.local` (tidak di-commit, hanya `DATABASE_URL` ke 5440) mengalahkan `.env` saat `npm run dev`.
   CATATAN DOCKER LAMA (stop datainduk / start raciksoal-db) SUDAH TIDAK PERLU. Docker Desktop AutoStart = mati: kalau
   `docker ps` error, jalankan `docker desktop start` dulu. Akses psql: `docker exec raciksoal-db psql -U <POSTGRES_USER>`.
+- 2026-11-09 (0.24.0, pilihan pemilik) MENU "MATERI SAYA" KEMBALI di sidebar, DI BAWAH PANDUAN (bukan di bawah Riwayat).
+  Dua jalan menambah materi: Set baru (tersimpan saat Buat soal) dan /materi/baru (Analisa → Simpan materi). Keduanya memakai
+  `KotakMateri` + `KartuMateri` (kotak-materi.tsx; `gabung={false}` di halaman materi). Formulir lama `FormMateri` versi
+  langkah 8a DIHAPUS (radio "Teks Arab: dalil/Bahasa Arab" ikut hilang: mode kini dari mapel lewat `modeArab`, tapi materi
+  lama yang sudah "bahasa" tetap, karena mode hanya dihitung ulang bila mapel diganti). "Ambil ayat" + "+ Tambah hadis"
+  (centang diverifikasi direset) ada di kartu, juga di Set baru. `PilihMapel` pindah ke kotak-materi.tsx. /materi:
+  kelompok per mapel·kelas (`identitasBab`), hitungan x/`BATAS_MATERI.perGuru` (300), peringatan sisa <= 20, tombol
+  Buat soal = `/?materi=materi-<id>` (<a> biasa). Simpan materi baru → `router.replace("/materi/<id>?tersimpan=1")`
+  (history.replaceState DITIMPA Next setelah revalidatePath; halaman dimuat ulang sehingga pesan dibawa lewat alamat).
+  `TautanMenu` menandai juga sub-halaman (/materi/12). Uji laptop (guru.uji.b): materi 11 (Fikih X Zakat) & 12 (Wakaf) dibuat
+  lewat Tambah materi; materi 10 diubah lalu dikembalikan; uji:pemisahan lulus semua.

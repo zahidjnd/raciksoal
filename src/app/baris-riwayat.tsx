@@ -11,7 +11,8 @@ const TANDA_AKTIF = "bg-krem-sorot font-semibold";
 
 /** Tautan menu sidebar (Semua set, Kelola guru, Pengaturan): ditandai bila alamat halaman sama dengan tautannya. */
 export function TautanMenu({ href, kelas, children }: { href: string; kelas: string; children: React.ReactNode }) {
-  const aktif = usePathname() === href;
+  const path = usePathname();
+  const aktif = path === href || path.startsWith(`${href}/`); // /materi/12 tetap menandai "Materi saya"
   return (
     <Link href={href} className={`${kelas} ${aktif ? TANDA_AKTIF : ""}`} aria-current={aktif ? "page" : undefined}>
       {children}

@@ -113,8 +113,7 @@ export async function Kerangka({ p, lebar = false, setAktif = null, children }: 
   const admin = p.peran === "admin";
   const riwayat = await ambilRiwayat(p.id, BATAS_SIDEBAR);
   const tema = (await cookies()).get("tema")?.value === "gelap" ? "gelap" : "terang";
-  // Materi kini dimasukkan langsung di halaman utama (2026-10-20); halaman kelolanya lewat tautan "Kelola materi" di sana.
-  // Panduan untuk semua akun (persiapan uji coba guru); menu admin di atasnya.
+  // Panduan & Materi saya untuk semua akun; menu admin di atasnya. Materi juga bisa dimasukkan langsung di Set baru.
   const menu = [
     ...(admin
       ? [
@@ -124,6 +123,7 @@ export async function Kerangka({ p, lebar = false, setAktif = null, children }: 
         ]
       : []),
     { href: "/panduan", label: "Panduan" },
+    { href: "/materi", label: "Materi saya" },
   ];
 
   // Tautan ke halaman utama sengaja <a> biasa (bukan Link): halaman Buat Soal membaca ?id= hanya saat dimuat.

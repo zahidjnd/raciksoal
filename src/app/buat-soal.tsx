@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ambilDaftarBab, ambilDaftarModel, ambilJatah, cekHasil, mulaiBuatSoal, ubahIdentitas } from "./actions";
 import { simpanMateri } from "./materi/actions";
 import { KartuSoal, Teks, TeksPeringatan, TulisSoalSendiri } from "./kartu-soal";
-import { KotakMateri, type MateriLama } from "./kotak-materi";
+import { KotakMateri, PilihMapel, type MateriLama } from "./kotak-materi";
 import { FormIdentitas, ringkasIdentitas } from "./form-identitas";
 import { StepAngka } from "./step-angka";
 import { Panah } from "./panah";
@@ -12,8 +12,8 @@ import { skorOtomatis } from "@/lib/skor";
 import { kunciRingkas } from "@/lib/kunci";
 import { PAKET, susunPaket, type Paket } from "@/lib/paket";
 import { ASAS_ALFATAH, ATURAN_TUJUAN, BOBOT_BAWAAN, hitungLevel, jumlahSoal, KESULITAN, MAKS_CATATAN, MAKS_SOAL, MAPEL_EKSAK, mapelTka, NAMA_BENTUK, namaBentuk, namaLevelTka, namaTujuan, PESAN_MJ_MIN, semesterDari, TKA, TUJUAN, WAKTU_BAWAAN, type Identitas, type Pengaturan } from "@/lib/prompt";
-import { KELAS, mjLama, pilihanAngka, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
-import { DAFTAR_MAPEL, type IsianMateri } from "@/lib/materi";
+import { mjLama, pilihanAngka, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
+import type { IsianMateri } from "@/lib/materi";
 import { useRouter } from "next/navigation";
 
 // Mapel & kelas terakhir diingat per perangkat (kenyamanan saja; boleh hilang).
@@ -717,38 +717,6 @@ export function BuatSoal({ sapaan, awalId, awalMateri }: { sapaan: string; awalI
           </div>
         </section>
       )}
-    </div>
-  );
-}
-
-/** Mapel (daftar tetap + "Lainnya") dan kelas, di atas kotak materi. */
-function PilihMapel({ mapel, kelas, ubah }: { mapel: string; kelas: string; ubah: (mapel: string, kelas: string) => void }) {
-  const lain = !!mapel && !DAFTAR_MAPEL.includes(mapel);
-  const [ketik, setKetik] = useState(lain);
-  const kotak = "h-10 rounded-lg border bg-kartu px-3 text-sm max-md:min-h-11";
-  return (
-    <div className="flex flex-wrap gap-2">
-      <select
-        aria-label="Mata pelajaran"
-        className={`${kotak} min-w-0 flex-1`}
-        value={ketik || lain ? "lain" : mapel}
-        onChange={(e) => {
-          if (e.target.value === "lain") return setKetik(true);
-          setKetik(false);
-          ubah(e.target.value, kelas);
-        }}
-      >
-        <option value="">Pilih mata pelajaran</option>
-        {DAFTAR_MAPEL.map((m) => <option key={m}>{m}</option>)}
-        <option value="lain">Lainnya (ketik sendiri)</option>
-      </select>
-      {(ketik || lain) && (
-        <input aria-label="Nama mata pelajaran" className={`${kotak} min-w-0 flex-1`} maxLength={60} placeholder="Nama mata pelajaran" defaultValue={lain ? mapel : ""} onBlur={(e) => e.target.value.trim() && ubah(e.target.value.trim(), kelas)} />
-      )}
-      <select aria-label="Kelas" className={`${kotak} w-32`} value={kelas} onChange={(e) => ubah(mapel, e.target.value)}>
-        <option value="">Kelas</option>
-        {KELAS.map((k) => <option key={k} value={k}>Kelas {k}</option>)}
-      </select>
     </div>
   );
 }

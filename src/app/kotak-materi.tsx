@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useState } from "react";
 import { analisaMateri } from "./actions";
+import { ambilAyat } from "./materi/actions";
 import { Panah } from "./panah";
-import type { IsianMateri } from "@/lib/materi";
-import { MAKS_GABUNG } from "@/lib/soal";
+import { BATAS_MATERI, DAFTAR_MAPEL, type IsianMateri } from "@/lib/materi";
+import { KELAS, MAKS_GABUNG } from "@/lib/soal";
+import { NAMA_SURAH } from "@/lib/surah";
 
 export type MateriLama = { id: string; judul: string; mapel: string; kelas: string; huruf?: number };
 
@@ -28,6 +30,7 @@ type Props = {
   setPilihan: (ids: string[]) => void;
   draf: IsianMateri | null; // materi baru yang sudah dianalisa AI, belum tersimpan (tersimpan saat "Buat soal")
   setDraf: (d: IsianMateri | null) => void;
+  gabung?: boolean; // false di halaman Materi saya: tanpa hitungan gabung & "Pakai materi sebelumnya"
 };
 
 const kotak = "w-full rounded-lg border p-2 text-sm";
@@ -38,7 +41,7 @@ const BATAS_FILE = 30 * 1024 * 1024;
  * (judul, usulan TP, pokok materi, sumber/terjemah dalil yang tertulis) → kartu materi yang bisa diedit guru.
  * Bisa digabung dengan materi sebelumnya (PTS/PAS). Ayat diambil dari mushaf; hadis wajib dicentang (aturan 5).
  */
-export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, setDraf }: Props) {
+export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, setDraf, gabung = true }: Props) {
   const [teks, setTeks] = useState("");
   const [file, setFile] = useState<string[]>([]); // paragraf dari file yang dilampirkan (urut)
   const [namaFile, setNamaFile] = useState<string[]>([]);
@@ -83,19 +86,16 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
     }
   }
 
-  const ubah = (sebagian: Partial<IsianMateri>) => draf && setDraf({ ...draf, ...sebagian });
-  const ubahDalil = (i: number, sebagian: Partial<IsianMateri["dalil"][number]>) =>
-    draf && ubah({ dalil: draf.dalil.map((d, j) => (j === i ? { ...d, ...sebagian } : d)) });
-  const adaHadis = !!draf?.dalil.some((d) => !d.mushaf);
-
   return (
     <div className="space-y-3 rounded-2xl border bg-kartu p-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm font-semibold">Materi</p>
-        <span className="text-xs text-pudar">
-          {pilihan.length + (draf ? 1 : 0)}/{MAKS_GABUNG} materi · <Link href="/materi" className="underline">Kelola materi</Link>
-        </span>
-      </div>
+      {gabung && (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm font-semibold">Materi</p>
+          <span className="text-xs text-pudar">
+            {pilihan.length + (draf ? 1 : 0)}/{MAKS_GABUNG} materi · <Link href="/materi" className="underline">Materi saya</Link>
+          </span>
+        </div>
+      )}
 
       {/* Materi sebelumnya yang dipakai (bisa lebih dari satu untuk PTS/PAS). */}
       {pilihan.map((id) => {
@@ -114,7 +114,7 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
       })}
 
       {draf ? (
-        <KartuDraf draf={draf} ubah={ubah} ubahDalil={ubahDalil} adaHadis={adaHadis} batal={() => { setDraf(null); setTeks(""); setFile([]); setNamaFile([]); setPesan(null); }} />
+        <KartuMateri draf={draf} setDraf={setDraf} judul="Materi baru (hasil analisa AI, silakan periksa)" batal={() => { setDraf(null); setTeks(""); setFile([]); setNamaFile([]); setPesan(null); }} />
       ) : (
         !penuh && (
           <div className="space-y-2">
@@ -136,7 +136,7 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
               <button className="h-8 rounded-lg bg-hijau px-3 text-sm font-semibold text-white disabled:opacity-40 max-md:min-h-11" disabled={!siap || !!proses || !teks.trim()} onClick={() => analisa()}>
                 Analisa materi
               </button>
-              {sesuai.length > 0 && (
+              {gabung && sesuai.length > 0 && (
                 <button className="inline-flex h-8 items-center gap-1 rounded-lg border bg-kartu px-3 text-sm hover:bg-krem max-md:min-h-11" aria-expanded={lihatLama} onClick={() => setLihatLama(!lihatLama)}>
                   Pakai materi sebelumnya <Panah buka={lihatLama} />
                 </button>
@@ -175,25 +175,36 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
   );
 }
 
-/** Kartu materi hasil analisa AI: semua bisa diedit guru sebelum soal dibuat. */
-function KartuDraf({
-  draf,
-  ubah,
-  ubahDalil,
-  adaHadis,
-  batal,
-}: {
-  draf: IsianMateri;
-  ubah: (s: Partial<IsianMateri>) => void;
-  ubahDalil: (i: number, s: Partial<IsianMateri["dalil"][number]>) => void;
-  adaHadis: boolean;
-  batal: () => void;
-}) {
+/**
+ * Kartu materi: dipakai bersama oleh Set baru (hasil analisa AI) dan halaman Materi saya (tambah/ubah).
+ * Semua bisa diedit guru. Ayat diambil dari mushaf ("Ambil ayat"); hadis diketik guru dan wajib dicentang (aturan 5).
+ */
+export function KartuMateri({ draf, setDraf, judul, batal }: { draf: IsianMateri; setDraf: (d: IsianMateri) => void; judul: string; batal?: () => void }) {
+  const ubah = (sebagian: Partial<IsianMateri>) => setDraf({ ...draf, ...sebagian });
+  const ubahDalil = (i: number, sebagian: Partial<IsianMateri["dalil"][number]>) =>
+    ubah({ dalil: draf.dalil.map((d, j) => (j === i ? { ...d, ...sebagian } : d)) });
+  const adaHadis = draf.dalil.some((d) => !d.mushaf);
+  const penuh = draf.dalil.length >= BATAS_MATERI.dalil;
+  const [rujukan, setRujukan] = useState("");
+  const [ayat, setAyat] = useState<{ proses: boolean; pesan?: string }>({ proses: false });
+
+  /** "QS An-Nur: 2" → teks dari data mushaf (tidak diketik guru). */
+  async function ambil() {
+    if (!rujukan.trim() || penuh) return;
+    setAyat({ proses: true });
+    const r = await ambilAyat(rujukan).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
+    if (!r.ok) return setAyat({ proses: false, pesan: r.pesan });
+    if (draf.dalil.some((d) => d.arab === r.arab)) return setAyat({ proses: false, pesan: `${r.sumber} sudah ada di daftar.` });
+    ubah({ dalil: [...draf.dalil, { sumber: r.sumber, arab: r.arab, terjemah: "", mushaf: true }] });
+    setRujukan("");
+    setAyat({ proses: false });
+  }
+
   return (
     <div className="space-y-3 rounded-xl border border-hijau/40 p-3 text-sm">
       <div className="flex items-center justify-between gap-2">
-        <p className="font-semibold text-hijau-teks">Materi baru (hasil analisa AI, silakan periksa)</p>
-        <button className="shrink-0 text-xs text-pudar hover:text-bahaya" onClick={batal}>✕ Batalkan</button>
+        <p className="font-semibold text-hijau-teks">{judul}</p>
+        {batal && <button className="shrink-0 text-xs text-pudar hover:text-bahaya" onClick={batal}>✕ Batalkan</button>}
       </div>
       {draf.isi.trim().length < MATERI_SEDIKIT && <PeringatanSedikit huruf={draf.isi.trim().length} />}
       <label className="block">
@@ -234,32 +245,96 @@ function KartuDraf({
           </ul>
         </div>
       )}
-      {draf.dalil.length > 0 && (
-        <div className="space-y-2">
-          <p>Ayat & hadis</p>
+      {/* Terbuka bila sudah ada dalil; mapel tanpa ayat/hadis cukup melihat judulnya. */}
+      <details open={draf.dalil.length > 0} className="space-y-2">
+        <summary className="cursor-pointer">Ayat & hadis ({draf.dalil.length})</summary>
+        <div className="mt-2 space-y-2">
           {draf.dalil.map((d, i) => (
             <div key={i} className={`space-y-1 rounded-lg border p-2 ${d.mushaf ? "border-hijau" : "border-peringatan-garis bg-peringatan-muda"}`}>
               <p className="text-xs">
                 {d.mushaf ? <span className="text-hijau-teks">✓ Ayat dari mushaf: {d.sumber}</span> : <span className="text-peringatan">Bukan ayat (hadis/lainnya): lengkapi sumber dan periksa teksnya</span>}
               </p>
-              <p dir="rtl" lang="ar" className="font-arab text-xl leading-loose">{d.arab}</p>
+              {d.mushaf ? (
+                <p dir="rtl" lang="ar" className="font-arab text-xl leading-loose">{d.arab}</p>
+              ) : (
+                <textarea dir="rtl" lang="ar" rows={2} className={`${kotak} font-arab text-xl`} placeholder="نص الحديث" aria-label={`Teks Arab dalil ${i + 1}`} value={d.arab} onChange={(e) => ubahDalil(i, { arab: e.target.value })} />
+              )}
               {!d.mushaf && <input className={kotak} placeholder="Sumber, mis. HR. Bukhari dan Muslim" value={d.sumber} onChange={(e) => ubahDalil(i, { sumber: e.target.value })} />}
               <input className={kotak} placeholder="Terjemah (opsional)" value={d.terjemah} onChange={(e) => ubahDalil(i, { terjemah: e.target.value })} />
               <button className="text-xs text-pudar hover:text-bahaya" onClick={() => ubah({ dalil: draf.dalil.filter((_, j) => j !== i) })}>✕ Hapus dari materi</button>
             </div>
           ))}
+          {!penuh && (
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                className="h-8 w-64 max-w-full rounded-lg border px-2 text-sm max-md:min-h-11"
+                list="daftar-surah"
+                aria-label="Rujukan ayat"
+                placeholder="Mis. QS An-Nur: 2 atau 24:2-3"
+                value={rujukan}
+                onChange={(e) => setRujukan(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && ambil()}
+              />
+              <datalist id="daftar-surah">
+                {NAMA_SURAH.map((n, i) => <option key={n} value={`QS ${n}: `}>{`${i + 1}. ${n}`}</option>)}
+              </datalist>
+              <button className="h-8 rounded-lg bg-hijau px-3 text-sm font-semibold text-white disabled:opacity-40 max-md:min-h-11" disabled={ayat.proses || !rujukan.trim()} onClick={ambil}>
+                {ayat.proses ? "Mengambil..." : "Ambil ayat"}
+              </button>
+              {/* Hadis baru = teks Arab baru → centang pemeriksaan wajib diulang (aturan 5). */}
+              <button className="h-8 rounded-lg border bg-kartu px-3 text-sm hover:bg-krem max-md:min-h-11" onClick={() => ubah({ dalil: [...draf.dalil, { sumber: "", arab: "", terjemah: "" }], diverifikasi: false })}>
+                + Tambah hadis
+              </button>
+              {ayat.pesan && <span className="text-sm text-bahaya">{ayat.pesan}</span>}
+            </div>
+          )}
           {adaHadis && (
             <label className="flex items-start gap-2">
               <input type="checkbox" className="mt-1" checked={draf.diverifikasi} onChange={(e) => ubah({ diverifikasi: e.target.checked })} />
               Saya sudah memeriksa teks Arab dan harakat hadis/teks di atas yang bukan dari mushaf sesuai kitab sumbernya.
             </label>
           )}
+          <p className="text-xs text-pudar">
+            Teks Al-Qur&apos;an: <a className="underline" href="https://tanzil.net" target="_blank" rel="noreferrer">Tanzil Project (tanzil.net)</a>. Terjemah diisi guru.
+          </p>
         </div>
-      )}
+      </details>
       <details>
         <summary className="cursor-pointer text-pudar">Lihat / ubah teks materi ({draf.isi.length.toLocaleString("id-ID")} huruf)</summary>
         <textarea dir="auto" rows={8} className={`${kotak} mt-1`} value={draf.isi} onChange={(e) => ubah({ isi: e.target.value })} />
       </details>
+    </div>
+  );
+}
+
+/** Mapel (daftar tetap + "Lainnya") dan kelas, di atas kotak materi (Set baru & Materi saya). */
+export function PilihMapel({ mapel, kelas, ubah }: { mapel: string; kelas: string; ubah: (mapel: string, kelas: string) => void }) {
+  const lain = !!mapel && !DAFTAR_MAPEL.includes(mapel);
+  const [ketik, setKetik] = useState(lain);
+  const kotak = "h-10 rounded-lg border bg-kartu px-3 text-sm max-md:min-h-11";
+  return (
+    <div className="flex flex-wrap gap-2">
+      <select
+        aria-label="Mata pelajaran"
+        className={`${kotak} min-w-0 flex-1`}
+        value={ketik || lain ? "lain" : mapel}
+        onChange={(e) => {
+          if (e.target.value === "lain") return setKetik(true);
+          setKetik(false);
+          ubah(e.target.value, kelas);
+        }}
+      >
+        <option value="">Pilih mata pelajaran</option>
+        {DAFTAR_MAPEL.map((m) => <option key={m}>{m}</option>)}
+        <option value="lain">Lainnya (ketik sendiri)</option>
+      </select>
+      {(ketik || lain) && (
+        <input aria-label="Nama mata pelajaran" className={`${kotak} min-w-0 flex-1`} maxLength={60} placeholder="Nama mata pelajaran" defaultValue={lain ? mapel : ""} onBlur={(e) => e.target.value.trim() && ubah(e.target.value.trim(), kelas)} />
+      )}
+      <select aria-label="Kelas" className={`${kotak} w-32`} value={kelas} onChange={(e) => ubah(mapel, e.target.value)}>
+        <option value="">Kelas</option>
+        {KELAS.map((k) => <option key={k} value={k}>Kelas {k}</option>)}
+      </select>
     </div>
   );
 }

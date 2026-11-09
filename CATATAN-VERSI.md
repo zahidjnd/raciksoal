@@ -52,6 +52,18 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.24.0 — 9 November 2026
+- **Menu "Materi saya" kembali di sidebar** (di bawah Panduan). Materi dikelompokkan per mapel & kelas, ada hitungan
+  jumlah materi, dan peringatan sejak awal bila hampir mencapai batas.
+- **Materi bisa ditambah dari dua tempat**: langsung di Set baru (seperti sebelumnya), atau di Materi saya →
+  **+ Tambah materi** (tempel teks / lampirkan Word, PowerPoint, PDF → Analisa materi → **Simpan materi**), tanpa harus
+  membuat soal. Cocok untuk menyiapkan beberapa bab sekaligus.
+- **Satu bentuk kartu materi** untuk Set baru, Tambah materi, dan Ubah materi (formulir lama dihapus). Ubah materi kini
+  juga punya penanda TP dan kotak ayat yang sama.
+- **"Ambil ayat" kini ada di kartu materi** (juga di Set baru): ketik "QS An-Nur: 2", teks diambil dari mushaf.
+  Hadis ditambah lewat **+ Tambah hadis**, lalu dicentang.
+- Tombol **Buat soal** di tiap materi langsung membuka Set baru dengan materi itu sudah terpilih.
+
 ## 0.23.0 — 8 November 2026
 - **Sapaan di halaman Set baru kini berganti-ganti** setiap halaman dibuka, seperti aplikasi AI: campuran formal dan
   santai ("Kopi dulu, baru racik soal ☕", "Jumat berkah"), menyesuaikan pagi/siang/sore/malam (WIB), hari, dan musim

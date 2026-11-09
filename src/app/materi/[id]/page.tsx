@@ -8,13 +8,11 @@ import type { Bab } from "@/lib/soal";
 import { Kerangka } from "../../kepala";
 import { FormMateri } from "../form";
 
-const KOSONG: IsianMateri = { mapel: "", kelas: "", teksArab: "dalil", judul: "", tp: "", isi: "", dalil: [], diverifikasi: false };
-
 /** /materi/baru atau /materi/12 (hanya materi milik sendiri, aturan 3). */
-export default async function UbahMateri({ params }: { params: Promise<{ id: string }> }) {
+export default async function UbahMateri({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tersimpan?: string }> }) {
   const p = await wajibMasuk();
   const { id } = await params;
-  let awal = KOSONG;
+  let awal: IsianMateri | null = null;
   if (id !== "baru") {
     const [m] = /^\d+$/.test(id) ? await db.select().from(materi).where(and(eq(materi.id, Number(id)), eq(materi.guruId, p.id))) : [];
     if (!m) notFound();
@@ -22,7 +20,7 @@ export default async function UbahMateri({ params }: { params: Promise<{ id: str
   }
   return (
     <Kerangka p={p}>
-      <FormMateri id={id === "baru" ? null : Number(id)} awal={awal} />
+      <FormMateri id={id === "baru" ? null : Number(id)} awal={awal} tersimpan={id !== "baru" && (await searchParams).tersimpan === "1"} />
     </Kerangka>
   );
 }
