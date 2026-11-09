@@ -34,6 +34,9 @@ type Props = {
 };
 
 const kotak = "w-full rounded-lg border p-2 text-sm";
+type FileMateri = { nama: string; paragraf: string[] };
+const huruf = (f: FileMateri) => f.paragraf.join("\n").length;
+const angka = (n: number) => n.toLocaleString("id-ID");
 const BATAS_FILE = 30 * 1024 * 1024;
 
 /**
@@ -43,8 +46,7 @@ const BATAS_FILE = 30 * 1024 * 1024;
  */
 export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, setDraf, gabung = true }: Props) {
   const [teks, setTeks] = useState("");
-  const [file, setFile] = useState<string[]>([]); // paragraf dari file yang dilampirkan (urut)
-  const [namaFile, setNamaFile] = useState<string[]>([]);
+  const [file, setFile] = useState<FileMateri[]>([]); // file yang dilampirkan (urut), bisa dilepas satu per satu
   const [proses, setProses] = useState("");
   const [pesan, setPesan] = useState<{ ok: boolean; teks: string } | null>(null);
   const [lihatLama, setLihatLama] = useState(false);
@@ -52,10 +54,23 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
   const siap = !!mapel && !!kelas;
   const penuh = pilihan.length + (draf ? 1 : 0) >= MAKS_GABUNG;
 
-  async function analisa(paragrafFile = file) {
+  async function analisa(daftarFile = file) {
     if (!siap) return setPesan({ ok: false, teks: "Pilih mata pelajaran dan kelas dulu." });
-    const paragraf = [...teks.split("\n"), ...paragrafFile];
+    const paragraf = [...teks.split("\n"), ...daftarFile.flatMap((f) => f.paragraf)];
     if (!paragraf.join("").trim()) return;
+    // Dicek di perangkat dulu (batas sama dengan server): pesan bisa menunjuk file yang kebesaran.
+    const panjang = paragraf.join("\n").length;
+    if (panjang > BATAS_MATERI.isi) {
+      const terbesar = [...daftarFile].sort((a, b) => huruf(b) - huruf(a))[0];
+      return setPesan({
+        ok: false,
+        teks:
+          `Materi terlalu panjang: ±${angka(panjang)} huruf, maksimal ${angka(BATAS_MATERI.isi)}. ` +
+          (terbesar && huruf(terbesar) > BATAS_MATERI.isi / 3
+            ? `File terbesar: ${terbesar.nama} (±${angka(huruf(terbesar))} huruf). Lepas file itu (✕), lalu lampirkan per bab saja.`
+            : "Kurangi teks atau lepas sebagian file (✕), lalu tekan Analisa materi."),
+      });
+    }
     setProses("AI sedang membaca dan menganalisa materi...");
     setPesan(null);
     const r = await analisaMateri({ mapel, kelas, paragraf }).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
@@ -74,11 +89,11 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
     setProses("Membaca file...");
     try {
       const { bacaFileOffice } = await import("@/lib/office"); // dimuat hanya saat dipakai; file dibaca di perangkat guru
-      const semua: string[] = [];
-      for (const f of daftarFile) semua.push(...(await bacaFileOffice(await f.arrayBuffer(), f.name)).semua);
-      const gabung = [...file, ...semua];
+      const baru: FileMateri[] = [];
+      for (const f of daftarFile) baru.push({ nama: f.name, paragraf: (await bacaFileOffice(await f.arrayBuffer(), f.name)).semua });
+      const gabung = [...file, ...baru];
       setFile(gabung);
-      setNamaFile([...namaFile, ...daftarFile.map((f) => f.name)]);
+      setProses("");
       await analisa(gabung); // langsung dianalisa begitu file masuk
     } catch (err) {
       setProses("");
@@ -114,7 +129,7 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
       })}
 
       {draf ? (
-        <KartuMateri draf={draf} setDraf={setDraf} judul="Materi baru (hasil analisa AI, silakan periksa)" batal={() => { setDraf(null); setTeks(""); setFile([]); setNamaFile([]); setPesan(null); }} />
+        <KartuMateri draf={draf} setDraf={setDraf} judul="Materi baru (hasil analisa AI, silakan periksa)" batal={() => { setDraf(null); setTeks(""); setFile([]); setPesan(null); }} />
       ) : (
         !penuh && (
           <div className="space-y-2">
@@ -133,7 +148,7 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
                 Lampirkan Word/PowerPoint/PDF
                 <input type="file" multiple accept=".docx,.pptx,.pdf" className="sr-only" disabled={!siap || !!proses} onChange={lampirkan} />
               </label>
-              <button className="h-8 rounded-lg bg-hijau px-3 text-sm font-semibold text-white disabled:opacity-40 max-md:min-h-11" disabled={!siap || !!proses || !teks.trim()} onClick={() => analisa()}>
+              <button className="h-8 rounded-lg bg-hijau px-3 text-sm font-semibold text-white disabled:opacity-40 max-md:min-h-11" disabled={!siap || !!proses || (!teks.trim() && !file.length)} onClick={() => analisa()}>
                 Analisa materi
               </button>
               {gabung && sesuai.length > 0 && (
@@ -142,7 +157,24 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
                 </button>
               )}
             </div>
-            {namaFile.length > 0 && <p className="text-xs text-pudar">File: {namaFile.join(", ")}</p>}
+            {file.length > 0 && (
+              <ul className="space-y-1 text-xs" aria-label="File yang dilampirkan">
+                {file.map((f, i) => (
+                  <li key={i} className="flex items-center gap-2 rounded-lg border px-2 py-1">
+                    <span className="min-w-0 flex-1 truncate">{f.nama}</span>
+                    <span className="shrink-0 text-pudar">±{angka(huruf(f))} huruf</span>
+                    <button
+                      className="shrink-0 rounded px-2 text-pudar hover:text-bahaya disabled:opacity-40 max-md:min-h-11 max-md:min-w-11"
+                      aria-label={`Lepas file ${f.nama}`}
+                      disabled={!!proses}
+                      onClick={() => { setFile(file.filter((_, j) => j !== i)); setPesan(null); }}
+                    >
+                      ✕
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         )
       )}

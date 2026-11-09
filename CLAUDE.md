@@ -640,3 +640,8 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   (history.replaceState DITIMPA Next setelah revalidatePath; halaman dimuat ulang sehingga pesan dibawa lewat alamat).
   `TautanMenu` menandai juga sub-halaman (/materi/12). Uji laptop (guru.uji.b): materi 11 (Fikih X Zakat) & 12 (Wakaf) dibuat
   lewat Tambah materi; materi 10 diubah lalu dikembalikan; uji:pemisahan lulus semua.
+  Temuan pemilik (sama hari): file lampiran DITUMPUK & tidak bisa dilepas → materi yang sudah dipendekkan tetap "terlalu
+  panjang". Kini `file: FileMateri[]` per file + tombol ✕; batas panjang dicek di browser DAN server = `BATAS_MATERI.isi`
+  (30.000, dihitung dari paragraf digabung "
+"; dulu server 40.000 tapi pesannya 30.000); pesan menyebut file terbesar.
+  Tombol Analisa aktif bila ada file walau kotak teks kosong. Ditolak karena panjang TIDAK memakai jatah analisa.

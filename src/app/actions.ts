@@ -567,7 +567,10 @@ export async function analisaMateri(input: { mapel: string; kelas: string; parag
   const kelas = String(input?.kelas ?? "").trim();
   if (!mapel || !KELAS.includes(kelas)) return { ok: false as const, pesan: "Pilih mata pelajaran dan kelas dulu." };
   const paragraf = (Array.isArray(input?.paragraf) ? input.paragraf : []).map((p) => String(p ?? "").slice(0, 5000)).slice(0, 3000);
-  if (paragraf.join("\n").length > 40_000) return { ok: false as const, pesan: "Materi terlalu panjang (maks ±30.000 huruf). Pecah menjadi beberapa materi." };
+  // Batas sama dengan pemeriksaan di browser (kotak-materi.tsx) dan batas isi materi tersimpan.
+  const panjang = paragraf.join("\n").length;
+  if (panjang > BATAS_MATERI.isi)
+    return { ok: false as const, pesan: `Materi terlalu panjang: ±${panjang.toLocaleString("id-ID")} huruf, maksimal ${BATAS_MATERI.isi.toLocaleString("id-ID")}. Pecah menjadi beberapa materi (per bab).` };
 
   const m = mushaf();
   const { isian, untukAi, dibuangPdf } = susunDraf({ mapel, kelas, paragraf }, m.cari, m.basmalah);

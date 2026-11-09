@@ -63,6 +63,9 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 - **"Ambil ayat" kini ada di kartu materi** (juga di Set baru): ketik "QS An-Nur: 2", teks diambil dari mushaf.
   Hadis ditambah lewat **+ Tambah hadis**, lalu dicentang.
 - Tombol **Buat soal** di tiap materi langsung membuka Set baru dengan materi itu sudah terpilih.
+- **File materi bisa dilepas satu per satu** (tombol ✕, terlihat jumlah hurufnya). Dulu file yang kepanjangan tetap
+  tertumpuk, jadi materi yang sudah dipendekkan tetap ditolak. Pesan "terlalu panjang" kini menyebut jumlah huruf dan
+  file terbesarnya, dan langsung muncul tanpa menunggu server.
 
 ## 0.23.0 — 8 November 2026
 - **Sapaan di halaman Set baru kini berganti-ganti** setiap halaman dibuka, seperti aplikasi AI: campuran formal dan
