@@ -21,7 +21,7 @@ import {
   type ParagraphChild,
 } from "docx";
 import { hariTanggal, mapelTka, NAMA_BENTUK, semesterDari, TKA, WAKTU_BAWAAN, type Pengaturan } from "./prompt";
-import { identitasBab, JUMLAH_PREMIS, kategoriBaru, mjLama, paragrafArab, pecahBaris, POLA_ARAB, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
+import { bukanDalil, identitasBab, JUMLAH_PREMIS, kategoriBaru, mjLama, paragrafArab, pecahBaris, POLA_ARAB, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
 
 const PERINGATAN = "Soal dibuat AI, wajib diperiksa guru sebelum dipakai.";
 
@@ -182,7 +182,8 @@ export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tangga
       const dalil = bab.dalil.find((d) => d.id === s.dalil_id);
       if (dalil) {
         isi.push(par(teks(dalil.arab), { bidirectional: true, alignment: AlignmentType.START, indent: { right: 400 }, keepNext: true, spacing: { after: 0 } }));
-        isi.push(par([r(`(${dalil.sumber})`, { italics: true, size: 18 })], { alignment: AlignmentType.RIGHT, keepNext: true }));
+        // Teks Arab materi yang ditandai "Bukan ayat/hadis": tanpa keterangan sumber di lembar siswa.
+        if (!bukanDalil(dalil)) isi.push(par([r(`(${dalil.sumber})`, { italics: true, size: 18 })], { alignment: AlignmentType.RIGHT, keepNext: true }));
       }
       if (s.pilihan) s.pilihan.forEach((o, i) => isi.push(...butirBaris(`${HURUF[i]}.`, o, 800, { spacing: { after: 0 }, keepNext: i === 0 || i === 3 })));
       if (bentuk === "MJ") isi.push(tabelMenjodohkan(s));

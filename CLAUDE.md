@@ -686,3 +686,13 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   kini 88 set (id terakhir 88). Kontainer `raciksoal-db-lama` ternyata sudah tidak ada. Cadangan DB laptop sebelum dihapus:
   `%TEMP%\cadangan-raciksoal\sebelum-bersih-2026-11-09.sql.gz` (pg_dump; pulihkan: gunzip lalu `psql -f`). Set uji yang
   disebut di catatan lama (mis. 85, 88, 51, 56) TIDAK dihapus.
+- 2026-11-09 VERIFIKASI ARAB DIPERMUDAH (pemilik "gas"): (1) ISTILAH: tulisan Arab <= `MAKS_ISTILAH` (3) kata, dihitung per
+  bagian di antara huruf Latin (`istilahArab`, soal.ts, dites; hadis dipisah koma Latin tetap bukan istilah), diterima apa adanya:
+  `rapikanMateri` tidak membuangnya, `susunDraf` menaruh paragraf istilah di isi (tidak dicari di mushaf: ق bukan "QS Qaf" lagi,
+  tidak jadi usulan hadis). Masuk korpus lewat bab.materi, jadi AI boleh memakainya persis. KartuMateri menampilkan daftar istilah
+  (kotak kecil per istilah; daftar berkoma di paragraf LTR urutannya kacau). (2) Tombol "Bukan ayat/hadis" di kotak dalil yang tidak
+  ada di mushaf: `bukan: true`, sumber = `SUMBER_BUKAN`, tanpa kolom sumber & tanpa centang ("Batalkan" mengembalikan).
+  `bukanDalil(d)` juga mengenali materi lama bersumber "bukan ayat/hadis"/"Bukan hadis/lainnya". Ditemukan di mushaf → tetap
+  ayat. Prompt: "Teks Arab materi (BUKAN ayat dan BUKAN hadis...)"; kartu soal: "Teks Arab materi"; Word: tanpa "(sumber)".
+  Uji laptop (guru.uji.ayat): materi-14 "Uji Istilah Arab" (4 istilah, mahfuzhat = bukan, hadis HR. Ahmad), set 102 (4 PG):
+  soal menyebut "kutipan mahfuzhat", 0 merah, Word tanpa "Bukan ayat". Belum di-push.

@@ -1,4 +1,4 @@
-import { blokMj, identitasBab, keFormatAI, kocok, MAKS_GABUNG, mjLama, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal.ts";
+import { blokMj, bukanDalil, identitasBab, keFormatAI, kocok, MAKS_GABUNG, mjLama, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal.ts";
 
 export const PESAN_MJ_MIN = "Menjodohkan minimal 3 nomor (atau 0), supaya daftar jawabannya masuk akal.";
 
@@ -209,6 +209,8 @@ export function buatSistem(bab: Bab, tka = false) {
   const dalil = bab.dalil
     .map((d) => {
       const mufradat = d.mufradat.map((m) => `${m.arab} = ${m.arti}`).join("; ");
+      // Ditandai guru "Bukan ayat/hadis": teks Arab materi biasa, jangan disebut dalil/ayat/hadis di soal.
+      if (bukanDalil(d)) return `[dalil_id: ${d.id}] Teks Arab materi (BUKAN ayat dan BUKAN hadis: jangan disebut ayat, hadis, atau dalil)\nArab: ${d.arab}${d.terjemah ? `\nTerjemah: ${d.terjemah}` : ""}`;
       return `[dalil_id: ${d.id}] ${d.sumber}\nArab: ${d.arab}\nTerjemah: ${d.terjemah}${mufradat ? `\nMufradat: ${mufradat}` : ""}`;
     })
     .join("\n\n");

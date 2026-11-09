@@ -6,7 +6,7 @@ import { analisaMateri } from "./actions";
 import { ambilAyat } from "./materi/actions";
 import { Panah } from "./panah";
 import { BATAS_MATERI, DAFTAR_MAPEL, type IsianMateri } from "@/lib/materi";
-import { KELAS, MAKS_GABUNG } from "@/lib/soal";
+import { bukanDalil, istilahArab, KELAS, MAKS_GABUNG, SUMBER_BUKAN } from "@/lib/soal";
 import { NAMA_SURAH } from "@/lib/surah";
 
 export type MateriLama = { id: string; judul: string; mapel: string; kelas: string; huruf?: number };
@@ -215,7 +215,9 @@ export function KartuMateri({ draf, setDraf, judul, batal }: { draf: IsianMateri
   const ubah = (sebagian: Partial<IsianMateri>) => setDraf({ ...draf, ...sebagian });
   const ubahDalil = (i: number, sebagian: Partial<IsianMateri["dalil"][number]>) =>
     ubah({ dalil: draf.dalil.map((d, j) => (j === i ? { ...d, ...sebagian } : d)) });
-  const adaHadis = draf.dalil.some((d) => !d.mushaf);
+  const adaHadis = draf.dalil.some((d) => !d.mushaf && !bukanDalil(d));
+  // Istilah Arab pendek (<= 3 kata) diterima apa adanya (server: istilahArab di rapikanMateri); ditampilkan supaya guru tahu.
+  const istilah = draf.teksArab === "bahasa" ? [] : [...new Set(draf.isi.split("\n").flatMap((b) => [...istilahArab(b)]))];
   const penuh = draf.dalil.length >= BATAS_MATERI.dalil;
   const [rujukan, setRujukan] = useState("");
   const [ayat, setAyat] = useState<{ proses: boolean; pesan?: string }>({ proses: false });
@@ -282,16 +284,31 @@ export function KartuMateri({ draf, setDraf, judul, batal }: { draf: IsianMateri
         <summary className="cursor-pointer">Ayat & hadis ({draf.dalil.length})</summary>
         <div className="mt-2 space-y-2">
           {draf.dalil.map((d, i) => (
-            <div key={i} className={`space-y-1 rounded-lg border p-2 ${d.mushaf ? "border-hijau" : "border-peringatan-garis bg-peringatan-muda"}`}>
-              <p className="text-xs">
-                {d.mushaf ? <span className="text-hijau-teks">✓ Ayat dari mushaf: {d.sumber}</span> : <span className="text-peringatan">Bukan ayat (hadis/lainnya): lengkapi sumber dan periksa teksnya</span>}
+            <div key={i} className={`space-y-1 rounded-lg border p-2 ${d.mushaf ? "border-hijau" : bukanDalil(d) ? "bg-krem" : "border-peringatan-garis bg-peringatan-muda"}`}>
+              <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                {d.mushaf ? (
+                  <span className="text-hijau-teks">✓ Ayat dari mushaf: {d.sumber}</span>
+                ) : bukanDalil(d) ? (
+                  <>
+                    <span className="text-pudar">Teks Arab materi (bukan ayat/hadis): tidak perlu sumber</span>
+                    <button className="underline hover:text-tinta" onClick={() => ubahDalil(i, { bukan: false, sumber: "" })}>Batalkan</button>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-peringatan">Tidak ada di mushaf: kalau hadis, isi sumbernya dan periksa teksnya</span>
+                    {/* Satu klik untuk teks Arab yang memang bukan ayat/hadis (dulu guru mengetik "bukan ayat/hadis" di kolom sumber). */}
+                    <button className="h-8 rounded-lg border bg-kartu px-3 text-sm text-tinta hover:bg-krem max-md:min-h-11" onClick={() => ubahDalil(i, { bukan: true, sumber: SUMBER_BUKAN })}>
+                      Bukan ayat/hadis
+                    </button>
+                  </>
+                )}
               </p>
               {d.mushaf ? (
                 <p dir="rtl" lang="ar" className="font-arab text-xl leading-loose">{d.arab}</p>
               ) : (
                 <textarea dir="rtl" lang="ar" rows={2} className={`${kotak} font-arab text-xl`} placeholder="نص الحديث" aria-label={`Teks Arab dalil ${i + 1}`} value={d.arab} onChange={(e) => ubahDalil(i, { arab: e.target.value })} />
               )}
-              {!d.mushaf && <input className={kotak} placeholder="Sumber, mis. HR. Bukhari dan Muslim" value={d.sumber} onChange={(e) => ubahDalil(i, { sumber: e.target.value })} />}
+              {!d.mushaf && !bukanDalil(d) && <input className={kotak} placeholder="Sumber, mis. HR. Bukhari dan Muslim" value={d.sumber} onChange={(e) => ubahDalil(i, { sumber: e.target.value })} />}
               <input className={kotak} placeholder="Terjemah (opsional)" value={d.terjemah} onChange={(e) => ubahDalil(i, { terjemah: e.target.value })} />
               <button className="text-xs text-pudar hover:text-bahaya" onClick={() => ubah({ dalil: draf.dalil.filter((_, j) => j !== i) })}>✕ Hapus dari materi</button>
             </div>
@@ -318,6 +335,17 @@ export function KartuMateri({ draf, setDraf, judul, batal }: { draf: IsianMateri
                 + Tambah hadis
               </button>
               {ayat.pesan && <span className="text-sm text-bahaya">{ayat.pesan}</span>}
+            </div>
+          )}
+          {istilah.length > 0 && (
+            <div className="text-xs text-pudar">
+              <p>Istilah Arab pendek (paling banyak 3 kata) dipakai apa adanya, tanpa verifikasi:</p>
+              {/* Satu kotak per istilah: daftar Arab yang dipisah koma di paragraf LTR urutannya kacau. */}
+              <p className="mt-1 flex flex-wrap gap-1">
+                {istilah.map((x) => (
+                  <bdi key={x} dir="rtl" lang="ar" className="rounded border bg-kartu px-2 font-arab text-base text-tinta">{x}</bdi>
+                ))}
+              </p>
             </div>
           )}
           {adaHadis && (

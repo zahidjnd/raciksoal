@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { arabTakTerverifikasi, bersihkanTanggapan, gabungBab, identitasBab, blokMj, kataTerpakai, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Soal } from "./soal.ts";
+import { arabTakTerverifikasi, istilahArab, bersihkanTanggapan, gabungBab, identitasBab, blokMj, kataTerpakai, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Soal } from "./soal.ts";
 import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, laranganIsian, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, semesterDari, MAKS_CATATAN, MAKS_INSTRUKSI, namaLevelTka, namaTujuan, pasangKunciPgk, rencanaLevel, type Pengaturan } from "./prompt.ts";
 import { bolehAkses, rapikanUsername } from "./akses.ts";
 import { headerUnduh } from "./nama-file.ts";
@@ -557,7 +557,7 @@ test("materi sendiri: TP diberi kode, teks Arab hanya dipercaya dari kotak ayat 
     kelas: "XII",
     judul: "Bab 1: Menjaga Kehormatan",
     tp: "TP 1.1: Peserta didik mampu menjelaskan isi ayat\nPeserta didik mampu menyebutkan hikmah",
-    isi: `Lafaz ${potongan} artinya janganlah mendekati. Karangan بِسْمِ اللّٰهِ dibuang. ${"Penjelasan materi. ".repeat(10)}`,
+    isi: `Lafaz ${potongan} artinya janganlah mendekati. Karangan قَالَ الشَّيْخُ فِي كِتَابِهِ الْكَبِيرِ dibuang. ${"Penjelasan materi. ".repeat(10)}`,
     dalil: [{ sumber: "QS. Al-Isra: 32", arab: ayat, terjemah: "Janganlah kamu mendekati zina" }, { sumber: "", arab: "", terjemah: "" }],
     diverifikasi: true,
   };
@@ -567,7 +567,7 @@ test("materi sendiri: TP diberi kode, teks Arab hanya dipercaya dari kotak ayat 
   assert.equal(r.bab.dalil.length, 1); // baris kosong diabaikan
   assert.equal(r.bab.dalil[0].id, "dalil-1");
   assert.ok(r.bab.materi[0].includes(potongan)); // ada di kotak ayat → dipertahankan
-  assert.ok(!r.bab.materi[0].includes("بِسْمِ")); // karangan → dibuang
+  assert.ok(!r.bab.materi[0].includes("الشَّيْخُ")); // karangan > 3 kata → dibuang
   assert.equal(r.dihapus.length, 1);
   // tanpa centang verifikasi → ditolak
   assert.match(String(rapikanMateri({ ...isian, diverifikasi: false }, "x")), /Centang/);
@@ -579,9 +579,9 @@ test("materi sendiri: TP diberi kode, teks Arab hanya dipercaya dari kotak ayat 
   assert.ok(typeof r !== "string" && r.bab.mapel === "Akidah Akhlak" && r.bab.kelas === "XII");
   assert.match(String(rapikanMateri({ ...isian, mapel: " " }, "x")), /Mata pelajaran wajib/);
   assert.match(String(rapikanMateri({ ...isian, kelas: "13" }, "x")), /kelas X, XI, atau XII/);
-  // tanpa ayat sama sekali: boleh, dan semua teks Arab dibuang
+  // tanpa ayat sama sekali: boleh; teks Arab panjang dibuang, istilah <= 3 kata (potongan 2 kata) tetap
   const tanpa = rapikanMateri({ ...isian, dalil: [], diverifikasi: false }, "x");
-  assert.ok(typeof tanpa !== "string" && !/[؀-ۿ]/.test(JSON.stringify(tanpa.bab)));
+  assert.ok(typeof tanpa !== "string" && !tanpa.bab.materi[0].includes("الشَّيْخُ") && tanpa.bab.materi[0].includes(potongan));
   // bolak-balik ke form edit
   assert.ok(typeof r !== "string" && keIsian(r.bab).tp.startsWith("TP 1.1: "));
 });
@@ -943,4 +943,33 @@ test("terapkanKembar: hanya baris belakangan, bukan MJ/URAIAN, bentuk/TP/level t
   assert.doesNotMatch(buatPeriksaKembar(kisi), /SUDAH PASTI/);
   assert.match(buatPeriksaKembar([b("PG", "Disajikan harga, peserta didik dapat menghitung PPN terutang"), b("BS", "y"), b("ISIAN", "menghitung besarnya PPN terutang pembeli")]), /SUDAH PASTI kembar dan wajib diperbaiki: 1 dan 3\./);
   assert.match(buatPeriksaKembar(kisi), /3\. ISIAN \| TP 1 \| C2 \| menentukan inflasi \| materi: m \| jawaban: 10%/);
+});
+
+test("istilah Arab <= 3 kata diterima apa adanya; tombol Bukan ayat/hadis tanpa sumber & centang", () => {
+  const hadis = "مَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الْآخِرِ فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ";
+  // istilahArab: dihitung per bagian di antara huruf Latin; hadis dipisah koma Latin tetap bukan istilah
+  assert.deepEqual([...istilahArab("Mukjizat (مُعْجِزَةٌ) dan ق serta عَقِيْدَةٌ ← عَقَائِدُ")], ["مُعْجِزَةٌ", "ق", "عَقِيْدَةٌ", "عَقَائِدُ"]);
+  assert.equal(istilahArab("Hadis: مَنْ كَانَ يُؤْمِنُ, بِاللَّهِ وَالْيَوْمِ الْآخِرِ").size, 0);
+  assert.equal(istilahArab(hadis).size, 0);
+  // susunDraf: paragraf istilah tetap di isi, tidak dicari di mushaf (ق = QS Qaf: 1), tidak jadi usulan
+  const cari = () => ({ sumber: "QS. Qāf [50]: 1", arab: "ق" });
+  const d = susunDraf({ mapel: "Al-Qur'an Hadis", kelas: "XI", paragraf: ["ق", "حَبْلٌ مِنَ اللهِ", "x".repeat(120)] }, cari, () => false);
+  assert.equal(d.isian.dalil.length, 0);
+  assert.ok(d.isian.isi.includes("ق") && d.isian.isi.includes("حَبْلٌ مِنَ اللهِ"));
+  // rapikanMateri: "Bukan ayat/hadis" tidak butuh sumber & centang; sumber lama "bukan ayat/hadis" dikenali
+  const isian = { mapel: "Akidah Akhlak", kelas: "X", teksArab: "dalil" as const, judul: "Bab 1", tp: "TP 1: menjelaskan", isi: "Penjelasan materi. ".repeat(10), dalil: [{ sumber: "", arab: hadis, terjemah: "", bukan: true }], diverifikasi: false };
+  const r = rapikanMateri(isian, "x");
+  assert.ok(typeof r !== "string", String(r));
+  assert.deepEqual([r.bab.dalil[0].sumber, r.bab.dalil[0].bukan], ["Bukan ayat/hadis", true]);
+  assert.ok(typeof rapikanMateri({ ...isian, dalil: [{ sumber: "bukan ayat/hadis", arab: hadis, terjemah: "" }] }, "x") !== "string");
+  assert.match(String(rapikanMateri({ ...isian, dalil: [{ sumber: "HR. Bukhari", arab: hadis, terjemah: "" }] }, "x")), /Bukan ayat\/hadis/);
+  // ditemukan di mushaf → tetap ayat walau ditandai bukan
+  const m = rapikanMateri(isian, "x", () => ({ sumber: "QS. X", arab: hadis }));
+  assert.ok(typeof m !== "string" && m.bab.dalil[0].mushaf && !m.bab.dalil[0].bukan);
+  // bolak-balik form: penanda ikut, centang tidak dianggap perlu
+  const balik = keIsian(r.bab);
+  assert.equal(balik.dalil[0].bukan, true);
+  assert.equal(balik.diverifikasi, false);
+  // AI diberi tahu bahwa itu bukan dalil
+  assert.match(buatSistem(r.bab), /Teks Arab materi \(BUKAN ayat dan BUKAN hadis/);
 });

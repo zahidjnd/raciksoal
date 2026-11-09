@@ -55,7 +55,7 @@ export type Bab = {
   teksArab?: "dalil" | "bahasa";
   tp: { kode: string; teks: string }[];
   // mushaf: teks Arab diambil/dicocokkan dari data mushaf (langkah 9), bukan ketikan guru
-  dalil: { id: string; sumber: string; arab: string; terjemah: string; mufradat: { arab: string; arti: string }[]; mushaf?: boolean }[];
+  dalil: { id: string; sumber: string; arab: string; terjemah: string; mufradat: { arab: string; arti: string }[]; mushaf?: boolean; bukan?: boolean }[];
   materi: string[];
   pokok?: string[]; // pokok-pokok materi hasil analisa AI (ringkasan untuk guru & sebaran soal)
 };
@@ -333,6 +333,31 @@ const HURUF_ARAB ="؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿";
 // Satu potongan teks Arab: huruf Arab, boleh berisi spasi di tengah.
 export const POLA_ARAB = `[${HURUF_ARAB}]+(?:[\\s${HURUF_ARAB}]*[${HURUF_ARAB}])?`;
 const rapikan = (s: string) => s.replace(/\s+/g, " ").normalize("NFC");
+
+/** Batas kata istilah Arab: tulisan Arab sependek ini di materi guru diterima apa adanya (bukan dalil). */
+export const MAKS_ISTILAH = 3;
+
+/**
+ * Potongan Arab (POLA_ARAB) di teks yang tergolong ISTILAH (2026-11-09, pilihan pemilik): bagian di antara huruf Latin
+ * yang berisi paling banyak MAKS_ISTILAH kata Arab, mis. "Mukjizat (مُعْجِزَةٌ)", "ق", "عَقِيْدَةٌ ← عَقَائِدُ". Dihitung per
+ * bagian tanpa huruf Latin (bukan per potongan), supaya hadis panjang yang dipisah koma/angka tidak lolos sebagai istilah.
+ * Dulu semua tulisan Arab di materi diperlakukan sebagai calon ayat/hadis, jadi guru menulis istilah di kotak dalil
+ * dengan sumber "bukan ayat/hadis" (21 isian di data laptop).
+ */
+export function istilahArab(t: string): Set<string> {
+  const hasil = new Set<string>();
+  for (const bagian of t.split(/[A-Za-zÀ-ɏḀ-ỿ]+/)) {
+    const potong = bagian.match(new RegExp(POLA_ARAB, "g")) ?? [];
+    const kata = potong.join(" ").split(/\s+/).filter(Boolean).length;
+    if (kata && kata <= MAKS_ISTILAH) potong.forEach((x) => hasil.add(x));
+  }
+  return hasil;
+}
+
+/** Isian kotak dalil yang ditandai guru "Bukan ayat/hadis" (tombol), termasuk materi lama yang sumbernya ditulis begitu. */
+export const bukanDalil = (d: { bukan?: boolean; sumber?: string; mushaf?: boolean }) =>
+  !d.mushaf && (d.bukan === true || /^\s*bukan\s+(ayat|hadis)/i.test(d.sumber ?? ""));
+export const SUMBER_BUKAN = "Bukan ayat/hadis";
 
 /** Semua teks Arab terverifikasi milik bab (ayat, hadis, mufradat, materi) dalam satu teks. */
 export const korpusArab = (bab: Bab) => rapikan(JSON.stringify(bab));

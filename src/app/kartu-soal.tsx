@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { gantiSatuSoal, hapusSoal, pindahSoal, simpanSoal, tambahSoalManual, tambahSoalSerupa } from "./actions";
 import { StepAngka } from "./step-angka";
-import { kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, type Bab, type Bentuk, type Soal } from "@/lib/soal";
+import { bukanDalil, kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, type Bab, type Bentuk, type Soal } from "@/lib/soal";
 import { MAKS_INSTRUKSI, namaBentuk } from "@/lib/prompt";
 
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
@@ -253,7 +253,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
       {dalil && (
         <figure className="rounded bg-krem p-3">
           <p dir="rtl" lang="ar" className="font-arab text-2xl">{dalil.arab}</p>
-          <figcaption className="mt-1 text-xs text-pudar">{dalil.sumber} · teks terverifikasi</figcaption>
+          <figcaption className="mt-1 text-xs text-pudar">{bukanDalil(dalil) ? "Teks Arab materi" : `${dalil.sumber} · teks terverifikasi`}</figcaption>
         </figure>
       )}
       {s.pilihan && (
@@ -412,7 +412,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
         Dalil yang ditampilkan (teks Arab terverifikasi)
         <select className={kotak} value={s.dalil_id ?? ""} onChange={(e) => ubah({ dalil_id: e.target.value || null })}>
           <option value="">(tidak ada)</option>
-          {bab.dalil.map((d) => <option key={d.id} value={d.id}>{d.sumber}</option>)}
+          {bab.dalil.map((d) => <option key={d.id} value={d.id}>{bukanDalil(d) ? `Teks Arab materi: ${d.arab.slice(0, 40)}` : d.sumber}</option>)}
         </select>
       </label>
 
