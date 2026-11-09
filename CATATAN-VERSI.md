@@ -52,6 +52,13 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.24.1 — 9 November 2026
+- **Menjodohkan: satu daftar jawaban, satu jenis.** Dulu jawaban di satu daftar bisa bercampur (istilah dicampur
+  nama nabi), sehingga siswa bisa menebak dari jenisnya. Kini setiap blok memakai satu indikator yang sama, jawabannya
+  sejenis, dan jawaban tambahan (pengecoh) tidak pernah sama dengan jawaban nomor lain. Isi daftar tetap perlu dilirik
+  guru: kadang masih ada jawaban yang sedikit beda bentuk dalam satu topik.
+- Set lama tidak berubah; perbaiki lewat **Edit** bila perlu.
+
 ## 0.24.0 — 9 November 2026
 - **Menu "Materi saya" kembali di sidebar** (di bawah Panduan). Materi dikelompokkan per mapel & kelas, ada hitungan
   jumlah materi, dan peringatan sejak awal bila hampir mencapai batas.
