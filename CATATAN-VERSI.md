@@ -52,6 +52,16 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.27.0 — 9 November 2026
+- **Daftar mapel sesuai MA Al-Fatah.** Pilihan mapel kini 20 mapel madrasah (termasuk Hadis, Tauhid, Fiqih Sholat, Nahwu,
+  Al-Quds wal Maqdisiyyah). Mapel lain tetap bisa diketik lewat "Lainnya".
+- **Nahwu diperlakukan seperti Bahasa Arab:** contoh kalimat Arab di materi tidak perlu diverifikasi seperti hadis.
+- **Bahasa Inggris otomatis berbahasa Inggris.** Soal, pilihan, dan pernyataan ditulis dalam bahasa Inggris tanpa perlu
+  catatan khusus, termasuk judul bagian dan petunjuk di file Word ("Choose the best answer!"). Pembahasan untuk guru tetap
+  Bahasa Indonesia.
+- **Mapel sejarah lebih aman dari tahun karangan.** Untuk SKI, Al-Quds wal Maqdisiyyah, dan Sejarah, tahun yang ditulis di
+  soal sebagai fakta benar harus ada di materi guru; kalau tidak, soal ditandai merah lalu dicoba diperbaiki otomatis.
+
 ## 0.26.0 — 9 November 2026
 - **Istilah Arab pendek tidak perlu diverifikasi lagi.** Tulisan Arab paling banyak 3 kata di materi (misalnya
   مُعْجِزَةٌ, خُلُقٌ, atau huruf ق) kini dipakai apa adanya: tidak dibuang, tidak masuk kotak ayat & hadis, dan tidak perlu
