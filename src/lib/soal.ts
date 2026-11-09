@@ -1,4 +1,5 @@
 // Pemeriksaan hasil AI. Tanpa import "@/..." supaya bisa dites langsung: npm test
+import { MAPEL_SEJARAH } from "./mapel.ts";
 
 export type Bentuk = "PG" | "PGK" | "BS" | "MJ" | "ISIAN" | "URAIAN";
 
@@ -607,6 +608,36 @@ function cekJawabanBenar(s: Soal): string | null {
   return null;
 }
 
+// "622 M", "2 H", "1187 Masehi", "tahun 1948", "tahun ke-8". H/M/SM huruf besar saja ("100 m" = meter).
+const POLA_TAHUN = /\b(\d{1,4})\s*(?:SM|SH|H|M)\b|\b(\d{1,4})\s*(?:[Hh]ijriy?ah|[Mm]asehi)\b|\b[Tt]ahun\s+(?:ke-?\s*)?(\d{1,4})\b/g;
+
+/**
+ * Mapel sejarah (2026-11-09, pilihan pemilik): tahun di bagian soal yang dinyatakan BENAR (pokok, wacana, kunci,
+ * pernyataan B/S yang benar, pasangan menjodohkan) harus tertulis di materi; tahun pengecoh boleh lain. Tahun >= 2010
+ * dilewati: stimulus kekinian ("Pada tahun 2025, siswa MA ...").
+ * ponytail: hanya angka tahun; nama tokoh & tempat dijaga lewat instruksi (ATURAN_SEJARAH), belum diperiksa aplikasi.
+ */
+export function tahunAsing(s: Soal, angkaMateri: Set<string>): string[] {
+  const k = [s.kunci].flat().map((x) => String(x ?? ""));
+  const benarBs = s.bentuk === "BS" && !Array.isArray(s.pernyataan) ? k[0] === "Benar" : true;
+  const teks = [
+    s.wacana ?? "",
+    benarBs ? s.pertanyaan : "",
+    ...(s.pilihan ?? []).filter((_, i) => k.includes(HURUF[i])),
+    ...(s.pernyataan ?? []).filter((_, i) => k[i] === s.label?.[0]),
+    ...(s.premis ?? []),
+    ...(s.jawaban ?? []).filter((_, i) => k.includes(HURUF[i])),
+    ...(s.bentuk === "ISIAN" || s.bentuk === "URAIAN" ? k : []),
+  ];
+  const asing = teks.flatMap((x) =>
+    [...String(x ?? "").matchAll(POLA_TAHUN)].filter((m) => {
+      const n = m[1] ?? m[2] ?? m[3];
+      return Number(n) < 2010 && !angkaMateri.has(String(Number(n)));
+    }).map((m) => m[0].trim()),
+  );
+  return [...new Set(asing)];
+}
+
 /**
  * Kata/frasa pendek (≤ 6 kata) yang sudah tertulis di soal LAIN: pilihan, isi lajur menjodohkan, kunci isian.
  * Untuk perbaikan otomatis isian yang bocor (0.19.1): dulu AI hanya melihat pertanyaan + kunci soal lain, bukan pengecohnya,
@@ -655,6 +686,9 @@ function acakPernyataan(s: Soal, acak: () => number) {
 /** Beri peringatan pada soal yang bermasalah. Aturan 5: teks Arab hanya boleh dari data terverifikasi. */
 export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
   const arabAsingDi = pemeriksaArab(bab, cekAyat);
+  // Angka dari teks materi saja (bukan kode TP "TP 3.1" atau nomor ayat di sumber dalil, yang membuat tahun palsu lolos).
+  const teksMateri = [bab.judul, ...bab.tp.map((t) => t.teks), ...bab.materi, ...(bab.pokok ?? [])].join(" ");
+  const angkaMateri = MAPEL_SEJARAH.test(identitasBab(bab).mapel) ? new Set((teksMateri.match(/\d+/g) ?? []).map((n) => String(Number(n)))) : null;
   const dalilAda = new Set(bab.dalil.map((d) => d.id));
   return soal.map((asli, i) => {
     // Bersihkan kode dalil yang bocor; kalau AI lupa mengisi dalil_id, pakai kode yang ditemukan di teks.
@@ -680,6 +714,8 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
     if (arabAsing.length)
       peringatan.push(`${bab.teksArab === "bahasa" ? "Teks Arab mirip ayat Al-Qur'an tetapi" : "Teks Arab"} tidak cocok dengan data terverifikasi: ${arabAsing.join(" | ")}`);
     if (s.dalil_id && !dalilAda.has(s.dalil_id)) peringatan.push(`Dalil "${s.dalil_id}" tidak ada di data bab.`);
+    const tahun = angkaMateri ? tahunAsing(s, angkaMateri) : [];
+    if (tahun.length) peringatan.push(`Tahun tidak tertulis di materi (mapel sejarah, bisa jadi dikarang AI): ${tahun.join(", ")}. Pakai tahun dari materi.`);
     if ((s.bentuk === "PG" || s.bentuk === "PGK") && s.pilihan?.length !== 5) peringatan.push("Jumlah pilihan bukan 5.");
     if ((s.bentuk === "PG" || s.bentuk === "PGK") && adaPilihanTerlarang(s))
       peringatan.push('Ada pilihan "semua benar/salah", "tidak ada yang benar", atau yang menunjuk huruf pilihan lain (urutan pilihan diacak aplikasi). Ganti dengan pilihan berisi.');

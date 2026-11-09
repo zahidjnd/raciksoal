@@ -1,4 +1,4 @@
-import { MAPEL_INGGRIS } from "./mapel.ts";
+import { MAPEL_INGGRIS, MAPEL_SEJARAH } from "./mapel.ts";
 import { blokMj, bukanDalil, identitasBab, keFormatAI, kocok, MAKS_GABUNG, mjLama, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal.ts";
 
 export const PESAN_MJ_MIN = "Menjodohkan minimal 3 nomor (atau 0), supaya daftar jawabannya masuk akal.";
@@ -37,6 +37,8 @@ const ATURAN_TKA = `KHUSUS LATIHAN TKA (mengikuti contoh soal resmi Pusmendik; b
 - BS (Kategori): TEPAT 3 pernyataan (lihat "Jumlah pernyataan" di kisi-kisi), "kunci" array 3 label. Pasangan label HANYA salah satu dari: ["Benar","Salah"], ["Tepat","Tidak Tepat"], ["Sesuai","Tidak Sesuai"], ["Setuju","Tidak Setuju"], ["Logis","Tidak Logis"].`;
 // Mapel Bahasa Inggris (mapel.ts MAPEL_INGGRIS): dulu guru harus menulis catatan "seluruh soal berbahasa Inggris" setiap set.
 const ATURAN_INGGRIS = `BAHASA SOAL (mapel Bahasa Inggris, WAJIB): SEMUA yang dibaca siswa ditulis dalam bahasa Inggris: pertanyaan/perintah soal, wacana, pilihan, pernyataan, premis dan jawaban menjodohkan, serta kalimat petunjuk di dalam soal. Ini mengalahkan aturan lain yang meminta kalimat petunjuk persis berbahasa Indonesia (termasuk aturan Latihan TKA): PG kompleks diakhiri "(Choose all the correct answers.)" atau, untuk Latihan TKA, "Choose the correct answers! More than one answer is correct."; label Kategori "True"/"False"; kata negatif di pokok soal ditulis kapital (NOT, EXCEPT). Kunci isian dalam bahasa Inggris. Pembahasan, rubrik, indikator, dan kisi-kisi TETAP dalam Bahasa Indonesia (dibaca guru).`;
+// Mapel sejarah (mapel.ts MAPEL_SEJARAH): tahun di bagian soal yang benar juga diperiksa aplikasi (tahunAsing, soal.ts).
+const ATURAN_SEJARAH = `FAKTA SEJARAH (mapel sejarah, WAJIB): tahun, tanggal, nama tokoh, tempat, dan peristiwa yang menjadi isi pokok soal, wacana, atau kunci HARUS tertulis di DATA BAB; jangan menambah dari pengetahuan sendiri walaupun Anda yakin benar. Tulis tahun persis seperti di DATA BAB (misalnya "2 H", "622 M"). Pengecoh boleh memakai tahun/tokoh lain. Stimulus kekinian boleh memakai tahun sekarang.`;
 export const KESULITAN = ["Mudah", "Sedang", "Sulit"] as const;
 
 const ATURAN_UJIAN = "Gaya soal ujian resmi madrasah (seperti asesmen tengah/akhir semester). Sebar soal merata ke semua TP dan materi (dan semua dalil bila ada). Bahasa baku. Pembahasan ringkas: alasan kunci benar + alasan singkat tiap pengecoh salah.";
@@ -240,7 +242,7 @@ export function buatSistem(bab: Bab, tka = false) {
 Tugas: menyusun soal dari DATA BAB di bawah. Kunci jawaban dan konsep yang diuji HARUS berdasar DATA BAB. Pengetahuan umum boleh dipakai hanya untuk membangun cerita/stimulus, bukan untuk menambah fakta yang menjadi kunci.
 
 ${aturanArab}
-${MAPEL_INGGRIS.test(mapel) ? `\n${ATURAN_INGGRIS}\n` : ""}
+${MAPEL_INGGRIS.test(mapel) ? `\n${ATURAN_INGGRIS}\n` : ""}${MAPEL_SEJARAH.test(mapel) ? `\n${ATURAN_SEJARAH}\n` : ""}
 ISI YANG DILARANG: SARA, politik praktis, pornografi, propaganda, kekerasan, merek dagang; tidak boleh bertentangan dengan Pancasila, UUD 1945, NKRI, Bhinneka Tunggal Ika, dan nilai agama.
 
 KAIDAH MATERI:

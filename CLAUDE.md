@@ -705,3 +705,11 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   following text..."). Kop & judul asesmen tetap. Aturan dalil & khilafiyah tetap berlaku untuk SEMUA mapel (bukan daftar sifat).
   Uji laptop: materi-15 "Uji Bahasa Inggris: Descriptive Text" (guru.uji.b, dimasukkan langsung ke DB), set 103 (14 soal semua
   bentuk): soal & Word berbahasa Inggris, pembahasan Indonesia. Belum di-push.
+- 2026-11-09 PENJAGA TAHUN SEJARAH: `MAPEL_SEJARAH` (mapel.ts: SKI, Al-Quds wal Maqdisiyyah, Sejarah, Tarikh) → `ATURAN_SEJARAH` di
+  `buatSistem` + `tahunAsing` di `periksaSoal` (soal.ts, dites): tahun ("2 H", "622 M", "1187 Masehi", "tahun 1948") di bagian
+  soal yang BENAR (pokok, wacana, pilihan kunci, B/S berkunci Benar, pernyataan Kategori berlabel pertama, premis & jawaban
+  kunci MJ, kunci isian/uraian) wajib ada sebagai angka di teks materi (judul, TP, materi, pokok; BUKAN kode TP/nomor ayat).
+  Tahun pengecoh & tahun >= 2010 (stimulus kekinian) dilewati. Merah → perbaikan otomatis biasa. Nama tokoh/tempat hanya lewat
+  instruksi. Uji laptop: materi-16 "Uji SKI: Dinasti Umayyah" (guru.uji.b), set 104 (18 soal): 0 tanda tahun; tahun di luar
+  materi (40 H, 660 M) hanya di pengecoh. Masalah lain terlihat: 3 isian bocor (nama tokoh/tahun berulang di materi kecil),
+  3 calon perbaikan semuanya gagal. Belum di-push.

@@ -988,3 +988,20 @@ test("mapel Bahasa Inggris: aturan bahasa soal hanya untuk mapel itu", () => {
   assert.doesNotMatch(buatSistem({ ...bab, mapel: "Bahasa Indonesia" }), /BAHASA SOAL/);
   assert.doesNotMatch(buatSistem(bab), /BAHASA SOAL/);
 });
+
+test("mapel sejarah: tahun di bagian soal yang benar harus ada di materi, pengecoh & stimulus kekinian dilewati", () => {
+  const ski: Bab = { ...bab, mapel: "Sejarah Kebudayaan Islam", materi: ["Perang Badar terjadi pada 17 Ramadan 2 H (624 M)."] };
+  const pg: Soal = { bentuk: "PG", dalil_id: null, pertanyaan: "Perang Badar terjadi pada tahun ....", pilihan: ["2 H", "3 H", "5 H", "8 H", "10 H"], kunci: "A", pembahasan: "", level: "C1", tp: "TP 1", skor: 2 };
+  assert.ok(!periksaSoal([pg], ski)[0].peringatan!.some((w) => w.startsWith("Tahun"))); // pengecoh 3 H dst. boleh
+  const salah = periksaSoal([{ ...pg, kunci: "B" }], ski)[0].peringatan!.find((w) => w.startsWith("Tahun"));
+  assert.match(String(salah), /3 H/);
+  // B/S yang kuncinya Salah boleh memakai tahun keliru; yang Benar tidak
+  const bs: Soal = { bentuk: "BS", dalil_id: null, pertanyaan: "Fathu Makkah terjadi pada tahun 8 H.", kunci: "Salah", pembahasan: "", level: "C1", tp: "TP 1", skor: 2 };
+  assert.ok(!periksaSoal([bs], ski)[0].peringatan!.some((w) => w.startsWith("Tahun")));
+  assert.ok(periksaSoal([{ ...bs, kunci: "Benar" }], ski)[0].peringatan!.some((w) => w.startsWith("Tahun")));
+  // stimulus kekinian & mapel bukan sejarah: tidak diperiksa
+  assert.ok(!periksaSoal([{ ...pg, pertanyaan: "Pada tahun 2025 siswa MA membaca kisah Perang Badar yang terjadi pada tahun ...." }], ski)[0].peringatan!.some((w) => w.startsWith("Tahun")));
+  assert.ok(!periksaSoal([{ ...pg, kunci: "B" }], bab)[0].peringatan!.some((w) => w.startsWith("Tahun")));
+  assert.match(buatSistem(ski), /FAKTA SEJARAH/);
+  assert.doesNotMatch(buatSistem(bab), /FAKTA SEJARAH/);
+});

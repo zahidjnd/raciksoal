@@ -23,3 +23,9 @@ export const MAPEL_EKSAK = /^(matematika?|fisika|kimia|biologi)\b/i;
  * termasuk petunjuk & judul bagian di lembar soal Word. Pembahasan, rubrik, dan kisi-kisi tetap Bahasa Indonesia (guru).
  */
 export const MAPEL_INGGRIS = /bahasa\s+inggris|english/i;
+
+/**
+ * Sejarah (SKI, Al-Quds wal Maqdisiyyah, Sejarah): tahun/tokoh/tempat wajib dari materi (ATURAN_SEJARAH, prompt.ts);
+ * tahun di bagian soal yang dinyatakan benar diperiksa aplikasi (tahunAsing, soal.ts).
+ */
+export const MAPEL_SEJARAH = /sejarah|\bski\b|tarikh|quds|maqdis/i;
