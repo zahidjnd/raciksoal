@@ -380,6 +380,17 @@ test("Latihan TKA: tanpa uraian, kisi-kisi meminta soal grup + wacana; grup sah 
   assert.ok(kisiBs.every((k) => !k.jumlahPernyataan) && kisiBs.filter((k) => k.kunciBs === "Benar").length === 3 && kisiBs.filter((k) => k.kunciBs === "Salah").length === 2);
   const kisiMj = pasangKunciPgk([{ bentuk: "PG", grup: null }, ...Array.from({ length: 7 }, () => ({ bentuk: "MJ" }))] as BarisKisi[], false);
   assert.deepEqual(kisiMj.map((k) => k.grup ?? null), [null, 1, 1, 1, 1, 2, 2, 2]);
+  // satu blok MJ = satu jenis hubungan: indikator/materi/TP nomor pertama blok dipakai seluruh blok (set 88 campur jenis)
+  const kisiMjIsi = pasangKunciPgk(["istilah", "nabi", "ciri", "x", "tokoh", "y", "z"].map((s, i) => ({ bentuk: "MJ", indikator: s, materi: s, tp: `TP ${i}`, level: `C${i}` })) as BarisKisi[], false);
+  assert.deepEqual(kisiMjIsi.map((k) => k.indikator), ["istilah", "istilah", "istilah", "istilah", "tokoh", "tokoh", "tokoh"]);
+  assert.deepEqual(kisiMjIsi.map((k) => k.tp), ["TP 0", "TP 0", "TP 0", "TP 0", "TP 4", "TP 4", "TP 4"]);
+  assert.equal(kisiMjIsi[2].level, "C2"); // level per nomor tetap
+  // batas blok MJ sudah diberitahukan saat kisi-kisi diminta (set 89: indikator nomor pertama terlalu sempit)
+  const mintaMj = buatPermintaanKisi({ ...p, tujuan: "PAS", jumlah: { PG: 2, PGK: 0, BS: 1, MJ: 8, ISIAN: 0, URAIAN: 0 } });
+  assert.ok(mintaMj.includes("BLOK MJ 2") && !mintaMj.includes("BLOK MJ 3") && mintaMj.includes("KECUALI baris MJ"));
+  const barisBlok = mintaMj.split("\n").filter((l) => l.startsWith("- Nomor") && l.includes("BLOK MJ"));
+  assert.ok(barisBlok.length >= 2 && barisBlok.every((l) => l.includes(": MJ,")), barisBlok.join(" / "));
+  assert.ok(/Nomor 3[^\n]*BLOK MJ 1/.test(mintaMj) === false && /Nomor (4|4–\d+): MJ[^\n]*BLOK MJ 1/.test(mintaMj));
   assert.ok(buatPengguna({ ...p, tujuan: "PAS" }, p.jumlah, [], "", [{ ...kisiBs[0], no: 1, tp: "TP 3.1", materi: "m", indikator: "i", level: "C2", dalil_id: null, stimulus: "s" }]).includes(`Kunci: ${kisiBs[0].kunciBs}`));
   assert.ok(!buatSistem(bab).includes("2 ATAU 3") && !buatSistem(bab).includes('tepat 4 "pernyataan"')); // tidak bertabrakan dengan kisi
   assert.deepEqual(pasangKunciPgk([{ bentuk: "PGK" }, { bentuk: "PGK" }, { bentuk: "PGK" }] as BarisKisi[], false).map((k) => k.kunciPgk), [2, 3, 2]);

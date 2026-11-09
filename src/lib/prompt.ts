@@ -342,7 +342,7 @@ const BS_KATEGORI = `- BS (pilihan ganda kompleks model Kategori): "pertanyaan" 
 
 const BS_LAMA = `- BS (benar/salah): SATU nomor = SATU pernyataan. "pertanyaan" berisi satu kalimat pernyataan utuh yang bisa dinilai benar atau salah (bukan kalimat tanya, tanpa "Benar atau salah?"). "kunci": "Benar" atau "Salah", WAJIB sama dengan "Kunci" di baris kisi-kisinya bila tertulis. Pernyataan salah dibuat dengan mengubah SATU konsep kunci dari pernyataan benar (bukan sekadar menambah kata "tidak"). Tanpa "pilihan" dan tanpa "pernyataan". "pembahasan": mengapa pernyataan itu benar atau salah.`;
 
-const MJ_LAMA = `- MJ (menjodohkan): SATU nomor = SATU pasangan. Nomor-nomor MJ dengan "Blok MJ" yang sama di kisi-kisi dijodohkan dengan SATU daftar jawaban bersama yang disusun aplikasi. Untuk setiap nomor MJ: "pertanyaan" = pernyataan lajur kiri (maks 15 kata; istilah, tokoh, kosakata, atau deskripsi singkat, tanpa titik-titik), "jodoh" = pasangannya yang benar (maks 12 kata). Semua nomor dalam satu blok berhubungan sejenis (istilah–pengertian, tokoh–karya, kata–arti, dan sebagainya), hubungannya SATU-SATU, dan semua "jodoh" berbeda isi; JANGAN pengelompokan (beberapa nomor berjodoh sama). SETIAP nomor MJ WAJIB juga punya "pengecoh": array berisi TEPAT 1 jawaban sejenis yang TIDAK cocok dengan pernyataan mana pun di bloknya (aplikasi memilih satu sebagai jawaban tambahan di daftar). JANGAN menulis huruf, "pilihan", "kunci", "pasangan", ataupun "premis". "pembahasan": satu kalimat tentang hubungan pasangan itu (sebut isinya).`;
+const MJ_LAMA = `- MJ (menjodohkan): SATU nomor = SATU pasangan. Nomor-nomor MJ dengan "Blok MJ" yang sama di kisi-kisi dijodohkan dengan SATU daftar jawaban bersama yang disusun aplikasi. Untuk setiap nomor MJ: "pertanyaan" = pernyataan lajur kiri (maks 15 kata; istilah, tokoh, kosakata, atau deskripsi singkat, tanpa titik-titik), "jodoh" = pasangannya yang benar (maks 12 kata). Semua nomor dalam satu blok berhubungan sejenis (istilah–pengertian, tokoh–karya, kata–arti, dan sebagainya), hubungannya SATU-SATU, dan semua "jodoh" berbeda isi; JANGAN pengelompokan (beberapa nomor berjodoh sama). SETIAP nomor MJ WAJIB juga punya "pengecoh": array berisi TEPAT 1 jawaban sejenis yang TIDAK cocok dengan pernyataan mana pun di bloknya dan BUKAN "jodoh" nomor lain di blok itu (aplikasi memilih satu sebagai jawaban tambahan di daftar; pengecoh yang sama dengan jodoh nomor lain dibuang). Contoh: jodoh satu blok "145 kali", "115 kali", "88 kali", "32 kali" → pengecoh yang benar "60 kali", BUKAN "115 kali". JANGAN menulis huruf, "pilihan", "kunci", "pasangan", ataupun "premis". "pembahasan": satu kalimat tentang hubungan pasangan itu (sebut isinya).`;
 
 const BENTUK_SOAL = `BENTUK SOAL:
 - PG: 5 pilihan, tepat 1 benar. Tulis berurutan: "pertanyaan", lalu "langkah" (langkah hitung atau alasan singkat untuk menemukan jawaban benar; wajib lengkap untuk soal hitungan), lalu "jawaban_benar" (isi jawaban benar hasil langkah itu), BARU "pilihan" (salah satunya salinan PERSIS "jawaban_benar") dan "kunci" ("A".."E", huruf pilihan yang sama dengan "jawaban_benar"). Periksa ulang hitungan sebelum menulis pilihan.
@@ -443,7 +443,7 @@ export function rencanaGrup(jumlah: Record<Bentuk, number>): (number | null)[] {
  * Jumlah jawaban benar tiap soal PGK, ditentukan APLIKASI dan dicatat di kisi-kisi (`kunciPgk`), karena AI tidak
  * meragamkannya sendiri (uji set 81: keempat PGK berkunci 2 walau diminta 2–4). TKA 2–4 (contoh resmi), jenis lain 2–3.
  */
-export function pasangKunciPgk<T extends { bentuk: Bentuk; grup?: number | null }>(kisi: T[], tka: boolean, acak: () => number = Math.random): (T & { kunciPgk?: number; jumlahPernyataan?: number; kunciBs?: string })[] {
+export function pasangKunciPgk<T extends { bentuk: Bentuk; grup?: number | null; tp?: string; materi?: string; indikator?: string }>(kisi: T[], tka: boolean, acak: () => number = Math.random): (T & { kunciPgk?: number; jumlahPernyataan?: number; kunciBs?: string })[] {
   const pola = tka ? [2, 3, 4] : [2, 3];
   let n = 0;
   // Benar/Salah gaya lama (0.22.0): kunci tiap nomor ditentukan aplikasi, separuh Benar separuh Salah, urutan acak
@@ -454,6 +454,7 @@ export function pasangKunciPgk<T extends { bentuk: Bentuk; grup?: number | null 
   const ukuran = blokMj(kisi.filter((k) => k.bentuk === "MJ").length);
   let grup = Math.max(0, ...kisi.map((k) => k.grup ?? 0));
   let sisaBlok = 0;
+  let kepala: T | null = null;
   return kisi.map((k) => {
     if (k.bentuk === "PGK") return { ...k, kunciPgk: pola[n++ % pola.length] };
     if (k.bentuk === "BS") return tka ? { ...k, jumlahPernyataan: 3 } : { ...k, kunciBs: kunciBs.shift() };
@@ -461,9 +462,14 @@ export function pasangKunciPgk<T extends { bentuk: Bentuk; grup?: number | null 
       if (sisaBlok === 0) {
         grup++;
         sisaBlok = ukuran.shift() ?? 1;
+        kepala = k;
       }
       sisaBlok--;
-      return { ...k, grup };
+      // Satu blok = satu daftar jawaban, jadi satu jenis hubungan: indikator/materi/TP nomor pertama dipakai seluruh blok.
+      // AI menyusun kisi sebelum blok dibentuk dan sengaja meragamkan tiap baris (set 86–88: istilah + nama nabi
+      // dalam satu daftar); indikator per baris lalu mengalahkan aturan "sejenis" saat soal ditulis.
+      const { tp, materi, indikator } = kepala!;
+      return { ...k, grup, tp, materi, indikator };
     }
     return k;
   });
@@ -504,11 +510,19 @@ export function buatPermintaanKisi(p: Pengaturan, bab?: Pick<Bab, "teksArab">) {
   const bentukNo = urutan.flatMap((b) => Array<Bentuk>(p.jumlah[b]).fill(b));
   const kategori = rencanaLevelSet(p);
   const grup = p.tujuan === TKA ? rencanaGrup(p.jumlah) : [];
+  // Menjodohkan gaya lama: batas blok (blokMj, sama dengan pasangKunciPgk) diberitahukan sejak kisi-kisi, supaya AI
+  // merencanakan satu jenis hubungan per blok (set 89: tanpa ini indikator nomor pertama blok hanya cukup untuk 1 pasangan).
+  const blok: number[] = [];
+  if (p.tujuan !== TKA) {
+    const awalMj = bentukNo.indexOf("MJ");
+    blokMj(p.jumlah.MJ ?? 0).forEach((n, b) => blok.push(...Array<number>(n).fill(b + 1)));
+    blok.unshift(...Array<number>(Math.max(awalMj, 0)).fill(0));
+  }
   const rentang: string[] = [];
   for (let i = 0; i < total; ) {
     let j = i;
-    while (j + 1 < total && bentukNo[j + 1] === bentukNo[i] && kategori[j + 1] === kategori[i] && (grup[j + 1] ?? null) === (grup[i] ?? null)) j++;
-    rentang.push(`- Nomor ${i === j ? i + 1 : `${i + 1}–${j + 1}`}: ${bentukNo[i]}, ${kategori[i]} (${RENTANG[kategori[i]]})${grup[i] ? `, GRUP ${grup[i]}` : ""}`);
+    while (j + 1 < total && bentukNo[j + 1] === bentukNo[i] && kategori[j + 1] === kategori[i] && (grup[j + 1] ?? null) === (grup[i] ?? null) && (blok[j + 1] ?? 0) === (blok[i] ?? 0)) j++;
+    rentang.push(`- Nomor ${i === j ? i + 1 : `${i + 1}–${j + 1}`}: ${bentukNo[i]}, ${kategori[i]} (${RENTANG[kategori[i]]})${grup[i] ? `, GRUP ${grup[i]}` : ""}${blok[i] ? `, BLOK MJ ${blok[i]}` : ""}`);
     i = j + 1;
   }
   return `Susun KISI-KISI untuk satu set ${total} soal. Belum menulis soal; setiap baris kisi-kisi = rencana satu soal.
@@ -521,7 +535,7 @@ Isi setiap baris:
 - "level": satu level di dalam kategori nomor itu (LOTS = C1 atau C2, MOTS = C3, HOTS = C4, C5, atau C6).
 - "dalil_id": id dalil yang dipakai, atau null. Bila DATA BAB memuat dalil, sebar ke semua dalil.
 - "stimulus": jenis stimulus + skenario singkat (maks 15 kata), atau "tanpa stimulus". Ikuti aturan STIMULUS: setiap skenario BERBEDA satu sama lain dalam seluruh kisi-kisi.
-Indikator antarbaris juga tidak boleh sama persis; ambil sisi materi yang berbeda.
+Indikator antarbaris juga tidak boleh sama persis; ambil sisi materi yang berbeda${p.jumlah.MJ && p.tujuan !== TKA ? " (KECUALI baris MJ dalam BLOK MJ yang sama: lihat aturan MJ)" : ""}.
 ${p.jumlah.ISIAN ? `${RENCANA_ISIAN}\n` : ""}${p.jumlah.MJ ? `${RENCANA_MJ}\n` : ""}${tanpaArab ? 'Di kisi-kisi JANGAN menulis huruf Arab sama sekali; sebut lafaz dengan transliterasi Latin (misalnya "lā taqrabū az-zinā").' : "Di kisi-kisi boleh menulis kosakata/kalimat Arab buatan sendiri, tetapi JANGAN menulis ayat atau hadis."}
 ${p.tujuan === TKA ? `${SOAL_GRUP}${tanpaArab ? " Wacana tanpa huruf Arab." : " Wacana boleh berbahasa Arab, tetapi bukan ayat atau hadis."}\n` : ""}${p.catatan ? `${TANGGAPAN}\n` : ""}FORMAT JAWABAN untuk permintaan ini: hanya JSON {${p.catatan ? '"tanggapan":"...",' : ""}"kisi":[{"bentuk":"PG","tp":"TP 3.1","materi":"...","indikator":"...","level":"C2","dalil_id":null,"stimulus":"tanpa stimulus"${p.tujuan === TKA ? ',"grup":null' : ""}}${p.jumlah.ISIAN ? ',{"bentuk":"ISIAN",...,"jawaban":"..."}' : ""}]${p.tujuan === TKA ? ',"wacana":[{"grup":1,"teks":"..."}]' : ""}}`;
 }
@@ -540,7 +554,7 @@ const RENCANA_ISIAN = `- "jawaban" (HANYA baris ISIAN): rencana jawaban soal isi
 
 // 0.19.1: menjodohkan "pengelompokan" (5 pajak → pusat/daerah) membuat jawaban berulang dan gagal diperbaiki (audit set 76).
 // 0.22.0: menjodohkan gaya lama (satu baris = satu pasangan); baris MJ berurutan dijodohkan dengan satu daftar jawaban.
-const RENCANA_MJ = `- Baris MJ (menjodohkan): setiap baris = SATU pasangan (satu pernyataan lajur kiri dan jodohnya). Baris-baris MJ yang berurutan dijodohkan bersama dengan satu daftar jawaban, jadi pilih SATU jenis hubungan untuk semuanya (istilah–pengertian, tokoh–karya, kata–arti) dengan pasangan berbeda di setiap baris dan jodoh yang semuanya berbeda. Materi pengelompokan (beberapa hal masuk ke kelompok yang sama) jangan dijadikan MJ. "stimulus" baris MJ: "tanpa stimulus".`;
+const RENCANA_MJ = `- Baris MJ (menjodohkan): setiap baris = SATU pasangan (satu pernyataan lajur kiri dan jodohnya). Baris-baris MJ yang berurutan dijodohkan bersama dengan satu daftar jawaban, jadi pilih SATU jenis hubungan untuk semuanya (istilah–pengertian, tokoh–karya, kata–arti) dengan pasangan berbeda di setiap baris dan jodoh yang semuanya berbeda. Semua baris dalam BLOK MJ yang sama memakai "indikator" dan "materi" yang SAMA PERSIS, berupa jenis hubungan yang cukup luas untuk memuat semua pasangan blok itu (contoh: "Peserta didik dapat menjodohkan istilah-istilah kemukjizatan dengan pengertiannya"), BUKAN satu pasangan tertentu. Jodoh dalam satu blok harus sejenis (semuanya istilah, atau semuanya nama surah, atau semuanya nama tokoh), jangan dicampur. Materi pengelompokan (beberapa hal masuk ke kelompok yang sama) jangan dijadikan MJ. "stimulus" baris MJ: "tanpa stimulus".`;
 
 /** Baris kisi-kisi dalam bentuk ringkas untuk permintaan soal. */
 const tulisKisi = (k: BarisKisi) =>
