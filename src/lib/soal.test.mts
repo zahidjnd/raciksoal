@@ -388,6 +388,9 @@ test("Latihan TKA: tanpa uraian, kisi-kisi meminta soal grup + wacana; grup sah 
   // batas blok MJ sudah diberitahukan saat kisi-kisi diminta (set 89: indikator nomor pertama terlalu sempit)
   const mintaMj = buatPermintaanKisi({ ...p, tujuan: "PAS", jumlah: { PG: 2, PGK: 0, BS: 1, MJ: 8, ISIAN: 0, URAIAN: 0 } });
   assert.ok(mintaMj.includes("BLOK MJ 2") && !mintaMj.includes("BLOK MJ 3") && mintaMj.includes("KECUALI baris MJ"));
+  // satu keterampilan = satu nomor lintas bentuk (set 79: PG & isian sama-sama menghitung inflasi dari IHK); uraian boleh memperdalam
+  assert.ok(mintaMj.includes("SATU KETERAMPILAN = SATU NOMOR") && !mintaMj.includes("baris URAIAN boleh memperdalam"));
+  assert.ok(buatPermintaanKisi({ ...p, tujuan: "PAS", jumlah: { PG: 2, PGK: 0, BS: 0, MJ: 0, ISIAN: 0, URAIAN: 1 } }).includes("baris URAIAN boleh memperdalam"));
   const barisBlok = mintaMj.split("\n").filter((l) => l.startsWith("- Nomor") && l.includes("BLOK MJ"));
   assert.ok(barisBlok.length >= 2 && barisBlok.every((l) => l.includes(": MJ,")), barisBlok.join(" / "));
   assert.ok(/Nomor 3[^\n]*BLOK MJ 1/.test(mintaMj) === false && /Nomor (4|4–\d+): MJ[^\n]*BLOK MJ 1/.test(mintaMj));

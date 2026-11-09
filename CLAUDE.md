@@ -659,3 +659,11 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   pilihan/pernyataan/jawaban soal lain tidak membocorkan; siswa tetap menghitung). Ukur data laptop: tanda angka 4 → 1
   (sisa = sungguhan, set 72 "PPN dengan tarif 11%"), tanda kata tetap 15. SISA: soal hitungan KEMBAR (set 79 & 80: PG dan
   isian sama-sama menghitung inflasi dari IHK) belum dicegah. Belum di-push.
+- 2026-11-09 SOAL KEMBAR (pemilik "gas", langkah 1): kisi-kisi merencanakan keterampilan sama di bentuk berbeda (set 79:
+  PG & isian sama-sama "menghitung inflasi dari IHK"; aturan lama hanya melarang indikator SAMA PERSIS). Ukur 54 kisi
+  laptop (kata inti indikator >= 75% sama, skrip `mirip.mts` di scratchpad sesi ini): 18 set terkena, 12 tanpa pasangan
+  Uraian. Kini `buatPermintaanKisi`: "SATU KETERAMPILAN = SATU NOMOR" lintas bentuk (sinonim/angka/kasus beda tidak
+  dihitung beda); Uraian boleh memperdalam (keputusan: uraian = langkah lengkap + rubrik). Uji laptop set 92 & 93
+  (guru.uji.ayat, materi-8 Ekonomi, ASAS 25: PG12 PGK3 BS5 ISIAN3 URAIAN2): pasangan mirip tanpa Uraian 0 (set lama
+  sejenis 69–80: 5 pasangan di 4/9 set); sisa 2 pasangan PG–Uraian PPh (dibolehkan). Langkah 2 (deteksi + perbaikan kisi
+  oleh aplikasi) BELUM perlu. Set 93: 2 isian merah = masalah lama isian bocor (kata), perbaikan otomatis gagal.
