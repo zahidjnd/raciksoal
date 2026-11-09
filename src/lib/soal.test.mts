@@ -982,3 +982,9 @@ test("mapel MA Al-Fatah: 20 mapel, Nahwu = mode Bahasa Arab, eksak ASAS", async 
   assert.deepEqual(["Bahasa Arab", "Nahwu", "Fiqih", "Al-Quds wal Maqdisiyyah"].map(modeArab), ["bahasa", "bahasa", "dalil", "dalil"]);
   assert.ok(["Matematika", "Matematik", "Fisika", "Kimia", "Biologi"].every((m) => MAPEL_EKSAK.test(m)) && !MAPEL_EKSAK.test("Ekonomi"));
 });
+
+test("mapel Bahasa Inggris: aturan bahasa soal hanya untuk mapel itu", () => {
+  assert.match(buatSistem({ ...bab, mapel: "Bahasa Inggris" }), /BAHASA SOAL \(mapel Bahasa Inggris/);
+  assert.doesNotMatch(buatSistem({ ...bab, mapel: "Bahasa Indonesia" }), /BAHASA SOAL/);
+  assert.doesNotMatch(buatSistem(bab), /BAHASA SOAL/);
+});

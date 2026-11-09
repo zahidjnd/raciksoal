@@ -17,3 +17,9 @@ export const MAPEL_BAHASA_ARAB = /bahasa\s+arab|nahwu|sharaf|sharf|shorof|balagh
  * (pilihan pemilik). "Matematik" (ejaan daftar madrasah) ikut.
  */
 export const MAPEL_EKSAK = /^(matematika?|fisika|kimia|biologi)\b/i;
+
+/**
+ * Bahasa Inggris (keluhan guru Bahasa Inggris saat uji coba, 2026-11-09): semua yang dibaca siswa berbahasa Inggris,
+ * termasuk petunjuk & judul bagian di lembar soal Word. Pembahasan, rubrik, dan kisi-kisi tetap Bahasa Indonesia (guru).
+ */
+export const MAPEL_INGGRIS = /bahasa\s+inggris|english/i;

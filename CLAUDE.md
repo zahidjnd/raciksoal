@@ -696,3 +696,12 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   ayat. Prompt: "Teks Arab materi (BUKAN ayat dan BUKAN hadis...)"; kartu soal: "Teks Arab materi"; Word: tanpa "(sumber)".
   Uji laptop (guru.uji.ayat): materi-14 "Uji Istilah Arab" (4 istilah, mahfuzhat = bukan, hadis HR. Ahmad), set 102 (4 PG):
   soal menyebut "kutipan mahfuzhat", 0 merah, Word tanpa "Bukan ayat". Belum di-push.
+- 2026-11-09 SIFAT MAPEL (pemilik "gas"): `src/lib/mapel.ts` = satu tempat aturan per mapel. `DAFTAR_MAPEL` = 20 mapel MA Al-Fatah
+  (Ijtimaiyyah, PJOK, BK sengaja TIDAK dimasukkan; "Lainnya" tetap bisa diketik; ejaan "Fiqih", materi lama "Fikih" tetap terbaca).
+  `MAPEL_BAHASA_ARAB` (Bahasa Arab, Nahwu, Sharaf, Balaghah) → `modeArab` "bahasa". `MAPEL_EKSAK` dipindah ke sini (prompt.ts
+  mengekspor ulang). `MAPEL_INGGRIS` → `ATURAN_INGGRIS` di `buatSistem` (semua yang dibaca siswa berbahasa Inggris, mengalahkan
+  kalimat petunjuk baku Indonesia termasuk TKA; pembahasan/rubrik/kisi tetap Indonesia; label Kategori "True"/"False" ditambah ke
+  `LABEL_KATEGORI`) dan `LEMBAR.en` di word.ts (judul bagian, petunjuk, "A. True B. False", kepala tabel MJ/Kategori, "Read the
+  following text..."). Kop & judul asesmen tetap. Aturan dalil & khilafiyah tetap berlaku untuk SEMUA mapel (bukan daftar sifat).
+  Uji laptop: materi-15 "Uji Bahasa Inggris: Descriptive Text" (guru.uji.b, dimasukkan langsung ke DB), set 103 (14 soal semua
+  bentuk): soal & Word berbahasa Inggris, pembahasan Indonesia. Belum di-push.

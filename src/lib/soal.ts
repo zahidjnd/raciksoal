@@ -121,6 +121,7 @@ export const LABEL_KATEGORI = [
   ["Didukung", "Tidak Didukung"],
   ["Setuju", "Tidak Setuju"],
   ["Logis", "Tidak Logis"],
+  ["True", "False"], // mapel Bahasa Inggris (ATURAN_INGGRIS, prompt.ts)
 ];
 export const JUMLAH_PERNYATAAN = 4; // paling banyak
 export const PERNYATAAN_BOLEH = [3, 4];

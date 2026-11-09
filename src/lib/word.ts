@@ -20,6 +20,7 @@ import {
   WidthType,
   type ParagraphChild,
 } from "docx";
+import { MAPEL_INGGRIS } from "./mapel";
 import { hariTanggal, mapelTka, NAMA_BENTUK, semesterDari, TKA, WAKTU_BAWAAN, type Pengaturan } from "./prompt";
 import { bukanDalil, identitasBab, JUMLAH_PREMIS, kategoriBaru, mjLama, paragrafArab, pecahBaris, POLA_ARAB, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
 
@@ -155,24 +156,25 @@ const TAHAN_WACANA = 3;
 export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Date, sekolah = "MADRASAH ALIYAH AL-FATAH", paket?: string) {
   const isi: (Paragraph | Table)[] = [];
   if (paket) isi.push(par([r(`PAKET ${paket}`, { bold: true, size: 28 })], { alignment: AlignmentType.RIGHT, keepNext: true, spacing: { after: 120 } }));
+  const L: Lembar = LEMBAR[MAPEL_INGGRIS.test(identitasBab(bab).mapel) ? "en" : "id"];
   kelompok(soal).forEach(({ bentuk, butir }, k) => {
     const kategori = bentuk === "BS" && butir.some((x) => kategoriBaru(x.s));
-    isi.push(par([r(`${ROMAWI[k]}. ${kategori ? "PILIHAN GANDA KOMPLEKS KATEGORI" : NAMA_BAGIAN[bentuk]}`, { bold: true })], { keepNext: true, spacing: { before: k ? 200 : 0, after: 40 } }));
-    isi.push(par([r(kategori ? PETUNJUK_KATEGORI : PETUNJUK[bentuk], { italics: true })], { keepNext: true, spacing: { after: 120 } }));
+    isi.push(par([r(`${ROMAWI[k]}. ${kategori ? L.kategori : L.bagian[bentuk]}`, { bold: true })], { keepNext: true, spacing: { before: k ? 200 : 0, after: 40 } }));
+    isi.push(par([r(kategori ? L.petunjukKategori : L.petunjuk[bentuk], { italics: true })], { keepNext: true, spacing: { after: 120 } }));
     for (const [j, { s, no }] of butir.entries()) {
       // Menjodohkan gaya lama: satu tabel per blok (pernyataan bernomor soal + daftar jawaban bersama), dicetak sekali.
       if (mjLama(s)) {
         if (s.grup && mjLama(butir[j - 1]?.s ?? s) && butir[j - 1]?.s.grup === s.grup) continue;
         const blok = [butir[j]];
         while (s.grup && butir[j + blok.length] && mjLama(butir[j + blok.length].s) && butir[j + blok.length].s.grup === s.grup) blok.push(butir[j + blok.length]);
-        isi.push(tabelMenjodohkan({ ...s, premis: blok.map((x) => x.s.pertanyaan) }, blok.map((x) => x.no)));
+        isi.push(tabelMenjodohkan({ ...s, premis: blok.map((x) => x.s.pertanyaan) }, blok.map((x) => x.no), L));
         isi.push(par([], { spacing: { after: 80 } }));
         continue;
       }
       // Soal grup: wacana bersama sekali, sebelum soal pertama grupnya.
       if (s.grup && s.wacana && butir[j - 1]?.s.grup !== s.grup) {
         const akhir = butir.slice(j).findLast((x) => x.s.grup === s.grup)!.no;
-        isi.push(par([r(`Bacalah teks berikut untuk menjawab soal nomor ${no}${akhir > no ? `–${akhir}` : ""}!`, { bold: true, italics: true })], { keepNext: true, spacing: { before: 60, after: 40 } }));
+        isi.push(par([r(`${L.bacalah} ${no}${akhir > no ? `–${akhir}` : ""}!`, { bold: true, italics: true })], { keepNext: true, spacing: { before: 60, after: 40 } }));
         // Wacana boleh terpotong di tengah; hanya TIGA baris terakhirnya (+ jarak) ditahan bersama soal pertama grup.
         const barisWacana = pecahBaris(s.wacana);
         barisWacana.forEach((baris, n) => isi.push(parBaris(baris, 200, { keepNext: n >= barisWacana.length - TAHAN_WACANA, spacing: { after: 40 } })));
@@ -186,9 +188,9 @@ export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tangga
         if (!bukanDalil(dalil)) isi.push(par([r(`(${dalil.sumber})`, { italics: true, size: 18 })], { alignment: AlignmentType.RIGHT, keepNext: true }));
       }
       if (s.pilihan) s.pilihan.forEach((o, i) => isi.push(...butirBaris(`${HURUF[i]}.`, o, 800, { spacing: { after: 0 }, keepNext: i === 0 || i === 3 })));
-      if (bentuk === "MJ") isi.push(tabelMenjodohkan(s));
-      else if (kategoriBaru(s)) isi.push(tabelKategori(s));
-      else if (bentuk === "BS") isi.push(par([r("A.", { bold: true }), r(" Benar\t\t"), r("B.", { bold: true }), r(" Salah")], { indent: { left: 400 } }));
+      if (bentuk === "MJ") isi.push(tabelMenjodohkan(s, undefined, L));
+      else if (kategoriBaru(s)) isi.push(tabelKategori(s, L));
+      else if (bentuk === "BS") isi.push(par([r("A.", { bold: true }), r(` ${L.benar}\t\t`), r("B.", { bold: true }), r(` ${L.salah}`)], { indent: { left: 400 } }));
       isi.push(par([], { spacing: { after: 80 } }));
     }
   });
@@ -219,6 +221,31 @@ const sel = (anak: Paragraph[], lebar: number) =>
 const KOLOM_KATEGORI = [400, 2500, 850, 850];
 const PETUNJUK_KATEGORI = "Berilah tanda centang (✓) pada kolom yang sesuai untuk setiap pernyataan!";
 
+/**
+ * Teks lembar siswa yang ditulis APLIKASI (bukan AI). Mapel Bahasa Inggris memakai versi Inggris (keluhan guru 2026-11-09:
+ * soal sudah berbahasa Inggris, tetapi judul bagian & petunjuk masih Indonesia). Kop dan judul asesmen tetap.
+ */
+const LEMBAR = {
+  id: {
+    bagian: NAMA_BAGIAN, petunjuk: PETUNJUK, kategori: "PILIHAN GANDA KOMPLEKS KATEGORI", petunjukKategori: PETUNJUK_KATEGORI,
+    benar: "Benar", salah: "Salah", bacalah: "Bacalah teks berikut untuk menjawab soal nomor", jawab: "Jawab", premis: "Premis", jawaban: "Jawaban", pernyataan: "Pernyataan",
+  },
+  en: {
+    bagian: { PG: "MULTIPLE CHOICE", PGK: "COMPLEX MULTIPLE CHOICE", BS: "TRUE / FALSE", MJ: "MATCHING", ISIAN: "SHORT ANSWER", URAIAN: "ESSAY" } as Record<Bentuk, string>,
+    petunjuk: {
+      PG: "Choose the best answer (A, B, C, D, or E)!",
+      PGK: "Choose all the correct answers from options A, B, C, D, or E (more than one answer is correct)!",
+      BS: "Choose A if the statement is TRUE, or B if it is FALSE!",
+      MJ: "Match each statement in the left column with the correct answer in the right column! Write the letter of the answer in the 'Answer' column.",
+      ISIAN: "Fill in the blanks with short and correct answers!",
+      URAIAN: "Answer the following questions briefly, clearly, and correctly!",
+    } as Record<Bentuk, string>,
+    kategori: "COMPLEX MULTIPLE CHOICE (CATEGORY)", petunjukKategori: "Put a tick (✓) in the correct column for each statement!",
+    benar: "True", salah: "False", bacalah: "Read the following text to answer questions number", jawab: "Answer", premis: "Statement", jawaban: "Options", pernyataan: "Statement",
+  },
+};
+type Lembar = (typeof LEMBAR)["id"];
+
 // Menjodohkan di lembar siswa: Jawab (kosong, diisi huruf) | No | Premis | Huruf | Jawaban. Total sama dengan tabel Kategori.
 const KOLOM_MJ = [650, 400, 1650, 400, 1500];
 
@@ -232,7 +259,7 @@ const parSel = (isi: string, opsi: Partial<ConstructorParameters<typeof Paragrap
  * Soal Menjodohkan di lembar siswa: premis di kiri (dengan kolom kosong untuk huruf jawaban), jawaban A–F di kanan.
  * `nomor`: nomor soal tiap premis (menjodohkan gaya lama: satu premis = satu nomor soal); tanpa itu 1, 2, 3, ...
  */
-function tabelMenjodohkan(s: Soal, nomor?: number[]) {
+function tabelMenjodohkan(s: Soal, nomor?: number[], L: Lembar = LEMBAR.id) {
   const premis = s.premis ?? [];
   const jawaban = s.jawaban ?? [];
   const kecil = (t: string) => par([r(t, { bold: true, size: 18 })], { alignment: AlignmentType.CENTER, spacing: { after: 0 } });
@@ -248,7 +275,7 @@ function tabelMenjodohkan(s: Soal, nomor?: number[]) {
     width: { size: KOLOM_MJ.reduce((a, b) => a + b, 0), type: WidthType.DXA },
     indent: { size: 400, type: WidthType.DXA },
     rows: [
-      baris([[kecil("Jawab")], [kecil("No")], [kecil("Premis")], [kecil("")], [kecil("Jawaban")]], true),
+      baris([[kecil(L.jawab)], [kecil("No")], [kecil(L.premis)], [kecil("")], [kecil(L.jawaban)]], true),
       ...Array.from({ length: n }, (_, i) =>
         baris([
           [par([], { spacing: { after: 0 } })],
@@ -263,7 +290,7 @@ function tabelMenjodohkan(s: Soal, nomor?: number[]) {
 }
 
 /** Soal Kategori di lembar siswa: No | Pernyataan | label 1 | label 2 (kolom label dikosongkan untuk dicentang). */
-function tabelKategori(s: Soal) {
+function tabelKategori(s: Soal, L: Lembar = LEMBAR.id) {
   const label = s.label?.length === 2 ? s.label : ["", ""];
   const kecil = (t: string, rata: (typeof AlignmentType)[keyof typeof AlignmentType] = AlignmentType.CENTER) =>
     par([r(t, { bold: true, size: 18 })], { alignment: rata, spacing: { after: 0 } });
@@ -277,7 +304,7 @@ function tabelKategori(s: Soal) {
     width: { size: KOLOM_KATEGORI.reduce((a, b) => a + b, 0), type: WidthType.DXA },
     indent: { size: 400, type: WidthType.DXA },
     rows: [
-      baris([[kecil("No")], [kecil("Pernyataan", AlignmentType.LEFT)], [kecil(label[0])], [kecil(label[1])]], true),
+      baris([[kecil("No")], [kecil(L.pernyataan, AlignmentType.LEFT)], [kecil(label[0])], [kecil(label[1])]], true),
       ...(s.pernyataan ?? []).map((p, i) => baris([[par([r(String(i + 1))], { alignment: AlignmentType.CENTER, spacing: { after: 0 } })], [par(teks(p), { spacing: { after: 0 } })], [par([])], [par([])]])),
     ],
   });
