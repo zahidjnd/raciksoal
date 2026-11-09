@@ -4,7 +4,7 @@ import { and, eq, gte, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { hasilSoal, pemakaianAi } from "@/db/schema";
 import { daftarModel, tanyaAI } from "@/lib/ai";
-import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, laranganIsian, ringkasSudah, buatPermintaanKisi, buatSistem, buatAnalisaMateri, bersihkanIdentitas, pasangKunciPgk, rencanaGrup, rencanaLevelSet, sesuaikanLevel, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
+import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, laranganIsian, ringkasSudah, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, buatSistem, buatAnalisaMateri, bersihkanIdentitas, pasangKunciPgk, rencanaGrup, rencanaLevelSet, sesuaikanLevel, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { BATAS_MATERI, susunDraf, terapkanAnalisa } from "@/lib/materi";
 import { bersihkanTanggapan, gabungBab, identitasBab, kataTerpakai, KELAS, LEVEL, mjLama, pemeriksaArab, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { babDariSet, babMilik, daftarBabMilik } from "@/lib/bab";
@@ -219,7 +219,7 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
 
   try {
     await simpan({ pesan: "Menyusun kisi-kisi" });
-    const { kisi, tanggapan } = await tanya("Kisi-kisi", buatPermintaanKisi(p, bab),(d) => {
+    const { kisi: kisiAwal, tanggapan } = await tanya("Kisi-kisi", buatPermintaanKisi(p, bab),(d) => {
       const isi = d as { kisi?: unknown; tanggapan?: unknown; wacana?: unknown };
       // Wacana soal grup hanya untuk Latihan TKA; jenis lain: semua soal tunggal.
       // Nomor grup dari rencana aplikasi (rencanaGrup), bukan dari AI; AI hanya menulis wacananya.
@@ -233,6 +233,18 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
       return { kisi, tanggapan: p.catatan ? bersihkanTanggapan(isi?.tanggapan, bab, cekAyat) : "" };
     });
     if (tanggapan) info.tanggapan = tanggapan;
+    // Pemeriksaan kisi-kisi (0.25.0): AI mencari baris kembar lintas bentuk dan menulis ulang yang belakangan. Gagal → kisi
+    // awal tetap dipakai; catatan di info.perbaikan (bukan info.catatan, yang memicu pita merah admin).
+    let kisi = kisiAwal;
+    await simpan({ kisi, pesan: "Memeriksa kisi-kisi" });
+    try {
+      const aman = (t: string) => !pemeriksaArab(bab, cekAyat)(t).length;
+      const r = await tanya("Periksa kisi-kisi", buatPeriksaKembar(kisi), (d) => terapkanKembar(kisi, d, aman));
+      kisi = r.kisi;
+      if (r.diganti.length) (info.perbaikan ??= []).push(`Kisi-kisi: baris kembar ditulis ulang: ${r.diganti.join(", ")}.`);
+    } catch (e) {
+      (info.perbaikan ??= []).push(`Kisi-kisi: pemeriksaan baris kembar gagal (${pesanError(e)}), kisi-kisi awal dipakai.`);
+    }
     await simpan({ kisi });
 
     let awal = 0;

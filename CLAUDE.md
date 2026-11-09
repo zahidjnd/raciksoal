@@ -673,3 +673,12 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   tertulis (set 93: "fungsi anggaran", "fungsi mengatur"); ukur data laptop: 14 dari 17 isian bocor = konsep ditanya dua kali
   (kunci/pokok soal lain), 3 hanya di pengecoh. Uji laptop set 94 & 95 (materi-8 Ekonomi, ASAS 25 seperti set 93): kedua
   isian bocor diperbaiki dengan calon 2 dari 3 (cara lama = tetap merah), 0 merah. Belum di-push.
+- 2026-11-09 PERIKSA KISI KEMBAR (pemilik "gas", langkah 2 SOAL KEMBAR): setelah kisi-kisi jadi, `kerjakan` memanggil AI
+  sekali lagi (`buatPeriksaKembar`, prompt.ts): cari baris yang menguji keterampilan sama lintas bentuk, tulis ulang yang
+  nomornya lebih besar. Pasangan dengan kata inti indikator >= 75% sama (`miripIndikator`) dikirim sebagai "SUDAH PASTI
+  kembar" (AI kadang melewatkannya). `terapkanKembar` (dites) hanya mengubah indikator/materi/stimulus/jawaban isian, melewati
+  MJ/URAIAN, menolak teks Arab tak terverifikasi, dan MENOLAK tulisan ulang yang mirip indikator lama atau baris lain (set 97:
+  AI "menulis ulang" dengan indikator yang sama persis). Gagal → kisi awal dipakai. Catatan di `info.perbaikan`.
+  Uji laptop (materi-8/10 Ekonomi, ASAS 25): sebelum (set 92–95) 3 pasangan kembar di 4 set; sesudah (set 98–101) 2 di 4 set,
+  2 set bersih. Sisa yang bandel: B/S "menilai kebenaran hasil hitung X" vs PG "menghitung X". Waktu set +±10 detik.
+  Set 96–97 = versi tanpa penolak salinan (tidak dihitung). Belum di-push.

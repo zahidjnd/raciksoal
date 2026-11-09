@@ -572,6 +572,69 @@ export function laranganIsian(kisi: BarisKisi[]) {
     : "";
 }
 
+/**
+ * Pemeriksaan kisi-kisi oleh AI (0.25.0): cari baris yang menguji keterampilan sama lintas bentuk, lalu tulis ulang baris
+ * yang belakangan. Aturan "satu keterampilan = satu nomor" di permintaan kisi saja tidak cukup (set 94: PG "menghitung
+ * tingkat inflasi dari IHK" + isian "menentukan tingkat inflasi dari IHK"; set 95: PG + B/S "membedakan pajak subjektif dan
+ * objektif"). Pemeriksa kemiripan kata buatan aplikasi melewatkan sinonim kata kerja, jadi yang memeriksa AI; aplikasi
+ * hanya menerima perubahan indikator/materi/stimulus/jawaban isian (terapkanKembar).
+ */
+export function buatPeriksaKembar(kisi: BarisKisi[]) {
+  const baris = kisi.map((k, i) =>
+    `${i + 1}. ${k.bentuk}${k.bentuk === "MJ" && k.grup ? ` (BLOK MJ ${k.grup})` : ""} | ${k.tp} | ${k.level} | ${k.indikator} | materi: ${k.materi}${k.bentuk === "ISIAN" && k.jawaban ? ` | jawaban: ${k.jawaban}` : ""}`,
+  );
+  // Pasangan yang kata intinya hampir sama sudah pasti kembar (aplikasi menemukannya; AI kadang melewatkannya, set 99: PG
+  // dan isian sama-sama menghitung PPN). AI tetap mencari pasangan lain yang beda kata (sinonim).
+  const pasti = kisi.flatMap((a, i) =>
+    kisi.slice(i + 1).flatMap((b, d) =>
+      [a.bentuk, b.bentuk].some((x) => x === "MJ" || x === "URAIAN") || !miripIndikator(a.indikator, b.indikator) ? [] : [`${i + 1} dan ${i + d + 2}`],
+    ),
+  );
+  return `Ini permintaan MEMERIKSA kisi-kisi set ini (bukan membuat soal):
+${baris.join("\n")}
+${pasti.length ? `\nPasangan berikut SUDAH PASTI kembar dan wajib diperbaiki: ${pasti.join("; ")}.\n` : ""}
+Cari pasangan baris yang MENGUJI KETERAMPILAN YANG SAMA: kata kerja + objek yang sama, walaupun kata kerjanya sinonim (menghitung/menentukan/menilai kebenaran hasil hitung), angka data, tokoh, kasus, atau bentuk soalnya berbeda. Contoh kembar: "menghitung tingkat inflasi dari data IHK" (PG) dengan "menentukan tingkat inflasi dalam persen dari data IHK" (ISIAN); "membedakan pajak subjektif dan objektif" (PG) dengan "membedakan ciri pajak subjektif dan objektif" (BS).
+BUKAN kembar: baris URAIAN yang memperdalam baris lain; baris MJ dalam BLOK MJ yang sama; dua baris dengan konsep sama tetapi keterampilan berbeda (misalnya menyebutkan pengertian vs menganalisis dampak).
+Untuk setiap pasangan kembar, tulis ulang baris yang NOMORNYA LEBIH BESAR: indikator baru gaya Kemenag dari TP yang sama, bentuk dan level tetap (kata kerja sesuai level), mengambil sisi materi yang BELUM diuji baris mana pun. Indikator baru WAJIB berbeda kata kerja DAN objeknya dari indikator lama dan dari semua baris lain (menyalin atau sekadar menambah kata pada indikator lama = gagal); boleh memakai sub-materi lain dari TP yang sama. "materi" dan "stimulus" (jenis + skenario, maks 15 kata, atau "tanpa stimulus") menyesuaikan. Baris ISIAN juga menulis "jawaban" baru (1–5 kata) yang tidak tertulis di baris lain. Jangan menulis ayat atau hadis.
+FORMAT JAWABAN: hanya JSON {"kembar":[{"nomor":17,"sama_dengan":3,"indikator":"...","materi":"...","stimulus":"..."}]}. Kalau tidak ada yang kembar: {"kembar":[]}.`;
+}
+
+const BUKAN_INTI = new Set("peserta didik dapat disajikan yang dan dengan dari pada untuk dalam suatu sebuah tentang secara tepat benar beberapa dua tiga data kasus".split(" "));
+const kataInti = (t: string) => new Set(String(t).toLowerCase().split(/,\s*peserta didik dapat/).pop()!.normalize("NFD").replace(/\p{M}/gu, "").replace(/[^\p{L}\p{N}]+/gu, " ").split(" ").filter((w) => w.length > 2 && !BUKAN_INTI.has(w)));
+/** Dua indikator hampir sama: >= 75% kata inti (setelah "peserta didik dapat") yang lebih pendek ada di yang lain. */
+export function miripIndikator(a: string, b: string) {
+  const [x, y] = [kataInti(a), kataInti(b)];
+  return Math.min(x.size, y.size) > 0 && [...x].filter((w) => y.has(w)).length / Math.min(x.size, y.size) >= 0.75;
+}
+
+/**
+ * Terapkan hasil buatPeriksaKembar: hanya baris yang nomornya lebih besar dari pasangannya, bukan MJ/URAIAN, dan hanya
+ * indikator/materi/stimulus/jawaban isian yang berubah (bentuk, TP, level, dalil, grup tetap). `aman` menolak teks berisi
+ * Arab tak terverifikasi (aturan 5). Jawaban AI yang rusak → kisi-kisi tetap.
+ */
+export function terapkanKembar<T extends BarisKisi>(kisi: T[], data: unknown, aman: (teks: string) => boolean) {
+  const baru = [...kisi];
+  const diganti: string[] = [];
+  const daftar = (data as { kembar?: unknown })?.kembar;
+  for (const k of (Array.isArray(daftar) ? daftar : []) as Record<string, unknown>[]) {
+    const no = Number(k?.nomor);
+    const sama = Number(k?.sama_dengan);
+    const a = baru[sama - 1];
+    const b = baru[no - 1];
+    const teks = (x: unknown, lama?: string) => (typeof x === "string" && x.trim() ? x.trim() : lama);
+    const indikator = teks(k?.indikator);
+    if (!a || !b || !Number.isInteger(no) || sama >= no || !indikator || [a.bentuk, b.bentuk].some((x) => x === "MJ" || x === "URAIAN")) continue;
+    if (diganti.some((d) => d.startsWith(`${no} `))) continue;
+    // AI sering "menulis ulang" dengan indikator yang sama atau hampir sama (set 97): itu bukan perbaikan, dilewati.
+    if (baru.some((x, j) => j !== no - 1 && miripIndikator(x.indikator, indikator)) || miripIndikator(b.indikator, indikator)) continue;
+    const isi = { indikator, materi: teks(k.materi, b.materi)!, stimulus: teks(k.stimulus, b.stimulus)!, ...(b.bentuk === "ISIAN" ? { jawaban: teks(k.jawaban, b.jawaban) } : {}) };
+    if (!Object.values(isi).every((x) => !x || aman(x))) continue;
+    baru[no - 1] = { ...b, ...isi };
+    diganti.push(`${no} (kembar dengan ${sama})`);
+  }
+  return { kisi: baru, diganti };
+}
+
 /** Wacana soal grup yang dipakai baris-baris ini (sekali per grup), untuk permintaan soal. */
 function tulisWacana(kisi: { grup?: number | null; wacana?: string; no?: number }[]) {
   const grup = new Map<number, { teks: string; no: number[] }>();

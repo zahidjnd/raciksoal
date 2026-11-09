@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { arabTakTerverifikasi, bersihkanTanggapan, gabungBab, identitasBab, blokMj, kataTerpakai, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Soal } from "./soal.ts";
-import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, laranganIsian, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, semesterDari, MAKS_CATATAN, MAKS_INSTRUKSI, namaLevelTka, namaTujuan, pasangKunciPgk, rencanaLevel, type Pengaturan } from "./prompt.ts";
+import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, laranganIsian, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, semesterDari, MAKS_CATATAN, MAKS_INSTRUKSI, namaLevelTka, namaTujuan, pasangKunciPgk, rencanaLevel, type Pengaturan } from "./prompt.ts";
 import { bolehAkses, rapikanUsername } from "./akses.ts";
 import { headerUnduh } from "./nama-file.ts";
 import { keIsian, rapikanMateri, susunDraf, terapkanAnalisa } from "./materi.ts";
@@ -912,4 +912,35 @@ test("0.22.0 level kisi dikunci ke kategori rencana (set 86: AI menulis C2 untuk
   const jadi = levelAi.map((l, i) => sesuaikanLevel(l, r[i]));
   const kat = (l: string) => (["C1", "C2"].includes(l) ? "LOTS" : l === "C3" ? "MOTS" : "HOTS");
   assert.deepEqual({ LOTS: jadi.filter((l) => kat(l) === "LOTS").length, MOTS: jadi.filter((l) => kat(l) === "MOTS").length, HOTS: jadi.filter((l) => kat(l) === "HOTS").length }, { LOTS: 15, MOTS: 20, HOTS: 10 });
+});
+
+test("terapkanKembar: hanya baris belakangan, bukan MJ/URAIAN, bentuk/TP/level tetap, Arab tak aman ditolak", () => {
+  const b = (bentuk: BarisKisi["bentuk"], indikator: string, extra: Partial<BarisKisi> = {}): BarisKisi =>
+    ({ no: 0, bentuk, tp: "TP 1", materi: "m", indikator, level: "C2", dalil_id: null, stimulus: "s", ...extra });
+  const kisi = [b("PG", "menghitung inflasi"), b("BS", "x"), b("ISIAN", "menentukan inflasi", { jawaban: "10%" }), b("MJ", "mj"), b("URAIAN", "u")];
+  const data = { kembar: [
+    { nomor: 3, sama_dengan: 1, indikator: "menyebutkan jenis inflasi", materi: "jenis", jawaban: "hiperinflasi", level: "C6", bentuk: "PG" },
+    { nomor: 3, sama_dengan: 2, indikator: "dobel" },          // nomor sama dua kali: yang pertama saja
+    { nomor: 1, sama_dengan: 3, indikator: "terbalik" },       // nomor depan tidak boleh diganti
+    { nomor: 4, sama_dengan: 1, indikator: "mj" },             // MJ dilewati
+    { nomor: 5, sama_dengan: 1, indikator: "uraian" },         // URAIAN dilewati
+    { nomor: 2, sama_dengan: 1, indikator: "ada عربي" },        // Arab tak aman ditolak
+    { nomor: 9, sama_dengan: 1, indikator: "di luar" },
+  ] };
+  const r = terapkanKembar(kisi, data, (t) => !/\p{Script=Arabic}/u.test(t));
+  assert.deepEqual(r.diganti, ["3 (kembar dengan 1)"]);
+  assert.equal(r.kisi[2].indikator, "menyebutkan jenis inflasi");
+  assert.equal(r.kisi[2].jawaban, "hiperinflasi");
+  assert.equal(r.kisi[2].level, "C2");
+  assert.equal(r.kisi[2].bentuk, "ISIAN");
+  assert.equal(r.kisi[2].stimulus, "s");
+  assert.equal(r.kisi[1].indikator, "x");
+  assert.equal(kisi[2].indikator, "menentukan inflasi"); // kisi asli tidak diubah
+  assert.deepEqual(terapkanKembar(kisi, "rusak", () => true).kisi, kisi);
+  // Salinan indikator lama (set 97) atau kembar baris lain: dilewati.
+  assert.deepEqual(terapkanKembar(kisi, { kembar: [{ nomor: 3, sama_dengan: 1, indikator: "Disajikan data, peserta didik dapat menentukan inflasi secara tepat" }] }, () => true).diganti, []);
+  assert.deepEqual(terapkanKembar(kisi, { kembar: [{ nomor: 3, sama_dengan: 1, indikator: "menghitung inflasi tahunan" }] }, () => true).diganti, []);
+  assert.doesNotMatch(buatPeriksaKembar(kisi), /SUDAH PASTI/);
+  assert.match(buatPeriksaKembar([b("PG", "Disajikan harga, peserta didik dapat menghitung PPN terutang"), b("BS", "y"), b("ISIAN", "menghitung besarnya PPN terutang pembeli")]), /SUDAH PASTI kembar dan wajib diperbaiki: 1 dan 3\./);
+  assert.match(buatPeriksaKembar(kisi), /3\. ISIAN \| TP 1 \| C2 \| menentukan inflasi \| materi: m \| jawaban: 10%/);
 });
