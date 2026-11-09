@@ -627,7 +627,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   utuh (80 set, 10 materi, 5 akun). Kalau kontainer hilang lagi setelah update, cek nilai itu dulu.
 - 2026-11-08 DOCKER LAPTOP TANPA TUKAR-TUKARAN (permintaan pemilik): `raciksoal-db` dibuat ulang di **127.0.0.1:5440**
   (volume `raciksoal-db` yang sama, `--restart unless-stopped`); kontainer lama diganti nama `raciksoal-db-lama` (mati,
-  boleh dihapus bila pemilik setuju). `datainduk-db-1` (5432) & `halaqoh-db` (5433) tetap menyala bersamaan.
+  per 2026-11-09 sudah tidak ada). `datainduk-db-1` (5432) & `halaqoh-db` (5433) tetap menyala bersamaan.
   `.env.development.local` (tidak di-commit, hanya `DATABASE_URL` ke 5440) mengalahkan `.env` saat `npm run dev`.
   CATATAN DOCKER LAMA (stop datainduk / start raciksoal-db) SUDAH TIDAK PERLU. Docker Desktop AutoStart = mati: kalau
   `docker ps` error, jalankan `docker desktop start` dulu. Akses psql: `docker exec raciksoal-db psql -U <POSTGRES_USER>`.
@@ -682,3 +682,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   Uji laptop (materi-8/10 Ekonomi, ASAS 25): sebelum (set 92–95) 3 pasangan kembar di 4 set; sesudah (set 98–101) 2 di 4 set,
   2 set bersih. Sisa yang bandel: B/S "menilai kebenaran hasil hitung X" vs PG "menghitung X". Waktu set +±10 detik.
   Set 96–97 = versi tanpa penolak salinan (tidak dihitung). Belum di-push.
+- 2026-11-09 BERSIH-BERSIH LAPTOP (pemilik "gas"): set uji 89–101 (akun guru.uji.ayat & guru.uji.b) DIHAPUS dari DB laptop;
+  kini 88 set (id terakhir 88). Kontainer `raciksoal-db-lama` ternyata sudah tidak ada. Cadangan DB laptop sebelum dihapus:
+  `%TEMP%\cadangan-raciksoal\sebelum-bersih-2026-11-09.sql.gz` (pg_dump; pulihkan: gunzip lalu `psql -f`). Set uji yang
+  disebut di catatan lama (mis. 85, 88, 51, 56) TIDAK dihapus.
