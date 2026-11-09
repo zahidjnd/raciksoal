@@ -647,3 +647,11 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   (30.000, dihitung dari paragraf digabung "
 "; dulu server 40.000 tapi pesannya 30.000); pesan menyebut file terbesar.
   Tombol Analisa aktif bila ada file walau kotak teks kosong. Ditolak karena panjang TIDAK memakai jatah analisa.
+- 2026-11-09 MJ CAMPUR JENIS (pemilik "gas"): sebab = perintah kisi "Indikator antarbaris tidak boleh sama" + blok MJ
+  baru dibentuk SETELAH kisi → tiap nomor satu blok beda jenis (set 88: istilah + "Nabi Ibrahim"). Kini (1)
+  `buatPermintaanKisi` menulis "BLOK MJ n" di rentang nomor (blokMj, sama dengan pasangKunciPgk) + pengecualian aturan
+  indikator; RENCANA_MJ minta indikator/materi SAMA PERSIS & luas per blok, jodoh sejenis; (2) `pasangKunciPgk` menyalin
+  indikator/materi/TP nomor pertama blok ke seluruh blok (level tetap); (3) MJ_LAMA: pengecoh BUKAN jodoh nomor lain
+  (+ contoh angka; set 90 blok tanpa pengecoh karena AI memakai jodoh nomor lain). Uji laptop (guru.uji.ayat, materi-6,
+  2 PG + MJ): set 89 (hanya langkah 2) masih campur; set 90 sejenis tapi 1 blok tanpa pengecoh; set 91 (10 MJ) 2 blok
+  berpengecoh, 0 merah, satu topik tapi kadang campur istilah/sifat ("syarat pertama mukjizat"). Belum di-push.
