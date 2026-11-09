@@ -52,6 +52,12 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.24.3 — 9 November 2026
+- **Tidak ada lagi soal kembar di bentuk berbeda.** Dulu satu set bisa berisi PG dan isian yang sama-sama meminta
+  hal yang sama (misalnya dua-duanya menghitung inflasi dari IHK, hanya angkanya beda). Kini setiap keterampilan
+  dipakai satu nomor saja, dan nomor lain mengambil sisi lain materi (menggolongkan, mencari penyebab, dampak, dan
+  sebagainya). Uraian tetap boleh memperdalam soal lain dengan langkah lengkap.
+
 ## 0.24.2 — 9 November 2026
 - **Tanda merah "jawaban isian sudah tertulis" lebih tepat untuk jawaban berupa angka.** Dulu angka seperti "10%"
   ditandai bocor hanya karena muncul sebagai pilihan di soal lain, padahal siswa tetap harus menghitung. Kini yang
