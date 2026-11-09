@@ -617,7 +617,9 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   17/19/9 padahal surat 15/20/10). Setiap nomor MJ wajib menulis `pengecoh` (set 87: AI lupa → daftar tanpa pengecoh, merah).
   Uji laptop (guru.uji.ayat): set 85 eksak Biologi 35 (12/15/8, BS 3 Benar 2 Salah, PGK 2,3,2,3,2, 2 PG merah dari aturan
   lama), set 88 non-eksak Qurdis 45 MJ4+BS1 (15/20/10, skor 100, 0 merah, daftar MJ 5 jawaban). 3 Word OK. Catatan mutu:
-  isi blok MJ kadang campur jenis (nabi + istilah) walau diminta sejenis. Tampilan web belum dilihat (panel tersembunyi).
+  isi blok MJ kadang campur jenis (nabi + istilah) walau diminta sejenis. Tampilan web DICEK 2026-11-09 (set 85 & 88:
+  laptop, HP 375px, mode gelap): rapi, tanpa luberan; MJ tanpa Ganti/Ubah/Tulis sendiri, Hapus nomor MJ aman (jawabannya
+  jadi pengecoh tambahan).
   Skrip uji: `uji-asas.mts` di scratchpad (kirim bobot dari skorOtomatis seperti form).
   DOCKER LAPTOP 2026-11-08: update Docker Desktop (15.56) mengganti mesin ke "docker-vmm" (`EngineTypeWindows` di
   `%APPDATA%\Docker\settings-store.json`) → folder data baru kosong, semua kontainer "hilang". Dipulihkan dengan mengembalikan
