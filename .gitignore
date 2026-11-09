@@ -43,3 +43,7 @@ next-env.d.ts
 
 # akun uji laptop (jangan di-commit)
 *.local.txt
+
+# dokumen pribadi pemilik (sengaja tidak di-commit): PDF peraturan rujukan & proposal
+dokumen/rujukan/
+dokumen/proposal/
