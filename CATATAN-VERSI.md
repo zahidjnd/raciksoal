@@ -52,6 +52,12 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.24.4 — 9 November 2026
+- **Soal isian yang jawabannya sudah tertulis di soal lain kini lebih sering berhasil diperbaiki otomatis.** Dulu AI
+  hanya membuat satu soal pengganti, dan konsep barunya sering ternyata juga sudah dipakai soal lain, sehingga tetap
+  merah. Kini AI membuat tiga calon sekaligus, lalu aplikasi memeriksa dan memakai calon pertama yang bersih. Waktu
+  pembuatan soal tidak bertambah.
+
 ## 0.24.3 — 9 November 2026
 - **Tidak ada lagi soal kembar di bentuk berbeda.** Dulu satu set bisa berisi PG dan isian yang sama-sama meminta
   hal yang sama (misalnya dua-duanya menghitung inflasi dari IHK, hanya angkanya beda). Kini setiap keterampilan
