@@ -51,14 +51,20 @@ pembahasan, dan rubrik**, lalu mengekspornya ke **Word** dengan kop madrasah.
   mengedit kartu materinya; materi tersimpan otomatis saat soal dibuat.
 - **Ayat Al-Qur'an otomatis dari mushaf**: kotak "Ambil ayat" (mis. `QS An-Nur: 30-31`), dan ayat di file guru
   dicocokkan ke data mushaf lalu diganti teks resminya. Hadis ditempel guru sendiri lalu dicentang sebagai sudah diperiksa.
+- **Teks Arab bukan dalil**: tulisan Arab paling banyak 3 kata (istilah, mis. مُعْجِزَةٌ atau ق) diterima apa adanya tanpa
+  verifikasi; teks Arab yang lebih panjang tetapi bukan ayat/hadis (mis. mahfuzhat) cukup diklik **"Bukan ayat/hadis"**.
+- **TP**: yang tertulis di materi dipakai apa adanya (hijau); TP usulan AI (materi tanpa TP) wajib dibaca & dicentang guru.
+- **Mapel**: 20 mapel MA Al-Fatah (`src/lib/mapel.ts`), mapel lain bisa diketik. Bahasa Arab & Nahwu: teks Arab bebas.
 - Satu set boleh menggabung **hingga 5 materi** (untuk AFTS/ASAS), asal satu mapel dan satu kelas.
 - Halaman **Kelola materi** (`/materi`): daftar, ubah, hapus materi (maks. 300 per guru).
 
 **Membuat set soal**
 - **Jenis**: Ulangan Harian, AFTS (Asesmen Formatif Tengah Semester), ASAS (Asesmen Sumatif Akhir Semester),
   Latihan, dan Latihan TKA (gaya Tes Kemampuan Akademik).
-- **Bentuk soal**: Pilihan Ganda, Pilihan Ganda Kompleks, Kategori (Benar/Salah, Fakta/Opini, dst.), Menjodohkan,
-  Isian Singkat, Uraian. Maks. **40 soal** per set.
+- **Bentuk soal**: Pilihan Ganda, Pilihan Ganda Kompleks, Benar/Salah, Menjodohkan, Isian Singkat, Uraian. Maks.
+  **50 soal** per set. Benar/Salah & Menjodohkan memakai gaya lama Al-Fatah (satu pernyataan/pasangan per nomor); Latihan
+  TKA memakai Kategori (3 pernyataan) dan PG kompleks 2–4 kunci seperti contoh resmi.
+- **ASAS**: kartu ASAS langsung mengisi format surat Kepala MA (eksak 35 soal / non-eksak 45 soal, skor 100).
 - **Komposisi level kognitif** LOTS/MOTS/HOTS (untuk TKA: Pemahaman/Penerapan/Penalaran) dan **tingkat kesulitan**
   (Mudah/Sedang/Sulit).
 - **Skor otomatis** per bentuk agar total 100, atau atur sendiri.
@@ -68,7 +74,12 @@ pembahasan, dan rubrik**, lalu mengekspornya ke **Word** dengan kop madrasah.
 
 **Memeriksa dan memperbaiki**
 - Peringatan wajib: *"Soal dibuat AI, wajib diperiksa guru sebelum dipakai."*
-- Soal yang memuat teks Arab tidak terverifikasi **ditandai merah**.
+- Soal yang melanggar aturan **ditandai merah**, mis. teks Arab tidak terverifikasi, kunci PG tidak sama dengan hasil
+  hitung, pilihan terlarang, kunci terpanjang mencolok, jawaban isian sudah tertulis di soal lain, HOTS tanpa stimulus,
+  tahun di mapel sejarah yang tidak ada di materi. Soal merah **diperbaiki otomatis sekali** sebelum set selesai
+  (isian bocor: 3 calon sekaligus, dipakai yang bersih); kalau masih melanggar, soal awal tetap merah untuk guru.
+- **Aturan per mapel** (`src/lib/mapel.ts`): Bahasa Inggris = semua isi untuk siswa dan petunjuk Word berbahasa
+  Inggris (pembahasan tetap Indonesia); SKI, Al-Quds wal Maqdisiyyah, Sejarah = tahun wajib dari materi.
 - Per soal: **Edit** (formulir lengkap), **Ganti** (soal baru dari AI), **Ubah** (minta perubahan, mis. "lebih sulit"),
   **Tambah soal serupa**, **Hapus**, **pindah ↑/↓**, **Tulis soal sendiri** (tanpa AI). Kisi-kisi ikut menyesuaikan.
 - **Kunci ringkas** (semua kunci dalam satu kotak + tombol Salin).
@@ -169,14 +180,18 @@ menyalakan ulang** (bagian 10).
    `cekHasil` tiap 3 detik (aman dari batas waktu proxy hosting).
 3. **Kisi-kisi dulu**: satu panggilan AI menyusun rencana semua nomor (TP, materi, indikator, level, dalil,
    stimulus). Kategori level tiap nomor **ditentukan aplikasi** (`rencanaLevel`), bukan AI. Nomor soal grup
-   (wacana bersama) juga dari aplikasi (`rencanaGrup`).
-4. **Soal ditulis bertahap**, maks. 10 soal per panggilan (`bagiTahap`), mengikuti potongan kisi-kisinya; tiap
+   (wacana bersama) juga dari aplikasi (`rencanaGrup`). Jumlah kunci PG kompleks, kunci Benar/Salah, dan blok
+   Menjodohkan juga direncanakan aplikasi (`pasangKunciPgk`).
+4. **Kisi-kisi diperiksa ulang** oleh satu panggilan AI (`buatPeriksaKembar`): baris yang menguji keterampilan sama
+   di bentuk berbeda ditulis ulang; aplikasi hanya menerima perubahan indikator/materi/stimulus (`terapkanKembar`).
+5. **Soal ditulis bertahap**, maks. 10 soal per panggilan (`bagiTahap`), mengikuti potongan kisi-kisinya; tiap
    tahap diberi daftar soal sebelumnya agar tidak mirip. Draf tampil di layar setelah tiap tahap.
-5. Tiap soal diperiksa: `rapikanSoal` → `periksaSoal` (penjaga ayat) → `samakanDenganKisi`; kunci PG diratakan
-   (`ratakanKunci`), Menjodohkan disusun aplikasi (`susunMenjodohkan`), skor diterapkan (`terapkanBobot`).
-6. Set disimpan `selesai` beserta **prompt, jawaban mentah AI, nama model, waktu, dan token** (untuk audit dan
+6. Tiap soal diperiksa: `rapikanSoal` → `periksaSoal` (penjaga ayat & pemeriksa lain) → `samakanDenganKisi`; soal
+   merah dikirim balik ke AI sekali (**perbaikan otomatis**, hasilnya diperiksa ulang aplikasi). Lalu kunci PG diratakan
+   (`ratakanKunci`), Menjodohkan disusun aplikasi (`susunMenjodohkan`/`susunMjLama`), skor diterapkan (`terapkanBobot`).
+7. Set disimpan `selesai` beserta **prompt, jawaban mentah AI, nama model, waktu, dan token** (untuk audit dan
    perbandingan model).
-7. Gagal di tengah → model berikutnya dicoba (cadangan). Lewat **10 menit** total → set `gagal` dan jatah kembali.
+8. Gagal di tengah → model berikutnya dicoba (cadangan). Lewat **10 menit** total → set `gagal` dan jatah kembali.
    Server dinyalakan ulang saat set masih `proses` → set itu ditandai `gagal` saat server menyala.
 
 ### 4.3 Penjaga ayat
@@ -184,7 +199,9 @@ menyalakan ulang** (bagian 10).
   (teks Arab → ayat resmi). Pencocokan memakai **kerangka huruf** (harakat, tanda waqaf, variasi alif/ya/waw/hamzah
   diabaikan; ة→ه) supaya teks PPT guru bergaya mushaf Indonesia tetap dikenali.
 - **Saat materi disimpan**, server mencocokkan ulang semua dalil ke mushaf: cocok → teks dan sumber diganti versi
-  mushaf; tidak cocok (hadis) → wajib dicentang guru.
+  mushaf; tidak cocok (hadis) → wajib dicentang guru, kecuali ditandai **"Bukan ayat/hadis"** (`bukan: true`, tanpa
+  sumber & centang; AI diberi tahu itu bukan dalil, lembar siswa tanpa keterangan sumber). Tulisan Arab ≤ 3 kata
+  (`istilahArab`) tetap di teks materi tanpa verifikasi dan tidak dicocokkan ke mushaf.
 - **Saat soal dibuat/diedit**, setiap potongan Arab harus substring persis dari data bab (`arabTakTerverifikasi`),
   kalau tidak soal ditandai merah. Mode **Bahasa Arab** (`bab.teksArab = "bahasa"`): Arab boleh ditulis AI, tetapi
   potongan yang dikenali sebagai ayat dan tidak persis data terverifikasi tetap ditandai.
@@ -213,7 +230,7 @@ menyalakan ulang** (bagian 10).
 | Ganti/Ubah/Tambah per set (permanen) | 30 | `BATAS_GANTI_PER_SET`, `actions.ts` |
 | Ganti/Ubah/Tambah per guru per hari | 60 (admin bebas) | `BATAS_UBAH_PER_GURU` |
 | Analisa materi per guru per hari | 30 (admin bebas) | `BATAS_ANALISA` |
-| Soal per set / per panggilan AI | 40 / 10 | `MAKS_SOAL`, `MAKS_PER_TAHAP`, `src/lib/prompt.ts` |
+| Soal per set / per panggilan AI | 50 / 10 | `MAKS_SOAL`, `MAKS_PER_TAHAP`, `src/lib/prompt.ts` |
 | Batas waktu satu panggilan AI | `AI_TIMEOUT_MS` (bawaan 180 dtk), dicoba ulang 2× untuk 429/5xx | `src/lib/ai.ts` |
 | Batas waktu total satu set / satu soal | 10 menit / 4 menit | `TENGGAT_SET`, `TENGGAT_SATU_SOAL` |
 
@@ -253,6 +270,7 @@ raciksoal/
 │   │   ├── ai.ts                 Adapter AI (format OpenAI), daftar model dari .env, coba ulang
 │   │   ├── prompt.ts             Instruksi AI, aturan per jenis/kesulitan, rencana level & grup, batas isian
 │   │   ├── soal.ts               Tipe Soal/Bab, pemeriksa soal & kisi, penjaga Arab, kunci, Menjodohkan
+│   │   ├── mapel.ts              Daftar mapel Al-Fatah & sifat mapel (Bahasa Arab, eksak, Inggris, sejarah)
 │   │   ├── mushaf.ts, surah.ts   Data mushaf: cari/ambil ayat, nama surah & rujukan
 │   │   ├── materi.ts             Merapikan materi guru, draf dari file, ayat dari PDF
 │   │   ├── office.ts             Membaca .docx/.pptx/.pdf (di browser)
@@ -270,6 +288,8 @@ raciksoal/
 │   ├── uji-pemisahan.mts         Tes pemisahan data antar guru (server laptop)
 │   └── buat-template-word.py     Membuat ulang cetakan Word dari format AFTS madrasah
 ├── deploy/                       Salinan skrip hosting: jalan.sh, backup.sh, htaccess, panduan pulih
+├── dokumen/                      Riwayat pengembangan, hasil audit, hitungan biaya AI
+│                                 (rujukan/ & proposal/ sengaja tidak di-commit)
 ├── .github/workflows/build.yml   Build di GitHub → branch deploy
 └── .claude/launch.json           Konfigurasi server laptop (dev, uji-cadangan, uji-pulih)
 ```
@@ -516,13 +536,15 @@ Saat melapor masalah, sertakan **versi** (tertulis di sidebar), nomor set (`?id=
 |---|---|
 | `README.md` | Dokumen ini: gambaran lengkap dan tata cara |
 | [CATATAN-VERSI.md](CATATAN-VERSI.md) | Perubahan tiap versi (bahasa sederhana) + daftar persiapan 1.0.0 |
-| [PRD.md](PRD.md) | Kebutuhan dan tujuan awal produk |
+| [PRD.md](PRD.md) | Tujuan, tahapan, dan ruang lingkup produk |
 | [ATURAN-SOAL.md](ATURAN-SOAL.md) | Aturan baku penyusunan soal (Bloom, kaidah, per bentuk, gaya TKA) |
+| [RUJUKAN.md](RUJUKAN.md) | Dasar setiap aturan soal (peraturan resmi, kaidah, keputusan madrasah) |
 | [DESIGN.md](DESIGN.md) | Arah tampilan: warna, huruf, bentuk, tema |
 | [dokumen/audit/](dokumen/audit/) | Hasil audit (fitur 4 Nov, mutu soal 7 Nov, tampilan 19 Okt) beserta statusnya |
 | [deploy/pulihkan-backup.md](deploy/pulihkan-backup.md) | Membuka, menguji, dan memulihkan backup |
 | [dokumen/Hitungan-Biaya-AI-RacikSoal.pdf](dokumen/Hitungan-Biaya-AI-RacikSoal.pdf) | Perkiraan biaya & token AI setahun (realistis dan batas atas), cara menghitung ulang |
-| `CLAUDE.md` | Catatan kerja untuk asisten AI: aturan proyek dan riwayat keputusan teknis yang rinci |
+| `CLAUDE.md` | Catatan kerja untuk asisten AI: aturan proyek, keputusan yang berlaku, jebakan teknis (ringkas) |
+| [dokumen/riwayat-pengembangan.md](dokumen/riwayat-pengembangan.md) | Catatan harian lengkap 14 Okt – 9 Nov 2026: alasan tiap keputusan teknis |
 | `.env.example` | Contoh pengaturan dengan penjelasan |
 
 ---
@@ -532,6 +554,8 @@ Saat melapor masalah, sertakan **versi** (tertulis di sidebar), nomor set (`?id=
 - Pembuatan soal berjalan **di dalam proses web** (bukan antrean terpisah); server restart = set yang sedang dibuat gagal.
 - Pembatas login dan sebagian penghitung berada di memori (kembali nol saat restart).
 - Hadis karangan dalam mode Bahasa Arab tidak terdeteksi otomatis (hanya dicegah lewat instruksi AI).
+- Mapel sejarah: hanya angka tahun yang diperiksa aplikasi; nama tokoh & tempat dijaga lewat instruksi AI saja.
+- Materi pendek dengan nama/tahun yang berulang membuat jawaban isian sering "bocor" ke soal lain (ditandai merah).
 - Teks Arab dari buku PDF Kemenag rusak saat diekstrak; hanya ayat yang dikenali mushaf yang dipakai.
 - Belum ada: bank soal, katalog CP/TP resmi, rumus/gambar/tabel di soal.
 - Word tidak bisa "boleh pindah kolom tapi jangan pindah halaman"; sesekali soal terbelah di dasar halaman.
