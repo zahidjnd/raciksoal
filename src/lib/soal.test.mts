@@ -758,6 +758,10 @@ test("periksaSoal: kunci isian yang sudah tertulis di soal lain ditandai (ḥ = 
   assert.deepEqual(aman.peringatan, []);
   const [, angka] = periksaSoal([{ ...pg, pilihan: ["tahun 2019", "b", "c", "d", "e"] }, isian("19")], bab);
   assert.deepEqual(angka.peringatan, []); // "19" tidak dianggap ada di dalam "2019"
+  // kunci berangka: angka sebagai PILIHAN soal lain tidak bocor (set 79), angka yang diberikan di POKOK soal lain bocor (set 72)
+  const persen = { ...dasar, bentuk: "ISIAN", pertanyaan: "PPN Rp165.000 dari harga Rp1.500.000, jadi tarifnya ....%", kunci: "11" } as Soal;
+  assert.deepEqual(periksaSoal([{ ...pg, pilihan: ["10%", "11%", "c", "d", "e"] }, persen], bab)[1].peringatan, []);
+  assert.ok(periksaSoal([{ ...pg, pertanyaan: "Laptop Rp4.000.000 dikenakan PPN dengan tarif 11%. Yang dibayar ...." }, persen], bab)[1].peringatan!.some((p) => p.includes("soal nomor 1")));
 });
 
 test("0.18.3: jawaban isian direncanakan di kisi-kisi, jadi kata terlarang untuk soal lain; pesan bocor menyebut potongan teks", () => {

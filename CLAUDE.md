@@ -655,3 +655,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   (+ contoh angka; set 90 blok tanpa pengecoh karena AI memakai jodoh nomor lain). Uji laptop (guru.uji.ayat, materi-6,
   2 PG + MJ): set 89 (hanya langkah 2) masih campur; set 90 sejenis tapi 1 blok tanpa pengecoh; set 91 (10 MJ) 2 blok
   berpengecoh, 0 merah, satu topik tapi kadang campur istilah/sifat ("syarat pertama mukjizat"). Belum di-push.
+- 2026-11-09 ISIAN ANGKA (pemilik "gas"): `bocorDi` untuk kunci berangka hanya mencari di POKOK soal lain (angka sebagai
+  pilihan/pernyataan/jawaban soal lain tidak membocorkan; siswa tetap menghitung). Ukur data laptop: tanda angka 4 → 1
+  (sisa = sungguhan, set 72 "PPN dengan tarif 11%"), tanda kata tetap 15. SISA: soal hitungan KEMBAR (set 79 & 80: PG dan
+  isian sama-sama menghitung inflasi dari IHK) belum dicegah. Belum di-push.

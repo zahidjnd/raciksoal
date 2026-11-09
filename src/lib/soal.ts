@@ -521,9 +521,13 @@ function bocorDi(soal: Soal[], i: number): string[] {
     const a = Math.max(0, di - 25);
     return `${a ? "…" : ""}${t.slice(a, a + 60)}${t.length > a + 60 ? "…" : ""}`;
   };
+  // Kunci berangka ("10%", "11"): angka sebagai pilihan/pernyataan/jawaban soal lain tidak membocorkan (siswa tetap
+  // menghitung); yang bocor angka yang DIBERIKAN di pokok soal lain ("PPN dengan tarif 11%"). Diukur 2026-11-09: 4 tanda
+  // di data laptop, hanya 1 sungguhan.
+  const angka = /\d/.test(asli);
   return soal.flatMap((s, j) => {
     if (j === i) return [];
-    const teks = [s.pertanyaan, ...(s.pilihan ?? []), ...(s.pernyataan ?? []), ...(s.premis ?? []), ...(s.jawaban ?? []), ...(s.bentuk === "ISIAN" ? [s.kunci].flat() : [])];
+    const teks = angka ? [s.pertanyaan] : [s.pertanyaan, ...(s.pilihan ?? []), ...(s.pernyataan ?? []), ...(s.premis ?? []), ...(s.jawaban ?? []), ...(s.bentuk === "ISIAN" ? [s.kunci].flat() : [])];
     const kena = teks.find((t) => polos(t).includes(kunci));
     return kena === undefined ? [] : [`${j + 1} ("${potong(String(kena))}")`];
   });
