@@ -52,6 +52,12 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.24.2 — 9 November 2026
+- **Tanda merah "jawaban isian sudah tertulis" lebih tepat untuk jawaban berupa angka.** Dulu angka seperti "10%"
+  ditandai bocor hanya karena muncul sebagai pilihan di soal lain, padahal siswa tetap harus menghitung. Kini yang
+  ditandai hanya angka yang sudah diberikan di soal lain (misalnya soal lain menulis "PPN dengan tarif 11%" dan isian
+  menanyakan tarif PPN). Jawaban berupa kata diperiksa seperti biasa.
+
 ## 0.24.1 — 9 November 2026
 - **Menjodohkan: satu daftar jawaban, satu jenis.** Dulu jawaban di satu daftar bisa bercampur (istilah dicampur
   nama nabi), sehingga siswa bisa menebak dari jenisnya. Kini setiap blok memakai satu indikator yang sama, jawabannya
