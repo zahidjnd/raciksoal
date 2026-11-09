@@ -52,6 +52,12 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.27.1 — 10 November 2026
+- **Halaman masuk baru.** Satu kartu di tengah layar: kiri berisi tanda bintang delapan dan kalimat yang "diketik"
+  bergiliran tentang cara Racik Soal bekerja di 6 mapel (Al-Qur'an Hadis, Fisika, Fiqih, Biologi, Bahasa Inggris,
+  Matematika); kanan berisi sapaan "Assalamu'alaikum." dan form masuk. Di HP tampil ringkas tanpa animasi ketik.
+  Cerita Fisika, Biologi, dan Matematika menyebut rumus, tabel, dan gambar yang belum ada di soal (sengaja, fitur menyusul).
+
 ## 0.27.0 — 9 November 2026
 - **Daftar mapel sesuai MA Al-Fatah.** Pilihan mapel kini 20 mapel madrasah (termasuk Hadis, Tauhid, Fiqih Sholat, Nahwu,
   Al-Quds wal Maqdisiyyah). Mapel lain tetap bisa diketik lewat "Lainnya".
