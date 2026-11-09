@@ -1,15 +1,10 @@
 // "Materi sendiri" milik guru (langkah 8). Tanpa import "@/..." supaya bisa dites langsung: npm test
+import { MAPEL_BAHASA_ARAB } from "./mapel.ts";
 import { arabTakTerverifikasi, bukanDalil, identitasBab, istilahArab, KELAS, korpusArab, paragrafArab, POLA_ARAB, SUMBER_BUKAN, type Bab } from "./soal.ts";
 
 // perGuru 300: materi kini tersimpan otomatis setiap kali guru memasukkan materi baru di halaman utama.
 export const BATAS_MATERI = { judul: 150, mapel: 60, tp: 15, teksTp: 500, isiMin: 100, isi: 30000, dalil: 20, teksDalil: 3000, perGuru: 300 };
 
-/** Saran isian kolom Mapel (boleh diketik lain). */
-export const DAFTAR_MAPEL = [
-  "Al-Qur'an Hadis", "Akidah Akhlak", "Fikih", "Sejarah Kebudayaan Islam", "Bahasa Arab", "Bahasa Indonesia", "Bahasa Inggris",
-  "Matematika", "Fisika", "Kimia", "Biologi", "Ekonomi", "Geografi", "Sosiologi", "Sejarah", "Pendidikan Pancasila", "Informatika",
-  "Ilmu Tafsir", "Ilmu Hadis", "Ushul Fikih", "Ilmu Kalam", "Akhlak",
-];
 
 /** Isian form "Materi Saya" (apa adanya dari browser, belum dipercaya). */
 export type IsianMateri = {
@@ -113,8 +108,8 @@ export function rapikanMateri(x: Partial<IsianMateri>, id: string, cariAyat?: Ca
   return { bab: { id, mapel: bersihkan(mapel), kelas, ...(bahasa && { teksArab: "bahasa" as const }), judul: bersihkan(judul), tp, dalil, materi, ...(pokok.length && { pokok }) }, dihapus };
 }
 
-/** Mapel yang teks Arabnya isi pelajaran (Tahap F). */
-export const modeArab = (mapel: string): IsianMateri["teksArab"] => (/bahasa\s+arab/i.test(mapel) ? "bahasa" : "dalil");
+/** Mapel yang teks Arabnya isi pelajaran (Tahap F; Nahwu sejak 2026-11-09). */
+export const modeArab = (mapel: string): IsianMateri["teksArab"] => (MAPEL_BAHASA_ARAB.test(mapel) ? "bahasa" : "dalil");
 
 /**
  * Materi dari halaman utama (tempel teks / file, urut seperti aslinya) → draf isian + teks untuk dianalisa AI.

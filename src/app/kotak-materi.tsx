@@ -5,7 +5,8 @@ import { useState } from "react";
 import { analisaMateri } from "./actions";
 import { ambilAyat } from "./materi/actions";
 import { Panah } from "./panah";
-import { BATAS_MATERI, DAFTAR_MAPEL, type IsianMateri } from "@/lib/materi";
+import { BATAS_MATERI, type IsianMateri } from "@/lib/materi";
+import { DAFTAR_MAPEL } from "@/lib/mapel";
 import { bukanDalil, istilahArab, KELAS, MAKS_GABUNG, SUMBER_BUKAN } from "@/lib/soal";
 import { NAMA_SURAH } from "@/lib/surah";
 

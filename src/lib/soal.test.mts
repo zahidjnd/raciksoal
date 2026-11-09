@@ -973,3 +973,12 @@ test("istilah Arab <= 3 kata diterima apa adanya; tombol Bukan ayat/hadis tanpa 
   // AI diberi tahu bahwa itu bukan dalil
   assert.match(buatSistem(r.bab), /Teks Arab materi \(BUKAN ayat dan BUKAN hadis/);
 });
+
+test("mapel MA Al-Fatah: 20 mapel, Nahwu = mode Bahasa Arab, eksak ASAS", async () => {
+  const { DAFTAR_MAPEL, MAPEL_EKSAK } = await import("./mapel.ts");
+  const { modeArab } = await import("./materi.ts");
+  assert.equal(DAFTAR_MAPEL.length, 20);
+  assert.ok(!DAFTAR_MAPEL.some((m) => /ijtima|pjok|konseling/i.test(m)));
+  assert.deepEqual(["Bahasa Arab", "Nahwu", "Fiqih", "Al-Quds wal Maqdisiyyah"].map(modeArab), ["bahasa", "bahasa", "dalil", "dalil"]);
+  assert.ok(["Matematika", "Matematik", "Fisika", "Kimia", "Biologi"].every((m) => MAPEL_EKSAK.test(m)) && !MAPEL_EKSAK.test("Ekonomi"));
+});

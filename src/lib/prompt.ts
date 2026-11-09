@@ -91,7 +91,7 @@ export const BOBOT_BAWAAN: Record<Bentuk, number> = { PG: 2, PGK: 5, BS: 3, MJ: 
  * supaya hitungLevel menghasilkan PERSIS jumlah di surat (dites): eksak 8/15/12 HOTS/MOTS/LOTS, non-eksak 10/20/15.
  * Skor total 100 diisi skorOtomatis (src/lib/skor.ts).
  */
-export const MAPEL_EKSAK = /^(matematika|fisika|kimia|biologi)\b/i;
+export { MAPEL_EKSAK } from "./mapel.ts";
 export const ASAS_ALFATAH = {
   eksak: { nama: "Eksak", jumlah: { PG: 20, PGK: 5, BS: 5, MJ: 0, ISIAN: 0, URAIAN: 5 }, level: { LOTS: 34, MOTS: 43, HOTS: 23 } },
   nonEksak: { nama: "Non-Eksak", jumlah: { PG: 30, PGK: 5, BS: 5, MJ: 0, ISIAN: 0, URAIAN: 5 }, level: { LOTS: 33, MOTS: 45, HOTS: 22 } },
