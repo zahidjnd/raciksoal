@@ -52,6 +52,12 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.25.0 — 9 November 2026
+- **Kisi-kisi diperiksa ulang sebelum soal ditulis.** Setelah kisi-kisi disusun, AI memeriksanya sekali lagi untuk
+  mencari nomor yang menguji hal yang sama di bentuk berbeda (misalnya PG dan isian sama-sama menghitung inflasi).
+  Nomor yang belakangan diganti ke bagian materi lain. Soal kembar jadi lebih jarang, walau belum hilang sama sekali.
+  Pembuatan satu set bertambah sekitar 10 detik.
+
 ## 0.24.4 — 9 November 2026
 - **Soal isian yang jawabannya sudah tertulis di soal lain kini lebih sering berhasil diperbaiki otomatis.** Dulu AI
   hanya membuat satu soal pengganti, dan konsep barunya sering ternyata juga sudah dipakai soal lain, sehingga tetap
