@@ -254,7 +254,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   Uji laptop set 39: "lebih sulit + santri putri Aisyah" → berubah, level C5, kisi ikut; ayat di luar bab diketik guru
   → soal ditandai merah; batas 30x → pesan. Soal 2 set 39 sengaja dibiarkan bertanda merah (bekas uji).
   Belum di-push (menunggu pemilik).
-- 2026-10-19 ANTISLOP (mode after): audit `anti-slop/audit-001-2026-10-19.md` (12 temuan). Diperbaiki 2–8: kontras
+- 2026-10-19 ANTISLOP (mode after): audit `dokumen/audit/antislop-001-2026-10-19.md` (12 temuan). Diperbaiki 2–8: kontras
   (footer Tanzil abu-600, placeholder abu-500 di globals.css), cincin fokus kotak Catatan AI, tombol HP min 44px (globals.css
   + `max-md:min-h-11` pada tautan-tombol), "Membuka set soal..." + `awalId` dari searchParams (page.tsx) agar form kosong tidak
   berkedip, `error.tsx` (Coba lagi = router.refresh + reset) dan `not-found.tsx` berbahasa Indonesia, "✨ Ubah" → "Ubah soal".
@@ -393,7 +393,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   harus dimatikan satu per satu (jangan sentuh dokumen pemilik).
   CARA LIHAT LOG HOSTING tanpa SSH: `~/raciksoal-app/app.log` (lewat konektor cPanel `read_file`). Uji laptop: judul set 51
   diubah sementara jadi Arab → soal/kunci/kisi 200; judul dikembalikan.
-- 2026-11-04 AUDIT (`AUDIT-2026-11-04.md`, pemilik bilang "gas sesuai saran"), dirilis 0.11.0 + 0.11.1:
+- 2026-11-04 AUDIT (`dokumen/audit/AUDIT-2026-11-04.md`, pemilik bilang "gas sesuai saran"), dirilis 0.11.0 + 0.11.1:
   Tampilan: kop ujian di form Buat Soal kini DILIPAT (<details>, tetap di bawah mapel & kelas, ringkasan terlihat);
   tanggal ditulis ulang gaya Indonesia (`hariTanggal` dipindah ke prompt.ts, dipakai word.ts juga); deret nomor soal
   satu baris geser di HP; peringatan Arab penjaga ayat dipecah per baris RTL (`TeksPeringatan`, kartu-soal.tsx);
@@ -537,7 +537,7 @@ Status terkini dan keputusan penting dicatat di bagian bawah file ini.
   kunci terpanjang & >= 1,5x rata-rata pengecoh, kunci < 15 huruf dilewati; diukur 274 PG lama: 60% kunci terpanjang)
   dan `PILIHAN_TERLARANG` (PG/PGK: "semua benar/salah", "tidak ada yang benar", pilihan yang HANYA huruf "A dan B").
   ATURAN-SOAL.md: tanda 🆕 dihapus, 🔍 = juga diperiksa aplikasi.
-  AUDIT `AUDIT-SOAL-2026-11-07.md`: set laptop 69 (Fikih), 70 (Ekonomi ASAS 25), 71 (Biologi TKA), materi 7–9, dibuat
+  AUDIT `dokumen/audit/AUDIT-SOAL-2026-11-07.md`: set laptop 69 (Fikih), 70 (Ekonomi ASAS 25), 71 (Biologi TKA), materi 7–9, dibuat
   lewat skrip server action (cara uji-pemisahan.mts; materi dimasukkan langsung ke tabel `materi`). Temuan utama:
   3/52 kunci SALAH dari AI sendiri (`jawaban_ai` sudah salah: AI menulis pilihan & kunci sebelum menghitung di
   pembahasan); 4 pembahasan menunjuk "pengecoh kedua" (salah setelah diacak). Usulan perbaikan urut prioritas ada di

@@ -207,7 +207,7 @@ Sisa perbaikan dari audit uji soal:
 - Dua soal isian dengan jawaban yang sama juga ditandai.
 
 ## 0.18.2 — 7 November 2026
-Perbaikan dari hasil audit uji soal (`AUDIT-SOAL-2026-11-07.md`):
+Perbaikan dari hasil audit uji soal (`dokumen/audit/AUDIT-SOAL-2026-11-07.md`):
 - **Kunci PG yang salah hitung kini ditandai merah.** Sebelumnya AI kadang menulis kunci dulu, baru menghitung.
   Contohnya pembahasan menghitung Rp82.500.000, tapi kuncinya Rp87.000.000. Sekarang AI wajib menghitung dulu dan
   menulis jawaban benarnya, baru menyusun pilihan. Aplikasi mencocokkannya dengan kunci; kalau tidak cocok, soal
@@ -365,7 +365,7 @@ Persiapan uji coba guru.
 - Tombol **Set baru** kini berlatar polos dengan tanda **+** di lingkaran hijau, supaya tidak tampak seperti "sedang dibuka".
 
 ## 0.11.0 — 4 November 2026
-Hasil audit 4 November (lihat `AUDIT-2026-11-04.md`).
+Hasil audit 4 November (lihat `dokumen/audit/AUDIT-2026-11-04.md`).
 - **Ganti nama dan hapus set** lewat riwayat di sidebar, seperti claude.ai: tombol **⋯** di tiap riwayat (di laptop
   muncul saat kursor diarahkan, di HP selalu terlihat) atau **klik kanan**. Ganti nama langsung di barisnya (Enter =
   simpan, Esc = batal). Set yang dihapus hilang dari riwayat dan tidak bisa dibuka lagi, tetapi **jatah hari ini tidak

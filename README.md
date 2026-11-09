@@ -519,7 +519,7 @@ Saat melapor masalah, sertakan **versi** (tertulis di sidebar), nomor set (`?id=
 | [PRD.md](PRD.md) | Kebutuhan dan tujuan awal produk |
 | [ATURAN-SOAL.md](ATURAN-SOAL.md) | Aturan baku penyusunan soal (Bloom, kaidah, per bentuk, gaya TKA) |
 | [DESIGN.md](DESIGN.md) | Arah tampilan: warna, huruf, bentuk, tema |
-| [AUDIT-2026-11-04.md](AUDIT-2026-11-04.md) | Audit fitur, tampilan, dan kode beserta statusnya |
+| [dokumen/audit/](dokumen/audit/) | Hasil audit (fitur 4 Nov, mutu soal 7 Nov, tampilan 19 Okt) beserta statusnya |
 | [deploy/pulihkan-backup.md](deploy/pulihkan-backup.md) | Membuka, menguji, dan memulihkan backup |
 | [dokumen/Hitungan-Biaya-AI-RacikSoal.pdf](dokumen/Hitungan-Biaya-AI-RacikSoal.pdf) | Perkiraan biaya & token AI setahun (realistis dan batas atas), cara menghitung ulang |
 | `CLAUDE.md` | Catatan kerja untuk asisten AI: aturan proyek dan riwayat keputusan teknis yang rinci |

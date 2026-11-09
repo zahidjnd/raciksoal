@@ -7,7 +7,7 @@ yang diberikan ke AI setiap kali membuat soal.
 Revisi 2026-11-07 (versi 0.18.0, disetujui pemilik): kesulitan vs HOTS (1c no. 5), khilafiyah (2a no. 6), kunci tidak
 boleh pilihan terpanjang + pemeriksa aplikasi (2b no. 7), ejaan KBBI (2c no. 5), nama tokoh (4 no. 6), dan tanda di
 dokumen ini disamakan dengan aplikasi. Versi 0.18.1: uraian berbatasan (bagian 3) dan pemeriksa pilihan terlarang (2b no. 6).
-Versi 0.18.2 (dari `AUDIT-SOAL-2026-11-07.md`): kunci PG dicocokkan dengan hasil hitung AI (2a no. 2), PG kompleks tanpa
+Versi 0.18.2 (dari `dokumen/audit/AUDIT-SOAL-2026-11-07.md`): kunci PG dicocokkan dengan hasil hitung AI (2a no. 2), PG kompleks tanpa
 pilihan gabungan (2b no. 6), pembahasan tidak menunjuk urutan pilihan (10 no. 2).
 Versi 0.19.0 (sisa audit): HOTS tanpa stimulus ditandai (1c no. 3), Menjodohkan mirip ditandai (2b no. 10), pernyataan
 Kategori diacak aplikasi + label diragamkan (bagian 3), contoh rubrik dengan skor sebagian (bagian 3).
