@@ -28,6 +28,102 @@ function tabelJadiBaris(xml: string, ns: string): string {
   );
 }
 
+type Simpul = { tag: string; attr: string; anak: Simpul[]; teks?: string };
+
+/** Pohon XML sederhana (cukup untuk potongan rumus Office; tanpa komentar/CDATA). */
+function pohon(xml: string): Simpul {
+  const akar: Simpul = { tag: "", attr: "", anak: [] };
+  const tumpuk = [akar];
+  for (const m of xml.matchAll(/<(\/?)([\w:]+)([^>]*?)(\/?)>|([^<]+)/g)) {
+    const atas = tumpuk.at(-1)!;
+    if (m[5] !== undefined) atas.anak.push({ tag: "#", attr: "", anak: [], teks: dekode(m[5]) });
+    else if (m[1]) {
+      if (tumpuk.length > 1) tumpuk.pop();
+    } else {
+      const s: Simpul = { tag: m[2], attr: m[3], anak: [] };
+      atas.anak.push(s);
+      if (!m[4]) tumpuk.push(s);
+    }
+  }
+  return akar;
+}
+
+const FUNGSI_LATEX = /^(sin|cos|tan|cot|sec|csc|log|ln|exp|lim|max|min|det|arcsin|arccos|arctan)$/;
+const AKSEN_LATEX: Record<string, string> = { "⃗": "vec", "̅": "bar", "¯": "bar", "̇": "dot", "̃": "tilde" };
+
+/**
+ * Rumus Word (OMML, Insert → Equation) → LaTeX untuk "$...$" (0.29.0). Dulu rumus di materi terbuang karena hanya w:t
+ * yang dibaca. Bagian yang jarang (matriks, susunan persamaan) hanya digabung teksnya.
+ */
+export function ommlKeLatex(xml: string): string {
+  const cari = (s: Simpul | undefined, tag: string): Simpul | undefined => s?.anak.find((a) => a.tag === tag);
+  const nilai = (s: Simpul | undefined, pr: string, tag: string) => /m:val="([^"]*)"/.exec(cari(cari(s, pr), tag)?.attr ?? "")?.[1];
+  const isi = (s?: Simpul): string => (s ? s.anak.map(tulis).join("") : "");
+  const g = (s?: Simpul) => `{${isi(s).trim()}}`;
+  function tulis(s: Simpul): string {
+    const e = cari(s, "m:e");
+    switch (s.tag) {
+      case "#":
+        return s.teks!.replace(/\\/g, "\\backslash ").replace(/[{}%#&$_^]/g, "\\$&");
+      case "m:r": {
+        const t = isi(cari(s, "m:t"));
+        return cari(cari(s, "m:rPr"), "m:nor") ? `\\text{${t}}` : t;
+      }
+      case "m:f":
+        return `\\frac${g(cari(s, "m:num"))}${g(cari(s, "m:den"))}`;
+      case "m:sSup":
+        return `${g(e)}^${g(cari(s, "m:sup"))}`;
+      case "m:sSub":
+        return `${g(e)}_${g(cari(s, "m:sub"))}`;
+      case "m:sSubSup":
+        return `${g(e)}_${g(cari(s, "m:sub"))}^${g(cari(s, "m:sup"))}`;
+      case "m:rad": {
+        const deg = isi(cari(s, "m:deg")).trim();
+        return `\\sqrt${deg ? `[${deg}]` : ""}${g(e)}`;
+      }
+      case "m:d": {
+        const buka = nilai(s, "m:dPr", "m:begChr") ?? "(";
+        const tutup = nilai(s, "m:dPr", "m:endChr") ?? ")";
+        const pisah = nilai(s, "m:dPr", "m:sepChr") ?? "|";
+        const k = (c: string) => ({ "{": "\\{", "}": "\\}" })[c] ?? c;
+        return `\\left${k(buka) || "."}${s.anak.filter((a) => a.tag === "m:e").map(isi).join(pisah)}\\right${k(tutup) || "."}`;
+      }
+      case "m:nary": {
+        const c = nilai(s, "m:naryPr", "m:chr") ?? "∫";
+        const op = c === "∑" ? "\\sum" : c === "∫" ? "\\int" : c;
+        const sub = isi(cari(s, "m:sub")).trim();
+        const sup = isi(cari(s, "m:sup")).trim();
+        return `${op}${sub ? `_{${sub}}` : ""}${sup ? `^{${sup}}` : ""} ${isi(e)}`;
+      }
+      case "m:func": {
+        const nama = isi(cari(s, "m:fName")).trim();
+        return `${FUNGSI_LATEX.test(nama) ? `\\${nama}` : nama} ${isi(e)}`;
+      }
+      case "m:limLow": {
+        const dasar = isi(e).trim();
+        return `${dasar === "lim" ?"\\lim" : `{${dasar}}`}_${g(cari(s, "m:lim"))}`;
+      }
+      case "m:acc": {
+        const a = AKSEN_LATEX[nilai(s, "m:accPr", "m:chr") ?? ""] ?? "hat";
+        return `\\${a}${g(e)}`;
+      }
+      case "m:bar":
+        return `\\overline${g(e)}`;
+      default:
+        return s.tag.endsWith("Pr") ? "" : isi(s); // ...Pr = pengaturan tampilan, bukan isi
+    }
+  }
+  return isi(pohon(xml)).replace(/\s+/g, " ").trim();
+}
+
+/** Setiap rumus Word/PowerPoint (m:oMath) diganti satu potongan teks "$LaTeX$" di tempatnya. */
+function rumusJadiTeks(xml: string, ns: string): string {
+  return xml.replace(/<m:oMath(?:\s[^>]*)?>[\s\S]*?<\/m:oMath>/g, (m) => {
+    const tex = ommlKeLatex(m);
+    return tex ? `<${ns}:t>${`$${tex}$`.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</${ns}:t>` : "";
+  });
+}
+
 /** Paragraf-paragraf dari XML Office: `p` = tag paragraf (w:p / a:p), `t` = tag teks (w:t / a:t). */
 function paragraf(xml: string, p: string, t: string): string[] {
   return xml
@@ -148,12 +244,12 @@ export async function bacaFileOffice(data: ArrayBuffer | Uint8Array, nama: strin
   if (akhiran === "docx") {
     const xml = await zip.file("word/document.xml")?.async("string");
     if (!xml) throw new Error("Isi dokumen Word tidak ditemukan.");
-    semua = paragraf(tabelJadiBaris(xml, "w"), "w:p", "w:t");
+    semua = paragraf(tabelJadiBaris(rumusJadiTeks(xml, "w"), "w"), "w:p", "w:t");
   } else {
     // Slide diurutkan menurut nomornya (slide2 sebelum slide10).
     const slide = zip.file(/^ppt\/slides\/slide\d+\.xml$/).sort((a, b) => Number(a.name.match(/\d+/)![0]) - Number(b.name.match(/\d+/)![0]));
     if (!slide.length) throw new Error("Slide PowerPoint tidak ditemukan.");
-    for (const s of slide) semua.push(...paragraf(tabelJadiBaris(await s.async("string"), "a"), "a:p", "a:t"));
+    for (const s of slide) semua.push(...paragraf(tabelJadiBaris(rumusJadiTeks(await s.async("string"), "a"), "a"), "a:p", "a:t"));
   }
 
   const teks = semua.map((t) => t.normalize("NFC"));

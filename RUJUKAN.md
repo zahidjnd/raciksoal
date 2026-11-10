@@ -170,6 +170,7 @@ Semua butir di ATURAN-SOAL.md bagian 2 dan 10.
 | Stimulus kontekstual, gambar dideskripsikan dengan kata | R1 + R2 | ✔ D08b hlm 39; D13 | |
 | Nama tokoh beragam, satu skenario sekali per set | R3 | keputusan pemilik | |
 | Data berbaris-berkolom ditulis sebagai tabel (maks 6 × 10, tidak di pilihan) | R2 + R3 | D12 (stimulus TKA: grafik/tabel, data percobaan); batas ukuran & tempat = keputusan pemilik 2026-11-10 | |
+| Rumus ditulis sebagai rumus sungguhan (LaTeX `$...$`), desimal koma | R2 + R3 | Kaidah penulisan matematika (notasi baku, desimal koma PUEBI); format & tempat = keputusan pemilik 2026-11-10 | |
 | Nilai Panca Cinta boleh disisipkan secara wajar | R1 | ✔ D11 hlm 26–30 (integrasi nilai ke pembelajaran) | D11 tidak mengatur soal secara khusus. ATURAN-SOAL menulis "Cinta Diri dan Sesama"; nama resminya "Cinta Diri dan **Sesama Manusia**" |
 
 ### K. Penskoran dan bobot

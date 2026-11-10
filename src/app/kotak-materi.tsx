@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { analisaMateri } from "./actions";
 import { ambilAyat } from "./materi/actions";
+import { Teks } from "./kartu-soal";
 import { Panah } from "./panah";
 import { BATAS_MATERI, type IsianMateri } from "@/lib/materi";
 import { DAFTAR_MAPEL } from "@/lib/mapel";
@@ -276,7 +277,7 @@ export function KartuMateri({ draf, setDraf, judul, batal }: { draf: IsianMateri
         <div>
           <p>Pokok materi yang akan diuji</p>
           <ul className="mt-1 list-disc pl-5 text-pudar">
-            {draf.pokok.map((p, i) => <li key={i}>{p}</li>)}
+            {draf.pokok.map((p, i) => <li key={i}><Teks teks={p} /></li>)}
           </ul>
         </div>
       )}

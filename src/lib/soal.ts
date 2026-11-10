@@ -371,6 +371,13 @@ export function paragrafArab(t: string) {
   return arab > 0 && arab >= latin * 4;
 }
 
+/**
+ * Rumus LaTeX di teks soal (0.29.0): "$...$" di satu baris. Seperti Pandoc: setelah "$" pembuka dan sebelum "$" penutup
+ * tidak boleh spasi, dan penutup tidak diikuti angka, supaya "US$ 5 dan US$ 10" tidak terbaca rumus.
+ */
+export const POLA_RUMUS = String.raw`\$(?=[^\s$])[^$\n]*?[^\s$]\$(?!\d)`;
+export const adaRumus = (t: string) => new RegExp(POLA_RUMUS).test(String(t ?? ""));
+
 /** Satu baris teks soal, atau satu tabel utuh (`tabel` terisi, `teks` kosong). */
 export type Baris = { teks: string; arab: boolean; tabel?: string[][] };
 
@@ -617,13 +624,15 @@ const URUTAN_PILIHAN = /\b(pengecoh|pilihan|opsi)\s+(ke-?\s?[1-5]\b|pertama|kedu
 /**
  * PG: jawaban benar yang ditulis AI SEBELUM pilihan (setelah menghitung) harus sama dengan pilihan yang ditandai kunci.
  * Audit 2026-11-07: 3 dari 52 kunci salah karena AI menulis kunci dulu, baru menghitung di pembahasan.
- * Dibandingkan tanpa spasi/tanda baca/huruf besar ("Rp82.500.000" = "Rp 82.500.000").
+ * Dibandingkan persis dulu (tanpa spasi, "$", huruf besar), baru tanpa tanda baca ("Rp82.500.000" = "Rp 82.500.000").
+ * Persis dulu (0.29.0): tanpa tanda baca, "x^2 + 2x - 24" = "x^2 - 2x - 24" (tanda +/− hilang) → kunci benar dianggap salah.
  */
 function cekJawabanBenar(s: Soal): string | null {
+  const persis = (t: unknown) => String(t ?? "").replace(/[\s$]+/g, "").toLowerCase();
   const rata = (t: unknown) => polos(t).replace(/\s+/g, "");
-  const benar = rata(s.jawaban_benar);
-  if (!benar) return null;
-  const di = (s.pilihan ?? []).findIndex((p) => rata(p) === benar);
+  if (!rata(s.jawaban_benar)) return null;
+  const cari = (f: (t: unknown) => string) => (s.pilihan ?? []).findIndex((p) => f(p) === f(s.jawaban_benar));
+  const di = cari(persis) >= 0 ? cari(persis) : cari(rata);
   if (di < 0) return `Jawaban benar hasil hitung/penalaran ("${String(s.jawaban_benar).slice(0, 80)}") tidak ada di pilihan.`;
   if (HURUF[di] !== String(s.kunci ?? "").trim().toUpperCase())
     return `Kunci tidak cocok: jawaban benar hasil hitung/penalaran adalah "${String(s.jawaban_benar).slice(0, 80)}", tetapi kunci menunjuk pilihan lain.`;

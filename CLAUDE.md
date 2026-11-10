@@ -120,6 +120,12 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   Paket A–D diacak bersemi (`susunPaket`), tanpa tabel baru. Set menyimpan salinan bab (`hasil_soal.bab`).
 - **Tabel** (0.28.0): ditulis di TEKS soal/wacana/pembahasan sebagai baris `| a | b |` (bukan kolom data baru), dikenali
   `pecahBaris` → `TabelData` (web) / `tabelData` (Word). Tabel Word/PPT materi → baris `|` di `office.ts`. Tidak di pilihan.
+- **Rumus** (0.29.0): LaTeX `$...$` di teks mana pun (`POLA_RUMUS` gaya Pandoc di soal.ts: "US$ 5" bukan rumus). Web: KaTeX
+  dimuat dinamis (`Rumus` di kartu-soal, salah tulis → teks asli). Word: `rumus.ts` LaTeX → OMML (subset; perintah tak
+  dikenal → LaTeX dicetak apa adanya). Jawaban AI: `betulkanGarisMiring` (ai.ts) menggandakan `\` di dalam `$...$` sebelum
+  JSON.parse. Materi Word: Equation → `$LaTeX$` (`ommlKeLatex`, office.ts). Angka/satuan biasa tanpa `$` (pilihan angka tetap diurutkan).
+  Edit: tombol "Σ Rumus" + klik rumus di Pratinjau → MathLive (`editor-rumus.ts`, dimuat dinamis, huruf dari CSS KaTeX).
+  Jendelanya SENGAJA bukan `<dialog>` modal (papan ketik MathLive tak terlihat di atasnya).
 - **Word**: kop dari cetakan asli (`scripts/buat-template-word.py`, jalankan ulang bila kop berubah); penanda {{judul}} {{tp}}
   {{isi}} {{mapel}} {{kelas}} {{sekolah}} {{hari}} {{waktu}}. Baris Arab = paragraf RTL. Nama file lewat `headerUnduh`.
 - **Tampilan** (`DESIGN.md`): gaya claude.ai, token warna di `@theme` globals.css (krem, hijau #006316, tinta, pudar, bahaya,
@@ -160,6 +166,6 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
 ## Masalah terbuka / tertunda
 - Isian bocor masih terjadi di materi pendek dengan nama/tahun berulang (SKI set 104: 3 isian merah, 3 calon gagal).
 - Soal kembar B/S "menilai hasil hitung X" vs PG "menghitung X" kadang lolos pemeriksaan kisi.
-- MJ kadang mencampur istilah & sifat dalam satu blok. Rumus & gambar belum didukung di soal; tabel dari PDF belum terbaca.
+- MJ kadang mencampur istilah & sifat dalam satu blok. Gambar belum didukung di soal; tabel & rumus dari PDF belum terbaca.
 - Belum diuji: balapan klik ganda & tenggat sungguhan; saringan /admin/set di browser; Latihan TKA grup campur bentuk.
 - Persiapan 1.0.0 di luar kode: saldo DeepSeek, tanya-jawab di Panduan, pemakaian saat ASAS.

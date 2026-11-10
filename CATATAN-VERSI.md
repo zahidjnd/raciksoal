@@ -52,6 +52,20 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.29.0 — 10 November 2026
+- **Rumus di soal.** Pecahan, akar, pangkat, indeks, huruf Yunani, dan simbol (×, ≤, Δ, …) kini tampil sebagai rumus
+  sungguhan di soal, pilihan jawaban, kunci, wacana, dan pembahasan. Di file Word rumusnya menjadi **rumus Word asli**
+  (seperti Insert → Equation), jadi masih bisa diklik dan diubah di Word.
+- **Rumus di materi ikut terbaca.** Rumus Equation di file Word materi guru dulu terbuang; sekarang ikut terbaca dan
+  dipakai AI. Contoh materi untuk mencoba: `dokumen/contoh-materi/Materi Fisika X - Gerak Lurus (contoh uji rumus).docx`.
+  Rumus di PDF belum terbaca rapi.
+- **Tombol Σ Rumus saat Edit.** Guru menyusun rumus di jendela rumus visual seperti di Word (di HP dengan papan ketik
+  rumus, desimal koma), tanpa perlu menghafal kode. Rumus yang sudah ada diubah dengan mengkliknya di kotak "Pratinjau
+  rumus". Di kotak teks rumus tersimpan sebagai kode di antara dua tanda `$` (mis. `$v = \frac{s}{t}$`).
+- Biaya AI per set tidak berubah.
+- Perbaikan: pemeriksa kunci tidak lagi menganggap pilihan yang hanya beda tanda plus/minus (mis. `x² + 2x − 24` dan
+  `x² − 2x − 24`) sebagai pilihan yang sama, jadi soal yang kuncinya benar tidak ikut ditandai "Kunci tidak cocok".
+
 ## 0.28.0 — 10 November 2026
 - **Tabel di soal.** Data yang lebih jelas dibaca berbaris-berkolom (data percobaan, perbandingan, angka statistik)
   kini bisa muncul sebagai tabel sungguhan di soal, wacana, dan pembahasan: tampil rapi di web (di HP bisa digeser) dan

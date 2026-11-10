@@ -293,6 +293,9 @@ test("periksaSoal: jawaban_benar AI harus sama dengan pilihan kunci; langkah & j
   const tanpa = pg("");
   delete tanpa.jawaban_benar;
   assert.deepEqual(periksaSoal([tanpa], bab)[0].peringatan, []); // soal lama / editan guru: tidak dicek
+  // Set 110 no. 7: pilihan hanya beda tanda +/− (dulu tanda baca dibuang → pilihan A dianggap jawaban benar)
+  const rumus: Soal = { ...pg("$x^2 - 2x - 24 = 0$", "D"), pilihan: ["$x^2 + 2x - 24 = 0$", "$x^2 - 10x + 24 = 0$", "$x^2 + 10x + 24 = 0$", "$x^2 - 2x - 24 = 0$", "$x^2 - 2x + 24 = 0$"] };
+  assert.deepEqual(periksaSoal([rumus], bab)[0].peringatan, []);
 });
 
 test("periksaSoal: PGK pilihan gabungan nomor dan pembahasan yang menunjuk urutan pilihan ditandai", () => {

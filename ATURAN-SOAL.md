@@ -179,6 +179,12 @@ mengatur skor). Persen level dipilih supaya jumlahnya persis surat (34/43/23 dan
    singkat. Tabel tidak dipakai di pilihan jawaban, pernyataan, dan menjodohkan. Data di tabel berasal dari materi atau
    dibuat konsisten dengan materi; kunci tidak boleh terbaca langsung dari tabel tanpa diolah (kecuali soal C1–C2).
    Tabel di file Word/PowerPoint materi guru ikut terbaca sebagai tabel (PDF belum).
+8. ✅ (0.29.0) **Rumus sungguhan.** Rumus, persamaan, pecahan, akar, pangkat, indeks, dan simbol (Δ, α, ×, ≤, …)
+   ditulis dalam format LaTeX diapit tanda `$` (contoh `$v = \frac{s}{t}$`); aplikasi menampilkannya sebagai rumus
+   di web dan sebagai rumus Word asli (Equation). Boleh di pertanyaan, wacana, pilihan, kunci, dan pembahasan.
+   Angka biasa dan satuan yang berdiri sendiri ("12 m/s", "2,5 kg") tetap teks biasa tanpa `$`, supaya pilihan angka
+   tetap diurutkan kecil → besar. Desimal memakai koma sesuai kaidah Indonesia (`$2{,}5$`). Rumus di file Word materi
+   guru (Equation) ikut terbaca; rumus di PDF belum.
 
 ### 4a. Nilai Kurikulum Berbasis Cinta (Kemenag 2025)
 Panduan KBC (Kepdirjen Pendis 6077/2025) memuat **Panca Cinta**: Cinta Allah dan Rasul-Nya, Cinta Ilmu,

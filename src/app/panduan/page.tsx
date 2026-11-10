@@ -28,6 +28,7 @@ const LANGKAH: { judul: string; isi: React.ReactNode[] }[] = [
       <><b>Edit</b>: ubah teks soal, pilihan, kunci, pembahasan, level, TP, atau skor, lalu <b>Simpan</b>. Muncul tulisan hijau “Tersimpan ✓”.</>,
       <><b>Lainnya</b>: <b>Ganti soal ini</b> (soal baru dari AI), <b>Ubah soal</b> (tulis permintaan, mis. “jadikan lebih sulit”), <b>Tambah soal serupa di bawahnya</b>, atau <b>Hapus soal ini</b>. Nomor menjodohkan memakai satu daftar jawaban bersama, jadi hanya bisa diperbaiki lewat <b>Edit</b> (daftar jawaban yang diedit ikut berubah di nomor menjodohkan lain). Ganti/ubah/tambah dibatasi 30 kali per set (jatah set ini tidak kembali) dan 60 kali per hari (kembali penuh setiap hari); sisanya terlihat di menu Lainnya. Edit dan tulis soal sendiri tidak dibatasi.</>,
       <>Punya soal sendiri? Tekan <b>+ Tulis soal … sendiri</b> di akhir tiap bagian (atau <b>Tulis soal bentuk lain</b> di paling bawah). Formulirnya sama dengan Edit; soal ini tanpa AI dan tidak memakai jatah, tetapi tetap diperiksa pemeriksa ayat.</>,
+      <><b>Rumus</b>: saat Edit, letakkan kursor di tempat rumus, lalu tekan <b>Σ Rumus</b>. Di jendela yang muncul, susun rumusnya seperti di Word (ketik <b>/</b> untuk pecahan, <b>^</b> untuk pangkat, <b>_</b> untuk indeks; di HP muncul papan ketik rumus), lalu tekan <b>Masukkan</b>. Untuk mengubah rumus, klik rumus itu di kotak <b>Pratinjau rumus</b>. Di kotak teks, rumus tertulis sebagai kode di antara dua tanda <b>$</b> (mis. <b>$v = \frac{"{s}{t}"}$</b>); kode itu jangan dihapus sebagian. Di file Word, rumus menjadi rumus Word asli.</>,
       <>Tombol <b>↑</b> / <b>↓</b> di kanan bawah kartu memindah urutan soal di dalam bagiannya (mis. sesama Pilihan Ganda).</>,
       <>Tab <b>Kisi-kisi</b> menampilkan TP, indikator, dan level setiap nomor.</>,
     ],
@@ -57,6 +58,7 @@ const LANGKAH: { judul: string; isi: React.ReactNode[] }[] = [
       <>Di <b>Materi saya</b>, materi dikelompokkan per mapel dan kelas. Tekan <b>Ubah</b> untuk membetulkan judul, TP, isi, atau ayat &amp; hadis; <b>Buat soal</b> untuk langsung membuat soal dari materi itu; <b>Hapus</b> untuk materi yang dobel. Set soal yang sudah dibuat tidak ikut berubah atau terhapus.</>,
       <>Di kotak <b>Ayat &amp; hadis</b>, ketik rujukan (mis. <b>QS An-Nur: 2</b>) lalu tekan <b>Ambil ayat</b>: teksnya diambil dari data mushaf. Hadis ditambah lewat <b>+ Tambah hadis</b>, lalu centang pernyataan pemeriksaan.</>,
       <>Tabel di file <b>Word/PowerPoint</b> ikut terbaca sebagai tabel (di kotak isi tampil sebagai baris <b>| sel | sel |</b>), jadi AI bisa membuat soal dari datanya. Tabel di <b>PDF</b> belum terbaca rapi: buka PDF-nya di Microsoft Word (klik kanan → Buka dengan → Word), simpan sebagai .docx, lalu lampirkan file Word itu.</>,
+      <>Rumus yang dibuat dengan <b>Insert → Equation</b> di Word ikut terbaca (di kotak isi tampil sebagai <b>$...$</b>). Rumus di PDF belum terbaca rapi (pecahan dan pangkat menjadi teks biasa): sebaiknya ketik ulang rumus penting di Word dengan Insert → Equation, lalu lampirkan file Word itu.</>,
     ],
   },
   {

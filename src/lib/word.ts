@@ -22,7 +22,8 @@ import {
 } from "docx";
 import { MAPEL_INGGRIS } from "./mapel";
 import { hariTanggal, mapelTka, NAMA_BENTUK, semesterDari, TKA, WAKTU_BAWAAN, type Pengaturan } from "./prompt";
-import { bukanDalil, identitasBab, JUMLAH_PREMIS, kategoriBaru, mjLama, paragrafArab, pecahBaris, POLA_ARAB, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
+import { rumusWord } from "./rumus";
+import { bukanDalil, identitasBab, JUMLAH_PREMIS, kategoriBaru, mjLama, paragrafArab, pecahBaris, POLA_ARAB, POLA_RUMUS, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
 
 const PERINGATAN = "Soal dibuat AI, wajib diperiksa guru sebelum dipakai.";
 
@@ -64,6 +65,7 @@ const NAMA_KELAS: Record<string, string> = { X: "Sepuluh", XI: "Sebelas", XII: "
 
 const aset = (nama: string) => readFileSync(path.join(process.cwd(), "public", "word", nama));
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
+const PECAH_RUMUS = new RegExp(`(${POLA_RUMUS})`);
 
 type Gaya = { bold?: boolean; italics?: boolean; color?: string; size?: number };
 
@@ -71,19 +73,24 @@ type Gaya = { bold?: boolean; italics?: boolean; color?: string; size?: number }
 const r = (text: string, gaya: Gaya = {}) => new TextRun({ font: FONT, size: UKURAN, ...gaya, text });
 
 /**
- * Teks campuran Latin + Arab: bagian Arab memakai font Arab dan arah kanan-ke-kiri.
- * Baris baru ("\n", mis. dialog/hiwar satu penutur per baris) menjadi pindah baris di paragraf yang sama.
+ * Teks campuran Latin + Arab + rumus: bagian Arab memakai font Arab dan arah kanan-ke-kiri; "$...$" jadi rumus Word asli
+ * (LaTeX yang belum didukung `rumusWord` tercetak apa adanya). Baris baru ("\n", mis. dialog/hiwar satu penutur per
+ * baris) menjadi pindah baris di paragraf yang sama.
  */
-export function teks(isi: string, gaya: Gaya = {}): TextRun[] {
+export function teks(isi: string, gaya: Gaya = {}): ParagraphChild[] {
   return String(isi ?? "")
     .split(/\r?\n/)
     .flatMap((baris, n) => [
       ...(n ? [new TextRun({ break: 1 })] : []),
-      ...baris
-        .split(PECAH_ARAB)
-        .flatMap((b, i) =>
-          !b ? [] : i % 2 ? new TextRun({ ...gaya, text: b, font: FONT_ARAB, size: UKURAN_ARAB, rightToLeft: true, language: { bidirectional: "ar-SA" } }) : r(b, gaya),
-        ),
+      ...baris.split(PECAH_RUMUS).flatMap((potong, m) =>
+        m % 2
+          ? (rumusWord(potong.slice(1, -1)) ?? r(potong.slice(1, -1), gaya))
+          : potong
+              .split(PECAH_ARAB)
+              .flatMap((b, i) =>
+                !b ? [] : i % 2 ? new TextRun({ ...gaya, text: b, font: FONT_ARAB, size: UKURAN_ARAB, rightToLeft: true, language: { bidirectional: "ar-SA" } }) : r(b, gaya),
+              ),
+      ),
     ]);
 }
 

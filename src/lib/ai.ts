@@ -40,6 +40,17 @@ const tunggu = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /** Sebagian model (mis. Claude) membungkus JSON dengan ```json ... ``` walau diminta JSON murni → buang pembungkusnya. */
 export const buangPagar = (teks: string) => teks.trim().replace(/^```(?:json)?\s*([\s\S]*?)\s*```$/i, "$1");
 
+/**
+ * Rumus LaTeX (0.29.0) memakai "\": AI sering lupa menggandakannya di JSON, sehingga "\frac" terbaca form-feed + "rac",
+ * "\times" tab, "\neq" baris baru, dan "\sqrt" membuat JSON tidak valid. Di dalam $...$ setiap "\" tunggal digandakan;
+ * di luar $...$ hanya "\" yang memang bukan escape JSON sah (selain itu "\n" pindah baris dialog/tabel bisa rusak).
+ * ponytail: "$" lepas yang kebetulan berpasangan dengan "$" rumus di baris yang sama ikut terbaca rumus (jarang).
+ */
+export function betulkanGarisMiring(json: string): string {
+  const ganda = (pola: RegExp) => (t: string) => t.replace(pola, (m) => (m === "\\" ? "\\\\" : m));
+  return ganda(/\\\\|\\(?:["/bfnrt]|u[0-9a-fA-F]{4})|\\/g)(json.replace(/\$(?=[^\s$"])[^$\n"]*?[^\s$"]\$(?!\d)/g, ganda(/\\\\|\\"|\\/g)));
+}
+
 /** Model yang terpasang di .env (hanya nomor dan nama, tanpa kunci). */
 export function daftarModel() {
   return [1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap((slot) => {
@@ -86,7 +97,7 @@ export async function tanyaAI(sistem: string, pengguna: string, slot = 1, sampai
   const pilihan = data.choices?.[0];
   if (!pilihan) throw new Error(`AI (${k.model}) tidak mengirim jawaban.`);
   return {
-    jawaban: buangPagar(String(pilihan.message?.content ?? "")),
+    jawaban: betulkanGarisMiring(buangPagar(String(pilihan.message?.content ?? ""))),
     terpotong: pilihan.finish_reason === "length",
     model: k.model,
     token: { masuk: Number(data.usage?.prompt_tokens) || 0, keluar: Number(data.usage?.completion_tokens) || 0 },

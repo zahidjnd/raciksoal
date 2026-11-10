@@ -1,24 +1,80 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
+import "katex/dist/katex.min.css";
 import { gantiSatuSoal, hapusSoal, pindahSoal, simpanSoal, tambahSoalManual, tambahSoalSerupa } from "./actions";
 import { StepAngka } from "./step-angka";
-import { bukanDalil, kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, type Bab, type Bentuk, type Soal } from "@/lib/soal";
+import { editRumus, isiKotak } from "./editor-rumus";
+import { adaRumus, bukanDalil, kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, POLA_RUMUS, type Bab, type Bentuk, type Soal } from "@/lib/soal";
 import { MAKS_INSTRUKSI, namaBentuk } from "@/lib/prompt";
 
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
+const PECAH_RUMUS = new RegExp(`(${POLA_RUMUS})`);
 const HURUF = ["A", "B", "C", "D", "E", "F", "G"];
 const kotak = "w-full rounded-lg border p-2 text-sm";
 const tombol = "rounded-lg border bg-kartu h-8 px-3 text-sm hover:bg-krem disabled:opacity-50";
 
-/** Teks campuran Latin + Arab: bagian Arab ditulis kanan-ke-kiri dengan font Arab. */
+/** Teks campuran Latin + Arab + rumus: bagian Arab kanan-ke-kiri dengan font Arab, "$...$" jadi rumus. */
 export function Teks({ teks }: { teks: string }) {
   return (
     <>
       {String(teks ?? "")
-        .split(PECAH_ARAB)
-        .map((b, i) => (i % 2 ? <bdi key={i} dir="rtl" lang="ar" className="font-arab text-xl">{b}</bdi> : b))}
+        .split(PECAH_RUMUS)
+        .map((r, n) =>
+          n % 2 ? (
+            <Rumus key={n} tex={r.slice(1, -1)} />
+          ) : (
+            <Fragment key={n}>{r.split(PECAH_ARAB).map((b, i) => (i % 2 ? <bdi key={i} dir="rtl" lang="ar" className="font-arab text-xl">{b}</bdi> : b))}</Fragment>
+          ),
+        )}
     </>
+  );
+}
+
+// KaTeX (±270 KB) dimuat hanya saat ada rumus di layar, sekali untuk semua kartu. Berjalan di browser guru, bukan di hosting.
+let muatKatex: Promise<typeof import("katex")> | null = null;
+
+/** Satu rumus LaTeX. Selama KaTeX dimuat (atau bila LaTeX-nya salah tulis) tampil teks aslinya, bukan error. */
+function Rumus({ tex }: { tex: string }) {
+  const [html, setHtml] = useState("");
+  useEffect(() => {
+    let hidup = true;
+    (muatKatex ??= import("katex")).then((k) => hidup && setHtml(k.default.renderToString(tex, { throwOnError: false, strict: false })));
+    return () => {
+      hidup = false;
+    };
+  }, [tex]);
+  return html ? <span data-tex={tex} dangerouslySetInnerHTML={{ __html: html }} /> : <span data-tex={tex} className="font-mono">{tex}</span>;
+}
+
+/** Kotak teks yang boleh diberi rumus (bukan pilihan radio/centang/angka). */
+const bisaRumus = (t: unknown): t is HTMLTextAreaElement | HTMLInputElement =>
+  t instanceof HTMLTextAreaElement || (t instanceof HTMLInputElement && t.type === "text");
+
+/** Klik rumus di Pratinjau → jendela rumus; hasilnya mengganti "$...$" itu di kotak teks pemiliknya (label/fieldset yang sama). */
+async function ubahRumusDiPratinjau(e: React.MouseEvent<HTMLElement>) {
+  const tex = (e.target as Element).closest("[data-tex]")?.getAttribute("data-tex");
+  if (tex == null) return;
+  e.preventDefault(); // klik di dalam <label> jangan memindah fokus ke kotaknya
+  const cari = `$${tex}$`;
+  const wadah = e.currentTarget.closest("label, fieldset") ?? document;
+  const el = [...wadah.querySelectorAll<HTMLTextAreaElement | HTMLInputElement>("textarea, input")].find((x) => x.value.includes(cari));
+  if (!el) return;
+  const baru = await editRumus(tex);
+  if (baru === null) return;
+  const i = el.value.indexOf(cari);
+  const sisip = baru ? `$${baru}$` : "";
+  isiKotak(el, el.value.slice(0, i) + sisip + el.value.slice(i + cari.length), i + sisip.length);
+}
+
+/** Pratinjau di form Edit: tampil hanya bila teksnya memuat rumus "$...$", supaya guru melihat hasilnya saat mengetik. */
+function Pratinjau({ teks }: { teks: string }) {
+  if (!adaRumus(teks)) return null;
+  return (
+    <div className="mt-1 rounded-lg bg-krem px-2 py-1 [&_[data-tex]]:cursor-pointer [&_[data-tex]]:rounded [&_[data-tex]:hover]:bg-hijau-muda" onClick={ubahRumusDiPratinjau}>
+      <span className="text-xs text-pudar">Pratinjau rumus (klik rumus untuk mengubahnya): </span>
+      <TeksBaris teks={teks} />
+    </div>
   );
 }
 
@@ -390,6 +446,30 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
   const [error, setError] = useState("");
   const ubah = (sebagian: Partial<Soal>) => setS({ ...s, ...sebagian });
   const kunciPgk = [s.kunci].flat();
+  // Kotak teks terakhir yang disentuh guru: tujuan tombol "Σ Rumus".
+  const terakhir = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
+  const catatFokus = (e: React.FocusEvent) => {
+    if (bisaRumus(e.target)) terakhir.current = e.target;
+  };
+
+  /** Sisipkan rumus di posisi kursor; bila kursor di dalam "$...$", rumus itu yang dibuka untuk diubah. */
+  async function sisipRumus(e: React.MouseEvent<HTMLElement>) {
+    const form = e.currentTarget.closest("article");
+    const aktif = document.activeElement; // tombol ini tidak mengambil fokus (onMouseDown), jadi kursor guru masih di kotaknya
+    const el = bisaRumus(aktif) && form?.contains(aktif) ? aktif : terakhir.current?.isConnected ? terakhir.current : form?.querySelector("textarea");
+    if (!el) return;
+    const v = el.value;
+    const a = el.selectionStart ?? v.length;
+    const m = [...v.matchAll(new RegExp(POLA_RUMUS, "g"))].find((x) => x.index <= a && a <= x.index + x[0].length);
+    const [i, j] = m ? [m.index, m.index + m[0].length] : [a, el.selectionEnd ?? a];
+    const tex = await editRumus(m ? m[0].slice(1, -1) : "");
+    if (tex === null) return;
+    // Spasi pemisah supaya "$" tidak menempel ke kata/angka (syarat POLA_RUMUS)
+    const kiri = !m && tex && i > 0 && !/\s/.test(v[i - 1]) ? " " : "";
+    const kanan = !m && tex && j < v.length && /[\p{L}\p{N}]/u.test(v[j]) ? " " : "";
+    const sisip = tex ? `${kiri}$${tex}$${kanan}` : "";
+    isiKotak(el, v.slice(0, i) + sisip + v.slice(j), i + sisip.length);
+  }
 
   async function simpan() {
     if (s.bentuk === "PGK" && !KUNCI_PGK.includes(kunciPgk.length)) return setError("Pilih 2 sampai 4 kunci jawaban.");
@@ -402,6 +482,15 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
   // Simpan/Batal juga di atas: form ini tinggi, di HP tombol bawah jauh dari pandangan (audit 2026-11-04).
   const tombolSimpan = (
     <div className="flex flex-wrap gap-2">
+      <button
+        type="button"
+        className="rounded-lg border h-10 px-3"
+        title="Sisipkan rumus di posisi kursor (kursor di dalam $...$ = ubah rumus itu)"
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={sisipRumus}
+      >
+        Σ Rumus
+      </button>
       <button className="rounded-lg bg-hijau h-10 px-4 font-semibold text-white disabled:opacity-50" disabled={menyimpan} onClick={simpan}>
         {menyimpan ? "Menyimpan..." : "Simpan"}
       </button>
@@ -410,7 +499,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
     </div>
   );
   return (
-    <article className="space-y-3 rounded-lg border-2 border-hijau p-4 text-sm">
+    <article className="space-y-3 rounded-lg border-2 border-hijau p-4 text-sm" onFocus={catatFokus}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="font-semibold">{judul ?? `Edit soal nomor ${no}`}</p>
         {tombolSimpan}
@@ -420,12 +509,14 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
         <label className="block">
           Wacana grup (dipakai bersama semua soal di grup ini; perubahan ikut ke soal lain di grup)
           <textarea dir="auto" rows={6} className={kotak} value={s.wacana} onChange={(e) => ubah({ wacana: e.target.value })} />
+          <Pratinjau teks={s.wacana} />
         </label>
       )}
 
       <label className="block">
         {mjLama(s) ? "Pernyataan (lajur kiri)" : s.bentuk === "BS" && !kategoriBaru(s) ? "Pernyataan (dinilai benar atau salah)" : "Pertanyaan"}
         <textarea dir="auto" rows={4} className={kotak} value={s.pertanyaan} onChange={(e) => ubah({ pertanyaan: e.target.value })} />
+        <Pratinjau teks={s.pertanyaan} />
       </label>
 
       <label className="block">
@@ -456,6 +547,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
               <input dir="auto" className={kotak} value={o} onChange={(e) => ubah({ pilihan: s.pilihan!.map((x, j) => (j === i ? e.target.value : x)) })} />
             </div>
           ))}
+          <Pratinjau teks={s.pilihan.map((o, i) => `${HURUF[i]}. ${o}`).join("\n")} />
         </fieldset>
       )}
 
@@ -503,6 +595,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
               </select>
             </div>
           ))}
+          <Pratinjau teks={(s.pernyataan ?? []).map((p, i) => `${i + 1}. ${p}`).join("\n")} />
         </fieldset>
       )}
 
@@ -522,6 +615,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
               <input dir="auto" className={kotak} aria-label={`Jawaban ${HURUF[j]}`} value={jw} onChange={(e) => ubah({ jawaban: s.jawaban!.map((x, k) => (k === j ? e.target.value : x)) })} />
             </div>
           ))}
+          <Pratinjau teks={(s.jawaban ?? []).map((jw, j) => `${HURUF[j]}. ${jw}`).join("\n")} />
         </fieldset>
       )}
 
@@ -550,6 +644,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
               <input dir="auto" className={kotak} aria-label={`Jawaban ${HURUF[j]}`} value={jw} onChange={(e) => ubah({ jawaban: s.jawaban!.map((x, k) => (k === j ? e.target.value : x)) })} />
             </div>
           ))}
+          <Pratinjau teks={(s.jawaban ?? []).map((jw, j) => `${HURUF[j]}. ${jw}`).join("\n")} />
         </fieldset>
       )}
 
@@ -558,6 +653,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
           <label className="block">
             Kunci jawaban (singkat)
             <input dir="auto" className={kotak} value={String(s.kunci)} onChange={(e) => ubah({ kunci: e.target.value })} />
+            <Pratinjau teks={String(s.kunci)} />
           </label>
           <label className="block">
             Jawaban lain yang diterima (satu per baris, boleh kosong)
@@ -571,6 +667,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
           <label className="block">
             Kunci jawaban
             <textarea dir="auto" rows={4} className={kotak} value={String(s.kunci)} onChange={(e) => ubah({ kunci: e.target.value })} />
+            <Pratinjau teks={String(s.kunci)} />
           </label>
           <fieldset className="space-y-1">
             <legend>Rubrik penilaian (skor total dihitung otomatis)</legend>
@@ -589,6 +686,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
       <label className="block">
         Pembahasan
         <textarea dir="auto" rows={3} className={kotak} value={s.pembahasan} onChange={(e) => ubah({ pembahasan: e.target.value })} />
+        <Pratinjau teks={s.pembahasan} />
       </label>
 
       <div className="grid gap-2 sm:grid-cols-3">
