@@ -55,9 +55,12 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 ## 0.30.0 — 10 November 2026
 - **Gambar di soal.** Soal kini bisa memakai gambar (diagram sel, peta, grafik, rangkaian, bangun ruang, dan lain-lain).
   Gambar tampil di bawah pertanyaan, di web maupun di file Word lembar soal (ikut ke Paket A–D).
-- **Gambar dari materi guru.** Di kartu materi ada bagian **Gambar**: gambar di file Word/PowerPoint muncul untuk diklik
-  (yang dipakai saja), atau guru menambah sendiri lewat **+ Tambah gambar** atau **tempel (Ctrl+V)**, misalnya tangkapan
-  layar dari PDF. Maksimal 10 gambar per materi; boleh diberi keterangan singkat.
+- **Gambar dari materi guru.** Gambar di file Word/PowerPoint **otomatis masuk** ke bagian **Gambar** di kartu materi
+  (maksimal 10 per materi); guru cukup melepas yang tidak perlu (logo, hiasan). Gambar juga bisa **ditempel (Ctrl+V)**,
+  misalnya tangkapan layar dari PDF, langsung di kotak materi atau di kolom mana saja pada kartu materi, atau lewat
+  **+ Tambah gambar**. Boleh diberi keterangan singkat. Di mapel eksak bagian Gambar langsung terbuka.
+- Ingin lebih banyak soal bergambar: tulis di **Catatan untuk AI** (mis. "buat 5 soal yang memakai gambar"). Panduan
+  sudah memuat cara membuat soal bergambar.
 - **AI melihat gambarnya.** AI membaca isi gambar (bukan hanya keterangannya), merencanakan nomor mana yang bergambar di
   kisi-kisi, lalu menulis soal seperti "Perhatikan gambar berikut! Bagian yang ditunjuk huruf D adalah ....".
   AI **tidak bisa membuat gambar sendiri**; gambar selalu dari guru.
