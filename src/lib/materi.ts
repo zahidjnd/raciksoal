@@ -34,6 +34,16 @@ export type IsianMateri = {
  */
 export const TANDA_PDF = "[[PDF]]";
 
+/**
+ * Tanda letak gambar file di teks materi (0.30.0, dibuat office.ts): "[[GAMBAR 3]]" = gambar ke-3 dari file itu. Untuk AI
+ * analisa ditulis "[GAMBAR 3]" (sama dengan label gambarnya); dari isi materi yang disimpan dibuang.
+ */
+export const tandaGambar = (n: number) => `[[GAMBAR ${n}]]`;
+export const POLA_TANDA_GAMBAR = /\[\[GAMBAR (\d+)\]\]/g;
+export const buangTandaGambar = (t: string) => t.replace(POLA_TANDA_GAMBAR, " ").replace(/\s+/g, " ").trim();
+/** Nomor tanda gambar digeser (file kedua dan seterusnya, serta gambar tempelan yang bernomor lebih dulu). */
+export const geserTandaGambar = (t: string, geser: number) => (geser ? t.replace(POLA_TANDA_GAMBAR, (_, n) => tandaGambar(Number(n) + geser)) : t);
+
 /** Pencari ayat di mushaf (mushaf().cari); disuntikkan supaya file ini tetap bisa dites tanpa membaca mushaf. */
 export type CariAyat = (arab: string, petunjuk: string) => { sumber: string; arab: string } | null;
 
@@ -130,7 +140,12 @@ export function susunDraf(
   const untukAi: string[] = [];
   const dalil: IsianMateri["dalil"] = [];
   let dibuangPdf = 0;
-  for (const p of x.paragraf.map(teks).filter(Boolean)) {
+  for (const asli of x.paragraf.map(teks).filter(Boolean)) {
+    // Letak gambar: hanya untuk AI analisa (di baris sendiri, sebelum teks paragrafnya), tidak masuk isi materi.
+    const tanda = [...asli.matchAll(POLA_TANDA_GAMBAR)].map((m) => `[GAMBAR ${m[1]}]`);
+    if (tanda.length) untukAi.push(tanda.join(" "));
+    const p = tanda.length ? buangTandaGambar(asli) : asli;
+    if (!p) continue;
     if (p.startsWith(TANDA_PDF)) {
       // Teks Arab PDF tidak dipercaya (aturan 5): hanya penunjuk ayat; yang dipakai teks mushaf, sisanya dibuang.
       const { ayat, dibuang } = ayatDariPdf(p.slice(TANDA_PDF.length), cariAyat, basmalah);

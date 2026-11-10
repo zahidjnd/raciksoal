@@ -8,6 +8,9 @@ export const BATAS_GAMBAR = {
   perSet: 20, // materi digabung (PTS/PAS): yang dikirim ke AI paling banyak sekian
   perGuru: 300,
   keterangan: 200,
+  dinilai: 20, // gambar yang dinilai AI saat analisa materi (pratinjau kecil); sisanya hanya ditawarkan ke guru
+  pratinjau: 384, // px, sisi terpanjang pratinjau untuk dinilai AI
+  bitaPratinjau: 25 * 1024, // 20 pratinjau ±670 KB base64 + teks materi: tetap di bawah batas kiriman 1 MB
 };
 
 /** Gambar di data bab: id = baris tabel `gambar`; keterangan opsional dari guru (dibaca AI & model tanpa penglihatan). */
@@ -43,6 +46,29 @@ export function rapikanGambar(x: unknown, maks: number = BATAS_GAMBAR.perMateri)
     if (hasil.length >= maks) break;
   }
   return hasil;
+}
+
+/** Penilaian AI atas gambar materi saat analisa: dipakai untuk soal atau tidak (logo/hiasan), plus keterangannya. */
+export type NilaiGambar = { no: number; pakai: boolean; keterangan: string };
+
+/**
+ * Jawaban AI "gambar" → satu penilaian per nomor 1..`jumlah` (nomor tanpa penilaian dianggap dipakai, supaya gambar
+ * guru tidak hilang diam-diam). `tempel` = nomor gambar yang ditempel guru: selalu dipakai.
+ */
+export function rapikanNilaiGambar(x: unknown, jumlah: number, tempel: number[] = []): NilaiGambar[] {
+  const ai = new Map<number, { pakai?: unknown; keterangan?: unknown }>();
+  for (const g of Array.isArray(x) ? x : []) {
+    const no = Number((g as { no?: unknown })?.no);
+    if (Number.isInteger(no) && no >= 1 && no <= jumlah && !ai.has(no)) ai.set(no, g as object);
+  }
+  return Array.from({ length: jumlah }, (_, i) => {
+    const g = ai.get(i + 1);
+    return {
+      no: i + 1,
+      pakai: tempel.includes(i + 1) || g?.pakai !== false,
+      keterangan: String(g?.keterangan ?? "").replace(/\s+/g, " ").trim().slice(0, BATAS_GAMBAR.keterangan),
+    };
+  });
 }
 
 /** Ukuran tampil di Word (piksel 96 dpi): muat di satu kolom lembar soal, perbandingan sisi tetap. */

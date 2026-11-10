@@ -10,15 +10,13 @@ export const urlGambar = (id: number) => `/api/gambar/${id}`;
  * Kecilkan (sisi terpanjang <= 1280 px) lalu jadikan JPEG; latar putih supaya PNG transparan tidak jadi hitam.
  * Masih kebesaran → dikecilkan lagi sampai muat batas server.
  */
-async function kecilkan(blob: Blob): Promise<string> {
+async function kecilkan(blob: Blob, sisi: number = BATAS_GAMBAR.sisi, bita: number = BATAS_GAMBAR.bita, mutu = 0.85): Promise<string> {
   let bmp: ImageBitmap;
   try {
     bmp = await createImageBitmap(blob);
   } catch {
     throw new Error("Format gambar ini tidak bisa dibaca. Pakai JPG atau PNG.");
   }
-  let sisi = BATAS_GAMBAR.sisi;
-  let mutu = 0.85;
   for (let coba = 0; coba < 5; coba++) {
     const skala = Math.min(1, sisi / Math.max(bmp.width, bmp.height));
     const c = document.createElement("canvas");
@@ -29,12 +27,15 @@ async function kecilkan(blob: Blob): Promise<string> {
     g.fillRect(0, 0, c.width, c.height);
     g.drawImage(bmp, 0, 0, c.width, c.height);
     const url = c.toDataURL("image/jpeg", mutu);
-    if ((url.length - 23) * 0.75 <= BATAS_GAMBAR.bita) return url;
+    if ((url.length - 23) * 0.75 <= bita) return url;
     sisi = Math.round(sisi * 0.8);
-    mutu = 0.75;
+    mutu = Math.min(mutu, 0.75);
   }
   throw new Error("Gambar terlalu besar. Potong atau kecilkan dulu.");
 }
+
+/** Pratinjau kecil untuk dinilai AI saat analisa materi (isi pelajaran atau logo/hiasan). Gagal → "" (dilewati server). */
+export const pratinjauAI = (blob: Blob) => kecilkan(blob, BATAS_GAMBAR.pratinjau, BATAS_GAMBAR.bitaPratinjau, 0.7).catch(() => "");
 
 /** Kecilkan lalu unggah satu gambar; mengembalikan id-nya, atau melempar Error berbahasa Indonesia. */
 export async function unggah(blob: Blob): Promise<number> {

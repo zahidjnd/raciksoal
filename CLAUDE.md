@@ -131,6 +131,9 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   memaksa). AI melihat gambar (pesan pengguna, sebelum teks; `AIn_GAMBAR=0` = tidak dikirim): kisi = semua gambar, tahap
   = gambar baris tahap itu saja. Gambar baru dari Edit disahkan `sahkanGambarBaru` (milik pemilik set) → masuk salinan
   bab set. Akses `/api/gambar/[id]` = pemilik/admin. Gambar PDF belum diambil (0.31.0: halaman PDF → AI).
+  Analisa materi: `office.ts` menandai letak gambar `[[GAMBAR n]]` (dibuang dari isi oleh `susunDraf`), browser mengirim
+  pratinjau ≤ 384 px/25 KB (maks 20, batas kiriman aksi 1 MB), AI menilai pakai/tolak + keterangan
+  (`rapikanNilaiGambar`; tempelan guru selalu pakai; `lihatGambar` false → semua dipakai).
 - **Word**: kop dari cetakan asli (`scripts/buat-template-word.py`, jalankan ulang bila kop berubah); penanda {{judul}} {{tp}}
   {{isi}} {{mapel}} {{kelas}} {{sekolah}} {{hari}} {{waktu}}. Baris Arab = paragraf RTL. Nama file lewat `headerUnduh`.
 - **Tampilan** (`DESIGN.md`): gaya claude.ai, token warna di `@theme` globals.css (krem, hijau #006316, tinta, pudar, bahaya,

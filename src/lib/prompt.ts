@@ -317,7 +317,7 @@ ${bab.materi.join("\n")}`;
  * Analisa materi baru dari halaman utama: judul, TP (disalin dari teks; usulan AI hanya bila teks tanpa TP, dan
  * wajib dicentang guru: RUJUKAN.md D), pokok materi, dan sumber/terjemah dalil yang tertulis di teks. Hasil dicek lagi oleh terapkanAnalisa (src/lib/materi.ts): yang tidak tertulis di teks guru dibuang.
  */
-export function buatAnalisaMateri(mapel: string, kelas: string, teks: string, bahasaArab: boolean) {
+export function buatAnalisaMateri(mapel: string, kelas: string, teks: string, bahasaArab: boolean, jumlahGambar = 0) {
   const sistem = `Anda membantu guru ${mapel} kelas ${kelas} madrasah aliyah (kurikulum Kemenag) menyiapkan materi untuk menyusun soal.
 Bekerja HANYA dari TEKS MATERI yang diberikan guru. Jangan menambah fakta dari luar teks.
 ${bahasaArab ? "Kosakata/kalimat Arab dari teks boleh disebut, tetapi jangan menulis ayat Al-Qur'an atau hadis." : "Jangan menulis huruf Arab, ayat, atau hadis sama sekali; sebut lafaz dengan transliterasi Latin bila perlu."}
@@ -327,14 +327,19 @@ Balas hanya JSON.`;
 ${teks.replace(/"{3,}/g, '"')}
 """
 
-Balas JSON {"judul":"...","tp":["..."],"pokok":["..."],"dalil":[{"no":1,"sumber":"...","terjemah":"..."}],"catatan":"..."}:
+Balas JSON {"judul":"...","tp":["..."],"pokok":["..."],"dalil":[{"no":1,"sumber":"...","terjemah":"..."}],${jumlahGambar ? '"gambar":[{"no":1,"pakai":true,"keterangan":"..."}],' : ""}"catatan":"..."}:
 - "judul": judul bab/materi singkat (maks 10 kata); pakai judul yang tertulis di teks bila ada.
 - "tp": bila teks memuat Tujuan Pembelajaran (TP) atau ATP, SALIN TP itu PERSIS kata per kata (jangan diperbaiki), satu TP per butir, beserta kodenya bila ada (mis. "TP 1.2: Peserta didik mampu ..."). Hanya bila teks TIDAK memuat TP: usulkan 3–6 TP gaya Kemenag, diawali "Peserta didik mampu ...", kata kerja operasional, sesuai isi teks, urut dari mudah ke sulit (guru akan membaca dan menyetujuinya).
 - "pokok": 4–10 pokok materi yang bisa diuji (maks 15 kata per poin). Rumus ditulis seperti di teks, dalam LaTeX "$...$" (garis miring terbalik ditulis ganda di JSON), bukan dengan kata-kata.
 - "dalil": untuk setiap [DALIL n]: "sumber" (mis. "HR. Bukhari dan Muslim") dan "terjemah" HANYA bila tertulis di teks di dekat dalil itu, disalin PERSIS kata per kata; kalau tidak tertulis, isi "". Jangan menerjemahkan sendiri.
-- "catatan": satu kalimat bila teks terlalu sedikit atau kurang jelas untuk dibuat soal; selain itu "".`;
+${jumlahGambar ? `${ANALISA_GAMBAR}\n` : ""}- "catatan": satu kalimat bila teks terlalu sedikit atau kurang jelas untuk dibuat soal; selain itu "".`;
   return { sistem, pengguna };
 }
+
+// 0.30.0: AI menilai gambar file materi (pratinjau kecil dikirim bersama pesan, berlabel [GAMBAR n]).
+const ANALISA_GAMBAR = `- "gambar": untuk SETIAP gambar yang dikirim (label [GAMBAR n]; di TEKS MATERI, [GAMBAR n] menandai letak gambar itu di materi): {"no":n,"pakai":...,"keterangan":"..."}.
+  "pakai": true bila gambar adalah ISI PELAJARAN yang bisa dipakai sebagai stimulus soal: diagram, skema, bagan, grafik, tabel, peta, denah, rangkaian, bangun/rumus, atau foto objek, percobaan, peristiwa, tokoh, atau tempat yang dibahas materi. false bila BUKAN isi pelajaran: logo, kop, lambang sekolah/instansi, ikon, bingkai, latar, garis hias, stiker/kartun/emoji yang tidak menjelaskan apa pun, foto sampul atau penulis, kode QR, tangkapan layar menu/tombol, atau gambar yang sama sekali tidak berhubungan dengan materi.
+  "keterangan": isi gambar dalam maks 15 kata, menyebut label, huruf, angka, atau warna penting yang tampak (mis. "Struktur sel hewan, bagian berlabel A–E"; "Grafik kecepatan terhadap waktu benda P dan Q"). Gambar bertanda "(ditempel guru)" selalu "pakai": true. Jangan menulis huruf Arab, ayat, atau hadis di keterangan; teks Arab di gambar cukup disebut "tulisan Arab".`;
 
 /**
  * Bentuk soal di instruksi sistem. `tka`: BS = PG kompleks Kategori (contoh resmi TKA). Jenis madrasah (0.22.0, gaya

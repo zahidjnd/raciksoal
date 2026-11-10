@@ -55,8 +55,10 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 ## 0.30.0 — 10 November 2026
 - **Gambar di soal.** Soal kini bisa memakai gambar (diagram sel, peta, grafik, rangkaian, bangun ruang, dan lain-lain).
   Gambar tampil di bawah pertanyaan, di web maupun di file Word lembar soal (ikut ke Paket A–D).
-- **Gambar dari materi guru.** Gambar di file Word/PowerPoint **otomatis masuk** ke bagian **Gambar** di kartu materi
-  (maksimal 10 per materi); guru cukup melepas yang tidak perlu (logo, hiasan). Gambar juga bisa **ditempel (Ctrl+V)**,
+- **Gambar dari materi guru, dipilih AI.** Saat Analisa materi, AI ikut **melihat gambar di file Word/PowerPoint
+  beserta letaknya di materi**. Gambar yang termasuk isi pelajaran (diagram, grafik, peta, foto percobaan) otomatis masuk
+  ke bagian **Gambar** di kartu materi lengkap dengan **keterangan buatan AI** (maksimal 10 per materi); logo, kop, dan
+  hiasan tidak dipakai, tetapi tetap bisa dilihat dan dipakai bila AI keliru. Gambar juga bisa **ditempel (Ctrl+V)**,
   misalnya tangkapan layar dari PDF, langsung di kotak materi atau di kolom mana saja pada kartu materi, atau lewat
   **+ Tambah gambar**. Boleh diberi keterangan singkat. Di mapel eksak bagian Gambar langsung terbuka.
 - Ingin lebih banyak soal bergambar: tulis di **Catatan untuk AI** (mis. "buat 5 soal yang memakai gambar"). Panduan
@@ -68,7 +70,8 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
   materi, atau unggah/tempel gambar baru.
 - Soal yang menulis "perhatikan gambar" tetapi tidak ada gambarnya ditandai merah.
 - Gambar tiap guru terpisah: guru lain tidak bisa membuka gambar Anda.
-- Biaya AI: naik sedikit hanya untuk materi bergambar (±250–1.500 token per gambar per tahap yang memakainya).
+- Biaya AI: naik sedikit hanya untuk materi bergambar (analisa: pratinjau kecil ±200–400 token per gambar; pembuatan soal:
+  ±250–1.500 token per gambar per tahap yang memakainya).
 - Belum: gambar di dalam PDF belum diambil otomatis (tempel tangkapan layarnya); tabel & rumus dari PDF menyusul.
 
 ## 0.29.0 — 10 November 2026

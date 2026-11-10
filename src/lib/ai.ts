@@ -113,6 +113,7 @@ export async function tanyaAI(sistem: string, pengguna: string, slot = 1, sampai
     jawaban: betulkanGarisMiring(buangPagar(String(pilihan.message?.content ?? ""))),
     terpotong: pilihan.finish_reason === "length",
     model: k.model,
+    lihatGambar: gambar.length > 0 && k.gambar, // model ini benar-benar menerima gambarnya
     token: { masuk: Number(data.usage?.prompt_tokens) || 0, keluar: Number(data.usage?.completion_tokens) || 0 },
   };
 }

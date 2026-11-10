@@ -2,10 +2,11 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { arabTakTerverifikasi, istilahArab, bersihkanTanggapan, gabungBab, identitasBab, blokMj, kataTerpakai, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Soal } from "./soal.ts";
-import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, laranganIsian, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, semesterDari, MAKS_CATATAN, MAKS_INSTRUKSI, namaLevelTka, namaTujuan, pasangKunciPgk, rencanaLevel, type Pengaturan } from "./prompt.ts";
+import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, laranganIsian, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, semesterDari, buatAnalisaMateri, MAKS_CATATAN, MAKS_INSTRUKSI, namaLevelTka, namaTujuan, pasangKunciPgk, rencanaLevel, type Pengaturan } from "./prompt.ts";
 import { bolehAkses, rapikanUsername } from "./akses.ts";
 import { headerUnduh } from "./nama-file.ts";
-import { keIsian, rapikanMateri, susunDraf, terapkanAnalisa } from "./materi.ts";
+import { geserTandaGambar, keIsian, rapikanMateri, susunDraf, terapkanAnalisa } from "./materi.ts";
+import { rapikanNilaiGambar } from "./gambar.ts";
 import { bacaFileOffice } from "./office.ts";
 
 test("aturan 3: guru hanya boleh membuka set miliknya, admin boleh semua", () => {
@@ -1126,4 +1127,51 @@ test("gambar dari file Word/PowerPoint (0.30.0): urut kemunculan, tanpa dobel, i
   pptx.file("ppt/media/image6.png", besar(6));
   const p = await bacaFileOffice(await pptx.generateAsync({ type: "uint8array" }), "sel.pptx");
   assert.deepEqual(p.gambar.map((g) => g.nama), ["image5.png", "image6.png"]); // slide 1 dulu
+});
+
+test("letak gambar (0.30.0): tanda [[GAMBAR n]] di teks file, dibuang dari isi, jadi [GAMBAR n] untuk AI", async () => {
+  const JSZip = (await import("jszip")).default;
+  const rel = (id: string, t: string) => `<Relationship Id="${id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="${t}"/>`;
+  const docx = new JSZip();
+  docx.file("word/document.xml", `<w:document><w:body><w:p><w:r><w:t>Logo</w:t></w:r><w:r><w:drawing><a:blip r:embed="rId2"/></w:drawing></w:r></w:p>
+    <w:p><w:r><w:t>Sel hewan dibatasi membran.</w:t></w:r></w:p><w:p><w:r><w:drawing><a:blip r:embed="rId3"/></w:drawing></w:r></w:p></w:body></w:document>`);
+  docx.file("word/_rels/document.xml.rels", `<Relationships>${rel("rId2", "media/logo.png")}${rel("rId3", "media/sel.png")}</Relationships>`);
+  docx.file("word/media/logo.png", new Uint8Array(4096).fill(1));
+  docx.file("word/media/sel.png", new Uint8Array(4096).fill(2));
+  const w = await bacaFileOffice(await docx.generateAsync({ type: "uint8array" }), "m.docx");
+  assert.deepEqual(w.semua, ["Logo [[GAMBAR 1]]", "Sel hewan dibatasi membran.", "[[GAMBAR 2]]"]);
+  assert.deepEqual(w.teks, ["Logo", "Sel hewan dibatasi membran."]); // tanpa tanda
+  assert.deepEqual(w.gambar.map((g) => g.nama), ["logo.png", "sel.png"]);
+
+  const pptx = new JSZip();
+  pptx.file("ppt/slides/slide1.xml", `<p:sld><p:sp><a:p><a:t>Judul slide</a:t></a:p></p:sp><p:pic><a:blip r:embed="rId4"/></p:pic><p:sp><a:p><a:t>Teks bawah</a:t></a:p></p:sp></p:sld>`);
+  pptx.file("ppt/slides/_rels/slide1.xml.rels", `<Relationships>${rel("rId4", "../media/g.png")}</Relationships>`);
+  pptx.file("ppt/media/g.png", new Uint8Array(4096).fill(3));
+  const p = await bacaFileOffice(await pptx.generateAsync({ type: "uint8array" }), "m.pptx");
+  assert.deepEqual(p.semua, ["Judul slide", "[[GAMBAR 1]]", "Teks bawah"]); // paragraf sendiri, tidak menempel ke teks
+
+  // susunDraf: tanda tidak masuk isi materi, tetapi tetap terlihat AI di tempatnya (nomor sudah digeser browser).
+  const { isian, untukAi } = susunDraf({ mapel: "Biologi", kelas: "XI", paragraf: ["Logo [[GAMBAR 3]]", "Sel hewan dibatasi membran.", "[[GAMBAR 4]]"] }, () => null, () => false);
+  assert.equal(isian.isi, "Logo\nSel hewan dibatasi membran.");
+  assert.equal(untukAi, "[GAMBAR 3]\nLogo\nSel hewan dibatasi membran.\n[GAMBAR 4]");
+  assert.equal(geserTandaGambar("a [[GAMBAR 1]] b [[GAMBAR 2]]", 2), "a [[GAMBAR 3]] b [[GAMBAR 4]]");
+});
+
+test("penilaian gambar AI (0.30.0): logo ditolak, tempelan guru selalu dipakai, nomor tanpa penilaian dipakai", () => {
+  const n = rapikanNilaiGambar(
+    [{ no: 2, pakai: false, keterangan: "Logo madrasah" }, { no: 3, pakai: true, keterangan: "  Struktur   sel hewan " }, { no: 1, pakai: false }, { no: 9, pakai: false }, { no: 3, pakai: false }],
+    4,
+    [1],
+  );
+  assert.deepEqual(n, [
+    { no: 1, pakai: true, keterangan: "" }, // tempelan guru: tetap dipakai walau AI menolak
+    { no: 2, pakai: false, keterangan: "Logo madrasah" },
+    { no: 3, pakai: true, keterangan: "Struktur sel hewan" }, // penilaian pertama yang dipakai
+    { no: 4, pakai: true, keterangan: "" }, // tidak dinilai AI → dipakai
+  ]);
+  assert.equal(rapikanNilaiGambar("rusak", 2).every((g) => g.pakai), true);
+  const { pengguna } = buatAnalisaMateri("Biologi", "XI", "Sel.", false, 2);
+  assert.match(pengguna, /"gambar":\[\{"no":1,"pakai":true/);
+  assert.match(pengguna, /logo, kop/);
+  assert.doesNotMatch(buatAnalisaMateri("Biologi", "XI", "Sel.", false).pengguna, /"gambar"/);
 });

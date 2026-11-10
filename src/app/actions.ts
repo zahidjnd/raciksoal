@@ -3,7 +3,7 @@
 import { and, eq, gte, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { gambar, hasilSoal, pemakaianAi } from "@/db/schema";
-import { BATAS_GAMBAR, ukuranJpeg } from "@/lib/gambar";
+import { BATAS_GAMBAR, rapikanNilaiGambar, ukuranJpeg } from "@/lib/gambar";
 import { daftarModel, tanyaAI, type GambarAI } from "@/lib/ai";
 import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, laranganIsian, ringkasSudah, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, buatSistem, buatAnalisaMateri, bersihkanIdentitas, pasangKunciPgk, rencanaGrup, rencanaLevelSet, sesuaikanLevel, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { BATAS_MATERI, susunDraf, terapkanAnalisa } from "@/lib/materi";
@@ -614,7 +614,7 @@ async function soalBaruDariAI(id: number, no: number, mode: "ganti" | "ubah" | "
  * lalu AI mengusulkan judul, TP, pokok materi, serta sumber/terjemah dalil yang tertulis di teks. Belum disimpan:
  * guru memeriksa kartu materinya dulu; materi tersimpan otomatis saat "Buat soal".
  */
-export async function analisaMateri(input: { mapel: string; kelas: string; paragraf: string[] }) {
+export async function analisaMateri(input: { mapel: string; kelas: string; paragraf: string[]; gambar?: string[]; tempel?: number }) {
   const saya = await penggunaSaatIni();
   if (!saya) return { ok: false as const, pesan: SESI_HABIS };
   const mapel = String(input?.mapel ?? "").trim().slice(0, 60);
@@ -639,15 +639,27 @@ export async function analisaMateri(input: { mapel: string; kelas: string; parag
     await db.insert(pemakaianAi).values({ guruId: saya.id, jenis: "analisa" });
   }
 
-  const { sistem, pengguna } = buatAnalisaMateri(mapel, kelas, untukAi, isian.teksArab === "bahasa");
+  // 0.30.0: pratinjau kecil gambar (JPEG, dari browser) dinilai AI: isi pelajaran atau logo/hiasan, plus keterangannya.
+  // Nomor = urutan daftar (gambar tempelan guru dulu, `tempel` buah, lalu gambar file sesuai tanda [[GAMBAR n]]).
+  // Pratinjau yang rusak/kebesaran dilewati tanpa menggeser nomor yang lain.
+  const pratinjau = (Array.isArray(input?.gambar) ? input.gambar : []).slice(0, BATAS_GAMBAR.dinilai).map((g) => {
+    const b = Buffer.from(String(g ?? "").replace(/^data:image\/jpeg;base64,/, ""), "base64");
+    return b.length <= BATAS_GAMBAR.bitaPratinjau && ukuranJpeg(b) ? b : null;
+  });
+  const tempel = Array.from({ length: Math.max(0, Math.min(Number(input?.tempel) || 0, pratinjau.length)) }, (_, i) => i + 1);
+  const gambarAI = pratinjau.flatMap((b, i) => (b ? [{ label: `[GAMBAR ${i + 1}]${tempel.includes(i + 1) ? " (ditempel guru)" : ""}`, url: `data:image/jpeg;base64,${b.toString("base64")}` }] : []));
+
+  const { sistem, pengguna } = buatAnalisaMateri(mapel, kelas, untukAi, isian.teksArab === "bahasa", gambarAI.length);
   try {
-    const r = await tanyaDenganCadangan(sistem, pengguna, daftarModel()[0]?.slot ?? 1, true, (d) => d, Date.now() + TENGGAT_SATU_SOAL);
+    const r = await tanyaDenganCadangan(sistem, pengguna, daftarModel()[0]?.slot ?? 1, true, (d) => d, Date.now() + TENGGAT_SATU_SOAL, gambarAI);
     const a = terapkanAnalisa(r.hasil, isian, untukAi);
-    return { ok: true as const, isian: a.isian, catatan: [pesanPdf, a.catatan].filter(Boolean).join(" ") };
+    // null = gambar tidak dinilai (tidak ada gambar, atau model yang menjawab tidak bisa melihat gambar): browser memakai semua.
+    const gambar = r.lihatGambar ? rapikanNilaiGambar((r.hasil as { gambar?: unknown })?.gambar, pratinjau.length, tempel) : null;
+    return { ok: true as const, isian: a.isian, gambar, catatan: [pesanPdf, a.catatan].filter(Boolean).join(" ") };
   } catch (e) {
     console.error("[analisa materi gagal]", pesanError(e));
     // AI gagal: materi tetap bisa dipakai, guru mengisi judul & TP sendiri di kartu materi.
-    return { ok: true as const, isian, catatan: `${pesanPdf} AI gagal menganalisa materi. Isi judul dan TP sendiri, atau coba analisa lagi.`.trim() };
+    return { ok: true as const, isian, gambar: null, catatan: `${pesanPdf} AI gagal menganalisa materi. Isi judul dan TP sendiri, atau coba analisa lagi.`.trim() };
   }
 }
 

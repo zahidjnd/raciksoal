@@ -55,9 +55,11 @@ pembahasan, dan rubrik**, lalu mengekspornya ke **Word** dengan kop madrasah.
   verifikasi; teks Arab yang lebih panjang tetapi bukan ayat/hadis (mis. mahfuzhat) cukup diklik **"Bukan ayat/hadis"**.
 - **TP**: yang tertulis di materi dipakai apa adanya (hijau); TP usulan AI (materi tanpa TP) wajib dibaca & dicentang guru.
 - **Mapel**: 20 mapel MA Al-Fatah (`src/lib/mapel.ts`), mapel lain bisa diketik. Bahasa Arab & Nahwu: teks Arab bebas.
-- **Gambar materi** (0.30.0): gambar di file Word/PowerPoint ditawarkan untuk dipilih, atau guru mengunggah / menempel
-  (Ctrl+V) gambar sendiri, maks. 10 per materi, boleh diberi keterangan. Gambar dikecilkan jadi JPEG di browser, AI
-  **melihat** gambarnya (DeepSeek bisa membaca gambar) dan boleh memakainya sebagai stimulus soal. AI tidak membuat gambar.
+- **Gambar materi** (0.30.0): saat Analisa materi, AI melihat pratinjau gambar file Word/PowerPoint beserta letaknya di
+  teks (tanda `[[GAMBAR n]]`), memilih yang termasuk isi pelajaran (logo/kop/hiasan ditolak, tetap bisa dipakai guru) dan
+  menulis keterangannya. Guru juga bisa mengunggah / menempel (Ctrl+V) gambar sendiri (selalu dipakai), maks. 10 per
+  materi. Gambar dikecilkan jadi JPEG di browser; AI **melihat** gambarnya saat membuat soal dan boleh memakainya sebagai
+  stimulus. AI tidak membuat gambar.
 - Satu set boleh menggabung **hingga 5 materi** (untuk AFTS/ASAS), asal satu mapel dan satu kelas.
 - Halaman **Kelola materi** (`/materi`): daftar, ubah, hapus materi (maks. 300 per guru).
 

@@ -1,7 +1,7 @@
 // Ambil teks dari file Word (.docx), PowerPoint (.pptx), atau PDF untuk "materi sendiri" (langkah 8b).
 // Dipakai di BROWSER guru (file tidak diunggah ke hosting). Tanpa import "@/..." supaya bisa dites: npm test
 import JSZip from "jszip";
-import { TANDA_PDF } from "./materi.ts";
+import { buangTandaGambar, TANDA_PDF, tandaGambar } from "./materi.ts";
 import { paragrafArab } from "./soal.ts";
 
 export { paragrafArab };
@@ -225,10 +225,12 @@ const BATAS_CALON = 30;
 
 /**
  * Gambar yang dipakai di bagian-bagian `xmlNama` (document.xml / slideN.xml), urut sesuai kemunculannya, tanpa dobel.
- * Gambar sangat kecil (< 3 KB, biasanya ikon/hiasan) dilewati.
+ * Gambar sangat kecil (< 3 KB, biasanya ikon/hiasan) dilewati. `nomor` = per bagian: id relasi (rIdN) → nomor gambar
+ * (1, 2, ...; sama dengan urutan `gambar`), untuk menandai letak gambar di teks (tandaiGambar).
  */
-async function gambarZip(zip: JSZip, xmlNama: string[]): Promise<GambarFile[]> {
+async function gambarZip(zip: JSZip, xmlNama: string[]) {
   const urut: string[] = [];
+  const relasi = new Map<string, Map<string, string>>(); // bagian → rIdN → jalur file gambar
   for (const nama of xmlNama) {
     const dir = nama.slice(0, nama.lastIndexOf("/") + 1);
     const [xml, rels] = await Promise.all([zip.file(nama)?.async("string"), zip.file(`${dir}_rels/${nama.slice(dir.length)}.rels`)?.async("string")]);
@@ -247,18 +249,35 @@ async function gambarZip(zip: JSZip, xmlNama: string[]): Promise<GambarFile[]> {
       }
       target.set(id, jalur.join("/"));
     }
+    relasi.set(nama, target);
     for (const m of xml.matchAll(/\br:(?:embed|id)="([^"]+)"/g)) {
       const j = target.get(m[1]);
       if (j && JENIS_GAMBAR.test(j) && !urut.includes(j)) urut.push(j);
     }
   }
-  const hasil: GambarFile[] = [];
+  const gambar: GambarFile[] = [];
+  const nomorJalur = new Map<string, number>();
   for (const j of urut) {
     const data = await zip.file(j)?.async("uint8array");
-    if (data && data.length >= 3 * 1024) hasil.push({ nama: j.split("/").pop()!, data });
-    if (hasil.length >= BATAS_CALON) break;
+    if (data && data.length >= 3 * 1024) nomorJalur.set(j, gambar.push({ nama: j.split("/").pop()!, data }));
+    if (gambar.length >= BATAS_CALON) break;
   }
-  return hasil;
+  const nomor = new Map([...relasi].map(([b, t]) => [b, new Map([...t].flatMap(([id, j]) => (nomorJalur.has(j) ? [[id, nomorJalur.get(j)!] as const] : [])))]));
+  return { gambar, nomor };
+}
+
+/**
+ * Sisipkan tanda [[GAMBAR n]] tepat di tempat gambar n muncul (0.30.0), supaya AI analisa tahu gambar itu dibahas di
+ * bagian materi yang mana. Word: teks di dalam paragraf gambarnya; PowerPoint: paragraf sendiri (gambar slide berada di
+ * luar kotak teks). Tanda dibuang lagi dari isi materi yang disimpan (susunDraf).
+ */
+function tandaiGambar(xml: string, nomor: Map<string, number> | undefined, ns: "w" | "a") {
+  if (!nomor?.size) return xml;
+  return xml.replace(/<(?:a:blip|v:imagedata)\b[^>]*?\br:(?:embed|id)="([^"]+)"[^>]*>/g, (tag, id: string) => {
+    const n = nomor.get(id);
+    if (!n) return tag;
+    return ns === "w" ? `${tag}<w:t> ${tandaGambar(n)} </w:t>` : `${tag}<a:p><a:t>${tandaGambar(n)}</a:t></a:p>`;
+  });
 }
 
 /**
@@ -285,25 +304,27 @@ export async function bacaFileOffice(data: ArrayBuffer | Uint8Array, nama: strin
   }
 
   let semua: string[] = [];
-  let bagian: string[];
+  let gambar: GambarFile[];
   if (akhiran === "docx") {
-    bagian = ["word/document.xml"];
     const xml = await zip.file("word/document.xml")?.async("string");
     if (!xml) throw new Error("Isi dokumen Word tidak ditemukan.");
-    semua = paragraf(tabelJadiBaris(rumusJadiTeks(xml, "w"), "w"), "w:p", "w:t");
+    const g = await gambarZip(zip, ["word/document.xml"]);
+    gambar = g.gambar;
+    semua = paragraf(tabelJadiBaris(rumusJadiTeks(tandaiGambar(xml, g.nomor.get("word/document.xml"), "w"), "w"), "w"), "w:p", "w:t");
   } else {
     // Slide diurutkan menurut nomornya (slide2 sebelum slide10).
     const slide = zip.file(/^ppt\/slides\/slide\d+\.xml$/).sort((a, b) => Number(a.name.match(/\d+/)![0]) - Number(b.name.match(/\d+/)![0]));
     if (!slide.length) throw new Error("Slide PowerPoint tidak ditemukan.");
-    bagian = slide.map((x) => x.name);
-    for (const s of slide) semua.push(...paragraf(tabelJadiBaris(rumusJadiTeks(await s.async("string"), "a"), "a"), "a:p", "a:t"));
+    const g = await gambarZip(zip, slide.map((x) => x.name));
+    gambar = g.gambar;
+    for (const s of slide) semua.push(...paragraf(tabelJadiBaris(rumusJadiTeks(tandaiGambar(await s.async("string"), g.nomor.get(s.name), "a"), "a"), "a"), "a:p", "a:t"));
   }
 
   const teks = semua.map((t) => t.normalize("NFC"));
   return {
-    teks: teks.filter((t) => !paragrafArab(t)),
+    teks: teks.map(buangTandaGambar).filter((t) => t && !paragrafArab(t)),
     arab: [...new Set(teks.filter(paragrafArab))],
-    semua: teks, // urut seperti di file (untuk analisa materi: terjemah biasanya tepat setelah ayatnya)
-    gambar: await gambarZip(zip, bagian),
+    semua: teks, // urut seperti di file (untuk analisa materi: terjemah biasanya tepat setelah ayatnya), dengan tanda [[GAMBAR n]]
+    gambar,
   };
 }
