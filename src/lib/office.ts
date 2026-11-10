@@ -12,6 +12,22 @@ const dekode = (t: string) =>
     e[0] === "#" ? String.fromCodePoint(parseInt(e.slice(1).replace(/^x/i, ""), e[1].toLowerCase() === "x" ? 16 : 10)) : (ENTITAS[e] ?? asli),
   );
 
+/**
+ * Tabel Word/PowerPoint (`ns` = "w" / "a") → satu paragraf per baris "| sel | sel |", plus "|---|" setelah baris judul,
+ * supaya susunan kolom tidak hilang (0.28.0; dulu tiap sel jadi paragraf lepas). Tanda | di dalam sel diganti /.
+ * Tabel bersarang tidak didukung (jarang di materi).
+ */
+function tabelJadiBaris(xml: string, ns: string): string {
+  const semua = (isi: string, tag: string) => isi.match(new RegExp(`<${ns}:${tag}[\\s>][\\s\\S]*?</${ns}:${tag}>`, "g")) ?? [];
+  const tulis = (b: string) => `<${ns}:p><${ns}:t>${b}</${ns}:t></${ns}:p>`;
+  return xml.replace(new RegExp(`<${ns}:tbl>[\\s\\S]*?</${ns}:tbl>`, "g"), (tbl) =>
+    semua(tbl, "tr")
+      .map((tr) => `| ${semua(tr, "tc").map((tc) => paragraf(tc, `${ns}:p`, `${ns}:t`).join(" ").replace(/\|/g, "/")).join(" | ")} |`)
+      .map((b, i) => tulis(b) + (i === 0 ? tulis(`|${"---|".repeat(b.split(" | ").length)}`) : ""))
+      .join(""),
+  );
+}
+
 /** Paragraf-paragraf dari XML Office: `p` = tag paragraf (w:p / a:p), `t` = tag teks (w:t / a:t). */
 function paragraf(xml: string, p: string, t: string): string[] {
   return xml
@@ -132,12 +148,12 @@ export async function bacaFileOffice(data: ArrayBuffer | Uint8Array, nama: strin
   if (akhiran === "docx") {
     const xml = await zip.file("word/document.xml")?.async("string");
     if (!xml) throw new Error("Isi dokumen Word tidak ditemukan.");
-    semua = paragraf(xml, "w:p", "w:t");
+    semua = paragraf(tabelJadiBaris(xml, "w"), "w:p", "w:t");
   } else {
     // Slide diurutkan menurut nomornya (slide2 sebelum slide10).
     const slide = zip.file(/^ppt\/slides\/slide\d+\.xml$/).sort((a, b) => Number(a.name.match(/\d+/)![0]) - Number(b.name.match(/\d+/)![0]));
     if (!slide.length) throw new Error("Slide PowerPoint tidak ditemukan.");
-    for (const s of slide) semua.push(...paragraf(await s.async("string"), "a:p", "a:t"));
+    for (const s of slide) semua.push(...paragraf(tabelJadiBaris(await s.async("string"), "a"), "a:p", "a:t"));
   }
 
   const teks = semua.map((t) => t.normalize("NFC"));

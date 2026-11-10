@@ -114,14 +114,68 @@ const parBaris = (b: { teks: string; arab: boolean }, kiri: number, opsi: Partia
  * Butir bernomor dengan teks berbaris (dialog/hiwar): baris pertama sebaris dengan nomor, tiap baris berikutnya
  * satu paragraf (Arab → kanan-ke-kiri). Teks satu baris tetap satu paragraf seperti sebelumnya.
  */
-function butirBaris(label: string, isi: string, kiri = 400, opsi: Partial<ConstructorParameters<typeof Paragraph>[0] & object> = {}): Paragraph[] {
+function butirBaris(label: string, isi: string, kiri = 400, opsi: Partial<ConstructorParameters<typeof Paragraph>[0] & object> = {}): (Paragraph | Table)[] {
   const baris = pecahBaris(isi);
-  if (baris.length <= 1) return [bernomor(label, teks(isi), kiri, opsi)];
+  if (baris.length <= 1 && !baris[0]?.tabel) return [bernomor(label, teks(isi), kiri, opsi)];
   const dalam = { ...opsi, spacing: { after: 0 }, keepNext: true }; // semua paragraf kecuali yang terakhir
+  const akhir = baris.length - 1;
   return [
-    bernomor(label, teks(baris[0].teks), kiri, dalam),
-    ...baris.slice(1).map((b, i) => parBaris(b, kiri, i === baris.length - 2 ? opsi : dalam)),
+    ...(baris[0].tabel ? [bernomor(label, [], kiri, dalam)] : []), // soal yang diawali tabel: nomor di baris sendiri
+    ...baris.map((b, i) =>
+      b.tabel ? tabelData(b.tabel, kiri) : i === 0 ? bernomor(label, teks(b.teks), kiri, dalam) : parBaris(b, kiri, i === akhir ? opsi : dalam),
+    ),
   ];
+}
+
+/** Lebar satu kolom lembar soal (2 kolom) dihitung dari tepi kiri kolom, sama dengan tabel Kategori (400 + 4.600). */
+const LEBAR_KOLOM = 5000;
+
+/**
+ * Tabel data dari teks soal "| a | b |" (0.28.0, lihat pecahBaris): judul kolom tebal berlatar abu, lebar kolom dibagi
+ * rata, huruf 10 pt supaya 6 kolom muat di satu kolom lembar soal. `kiri` = indentasi (sejajar teks soal).
+ */
+function tabelData(isi: string[][], kiri: number, lebar = LEBAR_KOLOM) {
+  const w = Math.floor((lebar - kiri) / isi[0].length);
+  return new Table({
+    width: { size: w * isi[0].length, type: WidthType.DXA },
+    indent: { size: kiri, type: WidthType.DXA },
+    columnWidths: isi[0].map(() => w),
+    rows: isi.map(
+      (b, i) =>
+        new TableRow({
+          tableHeader: i === 0,
+          cantSplit: true,
+          children: b.map(
+            (t) =>
+              new TableCell({
+                children: [par(teks(t, { size: 20, bold: i === 0 }), { spacing: { after: 0 } })],
+                width: { size: w, type: WidthType.DXA },
+                shading: i === 0 ? { fill: "E7E6E6" } : undefined,
+                margins: { left: 60, right: 60 },
+              }),
+          ),
+        }),
+    ),
+  });
+}
+
+/** Teks yang boleh berisi tabel (pembahasan di file kunci): `awal` (mis. "Pembahasan: ") di depan paragraf pertama. */
+function teksCampur(awal: ParagraphChild[], isi: string, kiri: number, lebar: number): (Paragraph | Table)[] {
+  const hasil: (Paragraph | Table)[] = [];
+  let kumpul: string[] = [];
+  const tutup = () => {
+    hasil.push(par([...(hasil.length ? [] : awal), ...teks(kumpul.join("\n"))], { indent: { left: kiri }, spacing: { after: 0 } }));
+    kumpul = [];
+  };
+  for (const b of pecahBaris(isi)) {
+    if (!b.tabel) kumpul.push(b.teks);
+    else {
+      if (kumpul.length || !hasil.length) tutup();
+      hasil.push(tabelData(b.tabel, kiri, lebar));
+    }
+  }
+  if (kumpul.length || !hasil.length) tutup();
+  return hasil;
 }
 
 /** Judul ujian & tahun pelajaran: dari identitas ujian (diisi guru), selain itu dari tanggal pembuatan set. */
@@ -177,7 +231,9 @@ export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tangga
         isi.push(par([r(`${L.bacalah} ${no}${akhir > no ? `–${akhir}` : ""}!`, { bold: true, italics: true })], { keepNext: true, spacing: { before: 60, after: 40 } }));
         // Wacana boleh terpotong di tengah; hanya TIGA baris terakhirnya (+ jarak) ditahan bersama soal pertama grup.
         const barisWacana = pecahBaris(s.wacana);
-        barisWacana.forEach((baris, n) => isi.push(parBaris(baris, 200, { keepNext: n >= barisWacana.length - TAHAN_WACANA, spacing: { after: 40 } })));
+        barisWacana.forEach((baris, n) =>
+          isi.push(baris.tabel ? tabelData(baris.tabel, 200) : parBaris(baris, 200, { keepNext: n >= barisWacana.length - TAHAN_WACANA, spacing: { after: 40 } })),
+        );
         isi.push(par([], { keepNext: true, spacing: { after: 40 } }));
       }
       isi.push(...butirBaris(`${no}.`, s.pertanyaan, 400, { keepNext: true }));
@@ -393,7 +449,7 @@ export function buatWordKunci(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Da
             }),
           );
       }
-      if (s.pembahasan) isi.push(par([new TextRun({ text: "Pembahasan: ", bold: true }), ...teks(s.pembahasan)], { indent: { left: 400 }, spacing: { after: 0 } }));
+      if (s.pembahasan) isi.push(...teksCampur([new TextRun({ text: "Pembahasan: ", bold: true })], s.pembahasan, 400, LEBAR));
       isi.push(kecil(`${s.level} · ${s.tp} · skor ${s.skor}`));
       isi.push(par([], { spacing: { after: 80 } }));
     }

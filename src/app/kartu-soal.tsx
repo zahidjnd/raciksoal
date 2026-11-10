@@ -47,18 +47,38 @@ export function TeksPeringatan({ w }: { w: string }) {
  */
 export function TeksBaris({ teks, jarak }: { teks: string; jarak?: boolean }) {
   const baris = pecahBaris(teks);
-  if (baris.length <= 1) return <Teks teks={baris[0]?.teks ?? ""} />;
+  if (baris.length <= 1 && !baris[0]?.tabel) return <Teks teks={baris[0]?.teks ?? ""} />;
   return (
     <>
-      <span><Teks teks={baris[0].teks} /></span>
-      {baris.slice(1).map((b, i) =>
-        b.arab ? (
+      {baris.map((b, i) =>
+        b.tabel ? (
+          <TabelData key={i} isi={b.tabel} />
+        ) : i === 0 ? (
+          <span key={i}><Teks teks={b.teks} /></span>
+        ) : b.arab ? (
           <span key={i} dir="rtl" className={`block text-right ${jarak ? "mt-2" : ""}`}><Teks teks={b.teks} /></span>
         ) : (
           <span key={i} className={`block ${jarak ? "mt-2" : ""}`}><Teks teks={b.teks} /></span>
         ),
       )}
     </>
+  );
+}
+
+/** Tabel data di soal/wacana/pembahasan (0.28.0). Baris pertama = judul kolom. HP: tabel lebar digeser ke samping. */
+function TabelData({ isi }: { isi: string[][] }) {
+  const [judul, ...badan] = isi;
+  return (
+    <div className="my-2 overflow-x-auto">
+      <table className="border-collapse text-sm">
+        <thead>
+          <tr>{judul.map((t, i) => <th key={i} className="border bg-krem px-2 py-1 text-left font-semibold"><Teks teks={t} /></th>)}</tr>
+        </thead>
+        <tbody>
+          {badan.map((b, i) => <tr key={i}>{b.map((t, j) => <td key={j} className="border px-2 py-1"><Teks teks={t} /></td>)}</tr>)}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -240,16 +260,16 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
     {nomorGrup && s.wacana && (
       <section className="space-y-1 rounded-xl border border-hijau/40 bg-hijau-muda/40 p-4 text-sm" aria-label={`Wacana soal nomor ${nomorGrup}`}>
         <p className="font-semibold">Bacalah teks berikut untuk menjawab soal nomor {nomorGrup}!</p>
-        <p><TeksBaris teks={s.wacana} jarak /></p>
+        <div><TeksBaris teks={s.wacana} jarak /></div>
       </section>
     )}
     <article id={`soal-${no}`} className={`scroll-mt-4 space-y-2 rounded-xl border p-4 ${s.peringatan?.length ? "border-bahaya-garis bg-bahaya-muda" : "bg-kartu"} ${mengganti ? "opacity-50" : ""}`}>
       {s.peringatan?.map((w, i) => (
         <p key={i} className="text-sm font-semibold text-bahaya"><TeksPeringatan w={w} /></p>
       ))}
-      <p>
+      <div>
         <span className="font-semibold">{no}.</span> <TeksBaris teks={s.pertanyaan} />
-      </p>
+      </div>
       {dalil && (
         <figure className="rounded bg-krem p-3">
           <p dir="rtl" lang="ar" className="font-arab text-2xl">{dalil.arab}</p>
@@ -272,7 +292,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
             {s.rubrik.map((r, i) => <li key={i}><Teks teks={r.kriteria} /> ({r.skor})</li>)}
           </ul>
         )}
-        <p><span className="font-semibold">Pembahasan:</span> <TeksBaris teks={s.pembahasan} /></p>
+        <div><span className="font-semibold">Pembahasan:</span> <TeksBaris teks={s.pembahasan} /></div>
         <p className="text-pudar">{s.level} · {s.tp} · skor {s.skor}</p>
       </div>
       )}

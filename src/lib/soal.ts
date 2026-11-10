@@ -371,16 +371,38 @@ export function paragrafArab(t: string) {
   return arab > 0 && arab >= latin * 4;
 }
 
+/** Satu baris teks soal, atau satu tabel utuh (`tabel` terisi, `teks` kosong). */
+export type Baris = { teks: string; arab: boolean; tabel?: string[][] };
+
+const BARIS_TABEL = /^\|.*\|$/;
+const PEMISAH_TABEL = /^\|(\s*:?-+:?\s*\|)+$/;
+
 /**
  * Pecah teks soal menjadi baris (baris kosong dibuang). `arab` = baris hampir seluruhnya huruf Arab (mis. satu ucapan
  * hiwar): ditampilkan sebagai satu blok kanan-ke-kiri, supaya titik dua, angka, dan tanda baca ikut urutan yang benar.
+ * Tabel (0.28.0): baris-baris berurutan berbentuk "| a | b |" (minimal judul + 1 baris isi; baris "|---|---|" dibuang)
+ * menjadi SATU baris ber-`tabel` (baris pertama = judul kolom, semua baris dibuat sama panjang). Kurang dari itu = teks biasa.
  */
-export function pecahBaris(t: string): { teks: string; arab: boolean }[] {
-  return String(t ?? "")
+export function pecahBaris(t: string): Baris[] {
+  const baris = String(t ?? "")
     .split(/\r?\n/)
     .map((b) => b.trim())
-    .filter(Boolean)
-    .map((b) => ({ teks: b, arab: paragrafArab(b) }));
+    .filter(Boolean);
+  const hasil: Baris[] = [];
+  for (let i = 0; i < baris.length; ) {
+    let j = i;
+    while (j < baris.length && BARIS_TABEL.test(baris[j])) j++;
+    const isi = baris.slice(i, j).filter((b) => !PEMISAH_TABEL.test(b)).map((b) => b.slice(1, -1).split("|").map((s) => s.trim()));
+    if (isi.length >= 2) {
+      const kolom = Math.max(...isi.map((x) => x.length));
+      hasil.push({ teks: "", arab: false, tabel: isi.map((x) => [...x, ...Array(kolom - x.length).fill("")]) });
+      i = j;
+    } else {
+      for (const b of baris.slice(i, Math.max(j, i + 1))) hasil.push({ teks: b, arab: paragrafArab(b) });
+      i = Math.max(j, i + 1);
+    }
+  }
+  return hasil;
 }
 
 /** Potongan teks Arab yang TIDAK ada persis (huruf + harakat) di data terverifikasi. Harus kosong. */

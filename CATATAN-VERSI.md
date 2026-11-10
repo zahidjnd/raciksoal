@@ -52,6 +52,15 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.28.0 — 10 November 2026
+- **Tabel di soal.** Data yang lebih jelas dibaca berbaris-berkolom (data percobaan, perbandingan, angka statistik)
+  kini bisa muncul sebagai tabel sungguhan di soal, wacana, dan pembahasan: tampil rapi di web (di HP bisa digeser) dan
+  menjadi tabel Word asli di lembar soal maupun file kunci. Tabel tidak dipakai di pilihan jawaban.
+- **Tabel di materi ikut terbaca.** Tabel di file Word dan PowerPoint materi tidak lagi tercerai-berai; di kotak isi
+  materi tampil sebagai baris `| sel | sel |`, jadi AI bisa membuat soal dari datanya. Tabel di PDF belum terbaca rapi:
+  buka PDF-nya di Microsoft Word, simpan sebagai .docx, lalu lampirkan (tips ada di Panduan).
+- Guru bisa mengubah tabel lewat tombol Edit soal (baris `| ... |` di kotak teks).
+
 ## 0.27.1 — 10 November 2026
 - **Halaman masuk baru.** Satu kartu di tengah layar: kiri berisi tanda bintang delapan dan kalimat yang "diketik"
   bergiliran tentang cara Racik Soal bekerja di 6 mapel (Al-Qur'an Hadis, Fisika, Fiqih, Biologi, Bahasa Inggris,

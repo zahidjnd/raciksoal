@@ -173,6 +173,12 @@ mengatur skor). Persen level dipilih supaya jumlahnya persis surat (34/43/23 dan
 5. ✅ Gambar belum bisa dibuat aplikasi → AI **dilarang** menulis "perhatikan gambar berikut" kecuali gambarnya dideskripsikan dengan kata.
 6. ✅ (0.18.0) **Nama tokoh beragam** (tidak selalu Ahmad/Fatimah), seimbang putra dan putri. Tokoh yang berbuat salah
    atau keliru tidak memakai nama nabi, sahabat, atau tokoh mulia dalam Islam.
+7. ✅ 🔍 (0.28.0) **Tabel sungguhan.** Data yang lebih jelas dibaca berbaris-berkolom (data percobaan, perbandingan,
+   angka statistik, daftar ciri) ditulis sebagai **tabel** di pertanyaan, wacana, atau pembahasan; aplikasi
+   menampilkannya sebagai tabel di web dan di Word. Maksimal 6 kolom × 10 baris, baris pertama = judul kolom, isi sel
+   singkat. Tabel tidak dipakai di pilihan jawaban, pernyataan, dan menjodohkan. Data di tabel berasal dari materi atau
+   dibuat konsisten dengan materi; kunci tidak boleh terbaca langsung dari tabel tanpa diolah (kecuali soal C1–C2).
+   Tabel di file Word/PowerPoint materi guru ikut terbaca sebagai tabel (PDF belum).
 
 ### 4a. Nilai Kurikulum Berbasis Cinta (Kemenag 2025)
 Panduan KBC (Kepdirjen Pendis 6077/2025) memuat **Panca Cinta**: Cinta Allah dan Rasul-Nya, Cinta Ilmu,

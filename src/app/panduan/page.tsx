@@ -56,6 +56,7 @@ const LANGKAH: { judul: string; isi: React.ReactNode[] }[] = [
       <>Materi bisa ditambah dengan dua cara: langsung di <b>Set baru</b> (tersimpan otomatis saat menekan <b>Buat soal</b>), atau lewat menu <b>Materi saya</b> → <b>+ Tambah materi</b> → <b>Analisa materi</b> → <b>Simpan materi</b>. Cara kedua cocok untuk menyiapkan beberapa bab sekaligus di awal semester.</>,
       <>Di <b>Materi saya</b>, materi dikelompokkan per mapel dan kelas. Tekan <b>Ubah</b> untuk membetulkan judul, TP, isi, atau ayat &amp; hadis; <b>Buat soal</b> untuk langsung membuat soal dari materi itu; <b>Hapus</b> untuk materi yang dobel. Set soal yang sudah dibuat tidak ikut berubah atau terhapus.</>,
       <>Di kotak <b>Ayat &amp; hadis</b>, ketik rujukan (mis. <b>QS An-Nur: 2</b>) lalu tekan <b>Ambil ayat</b>: teksnya diambil dari data mushaf. Hadis ditambah lewat <b>+ Tambah hadis</b>, lalu centang pernyataan pemeriksaan.</>,
+      <>Tabel di file <b>Word/PowerPoint</b> ikut terbaca sebagai tabel (di kotak isi tampil sebagai baris <b>| sel | sel |</b>), jadi AI bisa membuat soal dari datanya. Tabel di <b>PDF</b> belum terbaca rapi: buka PDF-nya di Microsoft Word (klik kanan → Buka dengan → Word), simpan sebagai .docx, lalu lampirkan file Word itu.</>,
     ],
   },
   {

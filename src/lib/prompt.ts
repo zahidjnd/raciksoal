@@ -278,9 +278,10 @@ LEVEL KOGNITIF (taksonomi Bloom revisi):
 
 STIMULUS (berlaku untuk seluruh set soal, lintas bentuk soal):
 - Kontekstual dan dekat dengan kehidupan siswa MA (madrasah, pesantren, keluarga, masyarakat, media sosial).
-- Ragamkan bentuknya: kasus/cerita pendek tentang satu orang, cuplikan berita, data/tabel (ditulis sebagai teks), grafik atau gambar yang dideskripsikan dengan kata, teks bacaan, potongan percakapan, kutipan tokoh, hasil percobaan (boleh dengan kelompok kontrol), perbandingan dua kondisi (misalnya wilayah X dan Y), potongan dokumen sejarah, atau tanpa stimulus.
+- Ragamkan bentuknya: kasus/cerita pendek tentang satu orang, cuplikan berita, data dalam tabel, grafik atau gambar yang dideskripsikan dengan kata, teks bacaan, potongan percakapan, kutipan tokoh, hasil percobaan (boleh dengan kelompok kontrol), perbandingan dua kondisi (misalnya wilayah X dan Y), potongan dokumen sejarah, atau tanpa stimulus.
 - Aplikasi tidak bisa menampilkan gambar: jangan menulis "perhatikan gambar berikut" kecuali gambarnya dideskripsikan lengkap dengan kata.
 - Susunan baris: percakapan/dialog/hiwar ditulis SATU PENUTUR PER BARIS dengan format "Nama: ucapan", baris dipisah baris baru (\\n di dalam teks JSON). Daftar bernomor, langkah prosedur, puisi/syair, dan surat/pesan singkat juga satu bagian per baris. Kalimat pengantar ("Perhatikan percakapan berikut!") dan perintah soal ditulis di baris sendiri. TANPA baris kosong di antara baris-baris (satu \\n saja). Bagian rumpang ditulis "..." atau "(1) ..." di dalam baris ucapan. Teks cerita atau uraian biasa tetap satu paragraf. Berlaku untuk "pertanyaan", "wacana", "pilihan", dan "pernyataan".
+- TABEL: data yang lebih jelas dibaca berbaris-berkolom (data percobaan, perbandingan, angka statistik, daftar ciri) ditulis sebagai tabel di "pertanyaan", "wacana", atau "pembahasan", aplikasi menampilkannya sebagai tabel sungguhan. Format: setiap baris tabel di baris sendiri diawali dan diakhiri "|", sel dipisah "|", baris pertama = judul kolom, lalu baris pemisah "|---|---|", contoh: "Perhatikan data berikut!\\n| Kelompok | Suhu (°C) | Waktu (menit) |\\n|---|---|---|\\n| A | 30 | 12 |\\n| B | 40 | 8 |\\nKesimpulan yang tepat adalah ....". Maksimal 6 kolom × 10 baris isi, sel singkat (angka, kata, atau frasa pendek), tanpa tanda "|" di dalam sel. Kalimat pengantar dan perintah soal di baris sendiri, di luar tabel. JANGAN memakai tabel di "pilihan", "pernyataan", atau soal MJ. Data tabel diambil dari materi atau dibuat konsisten dengan materi; untuk soal C3 ke atas, kunci TIDAK boleh terbaca langsung dari satu sel tanpa diolah. Tidak wajib: pakai tabel hanya bila memang membantu.
 - Pola "dua orang/kelompok berdebat atau berbeda pendapat" paling banyak 2 kali dalam satu set.
 - Satu skenario atau kasus hanya boleh dipakai SEKALI dalam satu set.
 - Nama tokoh beragam (jangan selalu Ahmad atau Fatimah), seimbang putra dan putri. Tokoh yang berbuat salah atau keliru TIDAK memakai nama nabi, sahabat, atau tokoh mulia dalam Islam.
@@ -551,7 +552,7 @@ ${p.tujuan === TKA ? `${SOAL_GRUP}${tanpaArab ? " Wacana tanpa huruf Arab." : " 
 // ATURAN-SOAL.md bagian 9 no. 4: soal grup TKA. Dibatasi bentuk sama supaya lembar soal tetap per bagian bentuk.
 const SOAL_GRUP = `SOAL GRUP (gaya TKA): nomor yang ditandai GRUP N di atas SUDAH DITENTUKAN sebagai soal grup: semua nomor dengan GRUP yang sama memakai SATU wacana bersama.
 - Isi "grup" setiap baris dengan nomor grupnya, atau null untuk soal tunggal. Soal dalam satu grup mengukur indikator yang berbeda.
-- WAJIB tulis wacana setiap grup di "wacana": teks lengkap 80–200 kata yang belum pernah dibaca siswa (bacaan, data/tabel ditulis sebagai teks, kasus, atau hasil percobaan).
+- WAJIB tulis wacana setiap grup di "wacana": teks lengkap 80–200 kata yang belum pernah dibaca siswa (bacaan, data dalam tabel sesuai aturan TABEL, kasus, atau hasil percobaan).
 - "stimulus" baris grup diisi "wacana grup N".`;
 
 // ATURAN-SOAL.md bagian 6 no. 2: AI menjawab catatan guru; tampil di paling atas hasil soal.

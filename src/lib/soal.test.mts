@@ -616,6 +616,23 @@ test("bacaFileOffice: paragraf Latin ke isi, paragraf Arab jadi usulan ayat; sli
   await assert.rejects(bacaFileOffice(new Uint8Array([1, 2, 3]), "rusak.docx"), /tidak bisa dibaca/);
 });
 
+test("bacaFileOffice: tabel Word & PowerPoint tetap berbaris-berkolom (| sel | sel |), terbaca pecahBaris sebagai tabel", async () => {
+  const { Document, Packer, Paragraph, Table, TableCell, TableRow } = await import("docx");
+  const baris = (...sel: string[]) => new TableRow({ children: sel.map((t) => new TableCell({ children: [new Paragraph(t)] })) });
+  const doc = new Document({
+    sections: [{ children: [new Paragraph("Data organel"), new Table({ rows: [baris("Organel", "Fungsi"), baris("Ribosom", "Sintesis protein | RNA")] }), new Paragraph("Sesudah tabel")] }],
+  });
+  const d = await bacaFileOffice(await Packer.toBuffer(doc), "Sel.docx");
+  assert.deepEqual(d.teks, ["Data organel", "| Organel | Fungsi |", "|---|---|", "| Ribosom | Sintesis protein / RNA |", "Sesudah tabel"]);
+  assert.deepEqual(pecahBaris(d.teks.join("\n"))[1].tabel, [["Organel", "Fungsi"], ["Ribosom", "Sintesis protein / RNA"]]);
+
+  const JSZip = (await import("jszip")).default;
+  const zip = new JSZip();
+  const tc = (t: string) => `<a:tc><a:txBody><a:p><a:r><a:t>${t}</a:t></a:r></a:p></a:txBody></a:tc>`;
+  zip.file("ppt/slides/slide1.xml", `<p:sld><a:p><a:r><a:t>Judul</a:t></a:r></a:p><a:tbl><a:tr h="1">${tc("X")}${tc("Y")}</a:tr><a:tr h="1">${tc("1")}${tc("2")}</a:tr></a:tbl></p:sld>`);
+  assert.deepEqual((await bacaFileOffice(await zip.generateAsync({ type: "uint8array" }), "s.pptx")).teks, ["Judul", "| X | Y |", "|---|---|", "| 1 | 2 |"]);
+});
+
 test("baris baru (dialog/hiwar) tidak hilang saat soal dirapikan dan diperiksa, dan aturannya dikirim ke AI", () => {
   const hiwar = "Perhatikan percakapan berikut!\nعلي: السلام عليكم\nعمر: وعليكم السلام";
   const s = rapikanSoal({ pertanyaan: hiwar, pilihan: ["a", "b", "c", "d", "e"], kunci: "A", pembahasan: "x", level: "C1", tp: "TP 1", skor: 1 }, "PG");
@@ -631,6 +648,17 @@ test("pecahBaris: baris kosong dibuang dan baris Arab terdeteksi (untuk blok kan
   assert.equal(b.length, 4);
   assert.equal(b[1].teks, "عمر: (1) ... اسمك؟");
   assert.deepEqual(pecahBaris(""), []);
+});
+
+test("pecahBaris: baris '| a | b |' berurutan jadi satu tabel; satu baris saja tetap teks", () => {
+  const b = pecahBaris("Perhatikan data berikut!\n| Organel | Fungsi |\n|---|:---:|\n| Mitokondria | Respirasi sel |\n| Ribosom |\nOrganel ... adalah ....");
+  assert.equal(b.length, 3);
+  assert.equal(b[0].teks, "Perhatikan data berikut!");
+  assert.deepEqual(b[1].tabel, [["Organel", "Fungsi"], ["Mitokondria", "Respirasi sel"], ["Ribosom", ""]]);
+  assert.equal(b[2].teks, "Organel ... adalah ....");
+  // Satu baris berpipa (atau judul + pemisah tanpa isi) bukan tabel: tetap teks biasa, tidak hilang.
+  assert.deepEqual(pecahBaris("a\n| x | y |\nb").map((x) => [x.teks, !!x.tabel]), [["a", false], ["| x | y |", false], ["b", false]]);
+  assert.deepEqual(pecahBaris("| x |\n|---|").map((x) => x.teks), ["| x |", "|---|"]);
 });
 
 test("nama file unduhan: judul berhuruf Arab tidak merusak header HTTP (bug 500 di hosting)", () => {
