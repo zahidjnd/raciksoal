@@ -170,7 +170,15 @@ mengatur skor). Persen level dipilih supaya jumlahnya persis surat (34/43/23 dan
 3. ✅ **Satu stimulus boleh dipakai untuk beberapa soal berurutan** ("soal grup"), umum di asesmen madrasah dan inti TKA.
    Dipakai di jenis **Latihan TKA** (bagian 9).
 4. ✅ Satu skenario hanya dipakai sekali per set; pola "dua orang berbeda pendapat" maks 2 kali.
-5. ✅ Gambar belum bisa dibuat aplikasi → AI **dilarang** menulis "perhatikan gambar berikut" kecuali gambarnya dideskripsikan dengan kata.
+5. ✅ 🔍 (0.30.0) **Gambar dari guru.** AI tidak bisa membuat gambar. Gambar hanya berasal dari **materi guru**
+   (diambil dari file Word/PowerPoint, diunggah, atau ditempel), dan AI melihat gambarnya. Soal boleh memakai satu gambar
+   sebagai stimulus; aplikasi menampilkannya di bawah pokok soal ("Perhatikan gambar berikut!"). Soal bergambar harus
+   benar-benar perlu melihat gambar untuk dijawab, jawabannya sesuai yang tampak di gambar (tidak mengarang bagian/label
+   yang tidak ada), dan pokok soal tidak menjelaskan isi gambar sampai jawabannya terbaca tanpa melihat gambar.
+   Rencana gambar per nomor ditulis di kisi-kisi; usahakan setiap gambar terpakai. Tanpa gambar di materi: tetap seperti
+   dulu, AI **dilarang** menulis "perhatikan gambar berikut" (aplikasi menandai soal yang menyebut gambar tanpa gambar).
+   Guru bisa menambah, mengganti, atau melepas gambar soal lewat Edit. Teks Arab di dalam gambar tidak pernah
+   dipercaya sebagai ayat/hadis (aturan 5 CLAUDE.md): kalau diketik ulang AI, penjaga ayat tetap menandainya.
 6. ✅ (0.18.0) **Nama tokoh beragam** (tidak selalu Ahmad/Fatimah), seimbang putra dan putri. Tokoh yang berbuat salah
    atau keliru tidak memakai nama nabi, sahabat, atau tokoh mulia dalam Islam.
 7. ✅ 🔍 (0.28.0) **Tabel sungguhan.** Data yang lebih jelas dibaca berbaris-berkolom (data percobaan, perbandingan,

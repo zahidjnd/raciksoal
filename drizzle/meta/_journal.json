@@ -71,6 +71,13 @@
       "when": 1793866045472,
       "tag": "0009_pemakaian_ai",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794304543251,
+      "tag": "0010_gambar",
+      "breakpoints": true
     }
   ]
 }

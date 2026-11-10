@@ -2,12 +2,13 @@
 
 import { and, eq, gte, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { hasilSoal, pemakaianAi } from "@/db/schema";
-import { daftarModel, tanyaAI } from "@/lib/ai";
+import { gambar, hasilSoal, pemakaianAi } from "@/db/schema";
+import { BATAS_GAMBAR, ukuranJpeg } from "@/lib/gambar";
+import { daftarModel, tanyaAI, type GambarAI } from "@/lib/ai";
 import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, laranganIsian, ringkasSudah, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, buatSistem, buatAnalisaMateri, bersihkanIdentitas, pasangKunciPgk, rencanaGrup, rencanaLevelSet, sesuaikanLevel, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { BATAS_MATERI, susunDraf, terapkanAnalisa } from "@/lib/materi";
 import { bersihkanTanggapan, gabungBab, identitasBab, kataTerpakai, KELAS, LEVEL, mjLama, pemeriksaArab, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
-import { babDariSet, babMilik, daftarBabMilik } from "@/lib/bab";
+import { babDariSet, babMilik, daftarBabMilik, dataGambar, gambarMilik } from "@/lib/bab";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
 import { mushaf } from "@/lib/mushaf";
@@ -70,7 +71,7 @@ const pesanError = (e: unknown) => {
  * timeout, jawaban rusak), pindah ke model berikutnya sesuai urutan nomor di .env.
  * Mode "Bandingkan semua model" tidak memakai cadangan.
  */
-async function tanyaDenganCadangan<T>(sistem: string, pengguna: string, slotUtama: number, pakaiCadangan: boolean, ambil: (data: unknown) => T, sampai: number) {
+async function tanyaDenganCadangan<T>(sistem: string, pengguna: string, slotUtama: number, pakaiCadangan: boolean, ambil: (data: unknown) => T, sampai: number, gambar: GambarAI[] = []) {
   const semuaModel = daftarModel();
   const urutan = pakaiCadangan ? [slotUtama, ...semuaModel.map((m) => m.slot).filter((s) => s !== slotUtama)] : [slotUtama];
   const catatan: string[] = [];
@@ -82,7 +83,7 @@ async function tanyaDenganCadangan<T>(sistem: string, pengguna: string, slotUtam
       break;
     }
     try {
-      const r = await tanyaAI(sistem, pengguna, slot, sampai);
+      const r = await tanyaAI(sistem, pengguna, slot, sampai, gambar);
       if (r.terpotong) throw new Error(`AI (${nama}) gagal: jawaban terpotong karena terlalu panjang.`);
       let hasil: T;
       try {
@@ -98,6 +99,19 @@ async function tanyaDenganCadangan<T>(sistem: string, pengguna: string, slotUtam
     }
   }
   throw new Error(catatan.join(" | "));
+}
+
+/**
+ * Gambar bab untuk dikirim ke AI (0.30.0). Isinya diambil sekali; yang bukan milik pemilik set tidak ikut (aturan 3).
+ * Kembalian: fungsi pemilih, `pilih()` = semua gambar, `pilih([12])` = gambar tertentu saja (hemat token).
+ */
+async function gambarUntukAI(bab: Bab, guruId: string | null) {
+  const daftar = bab.gambar ?? [];
+  const data = daftar.length && guruId ? await dataGambar(daftar.map((g) => g.id), guruId) : new Map<number, { data: Buffer }>();
+  const siap = daftar
+    .filter((g) => data.has(g.id))
+    .map((g) => ({ id: g.id, label: `[gambar_id: ${g.id}]${g.keterangan ? ` ${g.keterangan}` : ""}`, url: `data:image/jpeg;base64,${data.get(g.id)!.data.toString("base64")}` }));
+  return (ids?: (number | null | undefined)[]): GambarAI[] => siap.filter((g) => !ids || ids.includes(g.id)).map(({ label, url }) => ({ label, url }));
 }
 
 /** Ambil daftar soal dari JSON jawaban AI; `perlu` = jumlah minimal (kelebihan dibuang). */
@@ -171,7 +185,7 @@ export async function mulaiBuatSoal(input: Pengaturan) {
     });
     if (typeof mulai === "string") return { ok: false as const, pesan: mulai };
 
-    void kerjakan(mulai, bab, p); // sengaja tidak ditunggu, supaya koneksi browser tidak putus
+    void kerjakan(mulai, bab, p, saya.id); // sengaja tidak ditunggu, supaya koneksi browser tidak putus
     return { ok: true as const, id: mulai };
   } catch (e) {
     return { ok: false as const, pesan: `Gagal memulai: ${pesanError(e)}` };
@@ -182,7 +196,7 @@ export async function mulaiBuatSoal(input: Pengaturan) {
  * Langkah 6: susun kisi-kisi dulu (satu panggilan, AI melihat rencana semua soal sehingga skenario tidak berulang),
  * lalu buat soal bertahap (maks 10 per panggilan supaya jawaban AI tidak terpotong) mengikuti potongan kisi-kisinya.
  */
-async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
+async function kerjakan(id: number, bab: Bab, p: Pengaturan, guruId: string) {
   const sistem = buatSistem(bab, p.tujuan === TKA);
   const tahap = bagiTahap(p.jumlah);
   const permintaan: string[] = [];
@@ -206,9 +220,9 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
       .where(eq(hasilSoal.id, id));
 
   const sampai = mulai + TENGGAT_SET; // berlaku untuk seluruh tahap set ini
-  const tanya = async <T,>(label: string, pengguna: string, ambil: (data: unknown) => T) => {
-    permintaan.push(pengguna);
-    const r = await tanyaDenganCadangan(sistem, pengguna, p.modelSlot ?? 1, !p.bandingkan, ambil, sampai);
+  const tanya = async <T,>(label: string, pengguna: string, ambil: (data: unknown) => T, gambar: GambarAI[] = []) => {
+    permintaan.push(gambar.length ? `[${gambar.map((g) => g.label).join("; ")}]\n${pengguna}` : pengguna);
+    const r = await tanyaDenganCadangan(sistem, pengguna, p.modelSlot ?? 1, !p.bandingkan, ambil, sampai, gambar);
     mentah.push(r.jawaban);
     info.tokenMasuk += r.token.masuk;
     info.tokenKeluar += r.token.keluar;
@@ -218,6 +232,7 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
   };
 
   try {
+    const pilihGambar = await gambarUntukAI(bab, guruId);
     await simpan({ pesan: "Menyusun kisi-kisi" });
     const { kisi: kisiAwal, tanggapan } = await tanya("Kisi-kisi", buatPermintaanKisi(p, bab),(d) => {
       const isi = d as { kisi?: unknown; tanggapan?: unknown; wacana?: unknown };
@@ -231,7 +246,7 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
         p.tujuan === TKA,
       );
       return { kisi, tanggapan: p.catatan ? bersihkanTanggapan(isi?.tanggapan, bab, cekAyat) : "" };
-    });
+    }, pilihGambar());
     if (tanggapan) info.tanggapan = tanggapan;
     // Pemeriksaan kisi-kisi (0.25.0): AI mencari baris kembar lintas bentuk dan menulis ulang yang belakangan. Gagal → kisi
     // awal tetap dipakai; catatan di info.perbaikan (bukan info.catatan, yang memicu pita merah admin).
@@ -255,7 +270,9 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
       awal += n;
       await simpan({ pesan: `Tahap ${i + 1} dari ${tahap.length}` });
       const pengguna = buatPengguna(p, jumlah, semua.map(ringkasSudah), laranganIsian(kisi), baris);
-      const soal = await tanya(`Tahap ${i + 1}`, pengguna, (d) => ambilSoal(d, baris.length));
+      // Hanya gambar yang direncanakan kisi-kisi untuk nomor-nomor tahap ini.
+      const gambarTahap = baris.map((k) => k.gambar_id).filter(Boolean);
+      const soal = await tanya(`Tahap ${i + 1}`, pengguna, (d) => ambilSoal(d, baris.length), gambarTahap.length ? pilihGambar(gambarTahap) : []);
       // Menjodohkan gaya lama: daftar jawaban bersama per blok disusun & diacak aplikasi (susunMjLama).
       semua.push(...susunMjLama(soal.map((s, j) => samakanDenganKisi(s, baris[j]))).map((s) => susunMenjodohkan(s)));
       // Draf untuk tampilan bertahap (status tetap "proses"): sudah lewat penjaga ayat, tetapi kunci belum
@@ -291,7 +308,7 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan) {
         // penggantinya juga sudah tertulis di soal lain (set 93: "fungsi anggaran", "fungsi mengatur"); 14 dari 17 isian bocor
         // di data laptop memang konsep yang ditanyakan dua kali, jadi isiannya harus pindah konsep.
         const calon = bocor ? 3 : 1;
-        const daftar = await tanya(`Perbaikan soal ${i + 1}`, buatPenggantiPengguna(p, s, soal, kisi[i], instruksi, 2000, calon), (d) => ambilSoal(d, 1, calon));
+        const daftar = await tanya(`Perbaikan soal ${i + 1}`, buatPenggantiPengguna(p, s, soal, kisi[i], instruksi, 2000, calon), (d) => ambilSoal(d, 1, calon), s.gambar_id ? pilihGambar([s.gambar_id]) : []);
         // Diperiksa bersama seluruh set (bukan sendirian), supaya kunci isian yang masih bocor ke soal lain tetap ketahuan.
         const hasil = daftar.map((baru) => {
           const { stimulus: _s, indikator, ...isi } = susunMenjodohkan(samakanDenganKisi(baru, kisi[i]));
@@ -368,15 +385,28 @@ export async function simpanSoal(id: number, no: number, isian: Soal) {
   }
 }
 
+/**
+ * Gambar yang diunggah guru langsung di Edit / Tulis soal sendiri (belum ada di materi set): kalau milik pemilik set
+ * (aturan 3), dicatat di salinan bab set itu supaya lolos periksaSoal. Mengembalikan true kalau bab berubah.
+ */
+async function sahkanGambarBaru(set: IsiSet, id: unknown) {
+  const g = Number(id);
+  if (!Number.isInteger(g) || g <= 0 || !set.h.guruId || set.bab.gambar?.some((x) => x.id === g) || (set.bab.gambar?.length ?? 0) >= 2 * BATAS_GAMBAR.perSet) return false;
+  if (!(await gambarMilik([g], set.h.guruId)).has(g)) return false;
+  set.bab = { ...set.bab, gambar: [...(set.bab.gambar ?? []), { id: g, keterangan: "" }] };
+  return true;
+}
+
 async function simpanSoalDi(set: IsiSet, no: number, isian: Soal, tx: Tx) {
   {
     const lama = set.soal[no];
+    const babBaru = await sahkanGambarBaru(set, isian?.gambar_id);
     // Nomor grup tetap dari server (bukan dari browser); hanya teks wacananya yang boleh diedit guru.
     const [soal] = periksaSoal([rapikanSoal({ ...isian, grup: lama.grup }, lama.bentuk)], set.bab, cekAyat);
     set.soal[no] = soal;
     // TP/level yang diubah guru ikut ke baris kisi-kisinya, supaya kisi-kisi tetap cocok dengan soal.
     const kisi = set.h.kisi as BarisKisi[] | null;
-    if (kisi?.[no]) kisi[no] = { ...kisi[no], tp: soal.tp, level: soal.level };
+    if (kisi?.[no]) kisi[no] = { ...kisi[no], tp: soal.tp, level: soal.level, gambar_id: soal.gambar_id ?? null };
     // Wacana soal grup dipakai bersama: editan guru ikut ke semua soal & baris kisi-kisi grup itu.
     if (soal.grup && soal.wacana) {
       set.soal.forEach((s, i) => {
@@ -387,7 +417,7 @@ async function simpanSoalDi(set: IsiSet, no: number, isian: Soal, tx: Tx) {
     }
     // Menjodohkan gaya lama: daftar jawaban dipakai bersama satu blok, editannya ikut ke nomor lain di blok itu.
     if (mjLama(soal) && soal.grup) set.soal.forEach((s, i) => mjLama(s) && s.grup === soal.grup && (set.soal[i] = { ...s, jawaban: soal.jawaban }));
-    await tx.update(hasilSoal).set({ soal: set.soal, kisi }).where(eq(hasilSoal.id, set.h.id));
+    await tx.update(hasilSoal).set({ soal: set.soal, kisi, ...(babBaru && { bab: set.bab }) }).where(eq(hasilSoal.id, set.h.id));
     return soal;
   }
 }
@@ -419,6 +449,7 @@ export async function tambahSoalManual(id: number, isian: Soal) {
       // Menjodohkan gaya lama memakai daftar jawaban bersama satu blok: dibuat lewat "Buat soal", diperbaiki lewat Edit.
       if (bentuk === "MJ") return "Soal menjodohkan tidak bisa ditulis satu per satu. Buat lewat Buat soal, atau perbaiki nomor menjodohkan yang ada lewat Edit.";
       if (set.soal.length >= MAKS_SOAL) return `Satu set maksimal ${MAKS_SOAL} soal.`;
+      const babBaru = await sahkanGambarBaru(set, isian?.gambar_id);
       const rapi = rapikanSoal({ ...isian, grup: undefined, wacana: undefined }, bentuk);
       const kurang = kurangLengkap(rapi);
       if (kurang) return kurang;
@@ -430,8 +461,8 @@ export async function tambahSoalManual(id: number, isian: Soal) {
       const posisi = set.soal.reduce((akhir, s, i) => (urut.indexOf(s.bentuk) <= urut.indexOf(bentuk) ? i + 1 : akhir), 0);
       set.soal.splice(posisi, 0, soal);
       const kisi = set.h.kisi as BarisKisi[] | null;
-      kisi?.splice(posisi, 0, { no: 0, bentuk, tp: soal.tp, materi: "(soal tulisan guru)", indikator: "(soal tulisan guru)", level: soal.level, dalil_id: soal.dalil_id, stimulus: "" });
-      await tx.update(hasilSoal).set({ soal: set.soal, kisi: kisi && nomoriUlang(kisi) }).where(eq(hasilSoal.id, set.h.id));
+      kisi?.splice(posisi, 0, { no: 0, bentuk, tp: soal.tp, materi: "(soal tulisan guru)", indikator: "(soal tulisan guru)", level: soal.level, dalil_id: soal.dalil_id, gambar_id: soal.gambar_id ?? null, stimulus: "" });
+      await tx.update(hasilSoal).set({ soal: set.soal, kisi: kisi && nomoriUlang(kisi), ...(babBaru && { bab: set.bab }) }).where(eq(hasilSoal.id, set.h.id));
       return posisi;
     });
     return typeof r === "string" ? { ok: false as const, pesan: r } : { ok: true as const, no: r + 1 };
@@ -514,7 +545,10 @@ async function soalBaruDariAI(id: number, no: number, mode: "ganti" | "ubah" | "
     const pengguna = buatPenggantiPengguna(h.pengaturan as Pengaturan, lama, set.soal, baris, instruksi);
     const p = h.pengaturan as Pengaturan;
     // Model utama sama dengan set; cadangan dipakai kalau gagal (kecuali set hasil "Bandingkan semua model").
-    const r = await tanyaDenganCadangan(sistem, pengguna, p.modelSlot ?? 1, !p.bandingkan, (d) => ambilSoal(d), Date.now() + TENGGAT_SATU_SOAL);
+    // Gambar soal lama / rencana kisi-kisi ikut dikirim supaya AI bisa menulis soal bergambar yang benar.
+    const idGambar = [lama.gambar_id, baris?.gambar_id].filter(Boolean);
+    const gambarAI = idGambar.length ? (await gambarUntukAI(bab, h.guruId))(idGambar) : [];
+    const r = await tanyaDenganCadangan(sistem, pengguna, p.modelSlot ?? 1, !p.bandingkan, (d) => ambilSoal(d), Date.now() + TENGGAT_SATU_SOAL, gambarAI);
     const { stimulus, indikator, ...baru } = susunMenjodohkan({ ...r.hasil[0], bentuk: lama.bentuk }); // Menjodohkan: pasangan AI → premis, jawaban acak, kunci
     // Ubah: level/TP dari AI dipakai hanya kalau valid. Ganti/tambah: disamakan dengan kisi-kisi.
     // Grup & wacana tidak diambil dari jawaban AI: tetap milik soal lama (soal grup tetap di grupnya).
@@ -522,7 +556,7 @@ async function soalBaruDariAI(id: number, no: number, mode: "ganti" | "ubah" | "
     const { grup: _g, wacana: _w, ...isiBaru } = baru;
     void _g;
     void _w;
-    const hasilUbah = { ...isiBaru, ...grupLama, bentuk: lama.bentuk, level: LEVEL.includes(baru.level) ? baru.level : lama.level, tp: bab.tp.some((t) => t.kode === baru.tp) ? baru.tp : lama.tp };
+    const hasilUbah = { ...isiBaru, ...grupLama, gambar_id: baru.gambar_id === undefined ? lama.gambar_id : baru.gambar_id, bentuk: lama.bentuk, level: LEVEL.includes(baru.level) ? baru.level : lama.level, tp: bab.tp.some((t) => t.kode === baru.tp) ? baru.tp : lama.tp };
     const [soal] = periksaSoal([ubah ? hasilUbah : baris ? samakanDenganKisi(baru, baris) : { ...isiBaru, ...grupLama, bentuk: lama.bentuk }], bab, cekAyat);
     if (!ubah) ratakanKunci([soal]); // posisi kunci PG/PGK diacak (tidak saat "ubah", supaya guru tidak bingung)
     if (p.bobot) terapkanBobot([soal], p.bobot);
@@ -615,6 +649,23 @@ export async function analisaMateri(input: { mapel: string; kelas: string; parag
     // AI gagal: materi tetap bisa dipakai, guru mengisi judul & TP sendiri di kartu materi.
     return { ok: true as const, isian, catatan: `${pesanPdf} AI gagal menganalisa materi. Isi judul dan TP sendiri, atau coba analisa lagi.`.trim() };
   }
+}
+
+/**
+ * Simpan satu gambar (0.30.0): JPEG yang sudah dikecilkan di browser (src/app/gambar.tsx), dikirim sebagai base64.
+ * Server memastikan isinya JPEG sungguhan (ukuranJpeg) dan tidak melewati batas ukuran & jumlah per guru.
+ */
+export async function unggahGambar(base64: string) {
+  const saya = await penggunaSaatIni();
+  if (!saya) return { ok: false as const, pesan: SESI_HABIS };
+  const data = Buffer.from(String(base64 ?? "").replace(/^data:image\/jpeg;base64,/, ""), "base64");
+  if (data.length > BATAS_GAMBAR.bita) return { ok: false as const, pesan: "Gambar terlalu besar. Pakai gambar yang lebih kecil." };
+  const ukuran = ukuranJpeg(data);
+  if (!ukuran || ukuran.lebar > BATAS_GAMBAR.sisi || ukuran.tinggi > BATAS_GAMBAR.sisi) return { ok: false as const, pesan: "File bukan gambar yang bisa dipakai." };
+  const [{ n }] = await db.select({ n: sql<number>`count(*)::int` }).from(gambar).where(eq(gambar.guruId, saya.id));
+  if (n >= BATAS_GAMBAR.perGuru) return { ok: false as const, pesan: `Batas ${BATAS_GAMBAR.perGuru} gambar per guru sudah tercapai. Hubungi admin.` };
+  const [baris] = await db.insert(gambar).values({ guruId: saya.id, data, ...ukuran }).returning({ id: gambar.id });
+  return { ok: true as const, id: baris.id };
 }
 
 /** Ubah identitas ujian (kop Word) setelah set jadi: tanpa AI, hanya pemilik/admin (aturan 3). */

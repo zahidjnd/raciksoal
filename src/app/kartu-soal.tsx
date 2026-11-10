@@ -4,6 +4,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import "katex/dist/katex.min.css";
 import { gantiSatuSoal, hapusSoal, pindahSoal, simpanSoal, tambahSoalManual, tambahSoalSerupa } from "./actions";
 import { StepAngka } from "./step-angka";
+import { Gambar, gambarTempelan, TombolGambar, unggah } from "./gambar";
 import { editRumus, isiKotak } from "./editor-rumus";
 import { adaRumus, bukanDalil, kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, POLA_RUMUS, type Bab, type Bentuk, type Soal } from "@/lib/soal";
 import { MAKS_INSTRUKSI, namaBentuk } from "@/lib/prompt";
@@ -249,7 +250,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
     const r = await gantiSatuSoal(hasilId, no - 1, jenis === "ubah" ? instruksi : undefined).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
     setProses("");
     if (!r.ok) return setError(r.pesan);
-    const isi = (x: Soal) => JSON.stringify([x.pertanyaan, x.pilihan, x.pernyataan, x.kunci, x.pembahasan, x.dalil_id]);
+    const isi = (x: Soal) => JSON.stringify([x.pertanyaan, x.pilihan, x.pernyataan, x.kunci, x.pembahasan, x.dalil_id, x.gambar_id]);
     if (jenis === "ubah" && isi(r.soal) === isi(s))
       setError("AI tidak mengubah soal ini. Mungkin instruksinya bertentangan dengan aturan (mis. meminta ayat/hadis di luar data bab). Coba tulis instruksi lain.");
     else setBerhasil(jenis === "ubah" ? "Soal sudah diubah ✓" : "Soal sudah diganti ✓");
@@ -326,6 +327,9 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
       <div>
         <span className="font-semibold">{no}.</span> <TeksBaris teks={s.pertanyaan} />
       </div>
+      {!!s.gambar_id && (
+        <Gambar id={s.gambar_id} alt={bab.gambar?.find((g) => g.id === s.gambar_id)?.keterangan || `Gambar soal nomor ${no}`} className="max-h-80 max-w-full rounded-lg border bg-kartu" />
+      )}
       {dalil && (
         <figure className="rounded bg-krem p-3">
           <p dir="rtl" lang="ar" className="font-arab text-2xl">{dalil.arab}</p>
@@ -440,6 +444,56 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
 
 type FormProps = { no: number; awal: Soal; bab: Bab; onBatal: () => void; onSimpan: (s: Soal) => Promise<string | void>; judul?: string };
 
+/**
+ * Gambar soal di form Edit / Tulis soal sendiri (0.30.0): tanpa gambar, salah satu gambar materi, atau unggah/tempel
+ * gambar baru (server mencatatnya di materi set ini bila milik pemilik set).
+ */
+function PilihGambar({ bab, nilai, ubah }: { bab: Bab; nilai: number | null; ubah: (id: number | null) => void }) {
+  const [baru, setBaru] = useState<number[]>([]);
+  const [proses, setProses] = useState(false);
+  const [pesan, setPesan] = useState("");
+  const daftar = [...new Set([...(bab.gambar ?? []).map((g) => g.id), ...(nilai ? [nilai] : []), ...baru])];
+  async function tambah(f: Blob[]) {
+    if (!f[0] || proses) return;
+    setProses(true);
+    setPesan("");
+    try {
+      const id = await unggah(f[0]);
+      setBaru([...baru, id]);
+      ubah(id);
+    } catch (e) {
+      setPesan((e as Error).message);
+    }
+    setProses(false);
+  }
+  const pilihan = (aktif: boolean) => `rounded-lg border-2 p-1 ${aktif ? "border-hijau bg-hijau-muda" : "border-batas hover:bg-krem"}`;
+  return (
+    <fieldset
+      tabIndex={0}
+      className="space-y-1 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-hijau"
+      onPaste={(e) => {
+        const f = gambarTempelan(e);
+        if (f.length) void tambah(f);
+      }}
+    >
+      <legend>Gambar soal (tampil di bawah pertanyaan)</legend>
+      <div className="flex flex-wrap items-center gap-2">
+        <button type="button" aria-pressed={!nilai} className={`${pilihan(!nilai)} h-[5.5rem] w-[7.5rem] text-xs`} onClick={() => ubah(null)}>
+          Tanpa gambar
+        </button>
+        {daftar.map((id, i) => (
+          <button key={id} type="button" aria-pressed={nilai === id} aria-label={`Pakai gambar ${i + 1}`} className={pilihan(nilai === id)} onClick={() => ubah(id)}>
+            <Gambar id={id} alt={bab.gambar?.find((g) => g.id === id)?.keterangan} className="h-20 w-28 object-contain" />
+          </button>
+        ))}
+        <TombolGambar label={proses ? "Mengunggah..." : "Unggah gambar lain"} banyak={false} disabled={proses} onPilih={tambah} />
+      </div>
+      <p className="text-xs text-pudar">Bisa juga: klik bagian ini lalu tempel gambar (Ctrl+V).</p>
+      {pesan && <p className="text-sm text-bahaya" role="alert">{pesan}</p>}
+    </fieldset>
+  );
+}
+
 function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
   const [s, setS] = useState<Soal>(structuredClone(awal));
   const [menyimpan, setMenyimpan] = useState(false);
@@ -526,6 +580,8 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
           {bab.dalil.map((d) => <option key={d.id} value={d.id}>{bukanDalil(d) ? `Teks Arab materi: ${d.arab.slice(0, 40)}` : d.sumber}</option>)}
         </select>
       </label>
+
+      {!mjLama(s) && s.bentuk !== "MJ" && <PilihGambar bab={bab} nilai={s.gambar_id ?? null} ubah={(gambar_id) => ubah({ gambar_id })} />}
 
       {s.pilihan && (
         <fieldset className="space-y-1">

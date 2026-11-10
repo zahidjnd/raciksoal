@@ -6,6 +6,7 @@ import path from "node:path";
 import {
   AlignmentType,
   Document,
+  ImageRun,
   Packer,
   PageOrientation,
   Paragraph,
@@ -20,6 +21,7 @@ import {
   WidthType,
   type ParagraphChild,
 } from "docx";
+import { ukuranWord } from "./gambar";
 import { MAPEL_INGGRIS } from "./mapel";
 import { hariTanggal, mapelTka, NAMA_BENTUK, semesterDari, TKA, WAKTU_BAWAAN, type Pengaturan } from "./prompt";
 import { rumusWord } from "./rumus";
@@ -214,7 +216,10 @@ const TAHAN_WACANA = 3;
  * `paket` (A–D, bila guru membuat beberapa paket): tulisan "PAKET B" di atas soal pertama, sengaja TIDAK di kop
  * supaya kop asli madrasah tidak berubah. `soal` sudah disusun per paket oleh `susunPaket` (paket.ts).
  */
-export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Date, sekolah = "MADRASAH ALIYAH AL-FATAH", paket?: string) {
+/** Isi gambar soal untuk Word (id → JPEG + ukuran asli), diambil rute unduh dari tabel `gambar`. */
+export type GambarWord = Map<number, { data: Buffer; lebar: number; tinggi: number }>;
+
+export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Date, sekolah = "MADRASAH ALIYAH AL-FATAH", paket?: string, gambar: GambarWord = new Map()) {
   const isi: (Paragraph | Table)[] = [];
   if (paket) isi.push(par([r(`PAKET ${paket}`, { bold: true, size: 28 })], { alignment: AlignmentType.RIGHT, keepNext: true, spacing: { after: 120 } }));
   const L: Lembar = LEMBAR[MAPEL_INGGRIS.test(identitasBab(bab).mapel) ? "en" : "id"];
@@ -244,6 +249,9 @@ export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tangga
         isi.push(par([], { keepNext: true, spacing: { after: 40 } }));
       }
       isi.push(...butirBaris(`${no}.`, s.pertanyaan, 400, { keepNext: true }));
+      // Gambar soal (0.30.0): di bawah pokok soal, muat satu kolom lembar soal.
+      const g = s.gambar_id ? gambar.get(s.gambar_id) : undefined;
+      if (g) isi.push(par([new ImageRun({ type: "jpg", data: g.data, transformation: ukuranWord(g.lebar, g.tinggi) })], { indent: { left: 400 }, keepNext: true, spacing: { before: 40, after: 60 } }));
       const dalil = bab.dalil.find((d) => d.id === s.dalil_id);
       if (dalil) {
         isi.push(par(teks(dalil.arab), { bidirectional: true, alignment: AlignmentType.START, indent: { right: 400 }, keepNext: true, spacing: { after: 0 } }));

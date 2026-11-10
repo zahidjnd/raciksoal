@@ -143,6 +143,27 @@ const buat = (await aksi(B, "mulaiBuatSoal", {
 })).nilai;
 cek(buat?.ok === false && /tidak ditemukan/i.test(buat.pesan), "B ditolak: membuat soal dari materi A", JSON.stringify(buat));
 
+// Gambar (0.30.0): gambar A tidak bisa dibuka B, dan B tidak bisa menempelkannya ke soal setnya sendiri.
+// JPEG mini (hanya kepala + ukuran 600×400): cukup untuk lolos pemeriksaan server, tanpa isi gambar sungguhan.
+const jpegMini = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, ...Array(14).fill(0), 0xff, 0xc0, 0x00, 0x11, 0x08, 0x01, 0x90, 0x02, 0x58, 0x03, ...Array(9).fill(0), 0xff, 0xd9]).toString("base64");
+const gambarA = (await aksi(A, "unggahGambar", jpegMini)).nilai;
+cek(gambarA?.ok === true, "A bisa mengunggah gambar", JSON.stringify(gambarA));
+cek((await halaman(A, `/api/gambar/${gambarA?.id}`)).status === 200, "A bisa membuka gambarnya sendiri");
+cek((await halaman(B, `/api/gambar/${gambarA?.id}`)).status === 404, "B ditolak: membuka gambar A");
+cek((await fetch(`${BASE}/api/gambar/${gambarA?.id}`)).status === 401, "tanpa masuk ditolak: membuka gambar");
+const bukan = (await aksi(B, "unggahGambar", Buffer.from("bukan gambar").toString("base64"))).nilai;
+cek(bukan?.ok === false, "unggah selain JPEG ditolak", JSON.stringify(bukan));
+const riwayatB = await (await halaman(B, "/riwayat")).text();
+const setB = [...riwayatB.matchAll(/href="\/\?id=(\d+)"/g)].map((x) => Number(x[1]))[0];
+const soalB = setB && (await aksi(B, "cekHasil", setB, true)).nilai;
+if (soalB?.status === "selesai") {
+  const no = soalB.soal.findIndex((s: { bentuk: string; gambar_id?: number }) => s.bentuk !== "MJ" && !s.gambar_id);
+  if (no >= 0) {
+    const r = (await aksi(B, "simpanSoal", setB, no, { ...soalB.soal[no], gambar_id: gambarA?.id })).nilai;
+    cek(r?.ok === true && !r.soal.gambar_id, "B tidak bisa memasang gambar A di soalnya sendiri", JSON.stringify(r)?.slice(0, 200));
+  }
+} else console.log("(lewati: B belum punya set selesai untuk uji pasang gambar)");
+
 // Isi A tidak berubah sedikit pun.
 const isiAkhir = (await aksi(A, "cekHasil", setA, true)).teks;
 const beda = [...isiA].findIndex((h, i) => h !== isiAkhir[i]);

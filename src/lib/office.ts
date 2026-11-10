@@ -218,18 +218,62 @@ async function bacaPdf(data: ArrayBuffer | Uint8Array): Promise<string[]> {
   return semua;
 }
 
+/** Gambar dari file materi (0.30.0): calon yang ditawarkan ke guru, belum diunggah. */
+export type GambarFile = { nama: string; data: Uint8Array };
+const JENIS_GAMBAR = /\.(png|jpe?g|gif|bmp|webp)$/i; // yang bisa dibaca browser (EMF/WMF/SVG dilewati)
+const BATAS_CALON = 30;
+
+/**
+ * Gambar yang dipakai di bagian-bagian `xmlNama` (document.xml / slideN.xml), urut sesuai kemunculannya, tanpa dobel.
+ * Gambar sangat kecil (< 3 KB, biasanya ikon/hiasan) dilewati.
+ */
+async function gambarZip(zip: JSZip, xmlNama: string[]): Promise<GambarFile[]> {
+  const urut: string[] = [];
+  for (const nama of xmlNama) {
+    const dir = nama.slice(0, nama.lastIndexOf("/") + 1);
+    const [xml, rels] = await Promise.all([zip.file(nama)?.async("string"), zip.file(`${dir}_rels/${nama.slice(dir.length)}.rels`)?.async("string")]);
+    if (!xml || !rels) continue;
+    const target = new Map<string, string>();
+    for (const r of rels.match(/<Relationship\b[^>]*>/g) ?? []) {
+      const id = /\bId="([^"]+)"/.exec(r)?.[1];
+      const t = /\bTarget="([^"]+)"/.exec(r)?.[1];
+      if (!id || !t || !/\/image"/.test(r) || /TargetMode="External"/.test(r)) continue;
+      // "media/image1.png" relatif ke folder bagian itu; "../media/x.png" naik satu folder.
+      const bagian = (t.startsWith("/") ? t.slice(1) : dir + t).split("/");
+      const jalur: string[] = [];
+      for (const b of bagian) {
+        if (b === "..") jalur.pop();
+        else if (b !== ".") jalur.push(b);
+      }
+      target.set(id, jalur.join("/"));
+    }
+    for (const m of xml.matchAll(/\br:(?:embed|id)="([^"]+)"/g)) {
+      const j = target.get(m[1]);
+      if (j && JENIS_GAMBAR.test(j) && !urut.includes(j)) urut.push(j);
+    }
+  }
+  const hasil: GambarFile[] = [];
+  for (const j of urut) {
+    const data = await zip.file(j)?.async("uint8array");
+    if (data && data.length >= 3 * 1024) hasil.push({ nama: j.split("/").pop()!, data });
+    if (hasil.length >= BATAS_CALON) break;
+  }
+  return hasil;
+}
+
 /**
  * Baca .docx / .pptx / .pdf: `teks` = paragraf Latin (untuk kotak Isi materi), `arab` = paragraf Arab (USULAN ayat/hadis,
  * wajib diperiksa guru sebelum dipercaya, aturan 5). Melempar Error berbahasa Indonesia kalau file tidak didukung.
  * Paragraf Arab dari PDF bertanda TANDA_PDF (lihat di atas).
  */
-export async function bacaFileOffice(data: ArrayBuffer | Uint8Array, nama: string): Promise<{ teks: string[]; arab: string[]; semua: string[] }> {
+export async function bacaFileOffice(data: ArrayBuffer | Uint8Array, nama: string): Promise<{ teks: string[]; arab: string[]; semua: string[]; gambar: GambarFile[] }> {
   const akhiran = nama.toLowerCase().split(".").pop();
   if (akhiran === "doc" || akhiran === "ppt") throw new Error("Format lama (.doc/.ppt) tidak didukung. Simpan ulang sebagai .docx/.pptx (File → Save As).");
   if (akhiran === "pdf") {
     const semua = await bacaPdf(data);
     // `arab` sengaja kosong: teks Arab PDF tidak boleh jadi usulan ayat/hadis, hanya dicocokkan ke mushaf di server.
-    return { teks: semua.filter((t) => !t.startsWith(TANDA_PDF)), arab: [], semua };
+    // ponytail: gambar PDF belum diambil (guru bisa menempel tangkapan layar); halaman PDF → gambar menyusul (0.31.0).
+    return { teks: semua.filter((t) => !t.startsWith(TANDA_PDF)), arab: [], semua, gambar: [] };
   }
   if (akhiran !== "docx" && akhiran !== "pptx") throw new Error("Pilih file Word (.docx), PowerPoint (.pptx), atau PDF.");
 
@@ -241,7 +285,9 @@ export async function bacaFileOffice(data: ArrayBuffer | Uint8Array, nama: strin
   }
 
   let semua: string[] = [];
+  let bagian: string[];
   if (akhiran === "docx") {
+    bagian = ["word/document.xml"];
     const xml = await zip.file("word/document.xml")?.async("string");
     if (!xml) throw new Error("Isi dokumen Word tidak ditemukan.");
     semua = paragraf(tabelJadiBaris(rumusJadiTeks(xml, "w"), "w"), "w:p", "w:t");
@@ -249,6 +295,7 @@ export async function bacaFileOffice(data: ArrayBuffer | Uint8Array, nama: strin
     // Slide diurutkan menurut nomornya (slide2 sebelum slide10).
     const slide = zip.file(/^ppt\/slides\/slide\d+\.xml$/).sort((a, b) => Number(a.name.match(/\d+/)![0]) - Number(b.name.match(/\d+/)![0]));
     if (!slide.length) throw new Error("Slide PowerPoint tidak ditemukan.");
+    bagian = slide.map((x) => x.name);
     for (const s of slide) semua.push(...paragraf(tabelJadiBaris(rumusJadiTeks(await s.async("string"), "a"), "a"), "a:p", "a:t"));
   }
 
@@ -257,5 +304,6 @@ export async function bacaFileOffice(data: ArrayBuffer | Uint8Array, nama: strin
     teks: teks.filter((t) => !paragrafArab(t)),
     arab: [...new Set(teks.filter(paragrafArab))],
     semua: teks, // urut seperti di file (untuk analisa materi: terjemah biasanya tepat setelah ayatnya)
+    gambar: await gambarZip(zip, bagian),
   };
 }

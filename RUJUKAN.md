@@ -167,7 +167,8 @@ Semua butir di ATURAN-SOAL.md bagian 2 dan 10.
 ### J. Stimulus dan nilai
 | Aturan | Tingkat | Dasar | Catatan |
 |---|---|---|---|
-| Stimulus kontekstual, gambar dideskripsikan dengan kata | R1 + R2 | ✔ D08b hlm 39; D13 | |
+| Stimulus kontekstual, gambar dideskripsikan dengan kata | R1 + R2 | ✔ D08b hlm 39; D13 | Berlaku bila materi tanpa gambar |
+| Gambar stimulus hanya dari materi guru, ditampilkan di bawah pokok soal, harus perlu dilihat untuk menjawab | R2 + R3 | Kaidah umum: stimulus harus berfungsi untuk menjawab (halaman rujukan belum dicek); sumber gambar & tempat = keputusan pemilik 2026-11-10 | AI tidak membuat gambar |
 | Nama tokoh beragam, satu skenario sekali per set | R3 | keputusan pemilik | |
 | Data berbaris-berkolom ditulis sebagai tabel (maks 6 × 10, tidak di pilihan) | R2 + R3 | D12 (stimulus TKA: grafik/tabel, data percobaan); batas ukuran & tempat = keputusan pemilik 2026-11-10 | |
 | Rumus ditulis sebagai rumus sungguhan (LaTeX `$...$`), desimal koma | R2 + R3 | Kaidah penulisan matematika (notasi baku, desimal koma PUEBI); format & tempat = keputusan pemilik 2026-11-10 | |

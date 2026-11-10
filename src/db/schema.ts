@@ -1,4 +1,6 @@
-import { boolean, index, integer, jsonb, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, customType, index, integer, jsonb, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+
+const bytea = customType<{ data: Buffer }>({ dataType: () => "bytea" });
 
 // Tabel sementara dari tes langkah 1. Dibiarkan supaya datanya tidak terhapus.
 export const tesData = pgTable("tes_data", {
@@ -130,6 +132,26 @@ export const materi = pgTable(
     bab: jsonb("bab").notNull(),
   },
   (t) => [index("materi_guru_idx").on(t.guruId)],
+);
+
+/**
+ * Gambar materi/soal (0.30.0): JPEG yang sudah dikecilkan di browser guru (sisi terpanjang <= 1280 px). Aturan 3: per guru,
+ * hanya pemilik (dan admin) yang bisa membukanya lewat /api/gambar/[id]. Tidak pernah dihapus (materi/set yang sudah
+ * dibuat tetap bisa menampilkan gambarnya); jumlah per guru dibatasi BATAS_GAMBAR.
+ */
+export const gambar = pgTable(
+  "gambar",
+  {
+    id: serial("id").primaryKey(),
+    guruId: text("guru_id")
+      .notNull()
+      .references(() => pengguna.id),
+    dibuat: timestamp("dibuat", { withTimezone: true }).defaultNow().notNull(),
+    lebar: integer("lebar").notNull(),
+    tinggi: integer("tinggi").notNull(),
+    data: bytea("data").notNull(),
+  },
+  (t) => [index("gambar_guru_idx").on(t.guruId)],
 );
 
 // Pemakaian AI di luar pembuatan set (aturan 4): satu baris per Ganti/Ubah/Tambah soal yang berhasil dan per analisa

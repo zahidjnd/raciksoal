@@ -1,4 +1,5 @@
 // "Materi sendiri" milik guru (langkah 8). Tanpa import "@/..." supaya bisa dites langsung: npm test
+import { rapikanGambar, type GambarBab } from "./gambar.ts";
 import { MAPEL_BAHASA_ARAB } from "./mapel.ts";
 import { arabTakTerverifikasi, bukanDalil, identitasBab, istilahArab, KELAS, korpusArab, paragrafArab, POLA_ARAB, SUMBER_BUKAN, type Bab } from "./soal.ts";
 
@@ -19,6 +20,7 @@ export type IsianMateri = {
   dalil: { sumber: string; arab: string; terjemah: string; usulan?: boolean; mushaf?: boolean; bukan?: boolean }[];
   diverifikasi: boolean; // centang: guru sudah memeriksa teks hadis / teks Arab yang tidak ada di mushaf
   pokok?: string[]; // pokok materi hasil analisa AI (opsional)
+  gambar?: GambarBab[]; // 0.30.0: gambar yang sudah diunggah (id tabel `gambar`); kepemilikan dicek di simpanMateri
   // TP dirumuskan guru (RUJUKAN.md D): kalau ada TP usulan AI (tidak tertulis di teks guru), guru wajib mencentang
   // bahwa TP sudah dibaca. Penanda diberi server saat analisa; tidak disimpan di bab.
   tpUsulan?: boolean;
@@ -105,7 +107,8 @@ export function rapikanMateri(x: Partial<IsianMateri>, id: string, cariAyat?: Ca
   const materi = isi.split("\n").map((b) => bersihkan(b.trim())).filter(Boolean);
 
   const pokok = (Array.isArray(x?.pokok) ? x.pokok : []).map((p) => bersihkan(teks(p)).slice(0, 300)).filter(Boolean).slice(0, 15);
-  return { bab: { id, mapel: bersihkan(mapel), kelas, ...(bahasa && { teksArab: "bahasa" as const }), judul: bersihkan(judul), tp, dalil, materi, ...(pokok.length && { pokok }) }, dihapus };
+  const gambar = rapikanGambar(x?.gambar).map((g) => ({ ...g, keterangan: bersihkan(g.keterangan) }));
+  return { bab: { id, mapel: bersihkan(mapel), kelas, ...(bahasa && { teksArab: "bahasa" as const }), judul: bersihkan(judul), tp, dalil, materi, ...(pokok.length && { pokok }), ...(gambar.length && { gambar }) }, dihapus };
 }
 
 /** Mapel yang teks Arabnya isi pelajaran (Tahap F; Nahwu sejak 2026-11-09). */
@@ -253,5 +256,6 @@ export function keIsian(bab: Bab): IsianMateri {
     dalil: bab.dalil.map((d) => ({ sumber: d.sumber, arab: d.arab, terjemah: d.terjemah, ...(d.mushaf && { mushaf: true }), ...(bukanDalil(d) && { bukan: true }) })),
     diverifikasi: bab.dalil.some((d) => !d.mushaf && !bukanDalil(d)),
     ...(bab.pokok?.length && { pokok: bab.pokok }),
+    ...(bab.gambar?.length && { gambar: bab.gambar }),
   };
 }

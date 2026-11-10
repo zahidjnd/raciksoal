@@ -1,4 +1,5 @@
 // Pemeriksaan hasil AI. Tanpa import "@/..." supaya bisa dites langsung: npm test
+import { BATAS_GAMBAR, type GambarBab } from "./gambar.ts";
 import { MAPEL_SEJARAH } from "./mapel.ts";
 
 export type Bentuk = "PG" | "PGK" | "BS" | "MJ" | "ISIAN" | "URAIAN";
@@ -6,6 +7,8 @@ export type Bentuk = "PG" | "PGK" | "BS" | "MJ" | "ISIAN" | "URAIAN";
 export type Soal = {
   bentuk: Bentuk;
   dalil_id: string | null;
+  // 0.30.0: gambar materi yang ditampilkan di bawah pokok soal (id tabel `gambar`, harus ada di bab.gambar), atau kosong.
+  gambar_id?: number | null;
   pertanyaan: string;
   pilihan?: string[];
   // Bentuk BS = PG kompleks Kategori (Tahap D): 4 pernyataan, masing-masing dinilai dengan sepasang label,
@@ -59,6 +62,7 @@ export type Bab = {
   dalil: { id: string; sumber: string; arab: string; terjemah: string; mufradat: { arab: string; arti: string }[]; mushaf?: boolean; bukan?: boolean }[];
   materi: string[];
   pokok?: string[]; // pokok-pokok materi hasil analisa AI (ringkasan untuk guru & sebaran soal)
+  gambar?: GambarBab[]; // 0.30.0: gambar materi yang dipilih guru (AI melihatnya, soal boleh memakainya lewat gambar_id)
 };
 
 /** Maksimal materi yang digabung dalam satu set (PTS/PAS). */
@@ -81,6 +85,7 @@ export function gabungBab(babs: Bab[]): Bab {
     dalil: babs.flatMap((b) => b.dalil).map((d, i) => ({ ...d, id: `dalil-${i + 1}` })),
     materi: babs.flatMap((b) => [`MATERI: ${b.judul}`, ...b.materi]),
     pokok: babs.flatMap((b) => b.pokok ?? []),
+    gambar: babs.flatMap((b) => b.gambar ?? []).slice(0, BATAS_GAMBAR.perSet),
   };
 }
 
@@ -93,6 +98,7 @@ export type BarisKisi = {
   indikator: string;
   level: string;
   dalil_id: string | null;
+  gambar_id?: number | null; // 0.30.0: gambar materi yang dipakai soal ini (direncanakan di kisi-kisi)
   stimulus: string; // jenis + skenario singkat, supaya skenario tidak berulang dalam satu set
   peringatan?: string[]; // diisi aplikasi (aturan 5: teks Arab tak terverifikasi)
   grup?: number | null; // soal grup (Latihan TKA): nomor grup, atau null untuk soal tunggal
@@ -252,6 +258,7 @@ export function periksaKisi(data: unknown, jumlah: Record<Bentuk, number>, bab: 
   const teks = (x: unknown) => String(x ?? "").trim();
   const mentah = Array.isArray(data) ? (data as Partial<BarisKisi>[]) : [];
   const dalilAda = new Set(bab.dalil.map((d) => d.id));
+  const gambarAda = new Set((bab.gambar ?? []).map((g) => g.id));
   const arabAsingDi = pemeriksaArab(bab, cekAyat);
   const hasil = URUTAN_BENTUK.flatMap((b) => {
     const baris = mentah.filter((k) => teks(k?.bentuk).toUpperCase() === b).slice(0, jumlah[b]);
@@ -268,6 +275,7 @@ export function periksaKisi(data: unknown, jumlah: Record<Bentuk, number>, bab: 
         ...(jawaban && { jawaban }),
         level: teks(k.level).toUpperCase(),
         dalil_id: k.dalil_id && dalilAda.has(teks(k.dalil_id)) ? teks(k.dalil_id) : null,
+        gambar_id: b !== "MJ" && gambarAda.has(Number(k.gambar_id)) ? Number(k.gambar_id) : null,
         peringatan: arabAsing.length ? [`Teks Arab tidak cocok dengan data terverifikasi: ${arabAsing.join(" | ")}`] : [],
         // nomor grup usulan AI; disahkan/dinomori ulang oleh pasangWacana
         grup: k.grup !== null && k.grup !== undefined && Number.isInteger(Number(k.grup)) ? Number(k.grup) : null,
@@ -320,6 +328,8 @@ export function samakanDenganKisi(soal: Soal, k: BarisKisi): Soal {
     bentuk: k.bentuk,
     tp: k.tp || soal.tp,
     level: LEVEL.includes(k.level) ? k.level : soal.level,
+    // Gambar mengikuti rencana kisi-kisi: AI hanya melihat gambar yang direncanakan untuk soal itu.
+    gambar_id: k.gambar_id ?? null,
     // grup = wacana bersama (TKA) atau blok menjodohkan gaya lama (tanpa wacana)
     ...(k.grup && k.wacana ? { grup: k.grup, wacana: k.wacana } : k.grup && k.bentuk === "MJ" ? { grup: k.grup } : {}),
   };
@@ -448,6 +458,7 @@ export function rapikanSoal(s: Partial<Soal>, bentuk: Bentuk): Soal {
   return {
     bentuk,
     dalil_id: s.dalil_id ? teks(s.dalil_id) : null,
+    gambar_id: Number.isInteger(Number(s.gambar_id)) && Number(s.gambar_id) > 0 ? Number(s.gambar_id) : null,
     pertanyaan: teks(s.pertanyaan),
     ...(bentuk === "PG" || bentuk === "PGK" ? { pilihan: [0, 1, 2, 3, 4].map((i) => teks(s.pilihan?.[i])) } : {}),
     ...(kategori
@@ -714,6 +725,9 @@ function acakPernyataan(s: Soal, acak: () => number) {
   s.kunci = urut.map((i) => k[i]);
 }
 
+// "Perhatikan gambar berikut", "gambar di atas", "pada gambar tersebut" (bukan "menggambarkan" / "gambaran").
+const SEBUT_GAMBAR = /\bgambar\s+(berikut|di\s?(atas|bawah)|tersebut|ini)\b|\b(pada|dari|dalam)\s+gambar\b/i;
+
 /** Beri peringatan pada soal yang bermasalah. Aturan 5: teks Arab hanya boleh dari data terverifikasi. */
 export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
   const arabAsingDi = pemeriksaArab(bab, cekAyat);
@@ -721,6 +735,7 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
   const teksMateri = [bab.judul, ...bab.tp.map((t) => t.teks), ...bab.materi, ...(bab.pokok ?? [])].join(" ");
   const angkaMateri = MAPEL_SEJARAH.test(identitasBab(bab).mapel) ? new Set((teksMateri.match(/\d+/g) ?? []).map((n) => String(Number(n)))) : null;
   const dalilAda = new Set(bab.dalil.map((d) => d.id));
+  const gambarAda = new Set((bab.gambar ?? []).map((g) => g.id));
   return soal.map((asli, i) => {
     // Bersihkan kode dalil yang bocor; kalau AI lupa mengisi dalil_id, pakai kode yang ditemukan di teks.
     let ditemukan: string | null = null;
@@ -739,7 +754,10 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
       ...(Array.isArray(asli.jawaban) ? { jawaban: asli.jawaban.map(bersih) } : {}),
     });
     if (!s.dalil_id && ditemukan) s.dalil_id = ditemukan;
+    // Gambar yang tidak ada di materi dibuang; soal yang menyebut gambar tanpa gambar ditandai.
+    if (s.gambar_id != null && !gambarAda.has(Number(s.gambar_id))) s.gambar_id = null;
     const peringatan: string[] = [];
+    if (!s.gambar_id && SEBUT_GAMBAR.test(`${s.wacana ?? ""} ${s.pertanyaan}`)) peringatan.push("Soal menyebut gambar, tetapi tidak ada gambar yang ditampilkan. Pilih gambarnya lewat Edit, atau ubah kalimatnya.");
     const semuaTeks = [s.wacana ?? "", s.pertanyaan, ...(s.pilihan ?? []), ...(s.pernyataan ?? []), ...(s.premis ?? []), ...(s.jawaban ?? []), ...[s.kunci].flat(), ...(s.kunciAlt ?? []), s.pembahasan, ...(s.rubrik ?? []).map((r) => r.kriteria)];
     const arabAsing = semuaTeks.flatMap((t) => arabAsingDi(String(t ?? "")));
     if (arabAsing.length)
@@ -761,7 +779,7 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
     // HOTS wajib stimulus (ATURAN-SOAL 1c no. 3). Batas 80 huruf diukur 2026-11-07 pada ±100 soal C4–C6 lama tanpa
     // wacana/dalil: hanya pertanyaan yang benar-benar kosong ("Tentukan apakah setiap pernyataan berikut Benar atau Salah!")
     // yang kena. Menjodohkan dilewati: isinya ada di pasangan, perintahnya memang pendek.
-    if (/^C[4-6]$/i.test(s.level ?? "") && s.bentuk !== "MJ" && !s.wacana && !s.dalil_id && String(s.pertanyaan ?? "").trim().length < 80)
+    if (/^C[4-6]$/i.test(s.level ?? "") && s.bentuk !== "MJ" && !s.wacana && !s.dalil_id && !s.gambar_id && String(s.pertanyaan ?? "").trim().length < 80)
       peringatan.push(`Soal HOTS (${s.level}) tanpa stimulus: tambahkan kasus, data, atau teks yang harus diolah siswa untuk menjawab.`);
     if (s.bentuk === "PG" && kunciTerpanjang(s)) peringatan.push("Jawaban benar jauh lebih panjang dari semua pengecoh, jadi mudah ditebak. Samakan panjang dan kerincian pilihan.");
     if (s.bentuk === "PGK" && !KUNCI_PGK.includes(new Set([s.kunci].flat()).size)) peringatan.push("Kunci PG kompleks harus 2 sampai 4 jawaban (tidak semua pilihan).");

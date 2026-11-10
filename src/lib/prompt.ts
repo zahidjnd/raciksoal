@@ -222,6 +222,7 @@ export function buatSistem(bab: Bab, tka = false) {
 
   const { mapel, kelas } = identitasBab(bab);
   const adaDalil = bab.dalil.length > 0;
+  const adaGambar = !!bab.gambar?.length;
 
   // Aturan baku: ATURAN-SOAL.md (disetujui pemilik 2026-10-20). Ubah di sana dulu, baru di sini.
   // Aturan 5: bagian teks Arab hanya dikirim bila materi punya dalil; tanpa dalil, AI dilarang mengutip ayat/hadis sama sekali.
@@ -279,7 +280,7 @@ LEVEL KOGNITIF (taksonomi Bloom revisi):
 STIMULUS (berlaku untuk seluruh set soal, lintas bentuk soal):
 - Kontekstual dan dekat dengan kehidupan siswa MA (madrasah, pesantren, keluarga, masyarakat, media sosial).
 - Ragamkan bentuknya: kasus/cerita pendek tentang satu orang, cuplikan berita, data dalam tabel, grafik atau gambar yang dideskripsikan dengan kata, teks bacaan, potongan percakapan, kutipan tokoh, hasil percobaan (boleh dengan kelompok kontrol), perbandingan dua kondisi (misalnya wilayah X dan Y), potongan dokumen sejarah, atau tanpa stimulus.
-- Aplikasi tidak bisa menampilkan gambar: jangan menulis "perhatikan gambar berikut" kecuali gambarnya dideskripsikan lengkap dengan kata.
+${adaGambar ? ATURAN_GAMBAR : '- Materi ini tanpa gambar, jadi aplikasi tidak bisa menampilkan gambar: JANGAN menulis "perhatikan gambar", "gambar berikut", atau "gambar di atas". Bila perlu, deskripsikan bentuknya dengan kata tanpa menyebutnya gambar (misalnya "Sebuah segitiga siku-siku ABC dengan sisi AB = 3 cm ...").'}
 - Susunan baris: percakapan/dialog/hiwar ditulis SATU PENUTUR PER BARIS dengan format "Nama: ucapan", baris dipisah baris baru (\\n di dalam teks JSON). Daftar bernomor, langkah prosedur, puisi/syair, dan surat/pesan singkat juga satu bagian per baris. Kalimat pengantar ("Perhatikan percakapan berikut!") dan perintah soal ditulis di baris sendiri. TANPA baris kosong di antara baris-baris (satu \\n saja). Bagian rumpang ditulis "..." atau "(1) ..." di dalam baris ucapan. Teks cerita atau uraian biasa tetap satu paragraf. Berlaku untuk "pertanyaan", "wacana", "pilihan", dan "pernyataan".
 - TABEL: data yang lebih jelas dibaca berbaris-berkolom (data percobaan, perbandingan, angka statistik, daftar ciri) ditulis sebagai tabel di "pertanyaan", "wacana", atau "pembahasan", aplikasi menampilkannya sebagai tabel sungguhan. Format: setiap baris tabel di baris sendiri diawali dan diakhiri "|", sel dipisah "|", baris pertama = judul kolom, lalu baris pemisah "|---|---|", contoh: "Perhatikan data berikut!\\n| Kelompok | Suhu (°C) | Waktu (menit) |\\n|---|---|---|\\n| A | 30 | 12 |\\n| B | 40 | 8 |\\nKesimpulan yang tepat adalah ....". Maksimal 6 kolom × 10 baris isi, sel singkat (angka, kata, atau frasa pendek), tanpa tanda "|" di dalam sel. Kalimat pengantar dan perintah soal di baris sendiri, di luar tabel. JANGAN memakai tabel di "pilihan", "pernyataan", atau soal MJ. Data tabel diambil dari materi atau dibuat konsisten dengan materi; untuk soal C3 ke atas, kunci TIDAK boleh terbaca langsung dari satu sel tanpa diolah. Tidak wajib: pakai tabel hanya bila memang membantu.
 - RUMUS: rumus, persamaan, pecahan, akar, pangkat, indeks, dan simbol matematika/sains ditulis dalam LaTeX diapit SATU tanda "$" di kiri dan kanan, di baris yang sama, aplikasi menampilkannya sebagai rumus sungguhan. Di dalam JSON setiap garis miring terbalik WAJIB ditulis ganda, contoh: "Jika $v = \\\\frac{s}{t}$ dan $s = 1{,}2 \\\\times 10^{3}$ m, ...", "$\\\\sqrt{2}$", "$\\\\Delta T$", "$x^{2} - 4 \\\\geq 0$", "$\\\\text{CO}_{2}$". Desimal memakai koma dengan kurung kurawal: $2{,}5$. Satuan di luar "$" atau dengan \\\\text{}. Angka biasa dan satuan yang berdiri sendiri ("12 m/s", "2,5 kg", "Rp 15.000") TANPA "$". Jangan memakai "$$", "\\\\(", "\\\\[", atau lingkungan \\\\begin{...}; satu rumus = satu potongan "$...$". Boleh di "pertanyaan", "wacana", "pilihan", "kunci", dan "pembahasan" (juga di sel tabel).
@@ -296,7 +297,7 @@ PENGECOH DAN PEMBAHASAN:
 ${bentukSoal(tka)}
 
 FORMAT JAWABAN (kecuali permintaan menyebut format lain): hanya JSON (tanpa teks lain), dengan bentuk:
-{"soal":[{"bentuk":"PG","dalil_id":null,"pertanyaan":"...","langkah":"...","jawaban_benar":"...","pilihan":["...","...","...","...","..."],"kunci":"B","pembahasan":"...","level":"C2","tp":"TP 3.2","skor":1}]}
+{"soal":[{"bentuk":"PG","dalil_id":null,${adaGambar ? '"gambar_id":null,' : ""}"pertanyaan":"...","langkah":"...","jawaban_benar":"...","pilihan":["...","...","...","...","..."],"kunci":"B","pembahasan":"...","level":"C2","tp":"TP 3.2","skor":1}]}
 ${formatBsMj(tka)}
 Untuk ISIAN: {"bentuk":"ISIAN","dalil_id":null,"pertanyaan":"Kata yang menunjukkan tempat adalah ....","kunci":"mahall","kunciAlt":[],"pembahasan":"...","level":"C1","tp":"TP 3.2","skor":1}
 Untuk URAIAN tambahkan "rubrik", setiap kriteria menyebut skor penuh DAN skor sebagian dengan skala yang SAMA dengan "skor" kriteria itu; contoh bila jumlah skor rubrik 5: [{"kriteria":"Menyebut tiga syarat sah salat Jumat (3 = tiga benar; 2 = dua benar; 1 = satu benar; 0 = tidak ada yang benar)","skor":3},{"kriteria":"Menjelaskan alasan dengan tepat (2 = alasan tepat dan lengkap; 1 = alasan kurang lengkap; 0 = salah atau kosong)","skor":2}]. "tp" diisi kode TP yang paling sesuai.
@@ -307,7 +308,7 @@ Judul: ${bab.judul}
 
 Tujuan Pembelajaran:
 ${bab.tp.map((t) => `${t.kode}: ${t.teks}`).join("\n")}
-${adaDalil ? `\nDalil:\n${dalil}\n` : ""}${bab.pokok?.length ? `\nPokok materi (sebar soal ke semua pokok ini):\n${bab.pokok.map((p) => `- ${p}`).join("\n")}\n` : ""}
+${adaDalil ? `\nDalil:\n${dalil}\n` : ""}${adaGambar ? `\nGambar materi (gambarnya dikirim bersama permintaan bila diperlukan; keterangan dari guru):\n${bab.gambar!.map((g) => `[gambar_id: ${g.id}] ${g.keterangan || "(tanpa keterangan: lihat gambarnya)"}`).join("\n")}\n` : ""}${bab.pokok?.length ? `\nPokok materi (sebar soal ke semua pokok ini):\n${bab.pokok.map((p) => `- ${p}`).join("\n")}\n` : ""}
 Materi:
 ${bab.materi.join("\n")}`;
 }
@@ -510,7 +511,8 @@ const KUNCI_CATATAN = `Ikuti catatan guru sepenuhnya, walau berbeda dengan atura
 4. Isi yang dilarang (SARA, politik praktis, pornografi, propaganda, kekerasan, merek dagang).`;
 
 /** Langkah 6: minta KISI-KISI (rencana semua soal) dulu, dalam satu panggilan, supaya skenario tidak berulang. */
-export function buatPermintaanKisi(p: Pengaturan, bab?: Pick<Bab, "teksArab">) {
+export function buatPermintaanKisi(p: Pengaturan, bab?: Pick<Bab, "teksArab" | "gambar">) {
+  const adaGambar = !!bab?.gambar?.length;
   // Mode "bahasa" (Bahasa Arab): kosakata/kalimat Arab boleh ditulis; selain itu semua Arab ditulis dengan transliterasi.
   const tanpaArab = bab?.teksArab !== "bahasa";
   const urutan = urutanBentuk(p.jumlah);
@@ -543,12 +545,16 @@ Isi setiap baris:
 - "indikator": indikator soal gaya Kemenag, diawali "Disajikan ..., peserta didik dapat ..." bila memakai stimulus, atau "Peserta didik dapat ..." bila tanpa stimulus; kata kerja operasional sesuai level.
 - "level": satu level di dalam kategori nomor itu (LOTS = C1 atau C2, MOTS = C3, HOTS = C4, C5, atau C6).
 - "dalil_id": id dalil yang dipakai, atau null. Bila DATA BAB memuat dalil, sebar ke semua dalil.
-- "stimulus": jenis stimulus + skenario singkat (maks 15 kata), atau "tanpa stimulus". Ikuti aturan STIMULUS: setiap skenario BERBEDA satu sama lain dalam seluruh kisi-kisi.
+${adaGambar ? `${RENCANA_GAMBAR}\n` : ""}- "stimulus": jenis stimulus + skenario singkat (maks 15 kata), atau "tanpa stimulus". Ikuti aturan STIMULUS: setiap skenario BERBEDA satu sama lain dalam seluruh kisi-kisi.
 Indikator antarbaris juga tidak boleh sama persis; ambil sisi materi yang berbeda${p.jumlah.MJ && p.tujuan !== TKA ? " (KECUALI baris MJ dalam BLOK MJ yang sama: lihat aturan MJ)" : ""}.
 SATU KETERAMPILAN = SATU NOMOR: kata kerja + objek yang sama (misalnya "menghitung tingkat inflasi dari data IHK", "menyebutkan syarat mukjizat") hanya boleh dipakai SATU baris dalam seluruh kisi-kisi, lintas bentuk. Mengganti sinonim kata kerja ("menghitung" → "menyimpulkan ... dalam persen"), angka data, nama tokoh, atau kasusnya TIDAK membuatnya berbeda. Ambil keterampilan lain dari TP yang sama (misalnya menafsirkan hasil hitungan, menentukan penyebab, membandingkan, menggolongkan).${p.jumlah.URAIAN ? " Pengecualian: baris URAIAN boleh memperdalam keterampilan satu baris lain (langkah lengkap atau alasan), asalkan bukan pertanyaan yang sama." : ""}
 ${p.jumlah.ISIAN ? `${RENCANA_ISIAN}\n` : ""}${p.jumlah.MJ ? `${RENCANA_MJ}\n` : ""}${tanpaArab ? 'Di kisi-kisi JANGAN menulis huruf Arab sama sekali; sebut lafaz dengan transliterasi Latin (misalnya "lā taqrabū az-zinā").' : "Di kisi-kisi boleh menulis kosakata/kalimat Arab buatan sendiri, tetapi JANGAN menulis ayat atau hadis."}
-${p.tujuan === TKA ? `${SOAL_GRUP}${tanpaArab ? " Wacana tanpa huruf Arab." : " Wacana boleh berbahasa Arab, tetapi bukan ayat atau hadis."}\n` : ""}${p.catatan ? `${TANGGAPAN}\n` : ""}FORMAT JAWABAN untuk permintaan ini: hanya JSON {${p.catatan ? '"tanggapan":"...",' : ""}"kisi":[{"bentuk":"PG","tp":"TP 3.1","materi":"...","indikator":"...","level":"C2","dalil_id":null,"stimulus":"tanpa stimulus"${p.tujuan === TKA ? ',"grup":null' : ""}}${p.jumlah.ISIAN ? ',{"bentuk":"ISIAN",...,"jawaban":"..."}' : ""}]${p.tujuan === TKA ? ',"wacana":[{"grup":1,"teks":"..."}]' : ""}}`;
+${p.tujuan === TKA ? `${SOAL_GRUP}${tanpaArab ? " Wacana tanpa huruf Arab." : " Wacana boleh berbahasa Arab, tetapi bukan ayat atau hadis."}\n` : ""}${p.catatan ? `${TANGGAPAN}\n` : ""}FORMAT JAWABAN untuk permintaan ini: hanya JSON {${p.catatan ? '"tanggapan":"...",' : ""}"kisi":[{"bentuk":"PG","tp":"TP 3.1","materi":"...","indikator":"...","level":"C2","dalil_id":null,${adaGambar ? '"gambar_id":null,' : ""}"stimulus":"tanpa stimulus"${p.tujuan === TKA ? ',"grup":null' : ""}}${p.jumlah.ISIAN ? ',{"bentuk":"ISIAN",...,"jawaban":"..."}' : ""}]${p.tujuan === TKA ? ',"wacana":[{"grup":1,"teks":"..."}]' : ""}}`;
 }
+
+// ATURAN-SOAL.md bagian 4 no. 5 (0.30.0): gambar dari materi guru. Hanya dikirim bila bab punya gambar.
+const ATURAN_GAMBAR = `- GAMBAR: DATA BAB memuat gambar materi (lihat "Gambar materi"; gambarnya dikirim bersama permintaan). Soal boleh memakai SATU gambar sebagai stimulus dengan mengisi "gambar_id"; aplikasi menampilkan gambar itu di bawah pokok soal, jadi tulis misalnya "Perhatikan gambar berikut!" lalu perintah/pertanyaannya. JANGAN menulis id gambar di teks. Soal bergambar harus benar-benar perlu melihat gambar untuk dijawab (menunjuk bagian berlabel, membaca grafik/diagram/peta, mengamati hasil percobaan), dan jawabannya sesuai yang TAMPAK di gambar: jangan mengarang bagian, label, angka, atau warna yang tidak ada di gambar. Pokok soal tidak menjelaskan isi gambar sampai jawabannya terbaca tanpa melihat gambar. Teks Arab di dalam gambar jangan diketik ulang. Soal tanpa gambar: "gambar_id": null, dan jangan menulis "perhatikan gambar" (gambar lain tidak bisa ditampilkan).`;
+const RENCANA_GAMBAR = `- "gambar_id": id gambar dari "Gambar materi" bila soal itu memakai gambar sebagai stimulus, atau null. Usahakan setiap gambar terpakai minimal satu soal (pada TP yang cocok); satu gambar boleh dipakai beberapa soal asalkan yang ditanyakan berbeda. Gambar paling cocok untuk soal yang menunjuk bagian, membaca data, atau mengamati; tidak untuk soal MJ. "stimulus" baris bergambar: "gambar: <apa yang diamati>".`;
 
 // ATURAN-SOAL.md bagian 9 no. 4: soal grup TKA. Dibatasi bentuk sama supaya lembar soal tetap per bagian bentuk.
 const SOAL_GRUP = `SOAL GRUP (gaya TKA): nomor yang ditandai GRUP N di atas SUDAH DITENTUKAN sebagai soal grup: semua nomor dengan GRUP yang sama memakai SATU wacana bersama.
@@ -568,7 +574,7 @@ const RENCANA_MJ = `- Baris MJ (menjodohkan): setiap baris = SATU pasangan (satu
 
 /** Baris kisi-kisi dalam bentuk ringkas untuk permintaan soal. */
 const tulisKisi = (k: BarisKisi) =>
-  `- Nomor ${k.no} | ${k.bentuk} | ${k.tp} | ${k.level} | dalil_id: ${k.dalil_id ?? "null"} | Indikator: ${k.indikator} | Stimulus: ${k.grup && k.wacana ? `WACANA GRUP ${k.grup}` : k.stimulus}${k.jawaban ? ` | Jawaban (kunci): ${k.jawaban}` : ""}${k.kunciPgk ? ` | Jumlah jawaban benar: ${k.kunciPgk}` : ""}${k.jumlahPernyataan ? ` | Jumlah pernyataan: ${k.jumlahPernyataan}` : ""}${k.kunciBs ? ` | Kunci: ${k.kunciBs}` : ""}${k.bentuk === "MJ" && k.grup && !k.wacana ? ` | Blok MJ ${k.grup}` : ""}`;
+  `- Nomor ${k.no} | ${k.bentuk} | ${k.tp} | ${k.level} | dalil_id: ${k.dalil_id ?? "null"}${k.gambar_id ? ` | gambar_id: ${k.gambar_id}` : ""} | Indikator: ${k.indikator} | Stimulus: ${k.grup && k.wacana ? `WACANA GRUP ${k.grup}` : k.stimulus}${k.jawaban ? ` | Jawaban (kunci): ${k.jawaban}` : ""}${k.kunciPgk ? ` | Jumlah jawaban benar: ${k.kunciPgk}` : ""}${k.jumlahPernyataan ? ` | Jumlah pernyataan: ${k.jumlahPernyataan}` : ""}${k.kunciBs ? ` | Kunci: ${k.kunciBs}` : ""}${k.bentuk === "MJ" && k.grup && !k.wacana ? ` | Blok MJ ${k.grup}` : ""}`;
 
 /**
  * Daftar jawaban isian rencana kisi-kisi yang TIDAK boleh tertulis di soal lain (ATURAN-SOAL 2b no. 11), untuk setiap

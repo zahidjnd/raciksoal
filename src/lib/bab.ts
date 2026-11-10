@@ -1,9 +1,9 @@
 // Sumber data bab: materi milik guru (tabel `materi`, langkah 8). Bab bawaan (src/data) tidak lagi bisa dipilih
 // (keputusan pemilik 2026-10-20: Bab III hanya uji coba), tapi datanya tetap dipakai untuk membuka set lama.
 // Sengaja BUKAN file "use server": fungsi di sini menerima guruId, jadi tidak boleh bisa dipanggil dari browser.
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { materi } from "@/db/schema";
+import { gambar, materi } from "@/db/schema";
 import { DAFTAR_BAB } from "@/data";
 import type { Bab } from "./soal";
 
@@ -34,6 +34,23 @@ export async function daftarBabMilik(guruId: string) {
     .orderBy(desc(materi.diubah));
   // Materi lama tanpa mapel = Al-Qur'an Hadis kelas XI (sama dengan identitasBab).
   return milik.map((m) => ({ id: `materi-${m.id}`, judul: m.judul, mapel: m.mapel || "Al-Qur'an Hadis", kelas: m.kelas || "XI", huruf: m.huruf, diubah: m.diubah }));
+}
+
+/** Isi gambar (JPEG) milik `guruId` saja (aturan 3): id → data + ukuran. Id milik guru lain tidak ikut. */
+export async function dataGambar(ids: number[], guruId: string) {
+  const unik = [...new Set(ids.filter((x) => Number.isInteger(x) && x > 0))];
+  const baris = unik.length
+    ? await db.select({ id: gambar.id, data: gambar.data, lebar: gambar.lebar, tinggi: gambar.tinggi }).from(gambar).where(and(inArray(gambar.id, unik), eq(gambar.guruId, guruId)))
+    : [];
+  return new Map(baris.map((b) => [b.id, b]));
+}
+
+/** Id gambar yang memang milik `guruId` (tanpa mengambil isinya). */
+export async function gambarMilik(ids: number[], guruId: string) {
+  const unik = [...new Set(ids.filter((x) => Number.isInteger(x) && x > 0))];
+  if (!unik.length) return new Set<number>();
+  const baris = await db.select({ id: gambar.id }).from(gambar).where(and(inArray(gambar.id, unik), eq(gambar.guruId, guruId)));
+  return new Set(baris.map((b) => b.id));
 }
 
 /** Bab sebuah set: salinan yang disimpan saat set dibuat; set lama (tanpa salinan) memakai bab bawaan. */

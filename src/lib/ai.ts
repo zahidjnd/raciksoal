@@ -7,6 +7,7 @@
 //   AIn_MAX_TOKENS  batas panjang jawaban (bawaan 8000)
 //   AIn_EXTRA_BODY  JSON tambahan khusus penyedia, misalnya mematikan "berpikir" DeepSeek:
 //                   AI_EXTRA_BODY='{"thinking":{"type":"disabled"}}'
+//   AIn_GAMBAR=0    model ini tidak bisa melihat gambar: gambar materi tidak dikirim (AI hanya membaca keterangannya)
 // Batas waktu bersama: AI_TIMEOUT_MS.
 
 const awalan = (slot: number) => (slot === 1 ? "AI_" : `AI${slot}_`);
@@ -21,6 +22,7 @@ function konfigurasi(slot: number) {
     kunci: process.env[`${a}API_KEY`],
     maksToken: Number(process.env[`${a}MAX_TOKENS`] ?? process.env.AI_MAX_TOKENS ?? 8000),
     tambahan: process.env[`${a}EXTRA_BODY`] ?? "",
+    gambar: process.env[`${a}GAMBAR`] !== "0",
   };
 }
 
@@ -59,8 +61,14 @@ export function daftarModel() {
   });
 }
 
-/** `sampai` (opsional) = batas waktu total dalam milidetik epoch: timeout dipendekkan dan coba ulang dihentikan. */
-export async function tanyaAI(sistem: string, pengguna: string, slot = 1, sampai = Infinity) {
+/** Gambar untuk AI: `label` ditulis tepat sebelum gambarnya (mis. "[gambar_id: 12] Sel hewan"), `url` = data:image/jpeg;base64,... */
+export type GambarAI = { label: string; url: string };
+
+/**
+ * `sampai` (opsional) = batas waktu total dalam milidetik epoch: timeout dipendekkan dan coba ulang dihentikan.
+ * `gambar` dikirim di awal pesan pengguna (sebelum teks permintaan, supaya bagian yang sama antartahap tetap di depan).
+ */
+export async function tanyaAI(sistem: string, pengguna: string, slot = 1, sampai = Infinity, gambar: GambarAI[] = []) {
   const k = konfigurasi(slot);
   if (!k) throw new Error(`Model AI nomor ${slot} belum diatur di .env.`);
   let tambahan = {};
@@ -74,7 +82,12 @@ export async function tanyaAI(sistem: string, pengguna: string, slot = 1, sampai
     model: k.model,
     messages: [
       { role: "system", content: sistem },
-      { role: "user", content: pengguna },
+      {
+        role: "user",
+        content: gambar.length && k.gambar
+          ? [...gambar.flatMap((g) => [{ type: "text", text: g.label }, { type: "image_url", image_url: { url: g.url } }]), { type: "text", text: pengguna }]
+          : pengguna,
+      },
     ],
     response_format: { type: "json_object" },
     max_tokens: k.maksToken,

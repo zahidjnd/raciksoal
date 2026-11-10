@@ -52,6 +52,22 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.30.0 — 10 November 2026
+- **Gambar di soal.** Soal kini bisa memakai gambar (diagram sel, peta, grafik, rangkaian, bangun ruang, dan lain-lain).
+  Gambar tampil di bawah pertanyaan, di web maupun di file Word lembar soal (ikut ke Paket A–D).
+- **Gambar dari materi guru.** Di kartu materi ada bagian **Gambar**: gambar di file Word/PowerPoint muncul untuk diklik
+  (yang dipakai saja), atau guru menambah sendiri lewat **+ Tambah gambar** atau **tempel (Ctrl+V)**, misalnya tangkapan
+  layar dari PDF. Maksimal 10 gambar per materi; boleh diberi keterangan singkat.
+- **AI melihat gambarnya.** AI membaca isi gambar (bukan hanya keterangannya), merencanakan nomor mana yang bergambar di
+  kisi-kisi, lalu menulis soal seperti "Perhatikan gambar berikut! Bagian yang ditunjuk huruf D adalah ....".
+  AI **tidak bisa membuat gambar sendiri**; gambar selalu dari guru.
+- **Edit gambar per soal.** Di Edit (dan Tulis soal sendiri) ada pilihan **Gambar soal**: tanpa gambar, salah satu gambar
+  materi, atau unggah/tempel gambar baru.
+- Soal yang menulis "perhatikan gambar" tetapi tidak ada gambarnya ditandai merah.
+- Gambar tiap guru terpisah: guru lain tidak bisa membuka gambar Anda.
+- Biaya AI: naik sedikit hanya untuk materi bergambar (±250–1.500 token per gambar per tahap yang memakainya).
+- Belum: gambar di dalam PDF belum diambil otomatis (tempel tangkapan layarnya); tabel & rumus dari PDF menyusul.
+
 ## 0.29.0 — 10 November 2026
 - **Rumus di soal.** Pecahan, akar, pangkat, indeks, huruf Yunani, dan simbol (×, ≤, Δ, …) kini tampil sebagai rumus
   sungguhan di soal, pilihan jawaban, kunci, wacana, dan pembahasan. Di file Word rumusnya menjadi **rumus Word asli**

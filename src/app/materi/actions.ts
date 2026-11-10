@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { materi } from "@/db/schema";
 import { BATAS_MATERI, keIsian, rapikanMateri, type IsianMateri } from "@/lib/materi";
+import { gambarMilik } from "@/lib/bab";
 import { mushaf } from "@/lib/mushaf";
 import { penggunaSaatIni } from "@/lib/sesi";
 
@@ -39,6 +40,12 @@ export async function simpanMateri(id: number | null, isian: IsianMateri) {
   if (!saya) return { ok: false as const, pesan: SESI_HABIS };
   const r = rapikanMateri(isian, "", mushaf().cari);
   if (typeof r === "string") return { ok: false as const, pesan: r };
+  // Aturan 3: hanya gambar milik guru sendiri yang boleh masuk materinya (id gambar guru lain dibuang diam-diam).
+  if (r.bab.gambar) {
+    const milik = await gambarMilik(r.bab.gambar.map((g) => g.id), saya.id);
+    r.bab.gambar = r.bab.gambar.filter((g) => milik.has(g.id));
+    if (!r.bab.gambar.length) delete r.bab.gambar;
+  }
 
   let idBaru = id;
   if (id) {

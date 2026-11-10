@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { analisaMateri } from "./actions";
+import { Gambar, gambarTempelan, TombolGambar, unggah } from "./gambar";
 import { ambilAyat } from "./materi/actions";
 import { Teks } from "./kartu-soal";
 import { Panah } from "./panah";
+import { BATAS_GAMBAR } from "@/lib/gambar";
 import { BATAS_MATERI, type IsianMateri } from "@/lib/materi";
+import type { GambarFile } from "@/lib/office";
 import { DAFTAR_MAPEL } from "@/lib/mapel";
 import { bukanDalil, istilahArab, KELAS, MAKS_GABUNG, SUMBER_BUKAN } from "@/lib/soal";
 import { NAMA_SURAH } from "@/lib/surah";
@@ -36,7 +39,7 @@ type Props = {
 };
 
 const kotak = "w-full rounded-lg border p-2 text-sm";
-type FileMateri = { nama: string; paragraf: string[] };
+type FileMateri = { nama: string; paragraf: string[]; gambar: GambarFile[] };
 const huruf = (f: FileMateri) => f.paragraf.join("\n").length;
 const angka = (n: number) => n.toLocaleString("id-ID");
 const BATAS_FILE = 30 * 1024 * 1024;
@@ -92,7 +95,10 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
     try {
       const { bacaFileOffice } = await import("@/lib/office"); // dimuat hanya saat dipakai; file dibaca di perangkat guru
       const baru: FileMateri[] = [];
-      for (const f of daftarFile) baru.push({ nama: f.name, paragraf: (await bacaFileOffice(await f.arrayBuffer(), f.name)).semua });
+      for (const f of daftarFile) {
+        const isi = await bacaFileOffice(await f.arrayBuffer(), f.name);
+        baru.push({ nama: f.name, paragraf: isi.semua, gambar: isi.gambar });
+      }
       const gabung = [...file, ...baru];
       setFile(gabung);
       setProses("");
@@ -131,7 +137,7 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
       })}
 
       {draf ? (
-        <KartuMateri draf={draf} setDraf={setDraf} judul="Materi baru (hasil analisa AI, silakan periksa)" batal={() => { setDraf(null); setTeks(""); setFile([]); setPesan(null); }} />
+        <KartuMateri draf={draf} setDraf={setDraf} calon={file.flatMap((f) => f.gambar)} judul="Materi baru (hasil analisa AI, silakan periksa)" batal={() => { setDraf(null); setTeks(""); setFile([]); setPesan(null); }} />
       ) : (
         !penuh && (
           <div className="space-y-2">
@@ -213,7 +219,7 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
  * Kartu materi: dipakai bersama oleh Set baru (hasil analisa AI) dan halaman Materi saya (tambah/ubah).
  * Semua bisa diedit guru. Ayat diambil dari mushaf ("Ambil ayat"); hadis diketik guru dan wajib dicentang (aturan 5).
  */
-export function KartuMateri({ draf, setDraf, judul, batal }: { draf: IsianMateri; setDraf: (d: IsianMateri) => void; judul: string; batal?: () => void }) {
+export function KartuMateri({ draf, setDraf, judul, batal, calon }: { draf: IsianMateri; setDraf: (d: IsianMateri) => void; judul: string; batal?: () => void; calon?: GambarFile[] }) {
   const ubah = (sebagian: Partial<IsianMateri>) => setDraf({ ...draf, ...sebagian });
   const ubahDalil = (i: number, sebagian: Partial<IsianMateri["dalil"][number]>) =>
     ubah({ dalil: draf.dalil.map((d, j) => (j === i ? { ...d, ...sebagian } : d)) });
@@ -361,11 +367,117 @@ export function KartuMateri({ draf, setDraf, judul, batal }: { draf: IsianMateri
           </p>
         </div>
       </details>
+      <BagianGambar gambar={draf.gambar ?? []} ubah={(gambar) => ubah({ gambar })} calon={calon ?? []} />
       <details>
         <summary className="cursor-pointer text-pudar">Lihat / ubah teks materi ({draf.isi.length.toLocaleString("id-ID")} huruf)</summary>
         <textarea dir="auto" rows={8} className={`${kotak} mt-1`} value={draf.isi} onChange={(e) => ubah({ isi: e.target.value })} />
       </details>
     </div>
+  );
+}
+
+const JENIS_FILE: Record<string, string> = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", bmp: "image/bmp", webp: "image/webp" };
+const blobCalon = (c: GambarFile) => new Blob([c.data as BlobPart], { type: JENIS_FILE[c.nama.split(".").pop()!.toLowerCase()] ?? "" });
+
+/**
+ * Gambar materi (0.30.0): AI melihatnya dan boleh memakainya sebagai stimulus soal (lewat gambar_id). Sumber: gambar di
+ * file Word/PowerPoint guru (`calon`, belum diunggah; diunggah saat diklik), unggah file, atau tempel (Ctrl+V).
+ */
+function BagianGambar({ gambar, ubah, calon }: { gambar: NonNullable<IsianMateri["gambar"]>; ubah: (g: NonNullable<IsianMateri["gambar"]>) => void; calon: GambarFile[] }) {
+  const [proses, setProses] = useState("");
+  const [pesan, setPesan] = useState("");
+  const [dipakai, setDipakai] = useState<Set<GambarFile>>(new Set());
+  const penuh = gambar.length >= BATAS_GAMBAR.perMateri;
+  // Pratinjau calon dari file (belum diunggah): alamat sementara di perangkat, dilepas saat daftar berubah.
+  const pratinjau = useMemo(() => calon.map((c) => URL.createObjectURL(blobCalon(c))), [calon]);
+  useEffect(() => () => pratinjau.forEach((u) => URL.revokeObjectURL(u)), [pratinjau]);
+
+  async function tambah(daftar: Blob[], asal: GambarFile[] = []) {
+    const muat = daftar.slice(0, BATAS_GAMBAR.perMateri - gambar.length);
+    if (!muat.length) return setPesan(`Maksimal ${BATAS_GAMBAR.perMateri} gambar per materi.`);
+    setPesan("");
+    const baru = [...gambar];
+    try {
+      for (const [i, b] of muat.entries()) {
+        setProses(`Mengunggah gambar ${i + 1} dari ${muat.length}...`);
+        baru.push({ id: await unggah(b), keterangan: "" });
+        ubah([...baru]);
+        if (asal[i]) setDipakai((d) => new Set([...d, asal[i]]));
+      }
+      if (daftar.length > muat.length) setPesan(`Hanya ${muat.length} gambar yang dipakai (maksimal ${BATAS_GAMBAR.perMateri} per materi).`);
+    } catch (e) {
+      setPesan((e as Error).message);
+    }
+    setProses("");
+  }
+
+  const sisaCalon = calon.map((c, i) => ({ c, url: pratinjau[i] })).filter((x) => !dipakai.has(x.c));
+  return (
+    <details open={gambar.length > 0 || calon.length > 0}>
+      <summary className="cursor-pointer">Gambar ({gambar.length}/{BATAS_GAMBAR.perMateri})</summary>
+      <div
+        tabIndex={0}
+        className="mt-2 space-y-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-hijau"
+        onPaste={(e) => {
+          const f = gambarTempelan(e);
+          if (f.length && !proses) void tambah(f);
+        }}
+      >
+        <p className="text-xs text-pudar">
+          AI melihat gambar ini dan boleh memakainya untuk soal (&quot;Perhatikan gambar berikut!&quot;). AI tidak bisa membuat gambar sendiri.
+          Keterangan singkat membantu AI, misalnya &quot;Struktur sel hewan, bagian bertanda A–E&quot;.
+        </p>
+        {gambar.map((g, i) => (
+          <div key={g.id} className="flex items-start gap-2 rounded-lg border p-2">
+            <Gambar id={g.id} alt={g.keterangan || `Gambar ${i + 1}`} className="h-20 w-28 shrink-0 rounded bg-krem object-contain" />
+            <div className="min-w-0 flex-1 space-y-1">
+              <input
+                className={kotak}
+                maxLength={BATAS_GAMBAR.keterangan}
+                aria-label={`Keterangan gambar ${i + 1}`}
+                placeholder="Keterangan (opsional)"
+                value={g.keterangan}
+                onChange={(e) => ubah(gambar.map((x, j) => (j === i ? { ...x, keterangan: e.target.value } : x)))}
+              />
+              <button className="text-xs text-pudar hover:text-bahaya" onClick={() => ubah(gambar.filter((_, j) => j !== i))}>✕ Lepas dari materi</button>
+            </div>
+          </div>
+        ))}
+        {sisaCalon.length > 0 && !penuh && (
+          <div className="space-y-1">
+            <p className="text-xs text-pudar">Gambar di file Anda ({sisaCalon.length}). Klik gambar yang dipakai untuk soal:</p>
+            <div className="flex flex-wrap gap-2">
+              {sisaCalon.map(({ c, url }, i) => (
+                <button
+                  key={i}
+                  className="rounded-lg border bg-kartu p-1 hover:ring-2 hover:ring-hijau disabled:opacity-40"
+                  aria-label={`Pakai gambar ${c.nama}`}
+                  disabled={!!proses}
+                  onClick={() => tambah([blobCalon(c)], [c])}
+                >
+                  {/* Pratinjau dari perangkat sendiri (blob:), bukan dari server. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={url} alt="" className="h-20 w-28 object-contain" />
+                </button>
+              ))}
+            </div>
+            {sisaCalon.length > 1 && (
+              <button className="text-xs underline disabled:opacity-40" disabled={!!proses} onClick={() => tambah(sisaCalon.map(({ c }) => blobCalon(c)), sisaCalon.map(({ c }) => c))}>
+                Pakai semua
+              </button>
+            )}
+          </div>
+        )}
+        {!penuh && (
+          <div className="flex flex-wrap items-center gap-2">
+            <TombolGambar label="+ Tambah gambar" disabled={!!proses} onPilih={(f) => tambah(f)} />
+            <span className="text-xs text-pudar">atau klik kotak ini lalu tempel gambar (Ctrl+V)</span>
+          </div>
+        )}
+        {proses && <p className="text-sm text-hijau-teks" role="status">{proses}</p>}
+        {pesan && <p className="text-sm text-bahaya" role="alert">{pesan}</p>}
+      </div>
+    </details>
   );
 }
 

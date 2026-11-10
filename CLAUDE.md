@@ -126,6 +126,11 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   JSON.parse. Materi Word: Equation → `$LaTeX$` (`ommlKeLatex`, office.ts). Angka/satuan biasa tanpa `$` (pilihan angka tetap diurutkan).
   Edit: tombol "Σ Rumus" + klik rumus di Pratinjau → MathLive (`editor-rumus.ts`, dimuat dinamis, huruf dari CSS KaTeX).
   Jendelanya SENGAJA bukan `<dialog>` modal (papan ketik MathLive tak terlihat di atasnya).
+- **Gambar** (0.30.0): tabel `gambar` (bytea JPEG ≤ 1280 px, dikecilkan di browser `src/app/gambar.tsx`; server cek SOF
+  `ukuranJpeg`). `bab.gambar` = [{id, keterangan}], soal & kisi `gambar_id` (kisi merencanakan, `samakanDenganKisi`
+  memaksa). AI melihat gambar (pesan pengguna, sebelum teks; `AIn_GAMBAR=0` = tidak dikirim): kisi = semua gambar, tahap
+  = gambar baris tahap itu saja. Gambar baru dari Edit disahkan `sahkanGambarBaru` (milik pemilik set) → masuk salinan
+  bab set. Akses `/api/gambar/[id]` = pemilik/admin. Gambar PDF belum diambil (0.31.0: halaman PDF → AI).
 - **Word**: kop dari cetakan asli (`scripts/buat-template-word.py`, jalankan ulang bila kop berubah); penanda {{judul}} {{tp}}
   {{isi}} {{mapel}} {{kelas}} {{sekolah}} {{hari}} {{waktu}}. Baris Arab = paragraf RTL. Nama file lewat `headerUnduh`.
 - **Tampilan** (`DESIGN.md`): gaya claude.ai, token warna di `@theme` globals.css (krem, hijau #006316, tinta, pudar, bahaya,
@@ -166,6 +171,6 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
 ## Masalah terbuka / tertunda
 - Isian bocor masih terjadi di materi pendek dengan nama/tahun berulang (SKI set 104: 3 isian merah, 3 calon gagal).
 - Soal kembar B/S "menilai hasil hitung X" vs PG "menghitung X" kadang lolos pemeriksaan kisi.
-- MJ kadang mencampur istilah & sifat dalam satu blok. Gambar belum didukung di soal; tabel & rumus dari PDF belum terbaca.
+- MJ kadang mencampur istilah & sifat dalam satu blok. Tabel, rumus, & gambar dari PDF belum terbaca (rencana 0.31.0).
 - Belum diuji: balapan klik ganda & tenggat sungguhan; saringan /admin/set di browser; Latihan TKA grup campur bentuk.
 - Persiapan 1.0.0 di luar kode: saldo DeepSeek, tanya-jawab di Panduan, pemakaian saat ASAS.

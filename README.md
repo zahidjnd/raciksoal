@@ -55,6 +55,9 @@ pembahasan, dan rubrik**, lalu mengekspornya ke **Word** dengan kop madrasah.
   verifikasi; teks Arab yang lebih panjang tetapi bukan ayat/hadis (mis. mahfuzhat) cukup diklik **"Bukan ayat/hadis"**.
 - **TP**: yang tertulis di materi dipakai apa adanya (hijau); TP usulan AI (materi tanpa TP) wajib dibaca & dicentang guru.
 - **Mapel**: 20 mapel MA Al-Fatah (`src/lib/mapel.ts`), mapel lain bisa diketik. Bahasa Arab & Nahwu: teks Arab bebas.
+- **Gambar materi** (0.30.0): gambar di file Word/PowerPoint ditawarkan untuk dipilih, atau guru mengunggah / menempel
+  (Ctrl+V) gambar sendiri, maks. 10 per materi, boleh diberi keterangan. Gambar dikecilkan jadi JPEG di browser, AI
+  **melihat** gambarnya (DeepSeek bisa membaca gambar) dan boleh memakainya sebagai stimulus soal. AI tidak membuat gambar.
 - Satu set boleh menggabung **hingga 5 materi** (untuk AFTS/ASAS), asal satu mapel dan satu kelas.
 - Halaman **Kelola materi** (`/materi`): daftar, ubah, hapus materi (maks. 300 per guru).
 
@@ -310,6 +313,7 @@ saat server menyala (`src/instrumentation-node.ts`, catatan migrasi di tabel `pu
 | `hasil_soal` | Satu baris = satu set: pemilik, status (`proses`/`selesai`/`gagal`), pengaturan, **salinan bab**, soal, kisi, prompt, jawaban mentah AI, model, info (detik, token, catatan cadangan), jumlah ganti, nama, waktu dihapus (hapus lunak) |
 | `materi` | Materi milik guru (`bab` jsonb: mapel, kelas, judul, TP, isi, dalil terverifikasi) |
 | `pemakaian_ai` | Catatan Ganti/Ubah/Tambah dan analisa materi (untuk batas harian) |
+| `gambar` | Gambar materi/soal (JPEG ≤ 1280 px, kolom `bytea`), per guru; dibuka lewat `/api/gambar/[id]` (pemilik/admin saja). Tidak pernah dihapus; maks. 300 per guru |
 | `pengaturan_web` | Pengaturan admin (nama madrasah) |
 | `tes_data` | Sisa tes langkah 1, tidak dipakai |
 
@@ -333,6 +337,7 @@ Di hosting letaknya `~/raciksoal-app/.env`; mengubahnya membuat aplikasi menyala
 | `ADMIN_USERNAME` | Nama pengguna yang boleh menjadi admin pertama |
 | `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL` | Model AI utama (slot 1) |
 | `AI_EXTRA_BODY` | JSON tambahan khusus penyedia (mis. mematikan mode "berpikir") |
+| `AIn_GAMBAR=0` | Model nomor n tidak bisa melihat gambar: gambar materi tidak dikirim, AI hanya membaca keterangannya |
 | `AI_MAX_TOKENS`, `AI_TIMEOUT_MS` | Batas panjang jawaban (bawaan 8000) dan batas waktu per panggilan |
 | `AI2_*` … `AI9_*` | Model cadangan / pembanding, urutan nomor = urutan cadangan |
 | `BACKUP_PASSPHRASE` | Sandi pengunci backup (hanya hosting; **simpan juga di luar hosting**) |
@@ -557,6 +562,7 @@ Saat melapor masalah, sertakan **versi** (tertulis di sidebar), nomor set (`?id=
 - Mapel sejarah: hanya angka tahun yang diperiksa aplikasi; nama tokoh & tempat dijaga lewat instruksi AI saja.
 - Materi pendek dengan nama/tahun yang berulang membuat jawaban isian sering "bocor" ke soal lain (ditandai merah).
 - Teks Arab dari buku PDF Kemenag rusak saat diekstrak; hanya ayat yang dikenali mushaf yang dipakai.
-- Belum ada: bank soal, katalog CP/TP resmi, rumus/gambar/tabel di soal.
+- Belum ada: bank soal, katalog CP/TP resmi. Gambar, tabel, dan rumus dari PDF belum terbaca (gambar PDF: tempel tangkapan layar).
+- AI tidak bisa membuat gambar (grafik fungsi, diagram baru): gambar soal hanya dari materi guru.
 - Word tidak bisa "boleh pindah kolom tapi jangan pindah halaman"; sesekali soal terbelah di dasar halaman.
 - PDF berkop tidak bisa dibuat di hosting (butuh Word/LibreOffice di server); guru menyimpan file Word sebagai PDF.

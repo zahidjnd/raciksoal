@@ -1036,3 +1036,94 @@ test("mapel sejarah: tahun di bagian soal yang benar harus ada di materi, pengec
   assert.match(buatSistem(ski), /FAKTA SEJARAH/);
   assert.doesNotMatch(buatSistem(bab), /FAKTA SEJARAH/);
 });
+
+test("gambar (0.30.0): hanya gambar materi yang dipakai, soal yang menyebut gambar tanpa gambar ditandai", () => {
+  const bab = { id: "x", judul: "x", mapel: "Biologi", kelas: "XI", tp: [{ kode: "TP 1", teks: "x" }], dalil: [], materi: ["Sel hewan."], gambar: [{ id: 7, keterangan: "Sel hewan" }] } as Bab;
+  const dasar = { bentuk: "PG", dalil_id: null, pilihan: ["a", "b", "c", "d", "e"], kunci: "A", pembahasan: "", level: "C2", tp: "TP 1", skor: 1 } as const;
+  const [ada, asing, tanpa, biasa] = periksaSoal(
+    [
+      { ...dasar, gambar_id: 7, pertanyaan: "Perhatikan gambar berikut! Bagian X adalah ...." },
+      { ...dasar, gambar_id: 99, pertanyaan: "Perhatikan gambar berikut! Bagian X adalah ...." },
+      { ...dasar, pertanyaan: "Berdasarkan gambar di atas, bagian X adalah ...." },
+      { ...dasar, pertanyaan: "Puisi itu menggambarkan suasana ...." },
+    ] as Soal[],
+    bab,
+  );
+  assert.equal(ada.gambar_id, 7);
+  assert.ok(!ada.peringatan?.some((w) => w.includes("gambar")));
+  assert.equal(asing.gambar_id, null); // id 99 bukan gambar materi ini
+  assert.ok(asing.peringatan?.some((w) => w.startsWith("Soal menyebut gambar")));
+  assert.ok(tanpa.peringatan?.some((w) => w.startsWith("Soal menyebut gambar")));
+  assert.ok(!biasa.peringatan?.some((w) => w.startsWith("Soal menyebut gambar"))); // "menggambarkan" bukan menyebut gambar
+  assert.equal(rapikanSoal({ ...dasar, pertanyaan: "x", gambar_id: "7" as unknown as number }, "PG").gambar_id, 7);
+  assert.equal(rapikanSoal({ ...dasar, pertanyaan: "x", gambar_id: -3 }, "PG").gambar_id, null);
+
+  // Kisi: gambar_id harus gambar materi, tidak untuk MJ; soal mengikuti rencana kisi.
+  const kisi = periksaKisi(
+    [
+      { bentuk: "PG", tp: "TP 1", materi: "m", indikator: "i", level: "C2", gambar_id: 7, stimulus: "gambar: sel" },
+      { bentuk: "PG", tp: "TP 1", materi: "m", indikator: "j", level: "C2", gambar_id: 99, stimulus: "s" },
+      { bentuk: "MJ", tp: "TP 1", materi: "m", indikator: "k", level: "C1", gambar_id: 7, stimulus: "s" },
+    ],
+    { PG: 2, PGK: 0, BS: 0, MJ: 1, ISIAN: 0, URAIAN: 0 },
+    bab,
+  );
+  assert.deepEqual(kisi.map((k) => k.gambar_id), [7, null, null]);
+  assert.equal(samakanDenganKisi({ ...dasar, pertanyaan: "x" } as Soal, kisi[0]).gambar_id, 7);
+  assert.equal(samakanDenganKisi({ ...dasar, pertanyaan: "x", gambar_id: 7 } as Soal, kisi[1]).gambar_id, null);
+
+  // Prompt: daftar & aturan gambar hanya bila materi punya gambar.
+  assert.match(buatSistem(bab), /\[gambar_id: 7\] Sel hewan/);
+  assert.match(buatSistem(bab), /GAMBAR: DATA BAB memuat gambar/);
+  assert.doesNotMatch(buatSistem({ ...bab, gambar: undefined }), /gambar_id/);
+  assert.match(buatSistem({ ...bab, gambar: undefined }), /tidak bisa menampilkan gambar: JANGAN/);
+  const p = { tujuan: "Latihan", kesulitan: "Sedang", jumlah: { PG: 2, PGK: 0, BS: 0, MJ: 0, ISIAN: 0, URAIAN: 0 }, level: { LOTS: 100, MOTS: 0, HOTS: 0 } } as Pengaturan;
+  assert.match(buatPermintaanKisi(p, bab), /"gambar_id": id gambar/);
+  assert.doesNotMatch(buatPermintaanKisi(p, { teksArab: "dalil" }), /gambar_id/);
+  assert.match(buatPengguna(p, p.jumlah, [], "", kisi.slice(0, 1)), /gambar_id: 7/);
+
+  // Gabung materi (PTS/PAS): gambar ikut, dibatasi.
+  const banyak = Array.from({ length: 15 }, (_, i) => ({ id: i + 1, keterangan: "" }));
+  assert.equal(gabungBab([{ ...bab, gambar: banyak }, { ...bab, id: "y", gambar: banyak.map((g) => ({ ...g, id: g.id + 100 })) }]).gambar?.length, 20);
+});
+
+test("gambar materi (0.30.0): disimpan rapi, keterangan dibersihkan, ikut kembali ke isian", () => {
+  const isian = { mapel: "Biologi", kelas: "XI", teksArab: "dalil" as const, judul: "Sel", tp: "TP 1: Memahami sel", isi: "Sel adalah unit terkecil makhluk hidup. ".repeat(4), dalil: [], diverifikasi: false, gambar: [{ id: 3, keterangan: " Sel  tumbuhan " }, { id: 3, keterangan: "dobel" }] };
+  const r = rapikanMateri(isian, "materi-1");
+  assert.ok(typeof r !== "string");
+  assert.deepEqual(r.bab.gambar, [{ id: 3, keterangan: "Sel tumbuhan" }]);
+  assert.deepEqual(keIsian(r.bab).gambar, [{ id: 3, keterangan: "Sel tumbuhan" }]);
+  const tanpa = rapikanMateri({ ...isian, gambar: [] }, "materi-1");
+  assert.ok(typeof tanpa !== "string" && !("gambar" in tanpa.bab));
+});
+
+test("gambar dari file Word/PowerPoint (0.30.0): urut kemunculan, tanpa dobel, ikon & EMF dilewati", async () => {
+  const JSZip = (await import("jszip")).default;
+  const besar = (n: number) => new Uint8Array(4096).fill(n);
+  const rel = (id: string, target: string, jenis = "image") =>
+    `<Relationship Id="${id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/${jenis}" Target="${target}"/>`;
+
+  const docx = new JSZip();
+  docx.file("word/document.xml", `<w:document><w:body><w:p><w:r><w:t>Sel</w:t></w:r></w:p>
+    <w:p><a:blip r:embed="rId9"/></w:p><w:p><a:blip r:embed="rId5"/></w:p><w:p><a:blip r:embed="rId9"/></w:p>
+    <w:p><a:blip r:embed="rId6"/></w:p><w:p><a:blip r:embed="rId7"/></w:p><w:hyperlink r:id="rId8"/></w:body></w:document>`);
+  docx.file("word/_rels/document.xml.rels", `<Relationships>${rel("rId5", "media/image1.png")}${rel("rId9", "media/image2.jpeg")}${rel("rId6", "media/ikon.png")}${rel("rId7", "media/image3.emf")}${rel("rId8", "https://x.id", "hyperlink")}</Relationships>`);
+  docx.file("word/media/image1.png", besar(1));
+  docx.file("word/media/image2.jpeg", besar(2));
+  docx.file("word/media/ikon.png", new Uint8Array(500));
+  docx.file("word/media/image3.emf", besar(3));
+  const w = await bacaFileOffice(await docx.generateAsync({ type: "uint8array" }), "sel.docx");
+  assert.deepEqual(w.gambar.map((g) => g.nama), ["image2.jpeg", "image1.png"]);
+  assert.equal(w.gambar[0].data[0], 2);
+
+  const pptx = new JSZip();
+  const slide = (id: string) => `<p:sld><a:p><a:t>Slide</a:t></a:p><a:blip r:embed="${id}"/></p:sld>`;
+  pptx.file("ppt/slides/slide2.xml", slide("rId2"));
+  pptx.file("ppt/slides/slide1.xml", slide("rId2"));
+  pptx.file("ppt/slides/_rels/slide1.xml.rels", `<Relationships>${rel("rId2", "../media/image5.png")}</Relationships>`);
+  pptx.file("ppt/slides/_rels/slide2.xml.rels", `<Relationships>${rel("rId2", "../media/image6.png")}</Relationships>`);
+  pptx.file("ppt/media/image5.png", besar(5));
+  pptx.file("ppt/media/image6.png", besar(6));
+  const p = await bacaFileOffice(await pptx.generateAsync({ type: "uint8array" }), "sel.pptx");
+  assert.deepEqual(p.gambar.map((g) => g.nama), ["image5.png", "image6.png"]); // slide 1 dulu
+});
