@@ -52,6 +52,16 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.31.2 — 11 November 2026
+Mutu soal: lebih sedikit isian bocor dan soal kembar (tanpa fitur baru).
+- **Isian bocor berkurang.** Jawaban isian berupa tahun (mis. "92 H") kini juga dijaga supaya tidak tertulis di soal
+  lain. Saat memperbaiki isian yang bocor, AI diberi daftar nama dan tahun dari materi yang belum dipakai soal mana pun,
+  jadi tidak lagi menebak. Contoh uji materi SKI yang sama: dulu 3 isian merah, kini 0–1.
+- **Soal kembar lebih banyak tertangkap**, misalnya PG "menghitung tingkat inflasi" dengan B/S "menilai kebenaran hasil
+  hitung inflasi", atau isian yang jawabannya sudah diuji soal lain. Baris kisi-kisi yang kembar ditulis ulang otomatis.
+- Perbaikan otomatis tidak lagi mengganti dua isian ke konsep yang sama (mis. "PPnBM" dan "Pajak Penjualan atas Barang Mewah").
+- Pesan merah isian bocor kini menyarankan: ganti jawaban isian, atau kurangi jumlah isian bila materinya pendek.
+
 ## 0.31.1 — 11 November 2026
 Perapian dari hasil audit (tanpa fitur baru).
 - **Keamanan**: web tidak bisa lagi ditampilkan di dalam web lain (mencegah penipuan "klik tersembunyi"), dan izin
