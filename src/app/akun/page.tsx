@@ -20,11 +20,11 @@ export default async function HalamanAkun({ searchParams }: { searchParams: Prom
   const admin = p.peran === "admin";
   const kartu = "space-y-3 rounded-xl border bg-kartu p-4";
   return (
-    <Kerangka p={p}>
+    <Kerangka p={p} lebar="pengaturan">
       <h1 className="text-2xl">Akun</h1>
       <div className="md:flex md:items-start md:gap-6">
         {/* HP: deret tombol di atas; laptop: daftar di kiri. */}
-        <nav aria-label="Bagian akun" className="mb-4 flex gap-1 overflow-x-auto md:mb-0 md:w-44 md:shrink-0 md:flex-col">
+        <nav aria-label="Bagian akun" className="mb-4 flex gap-1 overflow-x-auto md:mb-0 md:w-52 md:shrink-0 md:flex-col">
           {TAB.map((t) => (
             <Link
               key={t.id}
@@ -37,7 +37,8 @@ export default async function HalamanAkun({ searchParams }: { searchParams: Prom
           ))}
         </nav>
 
-        <div className="min-w-0 flex-1 space-y-4">
+        {/* @container: kartu berdampingan menurut lebar kolom kartu sendiri (bukan lebar layar, karena sidebar ikut makan tempat). */}
+        <div className="@container min-w-0 flex-1 space-y-4">
           {tab === "profil" && <Profil p={p} admin={admin} kartu={kartu} />}
 
           {tab === "bawaan" && (
@@ -51,10 +52,14 @@ export default async function HalamanAkun({ searchParams }: { searchParams: Prom
           {tab === "keamanan" && (
             <section className={kartu} aria-labelledby="keamanan">
               <h2 id="keamanan">Keamanan</h2>
-              <div className="max-w-md space-y-4">
-                <FormKataSandi />
-                <hr className="border-garis" />
-                <TombolKeluarkanPerangkat />
+              {/* Kolom lebar: kata sandi kiri, perangkat lain kanan (garis pemisah tegak); sempit: bertumpuk. */}
+              <div className="grid gap-6 @3xl:grid-cols-2 @3xl:gap-0">
+                <div className="max-w-md @3xl:pr-6">
+                  <FormKataSandi />
+                </div>
+                <div className="border-t border-garis pt-4 @3xl:border-l @3xl:border-t-0 @3xl:pl-6 @3xl:pt-0">
+                  <TombolKeluarkanPerangkat />
+                </div>
               </div>
             </section>
           )}
@@ -77,7 +82,7 @@ async function Profil({ p, admin, kartu }: { p: Awaited<ReturnType<typeof wajibM
     { nama: "Halaman PDF dibaca AI", n: halaman, batas: BATAS_HALAMAN_PDF },
   ];
   return (
-    <>
+    <div className="grid gap-4 @3xl:grid-cols-2">
       <section className={kartu} aria-labelledby="profil">
         <h2 id="profil">Profil</h2>
         <p className="text-sm">
@@ -109,6 +114,6 @@ async function Profil({ p, admin, kartu }: { p: Awaited<ReturnType<typeof wajibM
         </ul>
         <p className="text-sm text-pudar">Jatah kembali penuh setiap pukul 00.00 WIB. Set yang gagal tidak dihitung. 30 hari terakhir: {sebulan} set.</p>
       </section>
-    </>
+    </div>
   );
 }

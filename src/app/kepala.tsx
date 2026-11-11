@@ -108,8 +108,9 @@ const tautan = "block shrink-0 truncate rounded-lg px-3 py-3 text-tinta hover:bg
  * menu + riwayat di tengah digulir); di HP menjadi laci dari kiri (LaciSidebar). Isi halaman di sebelah kanan.
  */
 // lebar: halaman Buat Soal & hasil memakai 1024px (pilihan pemilik 2026-10-20, layar lebar terlihat kosong); halaman lain 768px.
+// "pengaturan" (halaman Akun, 0.32.4): 1536px rata kiri, menu tab rapat di samping sidebar (pilihan pemilik).
 // setAktif: nomor set yang sedang dibuka (?id=, dari page.tsx) → barisnya di riwayat ditandai "sedang dibuka".
-export async function Kerangka({ p, lebar = false, setAktif = null, children }: { p: Pengguna; lebar?: boolean; setAktif?: number | null; children: React.ReactNode }) {
+export async function Kerangka({ p, lebar = false, setAktif = null, children }: { p: Pengguna; lebar?: boolean | "pengaturan"; setAktif?: number | null; children: React.ReactNode }) {
   const admin = p.peran === "admin";
   const riwayat = await ambilRiwayat(p.id, BATAS_SIDEBAR);
   const tema = (await cookies()).get("tema")?.value === "gelap" ? "gelap" : "terang";
@@ -189,7 +190,7 @@ export async function Kerangka({ p, lebar = false, setAktif = null, children }: 
           </form>
         </div>
       </LaciSidebar>
-      <main className={`mx-auto w-full ${lebar ? "max-w-5xl" : "max-w-3xl"} min-w-0 space-y-6 p-4 md:p-8`}>
+      <main className={`w-full ${lebar === "pengaturan" ? "max-w-[96rem]" : lebar ? "mx-auto max-w-5xl" : "mx-auto max-w-3xl"} min-w-0 space-y-6 p-4 md:p-8`}>
         {admin && <PeringatanAdmin />}
         {admin && <PeringatanBackup />}
         {children}

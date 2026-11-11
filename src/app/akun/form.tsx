@@ -41,7 +41,7 @@ export function FormPreferensi({ awal }: { awal: Preferensi }) {
         <legend className="text-sm">
           Mapel yang saya ajar <span className="text-pudar">(maks. {MAKS_MAPEL_SAYA}; tampil paling atas di Set baru, yang pertama langsung terpilih)</span>
         </legend>
-        <div className="mt-2 grid grid-cols-2 gap-1 md:grid-cols-3">
+        <div className="mt-2 grid grid-cols-2 gap-1 @xl:grid-cols-3 @3xl:grid-cols-4">
           {pilihan.map((m) => {
             const dipilih = mapel.includes(m);
             return (
