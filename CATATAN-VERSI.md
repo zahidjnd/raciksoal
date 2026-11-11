@@ -52,6 +52,13 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.32.3 — 11 November 2026
+- **Halaman Akun dibagi tiga tab**, tidak lagi satu halaman panjang: **Profil** (nama dan pemakaian hari ini),
+  **Bawaan soal** (mapel, kelas, lama ujian, kesulitan, catatan tetap), dan **Keamanan** (kata sandi, perangkat lain).
+  Di laptop tabnya di kiri, di HP di atas.
+- Kotak ganti kata sandi kini punya **ikon mata** untuk melihat yang diketik, sama seperti di halaman masuk.
+- Panduan bagian Akun diperbarui.
+
 ## 0.32.2 — 11 November 2026
 - **Halaman Set baru lebih rapi:**
   - Kartu jenis ujian kini sejajar, dan kartu yang dipilih berlatar hijau muda dengan tanda centang.
