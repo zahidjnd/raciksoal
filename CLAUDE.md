@@ -124,6 +124,10 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   Set baru di tabel `preferensi_guru` (mapel diajar → optgroup "Mapel saya" & yang pertama terpilih, kelas, menit, kesulitan,
   catatan tetap = MENGISI kotak Catatan untuk AI, bukan instruksi tersembunyi), pemakaian hari ini, keluarkan perangkat lain.
   Penghitung pemakaian & `ambilPreferensi` di `lib/pemakaian.ts` (BUKAN file "use server": ekspor di sana = bisa dipanggil browser).
+- **Panduan** (0.32.0): "Mulai cepat" 4 langkah + 8 gambar `public/panduan/*.webp` (tangkapan layar HP bertanda merah
+  bernomor; nomor `<N>` di teks = nomor tanda), topik & tanya-jawab dalam `<details>` (`BukaLipatan` membuka lipatan dari
+  `#id`). Tombol/tampilan berubah → perbarui teks DAN ambil ulang gambarnya: foto HP 375 px di preview (akun guru.uji.b,
+  sembunyikan `nextjs-portal`), koordinat CSS di `scripts/panduan-gambar.json`, lalu `scripts/panduan-tandai.py`.
 - **Set**: hapus = hapus lunak (`dihapus`, tetap dihitung jatah); ganti nama & hapus lewat menu ⋯ riwayat sidebar.
   Paket A–D diacak bersemi (`susunPaket`), tanpa tabel baru. Set menyimpan salinan bab (`hasil_soal.bab`).
 - **Tabel** (0.28.0): ditulis di TEKS soal/wacana/pembahasan sebagai baris `| a | b |` (bukan kolom data baru), dikenali

@@ -51,10 +51,12 @@ export function FormPreferensi({ awal }: { awal: Preferensi }) {
                   checked={dipilih}
                   disabled={!dipilih && penuh}
                   onChange={(e) => setMapel(e.target.checked ? [...mapel, m] : mapel.filter((x) => x !== m))}
-                  className="size-4 accent-hijau"
+                  className="size-4 shrink-0 accent-hijau"
                 />
-                {m}
-                {dipilih && mapel[0] === m && <span className="text-xs text-pudar">(langsung terpilih)</span>}
+                <span className="min-w-0">
+                  {m}
+                  {dipilih && mapel[0] === m && <span className="block text-xs text-hijau-teks">langsung terpilih</span>}
+                </span>
               </label>
             );
           })}
