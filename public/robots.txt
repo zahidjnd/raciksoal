@@ -1,0 +1,5 @@
+# Hanya beranda & halaman masuk yang boleh muncul di mesin pencari.
+User-agent: *
+Allow: /$
+Allow: /masuk
+Disallow: /

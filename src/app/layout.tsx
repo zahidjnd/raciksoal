@@ -15,7 +15,9 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Racik Soal",
-  description: "Pembuatan soal berbasis AI untuk guru madrasah",
+  description: "Pembuatan soal berbasis AI untuk guru MA Al-Fatah",
+  // Bukti kepemilikan untuk Google Search Console (bukan rahasia).
+  verification: { google: "snzqKTN6gve9u_QtD4_964TyvgT54P0g-hMufeoWFxE" },
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

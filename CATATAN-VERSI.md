@@ -52,6 +52,10 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.32.7 — 11 November 2026
+- **Bisa ditemukan di Google**: web terdaftar di Google Search Console (kode verifikasi dipasang). Yang boleh muncul di
+  hasil pencarian hanya beranda dan halaman masuk; soal dan materi guru tidak (dijaga lewat `robots.txt` dan login).
+
 ## 0.32.6 — 11 November 2026
 - **Halaman masuk di HP lebih rapi**: satu kartu putih polos (logo dan nama Racik Soal di atas kolom isian), posisinya
   sedikit lebih ke tengah, dan "MA Al-Fatah · versi" tampil di bawah layar. Kolom isian dan tombol lebih besar untuk
