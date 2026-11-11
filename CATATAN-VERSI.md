@@ -52,6 +52,18 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.32.0 — 11 November 2026
+- **Halaman Akun baru** (klik nama Anda di sidebar):
+  - **Nama tampil** bisa diganti sendiri, boleh dengan gelar (mis. "Ust. Ahmad Fauzi"). Nama pengguna untuk masuk tetap
+    diatur admin.
+  - **Bawaan membuat soal**: mapel yang Anda ajar (tampil paling atas di Set baru dan Materi saya, yang pertama langsung
+    terpilih), kelas, lama ujian, kesulitan, dan **catatan tetap untuk AI** (mengisi kotak Catatan untuk AI di setiap set
+    baru, tetap bisa diubah). Tersimpan di server, jadi sama di HP maupun laptop.
+  - **Pemakaian hari ini**: sisa jatah set, Ganti/Ubah/Tambah, dan halaman PDF.
+  - Tombol **Keluarkan perangkat lain** (mis. lupa keluar di komputer lab).
+- **Panduan baru, lebih mudah dipahami**: "Mulai cepat" 4 langkah dengan gambar layar HP bertanda merah bernomor,
+  topik lain dalam lipatan (ketuk untuk membuka), dan tanya-jawab yang sering muncul.
+
 ## 0.31.2 — 11 November 2026
 Mutu soal: lebih sedikit isian bocor dan soal kembar (tanpa fitur baru).
 - **Isian bocor berkurang.** Jawaban isian berupa tahun (mis. "92 H") kini juga dijaga supaya tidak tertulis di soal
