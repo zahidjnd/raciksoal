@@ -52,6 +52,11 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.32.4 — 11 November 2026
+- **Halaman Akun di laptop lebih lega**: menu tab di samping sidebar (tidak lagi di tengah), kartu lebih lebar.
+  Profil dan Pemakaian hari ini berdampingan, Ganti kata sandi dan Perangkat lain berdampingan, centang mapel 4 kolom.
+  Tampilan HP tidak berubah.
+
 ## 0.32.3 — 11 November 2026
 - **Halaman Akun dibagi tiga tab**, tidak lagi satu halaman panjang: **Profil** (nama dan pemakaian hari ini),
   **Bawaan soal** (mapel, kelas, lama ujian, kesulitan, catatan tetap), dan **Keamanan** (kata sandi, perangkat lain).
