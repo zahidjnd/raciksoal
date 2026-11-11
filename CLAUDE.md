@@ -118,7 +118,7 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   Indonesia; sejarah (SKI, Al-Quds, Sejarah) = tahun di bagian soal yang benar wajib ada di materi. Dalil & khilafiyah berlaku
   untuk SEMUA mapel. Ijtimaiyyah, PJOK, BK sengaja tidak dimasukkan.
 - **Batas**: 10 set/guru/hari (admin bebas) + 100/web; 2 set proses serentak/guru; Ganti/Ubah/Tambah 30x per set & 60/guru/hari;
-  analisa materi 30/guru/hari; halaman PDF dibaca AI 100/guru/hari; login dikunci 5x salah/15 menit per perangkat+nama. Batas ada di `pembatas.ts`.
+  analisa materi 30/guru/hari; halaman PDF dibaca AI 200/guru/hari (0.34.1); login dikunci 5x salah/15 menit per perangkat+nama. Batas ada di `pembatas.ts`.
 - **Pesan masuk** (0.32.5, pilihan pemilik): "nama tidak terdaftar" / "kata sandi salah" terpisah (kolom yang salah saja
   dikosongkan). Lebih dari 10 nama tak terdaftar per IP/15 menit → pesan umum saja (`samar`), TIDAK mengunci (satu IP madrasah).
 - **Peran**: guru hanya model utama, tanpa info teknis; admin = semua set, pilihan model, Bandingkan, pita peringatan.
@@ -164,8 +164,8 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   contekan angka (`paragrafPdf(..., pangkat)` menandai `^{-30}`; Arab dibuang di server) → minus pangkat Fisika 43/43;
   kepala halaman & nomor halaman dibuang `buangKepalaHalaman` (patokan teks asli, ≥ 40% halaman, min. 4). Arab: blok → TANDA_PDF (penunjuk mushaf); lafal di
   teks/tabel → `potongAyat` dari ayat halaman itu, selain itu dibuang; mode bahasa: Arab dipertahankan. Gambar dipotong
-  di browser dari kotak 0–1000 (+1,5% tepi) → ikut alur gambar 0.30.0. Batas `BATAS_HALAMAN_PDF` 100/guru/hari
-  (`pemakaian_ai.jenis = "halaman"`), `MAKS_HALAMAN_PDF` 30 sekali lampir (bawaan 10). 0.33.0: file PDF maks 100 MB
+  di browser dari kotak 0–1000 (+1,5% tepi) → ikut alur gambar 0.30.0. Batas `BATAS_HALAMAN_PDF` 200/guru/hari
+  (`pemakaian_ai.jenis = "halaman"`), `MAKS_HALAMAN_PDF` 50 sekali lampir (0.34.1; bawaan 10; ±batas 100 ribu huruf). 0.33.0: file PDF maks 100 MB
   (dibaca di browser, tidak diunggah), tebal buku bebas (batas 300 hanya untuk "teks saja"), isi materi DAN total
   gabungan satu set maks 100 ribu huruf (`BATAS_MATERI.isi`; biaya token sebanding panjang), kiriman aksi 2 MB.
 - **Word**: kop dari cetakan asli (`scripts/buat-template-word.py`, jalankan ulang bila kop berubah); penanda {{judul}} {{tp}}
