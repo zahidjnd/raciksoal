@@ -22,7 +22,8 @@ export default async function HalamanMasuk() {
         </section>
 
         <section className="flex flex-col justify-center gap-6 md:p-8">
-          <div>
+          {/* HP: disembunyikan (menumpuk dengan logo & tagline, pilihan pemilik); tetap dibaca pembaca layar. */}
+          <div className="max-md:sr-only">
             <h1 className="text-3xl">Assalamu&apos;alaikum.</h1>
             <p className="mt-1 text-sm text-pudar">Masuk untuk mulai meracik soal.</p>
           </div>
