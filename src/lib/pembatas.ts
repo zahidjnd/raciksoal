@@ -4,7 +4,7 @@ export const BATAS_TOTAL = 100; // set per hari seluruh web, pengaman saldo AI
 export const BATAS_UBAH_PER_GURU = 60; // Ganti/Ubah/Tambah soal (yang berhasil) per guru per hari; admin bebas
 export const BATAS_ANALISA = 30; // analisa materi per guru per hari; admin bebas
 export const BATAS_HALAMAN_PDF = 100; // halaman PDF yang dibaca AI per guru per hari (0.31.0); admin bebas
-export const MAKS_HALAMAN_PDF = 20; // halaman per PDF yang dibaca AI sekali lampir (dipilih guru bila PDF lebih panjang)
+export const MAKS_HALAMAN_PDF = 30; // (0.33.0: satu bab Fisika X = 28 halaman) halaman per PDF yang dibaca AI sekali lampir (dipilih guru bila PDF lebih panjang)
 
 // Pembatas percobaan masuk (tanpa import Next/DB, supaya bisa dites: npm test).
 // ponytail: disimpan di memori (hilang saat server restart), cukup untuk satu madrasah & satu proses server.

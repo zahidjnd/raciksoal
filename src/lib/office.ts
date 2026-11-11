@@ -210,7 +210,6 @@ export async function bukaPdf(data: ArrayBuffer | Uint8Array) {
     if ((e as Error)?.name === "PasswordException") throw new Error("PDF ini dikunci kata sandi. Buka kuncinya dulu.");
     throw new Error("File PDF tidak bisa dibaca (rusak atau bukan PDF).");
   }
-  if (doc.numPages > 300) throw new Error("PDF terlalu banyak halamannya (maks 300). Ambil bab yang diperlukan saja.");
   return { doc, tutup: () => tugas.destroy() };
 }
 
@@ -237,6 +236,11 @@ export function cakupanKata(asli: string[], bacaan: string[]): number | null {
 
 async function bacaPdf(data: ArrayBuffer | Uint8Array): Promise<string[]> {
   const { doc, tutup } = await bukaPdf(data);
+  // Hanya cara lama (semua halaman dibaca). Pilih halaman + Baca dengan AI tidak dibatasi tebal buku (0.33.0).
+  if (doc.numPages > 300) {
+    await tutup();
+    throw new Error("PDF lebih dari 300 halaman tidak bisa dibaca semuanya. Pilih halaman bab yang diperlukan, lalu Baca dengan AI.");
+  }
   const semua: string[] = [];
   for (let n = 1; n <= doc.numPages; n++) semua.push(...(await teksHalamanPdf(doc, n)));
   await tutup();

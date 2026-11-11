@@ -43,7 +43,10 @@ const kotak = "w-full rounded-lg border p-2 text-sm";
 type FileMateri = { nama: string; paragraf: string[]; gambar: GambarFile[] };
 const huruf = (f: FileMateri) => f.paragraf.join("\n").length;
 const angka = (n: number) => n.toLocaleString("id-ID");
-const BATAS_FILE = 30 * 1024 * 1024;
+// File dibaca di perangkat guru (tidak diunggah ke hosting): batas ini hanya menjaga memori HP. 0.33.0: buku Kemenag
+// sering > 30 MB (Biologi XI 31,5 MB).
+const BATAS_FILE_MB = 100;
+const BATAS_FILE = BATAS_FILE_MB * 1024 * 1024;
 const FILE_DITERIMA = /\.(docx|pptx|pdf)$/i;
 /** Teks tempelan yang belum dipakai disimpan di browser (kenyamanan saja), dihapus setelah materinya tersimpan di server. */
 export const DRAF_TEKS = "raciksoal-draf-materi";
@@ -171,7 +174,7 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
     const asing = daftarFile.find((f) => !FILE_DITERIMA.test(f.name));
     if (asing) return setPesan({ ok: false, teks: `${asing.name} tidak bisa dibaca. Hanya file Word (.docx), PowerPoint (.pptx), atau PDF.` });
     const besar = daftarFile.find((f) => f.size > BATAS_FILE);
-    if (besar) return setPesan({ ok: false, teks: `${besar.name} terlalu besar (maks 30 MB).` });
+    if (besar) return setPesan({ ok: false, teks: `${besar.name} terlalu besar (maks ${BATAS_FILE_MB} MB).` });
     setProses("Membaca file...");
     setPesan(null);
     try {
@@ -186,7 +189,7 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
           if (jumlah > MAKS_HALAMAN_PDF) {
             setFile([...file, ...baru]);
             setProses("");
-            // Bawaan 10 halaman: ±20 ribu huruf buku Kemenag, masih di bawah batas isi materi (30 ribu).
+            // Bawaan 10 halaman (±20 ribu huruf buku Kemenag, ±1 menit dibaca AI); guru bisa menaikkan sampai MAKS_HALAMAN_PDF.
             setPilihPdf({ f, jumlah, dari: 1, sampai: Math.min(10, MAKS_HALAMAN_PDF) });
             if (i < daftarFile.length - 1) setPesan({ ok: false, teks: "File sesudah PDF ini belum dibaca. Lampirkan lagi setelah memilih halaman PDF." });
             return;

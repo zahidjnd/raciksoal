@@ -138,6 +138,10 @@ export async function mulaiBuatSoal(input: Pengaturan) {
     if (babs.some((b) => identitasBab(b!).mapel.toLowerCase() !== id0.mapel.toLowerCase() || identitasBab(b!).kelas !== id0.kelas))
       return { ok: false as const, pesan: "Materi yang digabung harus satu mapel dan satu kelas." };
     const bab = gabungBab(babs as Bab[]);
+    // 0.33.0: batas total sama dengan batas satu materi (biaya token & panjang pesan yang diterima AI).
+    const totalHuruf = bab.materi.join("\n").length;
+    if (totalHuruf > BATAS_MATERI.isi)
+      return { ok: false as const, pesan: `Materi yang digabung terlalu panjang: ±${totalHuruf.toLocaleString("id-ID")} huruf, maksimal ${BATAS_MATERI.isi.toLocaleString("id-ID")}. Kurangi materi yang dipakai di set ini.` };
     const model = daftarModel().find((m) => m.slot === p.modelSlot);
     if (!model) return { ok: false as const, pesan: "Model AI tidak dikenal." };
 

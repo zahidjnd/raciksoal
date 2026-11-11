@@ -64,7 +64,7 @@ pembahasan, dan rubrik**, lalu mengekspornya ke **Word** dengan kop madrasah.
   `bacaHalamanPdf` (satu halaman per panggilan): teks, tabel, rumus, letak gambar (dipotong browser), juga PDF scan.
   Bacaan dicek terhadap teks pdf.js (cakupan kata < 85% → teks asli). Arab: blok ayat → penunjuk mushaf; lafal Arab di
   teks/tabel → ejaan resmi ayat halaman itu (`rapikanBacaanHalaman`, `potongAyat`), selain itu dibuang (mode Bahasa Arab:
-  dipertahankan). PDF > 20 halaman: guru memilih rentang.
+  dipertahankan). PDF > 30 halaman: guru memilih rentang (file maks 100 MB, tebal buku bebas; file tidak diunggah).
 - Satu set boleh menggabung **hingga 5 materi** (untuk AFTS/ASAS), asal satu mapel dan satu kelas.
 - Halaman **Kelola materi** (`/materi`): daftar, ubah, hapus materi (maks. 300 per guru).
 
@@ -570,7 +570,8 @@ Saat melapor masalah, sertakan **versi** (tertulis di sidebar), nomor set (`?id=
 - Materi pendek dengan nama/tahun yang berulang membuat jawaban isian sering "bocor" ke soal lain (ditandai merah).
 - Teks Arab dari buku PDF Kemenag rusak saat diekstrak; hanya ayat yang dikenali mushaf yang dipakai.
 - Belum ada: bank soal, katalog CP/TP resmi.
-- PDF dibaca AI maks 20 halaman sekali lampir & 100 halaman/guru/hari; isi materi tetap maks 30 ribu huruf (±10 halaman buku).
+- PDF dibaca AI maks 30 halaman sekali lampir & 100 halaman/guru/hari; isi satu materi dan total materi satu set maks
+  100 ribu huruf (biaya token naik sebanding panjang materi: materi 28 ribu huruf ±Rp360/set UH 25 soal, uji 11 Nov 2026).
 - AI tidak bisa membuat gambar (grafik fungsi, diagram baru): gambar soal hanya dari materi guru.
 - Word tidak bisa "boleh pindah kolom tapi jangan pindah halaman"; sesekali soal terbelah di dasar halaman.
 - PDF berkop tidak bisa dibuat di hosting (butuh Word/LibreOffice di server); guru menyimpan file Word sebagai PDF.

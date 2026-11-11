@@ -93,7 +93,7 @@ const TOPIK: { id: string; judul: string; isi: React.ReactNode }[] = [
           <li>Tabel di file ikut terbaca sebagai tabel (di kotak isi tampil sebagai baris <b>| sel | sel |</b>), jadi AI bisa membuat soal dari datanya.</li>
           <li>Rumus Word (<b>Insert → Equation</b>) ikut terbaca, tampil sebagai <b>$...$</b> di kotak isi.</li>
           <li><b>PDF dibaca AI</b> halaman demi halaman, termasuk tabel, rumus, gambar, dan PDF hasil scan. Muncul tulisan “AI membaca PDF: … halaman”.</li>
-          <li>PDF lebih dari {MAKS_HALAMAN_PDF} halaman: pilih halaman bab yang diperlukan (nomor halaman file, bukan nomor cetak buku), lalu tekan <b>Baca dengan AI</b>. Sebaiknya 10 halaman atau kurang.</li>
+          <li>PDF lebih dari {MAKS_HALAMAN_PDF} halaman: pilih halaman bab yang diperlukan (nomor halaman file, bukan nomor cetak buku), lalu tekan <b>Baca dengan AI</b>. Makin banyak halaman makin lama dibaca (10 halaman ±1 menit).</li>
           <li>Materi yang pernah dipakai bisa dipilih lagi lewat <b>Pakai materi sebelumnya</b>.</li>
         </ul>
         <Tips>menyiapkan beberapa bab di awal semester? Pakai menu <b>Materi saya</b> → <b>+ Tambah materi</b> → <b>Analisa materi</b> → <b>Simpan materi</b>.</Tips>

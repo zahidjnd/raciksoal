@@ -159,7 +159,9 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   Cakupan kata vs pdf.js < 85% → teks pdf.js (`cakupanKata`). Arab: blok → TANDA_PDF (penunjuk mushaf); lafal di
   teks/tabel → `potongAyat` dari ayat halaman itu, selain itu dibuang; mode bahasa: Arab dipertahankan. Gambar dipotong
   di browser dari kotak 0–1000 (+1,5% tepi) → ikut alur gambar 0.30.0. Batas `BATAS_HALAMAN_PDF` 100/guru/hari
-  (`pemakaian_ai.jenis = "halaman"`), `MAKS_HALAMAN_PDF` 20 sekali lampir (bawaan 10).
+  (`pemakaian_ai.jenis = "halaman"`), `MAKS_HALAMAN_PDF` 30 sekali lampir (bawaan 10). 0.33.0: file PDF maks 100 MB
+  (dibaca di browser, tidak diunggah), tebal buku bebas (batas 300 hanya untuk "teks saja"), isi materi DAN total
+  gabungan satu set maks 100 ribu huruf (`BATAS_MATERI.isi`; biaya token sebanding panjang), kiriman aksi 2 MB.
 - **Word**: kop dari cetakan asli (`scripts/buat-template-word.py`, jalankan ulang bila kop berubah); penanda {{judul}} {{tp}}
   {{isi}} {{mapel}} {{kelas}} {{sekolah}} {{hari}} {{waktu}}. Baris Arab = paragraf RTL. Nama file lewat `headerUnduh`.
 - **Tampilan** (`DESIGN.md`): gaya claude.ai, token warna di `@theme` globals.css (krem, hijau #006316, tinta, pudar, bahaya,
