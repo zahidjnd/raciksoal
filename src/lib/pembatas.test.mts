@@ -1,6 +1,19 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { BATAS_NAMA, BATAS_PERANGKAT, buatPembatas, ipDari, LAMA_KUNCI } from "./pembatas.ts";
+import { BATAS_NAMA, BATAS_NAMA_ASING, BATAS_PERANGKAT, buatPembatas, ipDari, LAMA_KUNCI } from "./pembatas.ts";
+
+test("pembatas login: coba-coba nama tak terdaftar → perangkat itu dapat pesan umum, perangkat lain tidak; hilang setelah 15 menit", () => {
+  let jam = 0;
+  const b = buatPembatas(() => jam);
+  for (let i = 0; i < BATAS_NAMA_ASING - 1; i++) b.namaAsing("1.1.1.1");
+  assert.equal(b.samar("1.1.1.1"), false); // salah ketik nama beberapa kali: pesan tetap jelas
+  b.namaAsing("1.1.1.1");
+  assert.equal(b.samar("1.1.1.1"), true);
+  assert.equal(b.samar("2.2.2.2"), false);
+  assert.equal(b.terkunci("1.1.1.1", "guru.a"), false); // tidak mengunci masuk
+  jam += LAMA_KUNCI + 1;
+  assert.equal(b.samar("1.1.1.1"), false);
+});
 
 test("pembatas login: perangkat lain tidak ikut terkunci; kunci habis setelah 15 menit", () => {
   let jam = 0;

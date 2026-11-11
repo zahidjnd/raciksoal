@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { buatAdminPertama, masuk } from "./actions";
 
 const tombol =
@@ -145,13 +145,14 @@ export function Panggung() {
 }
 
 /** Kotak kata sandi dengan tombol mata (lihat/sembunyikan). Dipakai juga di halaman Akun. */
-export function KataSandi({ label, ...props }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+// galat: pesan salah khusus kotak ini (garis merah + pesan di bawahnya). ref diteruskan ke <input> (React 19).
+export function KataSandi({ label, galat, ...props }: { label: string; galat?: string } & React.ComponentProps<"input">) {
   const [lihat, setLihat] = useState(false);
   return (
     <label className="block text-sm">
       {label}
       <span className="relative mt-1 block">
-        <input {...props} type={lihat ? "text" : "password"} required className="w-full rounded-lg border p-2 pr-11" />
+        <input {...props} type={lihat ? "text" : "password"} required aria-invalid={!!galat} className={`w-full rounded-lg border p-2 pr-11 ${galat ? "border-bahaya" : ""}`} />
         <button
           type="button"
           onClick={() => setLihat(!lihat)}
@@ -166,8 +167,32 @@ export function KataSandi({ label, ...props }: { label: string } & React.InputHT
           </svg>
         </button>
       </span>
+      {galat && <span role="alert" className="mt-1 block text-xs text-bahaya">{galat}</span>}
     </label>
   );
+}
+
+/**
+ * onSubmit: kirim form TANPA pengosongan otomatis React (form action mengosongkan semua kotak setelah dikirim, termasuk
+ * saat salah). Kotak yang salah dikosongkan sendiri oleh pemanggil (0.32.5).
+ * WAJIB tetap pasang `action={kirim}` juga: sebelum halaman siap (HP lambat) form dikirim browser lewat aksi server
+ * (POST). Tanpa action, browser mengirim GET dan kata sandi masuk ke alamat halaman. Setelah siap, preventDefault di
+ * sini membuat React tidak menjalankan action (jadi tidak ada pengosongan).
+ */
+export function kirimTanpaKosong(kirim: (f: FormData) => void, mulai: React.TransitionStartFunction) {
+  return (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    mulai(() => kirim(f));
+  };
+}
+
+/** Kosongkan satu kotak lalu taruh kursor di sana. */
+export function ulangiKotak(kotak: HTMLInputElement | null, kosongkan = true) {
+  if (!kotak) return;
+  if (kosongkan) kotak.value = "";
+  kotak.focus();
+  if (!kosongkan) kotak.select();
 }
 
 function Pesan({ hasil }: { hasil: { pesan: string } | null }) {
@@ -180,15 +205,27 @@ function Pesan({ hasil }: { hasil: { pesan: string } | null }) {
 
 export function FormMasuk() {
   const [hasil, kirim, proses] = useActionState(masuk, null);
+  const [, mulai] = useTransition();
+  const nama = useRef<HTMLInputElement>(null);
+  const sandi = useRef<HTMLInputElement>(null);
+  // Salah nama: nama tetap tertulis (diblok supaya mudah dibetulkan). Selain itu: hanya kata sandi yang dikosongkan.
+  useEffect(() => {
+    if (!hasil) return;
+    if (hasil.kolom === "username") ulangiKotak(nama.current, false);
+    else ulangiKotak(sandi.current);
+  }, [hasil]);
+  const galatNama = hasil?.kolom === "username" ? hasil.pesan : undefined;
   return (
     <div className="space-y-3">
-      <form action={kirim} className="space-y-4">
+      <form action={kirim} onSubmit={kirimTanpaKosong(kirim, mulai)} className="space-y-4">
         <label className="block text-sm">
           Nama pengguna
-          <input name="username" autoComplete="username" autoCapitalize="none" required className="mt-1 w-full rounded-lg border p-2" />
+          <input ref={nama} name="username" autoComplete="username" autoCapitalize="none" required aria-invalid={!!galatNama} className={`mt-1 w-full rounded-lg border p-2 ${galatNama ? "border-bahaya" : ""}`} />
+          {galatNama && <span role="alert" className="mt-1 block text-xs text-bahaya">{galatNama}</span>}
         </label>
-        <KataSandi label="Kata sandi" name="password" autoComplete="current-password" />
-        <Pesan hasil={hasil} />
+        <KataSandi ref={sandi} label="Kata sandi" name="password" autoComplete="current-password" galat={hasil?.kolom === "password" ? hasil.pesan : undefined} />
+        {/* Pesan umum (terkunci, akun nonaktif, pesan samar) di kotak merah seperti dulu. */}
+        <Pesan hasil={hasil && !hasil.kolom ? hasil : null} />
         <button className={tombol} disabled={proses}>
           {proses ? (
             <>

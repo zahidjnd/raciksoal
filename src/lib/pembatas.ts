@@ -11,6 +11,10 @@ export const MAKS_HALAMAN_PDF = 20; // halaman per PDF yang dibaca AI sekali lam
 
 export const BATAS_PERANGKAT = 5; // salah dari satu perangkat (IP) untuk satu nama pengguna
 export const BATAS_NAMA = 30; // salah dari semua perangkat untuk satu nama pengguna (cegah tebak beramai-ramai)
+// Nama tak terdaftar dari satu perangkat (0.32.5). Halaman masuk memberi tahu "nama tidak terdaftar" supaya guru tahu
+// salahnya di mana; lewat batas ini perangkat itu hanya mendapat pesan umum (cegah coba-coba nama). Tidak mengunci
+// masuk: satu madrasah bisa berbagi satu IP, guru yang namanya benar tetap bisa masuk.
+export const BATAS_NAMA_ASING = 10;
 export const LAMA_KUNCI = 15 * 60 * 1000;
 
 type Catatan = { kali: number; sampai: number };
@@ -42,6 +46,15 @@ export function buatPembatas(sekarang = () => Date.now()) {
     /** Admin mereset kata sandi: semua kunci untuk nama ini dibuka (dari perangkat mana pun). */
     buka(nama: string) {
       for (const k of data.keys()) if (k === nama || k.endsWith(`|${nama}`)) data.delete(k);
+    },
+    /** Mencoba nama yang tidak terdaftar. */
+    namaAsing(ip: string) {
+      const lama = masihBerlaku(data.get(`asing>${ip}`));
+      data.set(`asing>${ip}`, { kali: (lama?.kali ?? 0) + 1, sampai: sekarang() + LAMA_KUNCI });
+    },
+    /** true = perangkat ini sudah terlalu sering mencoba nama tak terdaftar: beri pesan umum saja. */
+    samar(ip: string) {
+      return (masihBerlaku(data.get(`asing>${ip}`))?.kali ?? 0) >= BATAS_NAMA_ASING;
     },
     /** Berhasil masuk: catatan perangkat ini dihapus (catatan nama tetap, supaya tebakan dari perangkat lain tetap terhitung). */
     berhasil(ip: string, nama: string) {

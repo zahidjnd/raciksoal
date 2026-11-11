@@ -1,12 +1,12 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { KESULITAN, MAKS_CATATAN } from "@/lib/prompt";
 import { DAFTAR_MAPEL } from "@/lib/mapel";
 import { KELAS } from "@/lib/soal";
 import { MAKS_MAPEL_SAYA, MAKS_NAMA, type Preferensi } from "@/lib/preferensi";
 import { gantiKataSandi, gantiNama, keluarkanPerangkatLain, simpanPreferensi } from "./actions";
-import { KataSandi } from "../masuk/form";
+import { KataSandi, kirimTanpaKosong, ulangiKotak } from "../masuk/form";
 
 const kotak = "mt-1 w-full rounded-lg border bg-kartu p-2";
 const tombol = "rounded-lg bg-hijau h-10 px-4 font-semibold text-white disabled:opacity-50 max-md:min-h-11";
@@ -101,15 +101,31 @@ export function FormPreferensi({ awal }: { awal: Preferensi }) {
 
 export function FormKataSandi() {
   const [hasil, kirim, proses] = useActionState(gantiKataSandi, null);
+  const [, mulai] = useTransition();
+  const form = useRef<HTMLFormElement>(null);
+  const lama = useRef<HTMLInputElement>(null);
+  const baru = useRef<HTMLInputElement>(null);
+  const ulang = useRef<HTMLInputElement>(null);
+  // Hanya kotak yang salah yang dikosongkan (0.32.5). Sandi baru salah → ulangannya ikut kosong (harus diketik sama lagi).
+  useEffect(() => {
+    if (hasil?.ok) form.current?.reset();
+    else if (hasil?.kolom === "lama") ulangiKotak(lama.current);
+    else if (hasil?.kolom === "ulang") ulangiKotak(ulang.current);
+    else if (hasil?.kolom === "baru") {
+      ulangiKotak(ulang.current);
+      ulangiKotak(baru.current);
+    }
+  }, [hasil]);
+  const galat = (k: "lama" | "baru" | "ulang") => (hasil?.kolom === k ? hasil.pesan : undefined);
   return (
-    <form action={kirim} className="space-y-4" key={hasil?.ok ? "selesai" : "isi"}>
+    <form ref={form} action={kirim} onSubmit={kirimTanpaKosong(kirim, mulai)} className="space-y-4">
       <h3 className="font-semibold">Ganti kata sandi</h3>
       {/* Tombol mata sama dengan halaman masuk. */}
-      <KataSandi label="Kata sandi lama" name="lama" autoComplete="current-password" />
-      <KataSandi label="Kata sandi baru (minimal 8 karakter)" name="baru" autoComplete="new-password" minLength={8} />
-      <KataSandi label="Ulangi kata sandi baru" name="ulang" autoComplete="new-password" minLength={8} />
+      <KataSandi ref={lama} label="Kata sandi lama" name="lama" autoComplete="current-password" galat={galat("lama")} />
+      <KataSandi ref={baru} label="Kata sandi baru (minimal 8 karakter)" name="baru" autoComplete="new-password" minLength={8} galat={galat("baru")} />
+      <KataSandi ref={ulang} label="Ulangi kata sandi baru" name="ulang" autoComplete="new-password" minLength={8} galat={galat("ulang")} />
       <button className={tombol} disabled={proses}>{proses ? "Menyimpan..." : "Simpan kata sandi baru"}</button>
-      <Pesan hasil={hasil} />
+      <Pesan hasil={hasil?.kolom ? null : hasil} />
     </form>
   );
 }

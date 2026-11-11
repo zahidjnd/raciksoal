@@ -1,6 +1,6 @@
 "use server";
 
-import { count, isNull } from "drizzle-orm";
+import { count, eq, isNull } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
@@ -9,7 +9,8 @@ import { emailDariUsername, rapikanUsername } from "@/lib/akses";
 import { auth } from "@/lib/auth";
 import { ipDari, pembatasMasuk as pembatas } from "@/lib/pembatas";
 
-type Hasil = { pesan: string } | null;
+// kolom: kolom yang salah (form masuk hanya mengosongkan/menandai kolom itu). Tanpa kolom = pesan umum, kata sandi dikosongkan.
+type Hasil = { pesan: string; kolom?: "username" | "password" } | null;
 
 // Pembatas percobaan salah: per perangkat + nama pengguna, plus batas longgar per nama (src/lib/pembatas.ts, dites).
 // Dibuka admin lewat "Reset kata sandi" (admin/guru/actions.ts).
@@ -17,18 +18,30 @@ type Hasil = { pesan: string } | null;
 export async function masuk(_: Hasil, form: FormData): Promise<Hasil> {
   const username = rapikanUsername(String(form.get("username") ?? ""));
   const password = String(form.get("password") ?? "");
-  if (!username || !password) return { pesan: "Isi nama pengguna dan kata sandi." };
+  if (!username) return { pesan: "Isi nama pengguna.", kolom: "username" };
+  if (!password) return { pesan: "Isi kata sandi.", kolom: "password" };
 
   const h = await headers();
   const ip = ipDari(h.get("x-forwarded-for"), h.get("x-real-ip") ?? "?");
   if (pembatas.terkunci(ip, username)) {
     return { pesan: "Terlalu banyak percobaan salah. Coba lagi 15 menit lagi, atau minta admin mereset kata sandi." };
   }
+  // Pesan menunjuk kolom yang salah (permintaan pemilik 0.32.5). Perangkat yang terlalu sering mencoba nama tak
+  // terdaftar hanya mendapat pesan umum (pembatas.samar), supaya nama guru tidak bisa ditebak satu per satu.
+  const samar = pembatas.samar(ip);
+  const UMUM = { pesan: "Nama pengguna atau kata sandi salah." };
+  const [akun] = await db.select({ nonaktif: pengguna.banned }).from(pengguna).where(eq(pengguna.username, username)).limit(1);
+  if (!akun) {
+    pembatas.namaAsing(ip);
+    return samar ? UMUM : { pesan: "Nama pengguna tidak terdaftar. Periksa ejaannya.", kolom: "username" };
+  }
   try {
     await auth.api.signInUsername({ body: { username, password }, headers: h });
   } catch {
     pembatas.gagal(ip, username);
-    return { pesan: "Nama pengguna atau kata sandi salah, atau akun dinonaktifkan." };
+    if (samar) return UMUM;
+    if (akun.nonaktif) return { pesan: "Akun ini dinonaktifkan. Hubungi admin." };
+    return { pesan: "Kata sandi salah.", kolom: "password" };
   }
   pembatas.berhasil(ip, username);
   redirect("/");

@@ -119,6 +119,8 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   untuk SEMUA mapel. Ijtimaiyyah, PJOK, BK sengaja tidak dimasukkan.
 - **Batas**: 10 set/guru/hari (admin bebas) + 100/web; 2 set proses serentak/guru; Ganti/Ubah/Tambah 30x per set & 60/guru/hari;
   analisa materi 30/guru/hari; halaman PDF dibaca AI 100/guru/hari; login dikunci 5x salah/15 menit per perangkat+nama. Batas ada di `pembatas.ts`.
+- **Pesan masuk** (0.32.5, pilihan pemilik): "nama tidak terdaftar" / "kata sandi salah" terpisah (kolom yang salah saja
+  dikosongkan). Lebih dari 10 nama tak terdaftar per IP/15 menit → pesan umum saja (`samar`), TIDAK mengunci (satu IP madrasah).
 - **Peran**: guru hanya model utama, tanpa info teknis; admin = semua set, pilihan model, Bandingkan, pita peringatan.
 - **Akun** (0.32.0): guru mengganti nama tampil sendiri (`updateUser`; sapaan menyebut gelar depan + nama depan), bawaan
   Set baru di tabel `preferensi_guru` (mapel diajar → optgroup "Mapel saya" & yang pertama terpilih, kelas, menit, kesulitan,
@@ -180,6 +182,9 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   aksi server "is not defined").
 - Menulis kode lewat skrip Python/heredoc: backslash bisa berubah (`\n`, `\b` rusak). Untuk teks ber-backslash pakai alat Edit.
 - Baris di daftar yang digulir (flex-col) WAJIB `shrink-0`. Visibilitas laci sidebar diatur pengatur waktu, bukan transisi CSS.
+- Form `action={...}` React 19 MENGOSONGKAN semua kotak setelah dikirim (juga saat salah). Supaya hanya kotak salah yang
+  kosong: `onSubmit={kirimTanpaKosong(...)}` (masuk/form.tsx) TETAP bersama `action=` (tanpa action, klik sebelum halaman
+  siap = GET → kata sandi masuk alamat; skrip uji-pemisahan juga butuh action).
 - `navigator.clipboard` diblokir di sebagian browser → cadangan `document.execCommand("copy")`.
 - Claude lewat endpoint OpenAI mengabaikan `response_format` → `buangPagar` membuang ```json. DeepSeek hanya menerima
   `deepseek-flash` / `deepseek-v4-pro`; "berpikir" dimatikan lewat `AIn_EXTRA_BODY`.

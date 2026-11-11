@@ -10,16 +10,19 @@ import { MAKS_NAMA, rapikanNama, rapikanPreferensi } from "@/lib/preferensi";
 import { penggunaSaatIni } from "@/lib/sesi";
 
 type Hasil = { ok: boolean; pesan: string } | null;
+// Ganti kata sandi: kolom yang salah, supaya form hanya mengosongkan kolom itu (0.32.5).
+type HasilSandi = { ok: boolean; pesan: string; kolom?: "lama" | "baru" | "ulang" } | null;
 const SESI_HABIS = { ok: false, pesan: "Sesi berakhir. Silakan masuk lagi." };
 
 /** Ganti kata sandi sendiri. Perangkat lain yang sedang masuk ikut dikeluarkan. */
-export async function gantiKataSandi(_: Hasil, form: FormData): Promise<Hasil> {
+export async function gantiKataSandi(_: HasilSandi, form: FormData): Promise<HasilSandi> {
   if (!(await penggunaSaatIni())) return SESI_HABIS;
   const lama = String(form.get("lama") ?? "");
   const baru = String(form.get("baru") ?? "");
-  if (baru.length < 8) return { ok: false, pesan: "Kata sandi baru minimal 8 karakter." };
-  if (baru !== String(form.get("ulang") ?? "")) return { ok: false, pesan: "Ulangan kata sandi baru tidak sama." };
-  if (baru === lama) return { ok: false, pesan: "Kata sandi baru harus berbeda dari yang lama." };
+  if (!lama) return { ok: false, pesan: "Isi kata sandi lama.", kolom: "lama" };
+  if (baru.length < 8) return { ok: false, pesan: "Kata sandi baru minimal 8 karakter.", kolom: "baru" };
+  if (baru === lama) return { ok: false, pesan: "Kata sandi baru harus berbeda dari yang lama.", kolom: "baru" };
+  if (baru !== String(form.get("ulang") ?? "")) return { ok: false, pesan: "Tidak sama dengan kata sandi baru di atas.", kolom: "ulang" };
   try {
     const h = await headers();
     // Jangan pakai opsi revokeOtherSessions bawaan: opsi itu mengganti sesi perangkat ini juga, dan sesi barunya
@@ -28,7 +31,8 @@ export async function gantiKataSandi(_: Hasil, form: FormData): Promise<Hasil> {
     await auth.api.revokeOtherSessions({ headers: h });
     return { ok: true, pesan: "Kata sandi berhasil diganti. Perangkat lain yang sedang masuk sudah dikeluarkan." };
   } catch (e) {
-    return { ok: false, pesan: pesanAuth(e) };
+    const salahLama = (e as { body?: { code?: string } }).body?.code === "INVALID_PASSWORD";
+    return { ok: false, pesan: pesanAuth(e), ...(salahLama ? { kolom: "lama" as const } : {}) };
   }
 }
 
