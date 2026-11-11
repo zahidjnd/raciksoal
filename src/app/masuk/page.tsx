@@ -11,16 +11,17 @@ export default async function HalamanMasuk() {
   const [{ n }] = await db.select({ n: count() }).from(pengguna);
 
   return (
-    <main id="halaman-masuk" className="flex min-h-dvh items-center justify-center p-4">
-      {/* Satu kartu di tengah (lebar tetap), supaya tidak banyak ruang kosong di layar lebar. */}
-      <div className="grid w-full max-w-[820px] overflow-hidden rounded-2xl border bg-kartu shadow-lg md:min-h-[480px] md:grid-cols-[5fr_6fr]">
-        {/* Kiri (HP: atas): tanda bintang delapan + teks yang "diketik" seperti AI sedang meracik soal. */}
-        <section className="flex flex-col gap-5 border-b bg-krem-tua p-5 md:border-r md:border-b-0 md:p-8">
+    // HP (0.32.6, pilihan pemilik): tanpa kartu, logo di atas, form di sepertiga atas (tidak tertutup papan ketik),
+    // MA Al-Fatah + versi di dasar layar. Laptop: satu kartu dua kolom di tengah seperti dulu.
+    <main id="halaman-masuk" className="flex min-h-dvh flex-col px-5 pt-[10dvh] pb-6 md:items-center md:justify-center md:p-4">
+      <div className="mx-auto w-full max-w-sm md:grid md:min-h-[480px] md:max-w-[820px] md:grid-cols-[5fr_6fr] md:overflow-hidden md:rounded-2xl md:border md:bg-kartu md:shadow-lg">
+        {/* Kiri (HP: atas, rata tengah): tanda bintang delapan + teks yang "diketik" seperti AI sedang meracik soal. */}
+        <section className="flex flex-col items-center gap-3 pb-8 text-center md:items-stretch md:gap-5 md:border-r md:bg-krem-tua md:p-8 md:text-left">
           <Panggung />
           <p className="hidden text-xs text-pudar md:block">MA Al-Fatah · v{paket.version}</p>
         </section>
 
-        <section className="flex flex-col justify-center gap-6 p-5 md:p-8">
+        <section className="flex flex-col justify-center gap-6 md:p-8">
           <div>
             <h1 className="text-3xl">Assalamu&apos;alaikum.</h1>
             <p className="mt-1 text-sm text-pudar">Masuk untuk mulai meracik soal.</p>
@@ -28,6 +29,7 @@ export default async function HalamanMasuk() {
           {n === 0 ? <FormAdminPertama /> : <FormMasuk />}
         </section>
       </div>
+      <p className="mt-auto pt-10 text-center text-xs text-pudar md:hidden">MA Al-Fatah · v{paket.version}</p>
     </main>
   );
 }

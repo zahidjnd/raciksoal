@@ -4,7 +4,7 @@ import { useActionState, useEffect, useRef, useState, useTransition } from "reac
 import { buatAdminPertama, masuk } from "./actions";
 
 const tombol =
-  "flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-hijau px-4 font-semibold text-white hover:bg-hijau-tua disabled:opacity-50";
+  "flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-hijau px-4 font-semibold text-white hover:bg-hijau-tua disabled:opacity-50 max-md:h-11";
 const kartu = "space-y-4 rounded-xl border bg-kartu p-5";
 
 /** Tanda Racik Soal: bintang delapan (khatam), dibuat sendiri. */
@@ -113,9 +113,10 @@ export function Panggung() {
 
   return (
     <>
-      <div className="flex items-center gap-2.5">
-        <Bintang className="h-7 w-7 text-hijau-teks transition-transform duration-1000 ease-out" putar={ke * 45} />
-        <span className="font-serif text-xl font-medium">Racik Soal</span>
+      {/* HP: logo besar di atas nama (wajah aplikasi); laptop: logo kecil di samping nama. */}
+      <div className="flex flex-col items-center gap-3 md:flex-row md:gap-2.5">
+        <Bintang className="h-12 w-12 text-hijau-teks transition-transform duration-1000 ease-out md:h-7 md:w-7" putar={ke * 45} />
+        <span className="font-serif text-2xl font-medium md:text-xl">Racik Soal</span>
       </div>
       <p className="text-sm text-pudar md:hidden">Racik soal lebih cepat, hasilnya tetap cermat</p>
       <div className="hidden flex-1 flex-col justify-center gap-4 md:flex" aria-hidden>
@@ -152,7 +153,7 @@ export function KataSandi({ label, galat, ...props }: { label: string; galat?: s
     <label className="block text-sm">
       {label}
       <span className="relative mt-1 block">
-        <input {...props} type={lihat ? "text" : "password"} required aria-invalid={!!galat} className={`w-full rounded-lg border p-2 pr-11 ${galat ? "border-bahaya" : ""}`} />
+        <input {...props} type={lihat ? "text" : "password"} required aria-invalid={!!galat} className={`w-full rounded-lg border bg-kartu p-2 pr-11 max-md:min-h-11 ${galat ? "border-bahaya" : ""}`} />
         <button
           type="button"
           onClick={() => setLihat(!lihat)}
@@ -220,7 +221,7 @@ export function FormMasuk() {
       <form action={kirim} onSubmit={kirimTanpaKosong(kirim, mulai)} className="space-y-4">
         <label className="block text-sm">
           Nama pengguna
-          <input ref={nama} name="username" autoComplete="username" autoCapitalize="none" required aria-invalid={!!galatNama} className={`mt-1 w-full rounded-lg border p-2 ${galatNama ? "border-bahaya" : ""}`} />
+          <input ref={nama} name="username" autoComplete="username" autoCapitalize="none" required aria-invalid={!!galatNama} className={`mt-1 w-full rounded-lg border bg-kartu p-2 max-md:min-h-11 ${galatNama ? "border-bahaya" : ""}`} />
           {galatNama && <span role="alert" className="mt-1 block text-xs text-bahaya">{galatNama}</span>}
         </label>
         <KataSandi ref={sandi} label="Kata sandi" name="password" autoComplete="current-password" galat={hasil?.kolom === "password" ? hasil.pesan : undefined} />
