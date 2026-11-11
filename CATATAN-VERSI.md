@@ -52,6 +52,12 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.34.1 — 11 November 2026
+- **PDF yang dibaca AI lebih longgar**: sekali lampir kini sampai **50 halaman** (dulu 30), dan per hari sampai
+  **200 halaman** per guru (dulu 100). Satu bab buku yang tebal bisa dibaca sekaligus; 50 halaman ±5 menit.
+
+---
+
 ## 0.34.0 — 11 November 2026
 - **Potong gambar**: tombol **✂ Potong** di bawah setiap gambar materi (Set baru dan Materi saya → Ubah) dan di
   bagian "Gambar soal" saat Edit soal. Geser kotaknya atau tarik sudutnya, lalu **Simpan potongan**. Berguna bila
