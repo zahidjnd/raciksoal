@@ -52,6 +52,15 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.31.1 — 11 November 2026
+Perapian dari hasil audit (tanpa fitur baru).
+- **Keamanan**: web tidak bisa lagi ditampilkan di dalam web lain (mencegah penipuan "klik tersembunyi"), dan izin
+  kamera, mikrofon, dan lokasi dimatikan karena memang tidak dipakai.
+- **Menu di HP lebih ramah papan ketik**: saat menu ☰ dibuka, fokus langsung ke tombol ✕, tombol Tab tidak lari ke
+  halaman di belakang, dan Esc menutup menu.
+- **Kelola guru** (admin): kolom Ganti/Ubah/Tambah hari ini tidak lagi ikut menghitung halaman PDF yang dibaca AI.
+- Bersih-bersih: tabel uji lama dan gambar bawaan yang tidak terpakai dihapus.
+
 ## 0.31.0 — 11 November 2026
 - **PDF dibaca AI.** Setiap halaman PDF difoto di perangkat guru lalu dibaca AI, seperti orang membaca halaman buku.
   Hasilnya: **tabel** jadi tabel, **rumus** jadi rumus sungguhan, **gambar** (diagram, grafik, peta) dipotong dari
