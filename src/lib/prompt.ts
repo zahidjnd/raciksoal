@@ -1,5 +1,5 @@
 import { MAPEL_INGGRIS, MAPEL_SEJARAH } from "./mapel.ts";
-import { blokMj, bukanDalil, identitasBab, keFormatAI, kocok, MAKS_GABUNG, mjLama, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal.ts";
+import { adalahTahun, blokMj, bukanDalil, identitasBab, keFormatAI, kocok, MAKS_GABUNG, mjLama, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal.ts";
 
 export const PESAN_MJ_MIN = "Menjodohkan minimal 3 nomor (atau 0), supaya daftar jawabannya masuk akal.";
 
@@ -601,9 +601,10 @@ const tulisKisi = (k: BarisKisi) =>
 /**
  * Daftar jawaban isian rencana kisi-kisi yang TIDAK boleh tertulis di soal lain (ATURAN-SOAL 2b no. 11), untuk setiap
  * tahap soal. Jawaban yang memuat angka dilewati: melarang angka (mis. tarif 11%) bisa membuat AI mengubah data yang benar.
+ * Kecuali tahun ("92 H"): bukan data hitungan, dan tanpa larangan tahun bocor ke soal PG yang ditulis lebih dulu (0.31.2, set 104).
  */
 export function laranganIsian(kisi: BarisKisi[]) {
-  const kata = [...new Set(kisi.filter((k) => k.bentuk === "ISIAN" && k.jawaban && !/\d/.test(k.jawaban)).map((k) => k.jawaban!.trim()))];
+  const kata = [...new Set(kisi.filter((k) => k.bentuk === "ISIAN" && k.jawaban && (!/\d/.test(k.jawaban) || adalahTahun(k.jawaban))).map((k) => k.jawaban!.trim()))];
   return kata.length
     ? `Kata/istilah berikut adalah JAWABAN soal isian di set ini: ${kata.map((k) => `"${k}"`).join(", ")}. JANGAN tuliskan kata-kata itu di pokok soal, pilihan, pernyataan, premis, maupun wacana soal lain (hanya soal isian yang bersangkutan yang memakainya, sebagai kunci).\n`
     : "";
@@ -627,6 +628,19 @@ export function buatPeriksaKembar(kisi: BarisKisi[]) {
       [a.bentuk, b.bentuk].some((x) => x === "MJ" || x === "URAIAN") || !miripIndikator(a.indikator, b.indikator) ? [] : [`${i + 1} dan ${i + d + 2}`],
     ),
   );
+  // Jawaban isian yang sudah tertulis di indikator/materi baris SEBELUMNYA pasti bocor (0.31.2, set 104: isian "Muawiyah bin
+  // Abi Sufyan" sementara baris 3, 11, 12 menguji Muawiyah). Dicocokkan kata terpanjang jawaban; kata topik yang muncul di
+  // >= 40% baris ("inflasi" di materi inflasi) dilewati. Diukur di 23 isian lama: 3 bocor sungguhan tertangkap, 1 salah tangkap.
+  const polos = (t: string) => ` ${t.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim()} `;
+  const teksBaris = kisi.map((k) => polos(`${k.indikator} ${k.materi}`));
+  const tabrak = kisi.flatMap((k, i) => {
+    if (k.bentuk !== "ISIAN" || !k.jawaban) return [];
+    const kata = polos(k.jawaban).trim().split(" ").filter((w) => w.length >= 4 && !/^\d+$/.test(w)).sort((a, b) => b.length - a.length)[0];
+    if (!kata || teksBaris.filter((t) => t.includes(` ${kata} `)).length >= 0.4 * kisi.length) return [];
+    const j = teksBaris.findIndex((t, j) => j < i && kisi[j].bentuk !== "URAIAN" && t.includes(` ${kata} `));
+    return j < 0 ? [] : [`${i + 1} dan ${j + 1} (jawaban isian "${k.jawaban}" sudah diuji di baris ${j + 1})`];
+  });
+  pasti.push(...tabrak);
   return `Ini permintaan MEMERIKSA kisi-kisi set ini (bukan membuat soal):
 ${baris.join("\n")}
 ${pasti.length ? `\nPasangan berikut SUDAH PASTI kembar dan wajib diperbaiki: ${pasti.join("; ")}.\n` : ""}
@@ -636,8 +650,19 @@ Untuk setiap pasangan kembar, tulis ulang baris yang NOMORNYA LEBIH BESAR: indik
 FORMAT JAWABAN: hanya JSON {"kembar":[{"nomor":17,"sama_dengan":3,"indikator":"...","materi":"...","stimulus":"..."}]}. Kalau tidak ada yang kembar: {"kembar":[]}.`;
 }
 
-const BUKAN_INTI = new Set("peserta didik dapat disajikan yang dan dengan dari pada untuk dalam suatu sebuah tentang secara tepat benar beberapa dua tiga data kasus".split(" "));
-const kataInti = (t: string) => new Set(String(t).toLowerCase().split(/,\s*peserta didik dapat/).pop()!.normalize("NFD").replace(/\p{M}/gu, "").replace(/[^\p{L}\p{N}]+/gu, " ").split(" ").filter((w) => w.length > 2 && !BUKAN_INTI.has(w)));
+const BUKAN_INTI = new Set("peserta didik dapat disajikan yang dan dengan dari pada untuk dalam suatu sebuah tentang secara tepat benar beberapa dua tiga data kasus besar pernyataan pilih semua jawaban".split(" "));
+/**
+ * Kata kerja sinonim disamakan dulu (0.31.2): "menilai kebenaran hasil hitung inflasi" (BS) = "menentukan tingkat inflasi"
+ * (ISIAN) = "menghitung tingkat inflasi" (PG). Tanpa ini kata kerjanya dihitung beda dan pasangan kembar lolos (set 110 no. 6
+ * dan 19). Diukur di 66 kisi laptop: 29 → 47 pasangan, 0 pasangan lama hilang, ±4 salah tangkap (cukup ditulis ulang AI).
+ */
+const samakanKerja = (t: string) =>
+  t
+    .replace(/\bmenentukan\s+benar\s+atau\s+salah\b/g, "menilai")
+    .replace(/\b(menilai|mengevaluasi|memeriksa|menentukan)\s+(kebenaran|ketepatan|kesesuaian)\s+(hasil\s+)?(per)?hitung(an)?\b/g, "menghitung")
+    .replace(/\b(menentukan|mencari)\b/g, "menghitung");
+const kataInti = (t: string) =>
+  new Set(samakanKerja(String(t).toLowerCase().split(/,\s*peserta didik dapat/).pop()!).normalize("NFD").replace(/\p{M}/gu, "").replace(/[^\p{L}\p{N}]+/gu, " ").split(" ").map((w) => w.replace(/nya$/, "")).filter((w) => w.length > 2 && !BUKAN_INTI.has(w)));
 /** Dua indikator hampir sama: >= 75% kata inti (setelah "peserta didik dapat") yang lebih pendek ada di yang lain. */
 export function miripIndikator(a: string, b: string) {
   const [x, y] = [kataInti(a), kataInti(b)];
@@ -660,7 +685,8 @@ export function terapkanKembar<T extends BarisKisi>(kisi: T[], data: unknown, am
     const b = baru[no - 1];
     const teks = (x: unknown, lama?: string) => (typeof x === "string" && x.trim() ? x.trim() : lama);
     const indikator = teks(k?.indikator);
-    if (!a || !b || !Number.isInteger(no) || sama >= no || !indikator || [a.bentuk, b.bentuk].some((x) => x === "MJ" || x === "URAIAN")) continue;
+    // Baris MJ boleh jadi pasangan bila yang ditulis ulang baris ISIAN (jawaban isian sudah dipakai di blok MJ).
+    if (!a || !b || !Number.isInteger(no) || sama >= no || !indikator || b.bentuk === "MJ" || [a.bentuk, b.bentuk].includes("URAIAN") || (a.bentuk === "MJ" && b.bentuk !== "ISIAN")) continue;
     if (diganti.some((d) => d.startsWith(`${no} `))) continue;
     // AI sering "menulis ulang" dengan indikator yang sama atau hampir sama (set 97): itu bukan perbaikan, dilewati.
     if (baru.some((x, j) => j !== no - 1 && miripIndikator(x.indikator, indikator)) || miripIndikator(b.indikator, indikator)) continue;

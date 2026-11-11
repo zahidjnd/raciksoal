@@ -103,6 +103,10 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
 - **Alur set**: kisi-kisi dulu (level per nomor ditentukan aplikasi `rencanaLevelSet`, AI tidak bisa menghitung komposisi) →
   AI memeriksa kisi untuk baris kembar lintas bentuk → soal BERTAHAP maks 10 per panggilan (`bagiTahap`) → `periksaSoal` →
   perbaikan otomatis 1x untuk soal merah (isian bocor: 3 calon, dipilih yang bersih). Jalan di belakang (`hasil_soal.status`),
+  Kembar (0.31.2): `miripIndikator` menyamakan kata kerja sinonim dulu (menentukan/menilai kebenaran perhitungan = menghitung);
+  jawaban isian yang sudah tertulis di indikator/materi baris sebelumnya = "pasti kembar". Isian bocor: tahun ("92 H") ikut
+  `laranganIsian` & dicari di pilihan; perbaikan diberi `jawabanAman` (nama/tahun materi yang belum tertulis) dan calon yang
+  indikatornya kembar baris lain ditolak (set 117: "PPnBM" vs "Pajak Penjualan atas Barang Mewah").
   browser cek tiap 3 detik, draf tampil bertahap. Server menyala → set "proses" ditandai gagal. Tenggat 10 menit per set.
 - **Bentuk**: PG, PGK, BS, MJ, ISIAN, URAIAN (urutan baku `URUTAN_BENTUK`; jumlah selalu lewat `jumlahSoal()`). Gaya lama
   Al-Fatah untuk semua jenis kecuali TKA: B/S satu pernyataan (kunci direncanakan aplikasi), MJ satu nomor = satu pasangan
@@ -179,8 +183,8 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   Arab), 15 (Bahasa Inggris), 16 (SKI). Cadangan DB sebelum bersih-bersih: `%TEMP%\cadangan-raciksoal\`.
 
 ## Masalah terbuka / tertunda
-- Isian bocor masih terjadi di materi pendek dengan nama/tahun berulang (SKI set 104: 3 isian merah, 3 calon gagal).
-- Soal kembar B/S "menilai hasil hitung X" vs PG "menghitung X" kadang lolos pemeriksaan kisi.
+- Isian bocor di materi SANGAT pendek (SKI 6 paragraf, 18 soal) kadang tetap 1 merah (0.31.2: set 118), pesannya menyarankan
+  mengurangi isian. Istilah berhuruf kecil belum masuk `jawabanAman`.
 - MJ kadang mencampur istilah & sifat dalam satu blok. PDF dibaca AI baru diuji 2 PDF (buku Qurdis XI, modul IPA buatan).
 - Belum diuji: balapan klik ganda & tenggat sungguhan; saringan /admin/set di browser; Latihan TKA grup campur bentuk.
 - Persiapan 1.0.0 di luar kode: saldo DeepSeek, tanya-jawab di Panduan, pemakaian saat ASAS.

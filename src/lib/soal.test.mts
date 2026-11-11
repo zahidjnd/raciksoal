@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { arabTakTerverifikasi, istilahArab, bersihkanTanggapan, gabungBab, identitasBab, blokMj, kataTerpakai, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Soal } from "./soal.ts";
-import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, laranganIsian, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, semesterDari, buatAnalisaMateri, MAKS_CATATAN, MAKS_INSTRUKSI, namaLevelTka, namaTujuan, pasangKunciPgk, rencanaLevel, type Pengaturan } from "./prompt.ts";
+import { adalahTahun, arabTakTerverifikasi, istilahArab, jawabanAman, bersihkanTanggapan, gabungBab, identitasBab, blokMj, kataTerpakai, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Soal } from "./soal.ts";
+import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, laranganIsian, miripIndikator, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, semesterDari, buatAnalisaMateri, MAKS_CATATAN, MAKS_INSTRUKSI, namaLevelTka, namaTujuan, pasangKunciPgk, rencanaLevel, type Pengaturan } from "./prompt.ts";
 import { bolehAkses, rapikanUsername } from "./akses.ts";
 import { headerUnduh } from "./nama-file.ts";
 import { geserTandaGambar, keIsian, rapikanMateri, susunDraf, terapkanAnalisa } from "./materi.ts";
@@ -972,9 +972,58 @@ test("terapkanKembar: hanya baris belakangan, bukan MJ/URAIAN, bentuk/TP/level t
   // Salinan indikator lama (set 97) atau kembar baris lain: dilewati.
   assert.deepEqual(terapkanKembar(kisi, { kembar: [{ nomor: 3, sama_dengan: 1, indikator: "Disajikan data, peserta didik dapat menentukan inflasi secara tepat" }] }, () => true).diganti, []);
   assert.deepEqual(terapkanKembar(kisi, { kembar: [{ nomor: 3, sama_dengan: 1, indikator: "menghitung inflasi tahunan" }] }, () => true).diganti, []);
-  assert.doesNotMatch(buatPeriksaKembar(kisi), /SUDAH PASTI/);
+  // 0.31.2: kata kerja sinonim disamakan, jadi "menghitung inflasi" (PG) dan "menentukan inflasi" (ISIAN) pasti kembar.
+  assert.match(buatPeriksaKembar(kisi), /SUDAH PASTI kembar dan wajib diperbaiki: 1 dan 3\./);
   assert.match(buatPeriksaKembar([b("PG", "Disajikan harga, peserta didik dapat menghitung PPN terutang"), b("BS", "y"), b("ISIAN", "menghitung besarnya PPN terutang pembeli")]), /SUDAH PASTI kembar dan wajib diperbaiki: 1 dan 3\./);
   assert.match(buatPeriksaKembar(kisi), /3\. ISIAN \| TP 1 \| C2 \| menentukan inflasi \| materi: m \| jawaban: 10%/);
+});
+
+test("0.31.2: kembar beda kata kerja (set 110), jawaban isian yang sudah diuji baris lain (set 104)", () => {
+  const b = (bentuk: BarisKisi["bentuk"], indikator: string, extra: Partial<BarisKisi> = {}): BarisKisi =>
+    ({ no: 0, bentuk, tp: "TP 1", materi: "m", indikator, level: "C2", dalil_id: null, stimulus: "s", ...extra });
+  // PG menghitung vs B/S menilai kebenaran perhitungan: kembar.
+  const pg = "Peserta didik dapat menghitung jumlah dan hasil kali akar persamaan kuadrat dari koefisiennya.";
+  assert.match(buatPeriksaKembar([b("PG", pg), b("BS", "Peserta didik dapat menilai kebenaran perhitungan jumlah akar suatu persamaan kuadrat.")]), /SUDAH PASTI kembar dan wajib diperbaiki: 1 dan 2\./);
+  // "menentukan benar atau salah pernyataan" bukan menghitung: pengaruh massa ≠ menghitung energi kinetik.
+  assert.doesNotMatch(
+    buatPeriksaKembar([b("PG", "Disajikan massa bola, peserta didik dapat menghitung energi kinetik bola"), b("BS", "Peserta didik dapat menentukan benar atau salah pernyataan tentang pengaruh massa benda terhadap energi kinetiknya pada kelajuan tetap")]),
+    /SUDAH PASTI/,
+  );
+  // Jawaban isian sudah diuji di baris sebelumnya → baris isian wajib ditulis ulang; kata topik (>= 40% baris) dilewati.
+  const sejarah = [
+    b("PG", "menyebutkan tahun berdirinya Dinasti Umayyah", { materi: "Berdirinya Dinasti Umayyah" }),
+    b("BS", "menilai pernyataan tentang penyerahan kekuasaan Hasan bin Ali kepada Muawiyah"),
+    b("PG", "menjelaskan alasan pemindahan ibu kota"),
+    b("ISIAN", "melengkapi nama khalifah penerima kekuasaan", { jawaban: "Muawiyah bin Abi Sufyan" }),
+  ];
+  assert.match(buatPeriksaKembar(sejarah), /4 dan 2 \(jawaban isian "Muawiyah bin Abi Sufyan" sudah diuji di baris 2\)/);
+  const topik = [b("PG", "menjelaskan inflasi"), b("PG", "menggolongkan inflasi"), b("ISIAN", "melengkapi", { jawaban: "inflasi berat" })];
+  assert.doesNotMatch(buatPeriksaKembar(topik), /SUDAH PASTI/);
+  // Perbaikan otomatis dua isian ke konsep yang sama (set 117: PPnBM vs Pajak Penjualan atas Barang Mewah) = indikator kembar.
+  assert.ok(miripIndikator("Peserta didik dapat menyebutkan jenis pajak yang dikenakan atas penyerahan barang mewah.", "Peserta didik dapat mengidentifikasi pajak pusat yang dikenakan atas penyerahan barang mewah."));
+  // Baris MJ boleh jadi pasangan bila yang ditulis ulang baris ISIAN.
+  const mj = [b("MJ", "menjodohkan tokoh"), b("ISIAN", "nama khalifah", { jawaban: "Muawiyah" })];
+  assert.deepEqual(terapkanKembar(mj, { kembar: [{ nomor: 2, sama_dengan: 1, indikator: "menyebutkan tahun keruntuhan dinasti", jawaban: "132 H" }] }, () => true).diganti, ["2 (kembar dengan 1)"]);
+});
+
+test("0.31.2: tahun = jawaban isian yang dilarang & dicari bocornya di pilihan; daftar jawaban aman dari materi", () => {
+  assert.ok(adalahTahun("92 H") && adalahTahun("711 M") && adalahTahun("tahun 1948") && adalahTahun("622 Masehi"));
+  assert.ok(!adalahTahun("11%") && !adalahTahun("Rp110.000") && !adalahTahun("100 m"));
+  const baris = (jawaban: string) => ({ no: 1, bentuk: "ISIAN", tp: "TP 1", materi: "m", indikator: "i", level: "C1", dalil_id: null, stimulus: "s", jawaban }) as BarisKisi;
+  assert.ok(laranganIsian([baris("92 H")]).includes('"92 H"'));
+  assert.equal(laranganIsian([baris("11%")]), "");
+  const bab = { id: "x", judul: "x", mapel: "Sejarah Kebudayaan Islam", tp: [{ kode: "TP 1", teks: "x" }], dalil: [],
+    materi: ["Muawiyah bin Abi Sufyan mengangkat anaknya, Yazid bin Muawiyah, sebagai putra mahkota. Ibu kota pindah ke Damaskus; ibu kota lama ditinggalkan.", "Kubah Ash-Shakhrah di Yerusalem dibangun pada tahun 72 H (691 M). Thariq bin Ziyad menyeberang pada 92 H."] } as Bab;
+  const dasar = { dalil_id: null, pembahasan: "", level: "C1", tp: "TP 1", skor: 1 };
+  const pg = { ...dasar, bentuk: "PG", pertanyaan: "Ibu kota Dinasti Umayyah dipindahkan ke ....", pilihan: ["Damaskus", "Kufah", "Madinah", "Baghdad", "Makkah"], kunci: "A" } as Soal;
+  const pg2 = { ...dasar, bentuk: "PG", pertanyaan: "Thariq bin Ziyad menyeberang ke Andalusia pada tahun ....", pilihan: ["92 H", "41 H", "72 H", "132 H", "99 H"], kunci: "A" } as Soal;
+  const isian = { ...dasar, bentuk: "ISIAN", pertanyaan: "Penyeberangan ke Andalusia terjadi pada tahun ....", kunci: "92 H" } as Soal;
+  // Tahun di PILIHAN soal lain = bocor (angka biasa di pilihan tidak).
+  assert.ok(periksaSoal([pg, pg2, isian], bab)[2].peringatan!.some((w) => w.startsWith("Jawaban isian sudah tertulis di soal nomor 2")));
+  const aman = jawabanAman(bab, [pg, pg2, isian], 2);
+  assert.ok(aman.includes("Yazid bin Muawiyah") && aman.includes("Yerusalem") && aman.includes("691 M"), aman.join(" | "));
+  assert.ok(!aman.includes("Damaskus") && !aman.includes("Thariq bin Ziyad") && !aman.includes("92 H") && !aman.includes("72 H"), aman.join(" | "));
+  assert.ok(!aman.includes("Ibu"), aman.join(" | ")); // awal kalimat yang juga muncul berhuruf kecil ("ibu kota") dibuang
 });
 
 test("istilah Arab <= 3 kata diterima apa adanya; tombol Bukan ayat/hadis tanpa sumber & centang", () => {

@@ -591,7 +591,9 @@ function bocorDi(soal: Soal[], i: number): string[] {
   // Kunci berangka ("10%", "11"): angka sebagai pilihan/pernyataan/jawaban soal lain tidak membocorkan (siswa tetap
   // menghitung); yang bocor angka yang DIBERIKAN di pokok soal lain ("PPN dengan tarif 11%"). Diukur 2026-11-09: 4 tanda
   // di data laptop, hanya 1 sungguhan.
-  const angka = /\d/.test(asli);
+  // Tahun ("92 H", "tahun 1948") bukan hasil hitung: tahun yang tertulis di pilihan/pernyataan soal lain tetap membocorkan
+  // (0.31.2, set 104: kunci "92 H" tertulis di pokok soal 5 dan 10).
+  const angka = /\d/.test(asli) && !adalahTahun(asli);
   return soal.flatMap((s, j) => {
     if (j === i) return [];
     const teks = angka ? [s.pertanyaan] : [s.pertanyaan, ...(s.pilihan ?? []), ...(s.pernyataan ?? []), ...(s.premis ?? []), ...(s.jawaban ?? []), ...(s.bentuk === "ISIAN" ? [s.kunci].flat() : [])];
@@ -652,6 +654,29 @@ function cekJawabanBenar(s: Soal): string | null {
 
 // "622 M", "2 H", "1187 Masehi", "tahun 1948", "tahun ke-8". H/M/SM huruf besar saja ("100 m" = meter).
 const POLA_TAHUN = /\b(\d{1,4})\s*(?:SM|SH|H|M)\b|\b(\d{1,4})\s*(?:[Hh]ijriy?ah|[Mm]asehi)\b|\b[Tt]ahun\s+(?:ke-?\s*)?(\d{1,4})\b/g;
+
+/** Teks berisi tahun ("92 H", "711 M", "tahun 1948"). Angka biasa ("11%", "Rp110.000", "1948") bukan. */
+export const adalahTahun = (t: unknown) => new RegExp(POLA_TAHUN.source).test(String(t ?? ""));
+
+/**
+ * Calon jawaban isian yang AMAN untuk perbaikan otomatis isian bocor (0.31.2): nama/istilah berhuruf besar dan tahun dari
+ * materi yang BELUM tertulis di soal lain mana pun (pokok, wacana, pilihan, pernyataan, lajur, kunci isian). Dulu AI menebak
+ * sendiri dan tebakannya juga sudah tertulis (set 104: "Al-Walid", "Damaskus" → 3 calon gagal). Kata berhuruf besar yang
+ * juga muncul berhuruf kecil di materi ("Pada", "Ia") dibuang karena hanya awal kalimat.
+ * ponytail: istilah berhuruf kecil ("fungsi anggaran") belum ikut; daftar kosong = AI tetap memilih sendiri.
+ */
+export function jawabanAman(bab: Bab, soal: Soal[], i: number, maks = 40): string[] {
+  const teks = [...bab.materi, ...(bab.pokok ?? [])].join("\n");
+  const kecil = new Set(teks.match(/\b\p{Ll}[\p{L}'-]*/gu) ?? []);
+  const nama = (teks.match(/\p{Lu}[\p{L}'-]*(?:\s+(?:(?:bin|binti|ibn|ibnu|al|as|asy|ar|ad|at|wa)\s+)?\p{Lu}[\p{L}'-]*)*/gu) ?? [])
+    .filter((n) => n.length >= 3 && (n.includes(" ") || !kecil.has(n.toLowerCase())));
+  const tahun = teks.match(/\b\d{1,4}\s*(?:SM|SH|H|M|Hijriy?ah|Masehi)\b/g) ?? []; // "41 H", bukan "tahun 41" dari "tahun 41 H"
+  const lain = polos(
+    soal.flatMap((s, j) => (j === i ? [] : [s.wacana, s.pertanyaan, ...(s.pilihan ?? []), ...(s.pernyataan ?? []), ...(s.premis ?? []), ...(s.jawaban ?? []), ...(s.bentuk === "ISIAN" ? [s.kunci].flat() : [])])).join(" "),
+  );
+  const kunci = polos([soal[i].kunci].flat()[0]);
+  return [...new Set([...nama, ...tahun])].filter((c) => !lain.includes(polos(c)) && polos(c) !== kunci).slice(0, maks);
+}
 
 /**
  * Mapel sejarah (2026-11-09, pilihan pemilik): tahun di bagian soal yang dinyatakan BENAR (pokok, wacana, kunci,
@@ -786,7 +811,7 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
     if (s.bentuk === "ISIAN") {
       peringatan.push(...periksaIsian(s));
       const di = bocorDi(soal, i);
-      if (di.length) peringatan.push(`Jawaban isian sudah tertulis di soal nomor ${di.slice(0, 3).join(", ")}${di.length > 3 ? `, dan ${di.length - 3} soal lain` : ""}.`);
+      if (di.length) peringatan.push(`Jawaban isian sudah tertulis di soal nomor ${di.slice(0, 3).join(", ")}${di.length > 3 ? `, dan ${di.length - 3} soal lain` : ""}. Ganti jawaban isian ini (Ganti/Edit); bila materinya pendek, kurangi jumlah soal isian.`);
     }
     if (mjLama(s)) peringatan.push(...periksaMjLama(soal, i, s));
     else if (s.bentuk === "MJ") {

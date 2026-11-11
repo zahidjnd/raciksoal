@@ -5,9 +5,9 @@ import { awalHariIni, db } from "@/db";
 import { gambar, hasilSoal, pemakaianAi } from "@/db/schema";
 import { BATAS_GAMBAR, rapikanNilaiGambar, ukuranJpeg } from "@/lib/gambar";
 import { daftarModel, tanyaAI, type GambarAI } from "@/lib/ai";
-import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, laranganIsian, ringkasSudah, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, buatSistem, buatAnalisaMateri, buatBacaHalaman, bersihkanIdentitas, pasangKunciPgk, rencanaGrup, rencanaLevelSet, sesuaikanLevel, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
+import { bagiTahap, jumlahSoal, miripIndikator, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, laranganIsian, ringkasSudah, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, buatSistem, buatAnalisaMateri, buatBacaHalaman, bersihkanIdentitas, pasangKunciPgk, rencanaGrup, rencanaLevelSet, sesuaikanLevel, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { BATAS_MATERI, modeArab, rapikanBacaanHalaman, susunDraf, terapkanAnalisa } from "@/lib/materi";
-import { bersihkanTanggapan, gabungBab, identitasBab, kataTerpakai, KELAS, LEVEL, mjLama, pemeriksaArab, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
+import { bersihkanTanggapan, gabungBab, identitasBab, jawabanAman, kataTerpakai, KELAS, LEVEL, mjLama, pemeriksaArab, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { babDariSet, babMilik, daftarBabMilik, dataGambar, gambarMilik } from "@/lib/bab";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
@@ -304,7 +304,11 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan, guruId: string) {
           : "";
         // Isian bocor: daftar kata yang sudah tertulis di soal lain (termasuk pengecoh), ditaruh di AKHIR supaya pemotongan hanya memendekkan daftar.
         const terpakai = bocor ? ` Kata/frasa yang SUDAH tertulis di soal lain, jadi TIDAK boleh menjadi jawaban baru: ${kataTerpakai(soal, i).map((k) => `"${k}"`).join(", ")}` : "";
-        const instruksi = `${awal}Perbaiki soal ini (bentuk, TP, level tetap). Masalah: ${masalah}${terpakai}`;
+        // 0.31.2: nama/istilah/tahun materi yang dipastikan aplikasi belum tertulis di soal mana pun, ditaruh SEBELUM daftar
+        // terlarang (yang boleh terpotong). Dulu AI menebak dan tebakannya juga sudah tertulis (set 104: 3 calon gagal).
+        const aman = bocor ? jawabanAman(bab, soal, i) : [];
+        const pilihan = aman.length ? ` Pilih jawaban baru dari daftar ini (dipastikan aplikasi belum tertulis di soal mana pun): ${aman.map((k) => `"${k}"`).join(", ")}.` : "";
+        const instruksi = `${awal}Perbaiki soal ini (bentuk, TP, level tetap). Masalah: ${masalah}${pilihan}${terpakai}`;
         // Instruksi buatan aplikasi boleh lebih panjang dari batas guru (300), supaya potongan teks bocor dan daftar kata tidak terpotong.
         // Isian bocor: 3 calon sekaligus, aplikasi memakai yang pertama bersih. Satu calon saja sering gagal karena konsep
         // penggantinya juga sudah tertulis di soal lain (set 93: "fungsi anggaran", "fungsi mengatur"); 14 dari 17 isian bocor
@@ -315,7 +319,11 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan, guruId: string) {
         const hasil = daftar.map((baru) => {
           const { stimulus: _s, indikator, ...isi } = susunMenjodohkan(samakanDenganKisi(baru, kisi[i]));
           void _s;
-          return { indikator, cek: periksaSoal(soal.map((x, j) => (j === i ? isi : x)), bab, cekAyat)[i] };
+          // Konsep pengganti tidak boleh mengulang baris kisi lain (0.31.2, set 117: isian 21 "PPnBM" dan 23 "Pajak Penjualan
+          // atas Barang Mewah" diperbaiki ke konsep yang sama; indikatornya kembar, kuncinya beda tulisan).
+          const ulang = (bocor || kelompok) && indikator ? kisi.findIndex((k, j) => j !== i && k.bentuk !== "MJ" && k.bentuk !== "URAIAN" && miripIndikator(k.indikator, String(indikator))) + 1 : 0;
+          const cek = periksaSoal(soal.map((x, j) => (j === i ? isi : x)), bab, cekAyat)[i];
+          return { indikator, cek: ulang ? { ...cek, peringatan: [...(cek.peringatan ?? []), `Konsep penggantinya sama dengan soal nomor ${ulang}.`] } : cek };
         });
         const bersih = hasil.findIndex((h) => !h.cek.peringatan?.length);
         const { indikator, cek } = hasil[Math.max(bersih, 0)];
@@ -325,6 +333,8 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan, guruId: string) {
           // Indikator baru (konsep lain) ikut ke kisi-kisi; teks berisi Arab tak terverifikasi tidak dipakai (aturan 5).
           const ind = String(indikator ?? "").trim();
           if ((bocor || kelompok) && ind && !pemeriksaArab(bab, cekAyat)(ind).length) kisi[i] = { ...kisi[i], indikator: ind };
+          // Rencana jawaban isian ikut kunci baru; tanpa ini Ganti/Ubah nanti diberi tahu kunci lama (set 115: "Damaskus").
+          if (bocor) kisi[i] = { ...kisi[i], jawaban: String([cek.kunci].flat()[0] ?? "").trim() || kisi[i].jawaban };
           info.perbaikan.push(`Soal ${i + 1} diperbaiki otomatis${hasil.length > 1 ? ` (calon ${bersih + 1} dari ${hasil.length})` : ""}: ${masalah}`);
         }
       } catch (e) {
