@@ -3,7 +3,9 @@
   "version": "0.32.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/salin-wasm-pdf.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/salin-wasm-pdf.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

@@ -199,7 +199,10 @@ export async function bukaPdf(data: ArrayBuffer | Uint8Array) {
   // Versi "legacy" hanya untuk npm test (Node); di browser guru dipakai versi biasa + worker.
   const pdfjs = diBrowser ? await import("pdfjs-dist") : await import("pdfjs-dist/legacy/build/pdf.mjs");
   if (diBrowser) pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
-  const tugas = pdfjs.getDocument({ data: new Uint8Array(data), verbosity: 0 });
+  // wasmUrl (0.32.1): pembaca gambar JPEG 2000/JBIG2 (public/pdfjs-wasm, disalin scripts/salin-wasm-pdf.mjs). Tanpa ini
+  // PDF scan bergambar JPX terfoto putih kosong (buku "Al-Muyassar fi Ilmi an-Nahwi", LuraDocument). Diunduh hanya bila perlu.
+  const wasmUrl = diBrowser ? new URL("/pdfjs-wasm/", location.href).href : undefined;
+  const tugas = pdfjs.getDocument({ data: new Uint8Array(data), verbosity: 0, wasmUrl });
   let doc;
   try {
     doc = await tugas.promise;

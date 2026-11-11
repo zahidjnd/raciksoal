@@ -169,6 +169,8 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   pembatas login) — jangan dipasang lagi.
 - Library docx: `\n` tidak jadi baris baru sendiri (pakai `teks()`); `keepNext: false` tetap ditulis sebagai tag → cek nilainya.
   Kop lembar soal ada di `word/header*.xml`.
+- pdf.js 6 butuh `wasmUrl` untuk gambar JPEG 2000/JBIG2 (PDF scan, mis. LuraDocument): tanpa itu halaman terfoto KOSONG
+  tanpa error. `predev`/`prebuild` menyalin `node_modules/pdfjs-dist/wasm` → `public/pdfjs-wasm/` (gitignore); `bukaPdf` menunjuknya.
 - Jangan `npm run build` saat server dev menyala (berbagi `.next`). Setelah mengedit, MUAT ULANG halaman dev (HMR bisa membuat
   aksi server "is not defined").
 - Menulis kode lewat skrip Python/heredoc: backslash bisa berubah (`\n`, `\b` rusak). Untuk teks ber-backslash pakai alat Edit.

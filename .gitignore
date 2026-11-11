@@ -13,6 +13,9 @@
 # testing
 /coverage
 
+# pembaca gambar pdf.js, disalin otomatis dari node_modules (scripts/salin-wasm-pdf.mjs)
+/public/pdfjs-wasm/
+
 # next.js
 /.next/
 /out/
