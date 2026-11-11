@@ -52,6 +52,13 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.35.0 — 11 November 2026
+- **Kunci ringkas bisa diunduh sebagai Word**: di jendela **Unduh** ada centang baru **Kunci ringkas** (bawaannya
+  tidak dicentang). Isinya satu lembar untuk koreksi cepat: kunci pilihan ganda dalam tabel ("1. C  2. A ..."),
+  jawaban isian, dan jawaban ideal uraian. Ikut urutan paket A–D, sama dengan kotak Kunci ringkas di halaman hasil.
+
+---
+
 ## 0.34.1 — 11 November 2026
 - **PDF yang dibaca AI lebih longgar**: sekali lampir kini sampai **50 halaman** (dulu 30), dan per hari sampai
   **200 halaman** per guru (dulu 100). Satu bab buku yang tebal bisa dibaca sekaligus; 50 halaman ±5 menit.
