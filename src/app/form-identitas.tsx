@@ -27,7 +27,7 @@ export function FormIdentitas({ nilai, ubah }: { nilai: Identitas; ubah: (i: Ide
         Hari, tanggal
         <input type="date" className={kotak} value={nilai.tanggal ?? ""} onChange={(e) => ubah({ ...nilai, tanggal: e.target.value })} />
         {/* Tampilan kotak tanggal mengikuti bahasa browser (bisa bulan/tanggal/tahun); tulis ulang gaya Indonesia. */}
-        <span className="mt-0.5 block text-xs text-pudar">{hariTanggal(nilai.tanggal) || "Boleh dikosongkan"}</span>
+        <span className="mt-0.5 block text-sm text-pudar">{hariTanggal(nilai.tanggal) || "Boleh dikosongkan"}</span>
       </label>
       <label className="block">
         Waktu (menit)

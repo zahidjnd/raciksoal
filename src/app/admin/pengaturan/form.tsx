@@ -11,7 +11,7 @@ export function FormNamaMadrasah({ awal }: { awal: string }) {
         Nama madrasah di kop lembar soal
         <input name="nama" defaultValue={awal} maxLength={80} required className="mt-1 w-full rounded-lg border p-2 uppercase" />
       </label>
-      <p className="text-xs text-pudar">Logo, alamat, dan bentuk kop tetap mengikuti format AFTS madrasah.</p>
+      <p className="text-sm text-pudar">Logo, alamat, dan bentuk kop tetap mengikuti format AFTS madrasah.</p>
       <button className="h-10 rounded-lg bg-hijau px-4 font-semibold text-white disabled:opacity-50" disabled={proses}>
         {proses ? "Menyimpan..." : "Simpan"}
       </button>

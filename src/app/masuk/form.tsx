@@ -168,7 +168,7 @@ export function KataSandi({ label, galat, ...props }: { label: string; galat?: s
           </svg>
         </button>
       </span>
-      {galat && <span role="alert" className="mt-1 block text-xs text-bahaya">{galat}</span>}
+      {galat && <span role="alert" className="mt-1 block text-sm text-bahaya">{galat}</span>}
     </label>
   );
 }
@@ -222,7 +222,7 @@ export function FormMasuk() {
         <label className="block text-sm">
           Nama pengguna
           <input ref={nama} name="username" autoComplete="username" autoCapitalize="none" required aria-invalid={!!galatNama} className={`mt-1 w-full rounded-lg border bg-kartu p-2 max-md:min-h-11 ${galatNama ? "border-bahaya" : ""}`} />
-          {galatNama && <span role="alert" className="mt-1 block text-xs text-bahaya">{galatNama}</span>}
+          {galatNama && <span role="alert" className="mt-1 block text-sm text-bahaya">{galatNama}</span>}
         </label>
         <KataSandi ref={sandi} label="Kata sandi" name="password" autoComplete="current-password" galat={hasil?.kolom === "password" ? hasil.pesan : undefined} />
         {/* Pesan umum (terkunci, akun nonaktif, pesan samar) di kotak merah seperti dulu. */}
@@ -242,7 +242,7 @@ export function FormMasuk() {
           )}
         </button>
       </form>
-      <p className="text-center text-xs text-pudar">Belum punya akun atau lupa kata sandi? Hubungi admin.</p>
+      <p className="text-center text-sm text-pudar">Belum punya akun atau lupa kata sandi? Hubungi admin.</p>
     </div>
   );
 }
@@ -253,7 +253,7 @@ export function FormAdminPertama() {
     <form action={kirim} className={`${kartu} border-peringatan-garis`}>
       <div>
         <p className="font-semibold">Buat akun admin pertama</p>
-        <p className="text-xs text-pudar">Hanya muncul sekali. Nama pengguna harus sama dengan ADMIN_USERNAME di .env.</p>
+        <p className="text-sm text-pudar">Hanya muncul sekali. Nama pengguna harus sama dengan ADMIN_USERNAME di .env.</p>
       </div>
       <label className="block text-sm">
         Nama lengkap

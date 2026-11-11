@@ -255,7 +255,7 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
       {gabung && (
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm font-semibold">Materi</p>
-          <span className="text-xs text-pudar">
+          <span className="text-sm text-pudar">
             Dipakai {pilihan.length + (draf ? 1 : 0)} dari maks. {MAKS_GABUNG} materi · <Link href="/materi" className="underline">Materi saya</Link>
           </span>
         </div>
@@ -268,7 +268,7 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
           <div key={id} className="space-y-2">
             <div className="flex items-center justify-between gap-2 rounded-lg border border-hijau/40 bg-hijau-muda/40 px-3 py-2 text-sm">
               <span className="min-w-0 truncate">✓ {m?.judul ?? id}</span>
-              <button className="shrink-0 text-xs text-pudar hover:text-bahaya" aria-label={`Lepas materi ${m?.judul ?? id}`} onClick={() => setPilihan(pilihan.filter((x) => x !== id))}>
+              <button className={`${TOMBOL_KECIL} shrink-0 text-pudar hover:text-bahaya`} aria-label={`Lepas materi ${m?.judul ?? id}`} onClick={() => setPilihan(pilihan.filter((x) => x !== id))}>
                 ✕ Lepas
               </button>
             </div>
@@ -337,7 +337,7 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
               )}
             </div>
             {tempelan.length > 0 && (
-              <p className="flex items-center gap-2 rounded-lg border px-2 py-1 text-xs">
+              <p className="flex items-center gap-2 rounded-lg border px-2 py-1 text-sm">
                 <span className="min-w-0 flex-1">{tempelan.length} gambar ditempel (ikut ke materi setelah Analisa materi)</span>
                 <button className="shrink-0 rounded px-2 text-pudar hover:text-bahaya disabled:opacity-40 max-md:min-h-11 max-md:min-w-11" aria-label="Lepas gambar yang ditempel" disabled={!!proses} onClick={() => setTempelan([])}>
                   ✕
@@ -345,7 +345,7 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
               </p>
             )}
             {file.length > 0 && (
-              <ul className="space-y-1 text-xs" aria-label="File yang dilampirkan">
+              <ul className="space-y-1 text-sm" aria-label="File yang dilampirkan">
                 {file.map((f, i) => (
                   <li key={i} className="flex items-center gap-2 rounded-lg border px-2 py-1">
                     <span className="min-w-0 flex-1 truncate">{f.nama}</span>
@@ -395,7 +395,7 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
             <input type="number" min={1} max={pilihPdf.jumlah} aria-label="Sampai halaman" className="h-8 w-20 rounded-lg border bg-kartu px-2 max-md:min-h-11" value={pilihPdf.sampai} onChange={(e) => setPilihPdf({ ...pilihPdf, sampai: Number(e.target.value) })} />
             <button className="h-8 rounded-lg bg-hijau px-3 font-semibold text-white max-md:min-h-11" onClick={() => lanjutPdf(true)}>Baca dengan AI</button>
           </div>
-          <p className="text-xs text-pudar">
+          <p className="text-sm text-pudar">
             Nomor halaman menurut file PDF (bukan nomor yang tercetak di buku).{" "}
             <button className="underline" onClick={() => lanjutPdf(false)}>Pakai teks saja, semua halaman (tanpa AI: tabel, rumus, dan gambar tidak terbaca)</button>
             {" · "}
@@ -453,7 +453,7 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
     >
       <div className="flex items-center justify-between gap-2">
         <p className="font-semibold text-hijau-teks">{judul}</p>
-        {batal && <button className="shrink-0 text-xs text-pudar hover:text-bahaya" onClick={batal}>✕ Batalkan</button>}
+        {batal && <button className={`${TOMBOL_KECIL} shrink-0 text-pudar hover:text-bahaya`} onClick={batal}>✕ Batalkan</button>}
       </div>
       {draf.isi.trim().length < MATERI_SEDIKIT && <PeringatanSedikit huruf={draf.isi.trim().length} />}
       <label className="block">
@@ -464,7 +464,7 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
       <div className={`space-y-1 rounded-lg border p-2 ${draf.tpUsulan || !draf.tp.trim() ? "border-peringatan-garis bg-peringatan-muda" : "border-hijau"}`}>
         <label className="block">
           Tujuan Pembelajaran (TP), satu per baris
-          <span className={`block text-xs ${draf.tpUsulan || !draf.tp.trim() ? "text-peringatan" : "text-hijau-teks"}`}>
+          <span className={`block text-sm ${draf.tpUsulan || !draf.tp.trim() ? "text-peringatan" : "text-hijau-teks"}`}>
             {draf.tpUsulan
               ? "TP usulan AI. Baca dulu dan ubah bila perlu, sesuaikan dengan yang Anda ajarkan."
               : draf.tp.trim()

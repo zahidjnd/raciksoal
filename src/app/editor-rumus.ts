@@ -31,7 +31,7 @@ export async function editRumus(awal: string): Promise<string | null> {
   dlg.className = "fixed inset-0 z-50 flex items-start justify-center bg-black/40 p-4 pt-[12vh]";
   dlg.innerHTML = `<div class="w-[min(92vw,600px)] rounded-xl border bg-kartu p-4 text-tinta shadow-lg">
 <p class="font-semibold">${awal ? "Ubah rumus" : "Sisipkan rumus"}</p>
-<p class="mb-3 text-xs text-pudar">Ketik / untuk pecahan, ^ untuk pangkat, _ untuk indeks, sqrt untuk akar; atau tekan gambar papan ketik di kanan kotak untuk tombol rumus.</p>
+<p class="mb-3 text-sm text-pudar">Ketik / untuk pecahan, ^ untuk pangkat, _ untuk indeks, sqrt untuk akar; atau tekan gambar papan ketik di kanan kotak untuk tombol rumus.</p>
 <div data-tempat></div>
 <div class="mt-4 flex justify-end gap-2"><button type="button" data-batal class="${tombol}">Batal</button><button type="button" data-ok class="${tombol} border-hijau bg-hijau font-semibold text-white">${awal ? "Simpan rumus" : "Masukkan"}</button></div>
 </div>`;

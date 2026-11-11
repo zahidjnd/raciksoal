@@ -154,7 +154,7 @@ export async function Kerangka({ p, lebar = false, setAktif = null, children }: 
           ))}
 
           <p className="shrink-0 px-3 pt-5 pb-1 text-xs text-pudar">Riwayat</p>
-          {riwayat.length === 0 && <p className="px-3 text-xs text-pudar">Belum ada set soal.</p>}
+          {riwayat.length === 0 && <p className="px-3 text-sm text-pudar">Belum ada set soal.</p>}
           {riwayat.map((s) => {
             const pg = s.pengaturan as Pengaturan;
             // Nama set buatan guru dipakai utuh; selain itu "ASAS ·" + judul materi (judul bisa berhuruf Arab).
@@ -168,7 +168,7 @@ export async function Kerangka({ p, lebar = false, setAktif = null, children }: 
           })}
           {/* Selalu tampil (bila ada set): halaman Riwayat punya pencarian & saringan. */}
           {riwayat.length > 0 && (
-            <Link href="/riwayat" className="flex min-h-11 shrink-0 items-center px-3 text-xs text-hijau-teks hover:underline md:min-h-0 md:py-1">Lihat &amp; cari semua riwayat</Link>
+            <Link href="/riwayat" className="flex min-h-11 shrink-0 items-center px-3 text-sm text-hijau-teks hover:underline md:min-h-0 md:py-1">Lihat &amp; cari semua riwayat</Link>
           )}
         </nav>
 
@@ -186,7 +186,7 @@ export async function Kerangka({ p, lebar = false, setAktif = null, children }: 
           </Link>
           <TombolTema awal={tema} />
           <form action={keluar}>
-            <button className="h-8 rounded-lg px-2 text-xs text-pudar hover:bg-krem-sorot hover:text-tinta">Keluar</button>
+            <button className="h-8 rounded-lg px-2 text-sm text-pudar hover:bg-krem-sorot hover:text-tinta">Keluar</button>
           </form>
         </div>
       </LaciSidebar>

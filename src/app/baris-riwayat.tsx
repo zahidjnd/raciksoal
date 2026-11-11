@@ -92,7 +92,7 @@ export function BarisRiwayat({ id, awalan = "", label: judul, nama, keterangan, 
             if (e.key === "Escape") setKetik(null);
           }}
         />
-        <p className="px-1 pt-1 text-xs text-pudar">Kosongkan untuk kembali ke judul materi.</p>
+        <p className="px-1 pt-1 text-sm text-pudar">Kosongkan untuk kembali ke judul materi.</p>
       </div>
     );
 

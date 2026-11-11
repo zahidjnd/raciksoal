@@ -74,7 +74,7 @@ function Pratinjau({ teks }: { teks: string }) {
   if (!adaRumus(teks)) return null;
   return (
     <div className="mt-1 rounded-lg bg-krem px-2 py-1 [&_[data-tex]]:cursor-pointer [&_[data-tex]]:rounded [&_[data-tex]:hover]:bg-hijau-muda" onClick={ubahRumusDiPratinjau}>
-      <span className="text-xs text-pudar">Pratinjau rumus (klik rumus untuk mengubahnya): </span>
+      <span className="text-sm text-pudar">Pratinjau rumus (klik rumus untuk mengubahnya): </span>
       <TeksBaris teks={teks} />
     </div>
   );
@@ -378,7 +378,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
       </div>
       {lainnya && s.bentuk === "MJ" && (
       <div className="space-y-2 rounded-lg border bg-krem p-3">
-        <p className="text-xs text-pudar">Daftar jawaban menjodohkan dipakai bersama, jadi nomor ini tidak bisa diganti atau diubah AI. Perbaiki lewat Edit.</p>
+        <p className="text-sm text-pudar">Daftar jawaban menjodohkan dipakai bersama, jadi nomor ini tidak bisa diganti atau diubah AI. Perbaiki lewat Edit.</p>
         {onSetBerubah && (
           <button className={`${tombol} text-bahaya`} disabled={mengganti} onClick={() => ubahJumlah("hapus")}>
             {proses === "hapus" ? "Menghapus..." : "Hapus soal ini"}
@@ -424,7 +424,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
         </button>
       </form>
       {jatahUbah && (
-        <p className={`text-xs ${habisAI ? "font-semibold text-bahaya" : "text-pudar"}`}>
+        <p className={`text-sm ${habisAI ? "font-semibold text-bahaya" : "text-pudar"}`}>
           {habisAI === "set"
             ? `Jatah ${jatahUbah.batasSet} kali ganti/ubah/tambah untuk set ini sudah habis dan tidak kembali. Perbaiki lewat Edit atau Tulis soal sendiri, atau buat set baru dengan "Pakai materi ini lagi".`
             : habisAI === "hari"

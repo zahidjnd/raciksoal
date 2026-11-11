@@ -75,7 +75,7 @@ function TabelKisi({ kisi }: { kisi: BarisKisi[] }) {
   return (
     <div className="overflow-x-auto bg-kartu">
         {/* Tabel lebih lebar dari layar HP (min. 640px): beri tahu bahwa bisa digeser. */}
-        <p className="px-2 py-1 text-xs text-pudar md:hidden print:hidden">Geser tabel ke samping untuk melihat semua kolom →</p>
+        <p className="px-2 py-1 text-sm text-pudar md:hidden print:hidden">Geser tabel ke samping untuk melihat semua kolom →</p>
         <table className="w-full min-w-[640px] border-collapse text-sm">
           <thead>
             <tr className="bg-krem-sorot text-left">
@@ -370,7 +370,7 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: strin
                   )}
                   <span className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-hijau-muda text-hijau-teks">{j.ikon}</span>
                   <span className="block text-sm font-semibold">{namaTujuan(j.tujuan, mapel)}</span>
-                  <span className="mt-0.5 block text-xs leading-snug text-pudar">
+                  <span className="mt-0.5 block text-sm leading-snug text-pudar">
                     {j.tujuan === TKA && mapel && !mapelTka(mapel) ? "Mapel ini tidak diujikan di TKA. Soal bergaya TKA (bacaan/kasus, soal grup) untuk melatih nalar." : j.ket}
                   </span>
                 </button>
@@ -400,7 +400,7 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: strin
                   </button>
                 );
               })}
-              <span className="w-full text-xs text-pudar">
+              <span className="w-full text-sm text-pudar">
                 Eksak = Matematika, Fisika, Kimia, Biologi.
               </span>
             </div>
@@ -438,12 +438,12 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: strin
               </button>
             </div>
             {/* Alasan tombol terkunci tepat di bawah tombolnya (dulu di luar kotak, jauh dari tombol). */}
-            {alasanTerkunci && <p className="mt-2 text-right text-xs text-peringatan" role="status">{alasanTerkunci}</p>}
+            {alasanTerkunci && <p className="mt-2 text-right text-sm text-peringatan" role="status">{alasanTerkunci}</p>}
 
             {buka === "jumlah" && (
               <fieldset className="mt-3 border-t pt-3">
                 <legend className="sr-only">Jumlah soal dan skor per soal</legend>
-                <p className="pb-1 text-xs text-pudar">Jumlah soal per jenis</p>
+                <p className="pb-1 text-sm text-pudar">Jumlah soal per jenis</p>
                 <div className="divide-y text-sm">
                   {BENTUK.filter((b) => !(tka && TANPA_TKA.includes(b))).map((b) => {
                     const n = p.jumlah[b];
@@ -451,11 +451,11 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: strin
                       <div key={b} className="flex flex-col gap-1 py-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                         <span className={n ? "" : "text-pudar"}>
                           {namaBentuk(b, tka)}
-                          {!aturSkor && n > 0 && <span className="ml-2 text-xs text-pudar">{bobot[b]} poin/soal</span>}
+                          {!aturSkor && n > 0 && <span className="ml-2 text-sm text-pudar">{bobot[b]} poin/soal</span>}
                         </span>
                         <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
                           {aturSkor && n > 0 && (
-                            <span className="flex items-center gap-1 text-xs text-pudar">
+                            <span className="flex items-center gap-1 text-sm text-pudar">
                               poin
                               <StepAngka label={`Skor per soal ${namaBentuk(b, tka)}`} nilai={bobot[b]} ubah={(v) => setP({ ...p, bobot: { ...bobot, [b]: v } })} max={100} />
                             </span>
@@ -487,7 +487,7 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: strin
               <div className="mt-3 space-y-3 border-t pt-3">
                 <fieldset className="space-y-2">
                   <legend className="mb-1 text-sm font-semibold">Komposisi level (total {totalLevel}%)</legend>
-                  <p className="text-xs text-pudar">
+                  <p className="text-sm text-pudar">
                     Terisi otomatis sesuai tujuan soal, boleh diubah.
                     {totalLevel === 100 && total > 0 && ` Untuk ${total} soal: LOTS ${perLevel.LOTS}, MOTS ${perLevel.MOTS}, HOTS ${perLevel.HOTS} soal.`}
                   </p>
@@ -511,7 +511,7 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: strin
             )}
           </div>
 
-          <p className="text-center text-xs text-pudar">
+          <p className="text-center text-sm text-pudar">
             {jatah &&
               (jatah.batas
                 ? `Sisa jatah hari ini: ${Math.max(0, jatah.batas - jatah.terpakai)} dari ${jatah.batas} set. `
@@ -601,7 +601,7 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: strin
               {hasil.info && ` · ${hasil.info.detik} detik · ${(hasil.info.tokenMasuk + hasil.info.tokenKeluar).toLocaleString("id-ID")} token`}
               {` · ${soal.filter((s) => s.peringatan?.length).length} soal ditandai`}
             </p>
-            <p className="text-xs text-pudar print:hidden">File Word di bilah bawah selalu mengikuti isi terbaru, termasuk soal yang diedit atau diganti.</p>
+            <p className="text-sm text-pudar print:hidden">File Word di bilah bawah selalu mengikuti isi terbaru, termasuk soal yang diedit atau diganti.</p>
             {/* Set dari materi (bukan set lama dari bab bawaan): buat set baru dengan materi yang sama. Muat penuh, lihat komentar di kepala.tsx. */}
             {hasil.babId.split(",").every((b) => /^materi-\d+$/.test(b)) && (
               <a href={`/?materi=${hasil.babId}`} className="inline-block text-sm text-hijau-teks underline print:hidden">
@@ -835,7 +835,7 @@ function JendelaUnduh({ id, adaKisi, paketDipilih, setPaketDipilih }: { id: numb
                 </button>
               ))}
             </div>
-            <p className="text-xs text-pudar">Paket A = urutan seperti di layar. Paket B–D: soal sama, urutan soal dan pilihan diacak (mencegah contek).</p>
+            <p className="text-sm text-pudar">Paket A = urutan seperti di layar. Paket B–D: soal sama, urutan soal dan pilihan diacak (mencegah contek).</p>
           </fieldset>
 
           <fieldset className="space-y-1">
@@ -852,7 +852,7 @@ function JendelaUnduh({ id, adaKisi, paketDipilih, setPaketDipilih }: { id: numb
                   }}
                 />
                 <span className="font-semibold">{f.judul}</span>
-                <span className="text-xs text-pudar">{f.jenis === "kisi" && label ? "satu file, urutan Paket A" : f.ket}</span>
+                <span className="text-sm text-pudar">{f.jenis === "kisi" && label ? "satu file, urutan Paket A" : f.ket}</span>
               </label>
             ))}
           </fieldset>
@@ -864,7 +864,7 @@ function JendelaUnduh({ id, adaKisi, paketDipilih, setPaketDipilih }: { id: numb
               <>
                 <p className="font-semibold">Akan diunduh {daftar.length} file Word:</p>
                 <p className="text-pudar">{daftar.map((f) => f.nama).join(", ")}</p>
-                {daftar.length > 1 && <p className="mt-1 text-xs text-pudar">Bila browser bertanya “izinkan beberapa unduhan?”, pilih Izinkan.</p>}
+                {daftar.length > 1 && <p className="mt-1 text-sm text-pudar">Bila browser bertanya “izinkan beberapa unduhan?”, pilih Izinkan.</p>}
               </>
             )}
           </div>

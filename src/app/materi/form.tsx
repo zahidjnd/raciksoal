@@ -73,7 +73,7 @@ export function FormMateri({ id: idAwal, awal, tersimpan = false, bawaan }: { id
           <a href={`/?materi=materi-${id}`} className="inline-flex h-10 items-center rounded-lg border px-4 text-sm max-md:min-h-11">Buat soal dari materi ini</a>
         )}
       </div>
-      {alasan && <p className="text-xs text-pudar">{alasan}</p>}
+      {alasan && <p className="text-sm text-pudar">{alasan}</p>}
       {pesan && (
         <div className={`text-sm ${pesan.ok ? "text-hijau-teks" : "text-bahaya"}`} role={pesan.ok ? "status" : "alert"}>
           <p>{pesan.teks}</p>
