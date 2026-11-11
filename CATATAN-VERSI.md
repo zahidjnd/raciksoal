@@ -52,6 +52,14 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.33.3 — 11 November 2026
+- **Gambar materi lebih banyak dipakai di soal**: aplikasi kini menentukan nomor mana yang bergambar (1 dari setiap
+  5 soal, tersebar merata, tidak lebih dari jumlah gambar); AI memilih gambar yang paling cocok dan soalnya wajib
+  menanyakan hal yang tampak di gambar. Dulu AI bebas memilih: satu set Fisika memakai 0 dari 10 gambar; kini 4–5
+  soal bergambar per 25 soal. Soal menjodohkan dan Benar/Salah satu pernyataan tidak dijadikan soal bergambar.
+
+---
+
 ## 0.33.2 — 11 November 2026
 - **Pangkat negatif di buku PDF terbaca benar**: saat AI membaca halaman PDF, aplikasi ikut memberi teks asli
   halaman itu sebagai contekan angka. Dulu minus kecil di pangkat sering hilang ($10^{-30}$ terbaca $10^{30}$);
