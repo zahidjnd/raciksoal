@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * Sidebar yang sama untuk laptop & HP (DESIGN.md).
@@ -22,14 +22,32 @@ export function LaciSidebar({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(t);
   }, [buka]);
 
+  // Papan ketik (audit 2026-11-11): saat laci terbuka fokus pindah ke ✕, Tab berputar di dalam laci (tidak lari ke
+  // halaman di balik lapisan gelap), dan setelah ditutup fokus kembali ke ☰.
+  const laci = useRef<HTMLElement>(null);
+  const tombolBuka = useRef<HTMLButtonElement>(null);
+  const tombolTutup = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    if (!buka) return;
-    const tutupDenganEsc = (e: KeyboardEvent) => e.key === "Escape" && setBuka(false);
-    document.addEventListener("keydown", tutupDenganEsc);
+    const [aside, kembali] = [laci.current, tombolBuka.current];
+    if (!buka || !aside) return;
+    tombolTutup.current?.focus();
+    const tekan = (e: KeyboardEvent) => {
+      if (e.key === "Escape") return setBuka(false);
+      if (e.key !== "Tab") return;
+      const bisa = [...aside.querySelectorAll<HTMLElement>("a[href], button, input, [tabindex]:not([tabindex='-1'])")].filter((x) => x.offsetParent);
+      const tujuan = e.shiftKey ? bisa[bisa.length - 1] : bisa[0];
+      const di = document.activeElement;
+      if (!aside.contains(di) || di === (e.shiftKey ? bisa[0] : bisa[bisa.length - 1])) {
+        e.preventDefault();
+        tujuan?.focus();
+      }
+    };
+    document.addEventListener("keydown", tekan);
     document.body.style.overflow = "hidden";
     return () => {
-      document.removeEventListener("keydown", tutupDenganEsc);
+      document.removeEventListener("keydown", tekan);
       document.body.style.overflow = "";
+      if (aside.contains(document.activeElement)) kembali?.focus();
     };
   }, [buka]);
 
@@ -37,7 +55,7 @@ export function LaciSidebar({ children }: { children: React.ReactNode }) {
     <>
       {/* HP: bilah atas menempel, berisi tombol ☰. */}
       <div className="sticky top-0 z-30 flex items-center gap-2 border-b border-garis bg-krem-tua px-2 py-1.5 md:hidden print:hidden">
-        <button onClick={() => setBuka(true)} aria-label="Buka menu" aria-expanded={buka} className="flex h-11 w-11 items-center justify-center rounded-lg hover:bg-krem-sorot">
+        <button ref={tombolBuka} onClick={() => setBuka(true)} aria-label="Buka menu" aria-expanded={buka} className="flex h-11 w-11 items-center justify-center rounded-lg hover:bg-krem-sorot">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
             <path d="M4 7h16M4 12h16M4 17h16" />
           </svg>
@@ -53,6 +71,7 @@ export function LaciSidebar({ children }: { children: React.ReactNode }) {
       />
 
       <aside
+        ref={laci}
         aria-label="Menu"
         // Memilih tautan apa pun di dalam laci = pindah halaman, jadi laci ditutup.
         onClick={(e) => (e.target as HTMLElement).closest("a") && setBuka(false)}
@@ -60,7 +79,7 @@ export function LaciSidebar({ children }: { children: React.ReactNode }) {
       >
         <div className="flex items-center justify-between px-6 pt-5 pb-2 max-md:px-4 max-md:pt-3">
           <span className="font-serif text-xl">Racik Soal</span>
-          <button onClick={() => setBuka(false)} aria-label="Tutup menu" className="flex h-11 w-11 items-center justify-center rounded-lg hover:bg-krem-sorot md:hidden">
+          <button ref={tombolTutup} onClick={() => setBuka(false)} aria-label="Tutup menu" className="flex h-11 w-11 items-center justify-center rounded-lg hover:bg-krem-sorot md:hidden">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
               <path d="M6 6l12 12M18 6L6 18" />
             </svg>

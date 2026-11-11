@@ -43,7 +43,7 @@ async function PeringatanAdmin() {
   return (
     <div className="rounded-lg border border-bahaya-garis bg-bahaya-muda p-3 text-sm text-bahaya">
       <p className="font-semibold">
-        <IkonAwas /> 24 jam terakhir: {cadangan > 0 && `${cadangan} set memakai model cadangan`}
+        ⚠️ 24 jam terakhir: {cadangan > 0 && `${cadangan} set memakai model cadangan`}
         {cadangan > 0 && gagal > 0 && ", "}
         {gagal > 0 && `${gagal} set gagal`}. Cek saldo/kunci model AI.
       </p>
@@ -75,18 +75,8 @@ async function PeringatanBackup() {
   if (!pesan) return null;
   return (
     <div className="rounded-lg border border-bahaya-garis bg-bahaya-muda p-3 text-sm text-bahaya">
-      <IkonAwas /> {pesan} Cek <code>backup.log</code> di hosting.
+      ⚠️ {pesan} Cek <code>backup.log</code> di hosting.
     </div>
-  );
-}
-
-/** Segitiga peringatan (pengganti emoji ⚠️, DESIGN.md: tanpa emoji hiasan). */
-function IkonAwas() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1 inline-block align-[-3px]" aria-hidden>
-      <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
-      <path d="M12 9v4M12 17h.01" />
-    </svg>
   );
 }
 
