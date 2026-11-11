@@ -128,6 +128,8 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   bernomor; nomor `<N>` di teks = nomor tanda), topik & tanya-jawab dalam `<details>` (`BukaLipatan` membuka lipatan dari
   `#id`). Tombol/tampilan berubah → perbarui teks DAN ambil ulang gambarnya: foto HP 375 px di preview (akun guru.uji.b,
   sembunyikan `nextjs-portal`), koordinat CSS di `scripts/panduan-gambar.json`, lalu `scripts/panduan-tandai.py`.
+- **Form Set baru**: file bisa diseret ke kotak materi (sama dengan Lampirkan). Teks tempelan yang belum dipakai disimpan
+  di localStorage `raciksoal-draf-materi` (`DRAF_TEKS`, hanya halaman Set baru), dihapus setelah materinya tersimpan di server.
 - **Set**: hapus = hapus lunak (`dihapus`, tetap dihitung jatah); ganti nama & hapus lewat menu ⋯ riwayat sidebar.
   Paket A–D diacak bersemi (`susunPaket`), tanpa tabel baru. Set menyimpan salinan bab (`hasil_soal.bab`).
 - **Tabel** (0.28.0): ditulis di TEKS soal/wacana/pembahasan sebagai baris `| a | b |` (bukan kolom data baru), dikenali

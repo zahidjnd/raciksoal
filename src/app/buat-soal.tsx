@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ambilDaftarBab, ambilDaftarModel, ambilJatah, cekHasil, mulaiBuatSoal, ubahIdentitas } from "./actions";
 import { simpanMateri } from "./materi/actions";
 import { KartuSoal, Teks, TeksPeringatan, TulisSoalSendiri } from "./kartu-soal";
-import { KotakMateri, PilihMapel, type MateriLama } from "./kotak-materi";
+import { DRAF_TEKS, KotakMateri, PilihMapel, type MateriLama } from "./kotak-materi";
 import { FormIdentitas, ringkasIdentitas } from "./form-identitas";
 import { StepAngka } from "./step-angka";
 import { Panah } from "./panah";
@@ -207,6 +207,11 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: strin
     if (!draf) return pilihan;
     const r = await simpanMateri(null, { ...draf, mapel, kelas }).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
     if (!r.ok) return r.pesan;
+    try {
+      localStorage.removeItem(DRAF_TEKS); // materi sudah tersimpan di server: draf teks tempelan tidak perlu lagi
+    } catch {
+      // Penyimpanan browser diblokir: tidak ada draf untuk dihapus.
+    }
     const id = `materi-${r.id}`;
     setDraf(null);
     setPilihan([...pilihan, id]); // supaya tidak tersimpan dua kali kalau pembuatan soal diulang
@@ -354,8 +359,15 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: strin
                       ...(asas ? { jumlah: { ...asas.jumlah } } : j.tujuan === TKA ? { jumlah: JUMLAH_TKA } : p.tujuan === TKA ? { jumlah: JUMLAH_AWAL } : {}),
                     });
                   }}
-                  className={`rounded-xl border bg-kartu p-3 text-left hover:border-pudar/40 ${pilih ? "border-hijau bg-hijau-muda/50 ring-1 ring-hijau" : ""}`}
+                  // flex-col justify-start: isi tombol rata atas (bawaan tombol = tengah, membuat ikon & judul naik-turun
+                  // bila keterangan kartu beda jumlah baris). Latar kartu dipilih salah satu saja (dua kelas bg- bertabrakan).
+                  className={`relative flex flex-col justify-start rounded-xl border p-3 text-left ${pilih ? "border-hijau bg-hijau-muda/50 ring-1 ring-hijau" : "bg-kartu hover:border-pudar/40"}`}
                 >
+                  {pilih && (
+                    <svg className="absolute right-2 top-2 h-5 w-5 text-hijau" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                      <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1.2 14.2-4-4 1.4-1.4 2.6 2.6 5.6-5.6 1.4 1.4-7 7z" />
+                    </svg>
+                  )}
                   <span className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-hijau-muda text-hijau-teks">{j.ikon}</span>
                   <span className="block text-sm font-semibold">{namaTujuan(j.tujuan, mapel)}</span>
                   <span className="mt-0.5 block text-xs leading-snug text-pudar">
@@ -397,7 +409,8 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: strin
           <div className="rounded-2xl border bg-kartu p-3 shadow-sm focus-within:border-hijau focus-within:ring-2 focus-within:ring-hijau">
             {/* Kotak opsional: huruf seukuran isian lain supaya tidak lebih menonjol dari langkah wajib (audit tampilan 2026-11-08). */}
             <textarea
-              className="w-full resize-none p-1 text-sm outline-none"
+              // Garis tepi tipis: tanpa itu kalimat contoh terbaca seperti tulisan biasa, bukan tempat mengetik.
+              className="mb-2 w-full resize-none rounded-lg border p-2 text-sm outline-none focus:border-hijau"
               rows={2}
               maxLength={MAKS_CATATAN}
               aria-label="Catatan untuk AI (opsional)"

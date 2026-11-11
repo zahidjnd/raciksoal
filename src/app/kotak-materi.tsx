@@ -44,6 +44,9 @@ type FileMateri = { nama: string; paragraf: string[]; gambar: GambarFile[] };
 const huruf = (f: FileMateri) => f.paragraf.join("\n").length;
 const angka = (n: number) => n.toLocaleString("id-ID");
 const BATAS_FILE = 30 * 1024 * 1024;
+const FILE_DITERIMA = /\.(docx|pptx|pdf)$/i;
+/** Teks tempelan yang belum dipakai disimpan di browser (kenyamanan saja), dihapus setelah materinya tersimpan di server. */
+export const DRAF_TEKS = "raciksoal-draf-materi";
 
 /**
  * Materi di halaman utama (pengganti menu Materi saya): tempel teks atau lampirkan Word/PowerPoint/PDF → AI menganalisa
@@ -51,7 +54,27 @@ const BATAS_FILE = 30 * 1024 * 1024;
  * Bisa digabung dengan materi sebelumnya (PTS/PAS). Ayat diambil dari mushaf; hadis wajib dicentang (aturan 5).
  */
 export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, setDraf, gabung = true }: Props) {
-  const [teks, setTeks] = useState("");
+  const [teks, setTeksMentah] = useState("");
+  // Draf teks hanya di halaman Set baru (gabung): tab tertutup sebelum Analisa materi → teks kembali saat dibuka lagi.
+  useEffect(() => {
+    if (!gabung) return;
+    try {
+      setTeksMentah(localStorage.getItem(DRAF_TEKS) ?? "");
+    } catch {
+      // Penyimpanan browser diblokir: mulai kosong.
+    }
+  }, [gabung]);
+  const setTeks = (t: string) => {
+    setTeksMentah(t);
+    if (!gabung) return;
+    try {
+      if (t) localStorage.setItem(DRAF_TEKS, t);
+      else localStorage.removeItem(DRAF_TEKS);
+    } catch {
+      // Penyimpanan browser diblokir/penuh: teks tetap ada di layar, hanya tidak diingat.
+    }
+  };
+  const [seret, setSeret] = useState(false); // file sedang diseret di atas kotak materi
   const [file, setFile] = useState<FileMateri[]>([]); // file yang dilampirkan (urut), bisa dilepas satu per satu
   const [proses, setProses] = useState("");
   const [pesan, setPesan] = useState<{ ok: boolean; teks: string } | null>(null);
@@ -142,10 +165,11 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
     if (catatan) setPesan({ ok: false, teks: catatan });
   }
 
-  async function lampirkan(e: React.ChangeEvent<HTMLInputElement>) {
-    const daftarFile = [...(e.target.files ?? [])];
-    e.target.value = "";
+  /** File dari tombol Lampirkan atau diseret ke kotak materi. */
+  async function lampirkan(daftarFile: File[]) {
     if (!daftarFile.length) return;
+    const asing = daftarFile.find((f) => !FILE_DITERIMA.test(f.name));
+    if (asing) return setPesan({ ok: false, teks: `${asing.name} tidak bisa dibaca. Hanya file Word (.docx), PowerPoint (.pptx), atau PDF.` });
     const besar = daftarFile.find((f) => f.size > BATAS_FILE);
     if (besar) return setPesan({ ok: false, teks: `${besar.name} terlalu besar (maks 30 MB).` });
     setProses("Membaca file...");
@@ -228,7 +252,7 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm font-semibold">Materi</p>
           <span className="text-xs text-pudar">
-            {pilihan.length + (draf ? 1 : 0)}/{MAKS_GABUNG} materi · <Link href="/materi" className="underline">Materi saya</Link>
+            Dipakai {pilihan.length + (draf ? 1 : 0)} dari maks. {MAKS_GABUNG} materi · <Link href="/materi" className="underline">Materi saya</Link>
           </span>
         </div>
       )}
@@ -253,13 +277,35 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
         <KartuMateri draf={draf} setDraf={setDraf} calon={calon} ditolak={ditolak} judul="Materi baru (hasil analisa AI, silakan periksa)" batal={() => { setDraf(null); setTeks(""); setFile([]); setTempelan([]); setTerpakai(new Set()); setDitolak(new Set()); setPesan(null); }} />
       ) : (
         !penuh && (
-          <div className="space-y-2">
+          <div
+            className="space-y-2"
+            // Seret-lepas file Word/PowerPoint/PDF ke kotak materi = sama dengan tombol Lampirkan.
+            onDragOver={(e) => {
+              if (!e.dataTransfer.types.includes("Files")) return;
+              e.preventDefault(); // tanpa ini browser membuka file yang dilepas (meninggalkan halaman)
+              if (siap && !proses) setSeret(true);
+            }}
+            onDragLeave={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setSeret(false);
+            }}
+            onDrop={(e) => {
+              if (!e.dataTransfer.files.length) return;
+              e.preventDefault();
+              setSeret(false);
+              if (!siap) setPesan({ ok: false, teks: "Pilih mata pelajaran dan kelas dulu." });
+              else if (!proses) lampirkan([...e.dataTransfer.files]);
+            }}
+          >
             <textarea
               dir="auto"
               rows={4}
-              className={kotak}
+              className={`${kotak} ${seret ? "border-hijau bg-hijau-muda/50 ring-2 ring-hijau" : ""}`}
               aria-label="Tempel materi"
-              placeholder={siap ? "Tempel materi di sini (ringkasan bab, modul, atau isi PPT), atau lampirkan file Word/PowerPoint/PDF." : "Pilih mata pelajaran dan kelas dulu."}
+              placeholder={
+                seret ? "Lepaskan file di sini..." :
+                siap ? "Tempel materi di sini (ringkasan bab, modul, atau isi PPT), atau lampirkan/seret file Word/PowerPoint/PDF ke sini." :
+                "Pilih mata pelajaran dan kelas dulu."
+              }
               disabled={!siap || !!proses}
               value={teks}
               onChange={(e) => setTeks(e.target.value)}
@@ -271,7 +317,11 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
             <div className="flex flex-wrap items-center gap-2">
               <label className={`inline-flex h-8 cursor-pointer items-center rounded-lg border bg-kartu px-3 text-sm hover:bg-krem max-md:min-h-11 focus-within:ring-2 focus-within:ring-hijau ${!siap || proses ? "pointer-events-none opacity-50" : ""}`}>
                 Lampirkan Word/PowerPoint/PDF
-                <input type="file" multiple accept=".docx,.pptx,.pdf" className="sr-only" disabled={!siap || !!proses} onChange={lampirkan} />
+                <input type="file" multiple accept=".docx,.pptx,.pdf" className="sr-only" disabled={!siap || !!proses} onChange={(e) => {
+                  const f = [...(e.target.files ?? [])];
+                  e.target.value = "";
+                  lampirkan(f);
+                }} />
               </label>
               <button className="h-8 rounded-lg bg-hijau px-3 text-sm font-semibold text-white disabled:opacity-40 max-md:min-h-11" disabled={!siap || !!proses || (!teks.trim() && !file.length)} onClick={() => analisa()}>
                 Analisa materi

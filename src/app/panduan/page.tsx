@@ -43,7 +43,7 @@ const LANGKAH: { judul: string; isi: React.ReactNode; gambar: React.ReactNode[] 
     isi: (
       <>
         <p>Klik <b>Set baru</b>. Pilih <b>mata pelajaran</b> dan <b>kelas</b>&nbsp;<N n={1} />.</p>
-        <p>Tempel teks materi, atau tekan <b>Lampirkan Word/PowerPoint/PDF</b>&nbsp;<N n={2} />. Lalu tekan <b>Analisa materi</b>&nbsp;<N n={3} />.</p>
+        <p>Tempel teks materi, atau tekan <b>Lampirkan Word/PowerPoint/PDF</b>&nbsp;<N n={2} /> (di laptop, file juga bisa diseret ke kotak materi). Lalu tekan <b>Analisa materi</b>&nbsp;<N n={3} />.</p>
       </>
     ),
     gambar: [<Gambar key="1" nama="1-mapel-materi" alt="Pilihan mata pelajaran dan kelas, kotak materi, tombol Lampirkan dan Analisa materi" lebar={750} tinggi={800} />],
@@ -66,7 +66,7 @@ const LANGKAH: { judul: string; isi: React.ReactNode; gambar: React.ReactNode[] 
         <p>Tekan <b>Buat soal</b>&nbsp;<N n={3} />. Biasanya 1–3 menit; soal muncul bertahap. Halaman boleh ditinggal, set tersimpan di riwayat.</p>
       </>
     ),
-    gambar: [<Gambar key="3" nama="3-jenis-buat" alt="Kartu jenis ujian, tombol jumlah soal, dan tombol Buat soal" lebar={750} tinggi={1354} />],
+    gambar: [<Gambar key="3" nama="3-jenis-buat" alt="Kartu jenis ujian, tombol jumlah soal, dan tombol Buat soal" lebar={469} tinggi={868} />],
   },
   {
     judul: "Periksa soal, lalu Unduh",
