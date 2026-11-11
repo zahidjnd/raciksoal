@@ -185,6 +185,9 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
 ## Masalah terbuka / tertunda
 - Isian bocor di materi SANGAT pendek (SKI 6 paragraf, 18 soal) kadang tetap 1 merah (0.31.2: set 118), pesannya menyarankan
   mengurangi isian. Istilah berhuruf kecil belum masuk `jawabanAman`.
-- MJ kadang mencampur istilah & sifat dalam satu blok. PDF dibaca AI baru diuji 2 PDF (buku Qurdis XI, modul IPA buatan).
-- Belum diuji: balapan klik ganda & tenggat sungguhan; saringan /admin/set di browser; Latihan TKA grup campur bentuk.
+- MJ kadang mencampur istilah & sifat dalam satu blok (ditunda: tunggu contoh guru). Wacana grup TKA kadang "dijahit"
+  dari dua topik agar memuat dua indikator (set 126: golongan darah + katup jantung); soal tetap bisa dijawab.
+- Diuji 11 Nov 2026 (lulus, tanpa ubah kode): 4 Buat serentak → 2 jalan; 3 serentak di jatah ke-9 → 1; tenggat (dipendekkan
+  sementara) → gagal rapi, tak memakan jatah, guru melihat pesan awam; 13 saringan /admin/set = hitungan DB; TKA grup PG/PGK/
+  Kategori utuh di Paket B; PDF Geografi (tabel) & Sejarah hasil scan terbaca utuh. PDF buku asli mapel non-PAI belum.
 - Persiapan 1.0.0 di luar kode: saldo DeepSeek, tanya-jawab di Panduan, pemakaian saat ASAS.
