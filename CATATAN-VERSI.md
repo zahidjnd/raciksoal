@@ -52,6 +52,15 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.33.2 — 11 November 2026
+- **Pangkat negatif di buku PDF terbaca benar**: saat AI membaca halaman PDF, aplikasi ikut memberi teks asli
+  halaman itu sebagai contekan angka. Dulu minus kecil di pangkat sering hilang ($10^{-30}$ terbaca $10^{30}$);
+  diuji di Fisika X halaman 13–22: 43 dari 43 benar.
+- **Kepala halaman tidak ikut masuk materi**: baris berulang seperti "Fisika SMA/MA X", "Biologi untuk SMA/MA
+  Kelas XI", "Bab 1 | Menjelajah Sel", dan nomor halaman dibuang otomatis (berlaku juga untuk "teks saja").
+
+---
+
 ## 0.33.1 — 11 November 2026
 - **Soal grup Latihan TKA tidak lagi merah palsu**: kalau wacana bersama berbunyi "Perhatikan gambar berikut" dan
   gambarnya sudah ada di salah satu soal grup itu, soal lain di grup yang sama tidak ditandai "menyebut gambar tanpa
