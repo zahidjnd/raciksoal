@@ -563,11 +563,18 @@ export function buatPermintaanKisi(p: Pengaturan, bab?: Pick<Bab, "teksArab" | "
     blokMj(p.jumlah.MJ ?? 0).forEach((n, b) => blok.push(...Array<number>(n).fill(b + 1)));
     blok.unshift(...Array<number>(Math.max(awalMj, 0)).fill(0));
   }
+  // 0.33.3: nomor BERGAMBAR ditentukan aplikasi (1 per 5 soal yang bisa bergambar, maks jumlah gambar, tersebar merata). "Usahakan"
+  // (set 127: 0 dari 10 gambar) dan "minimal N baris" (set 131–135: 2–6 dari jatah 5) tidak dituruti AI; nomor yang
+  // ditandai dituruti seperti kategori level. Gambar mana & isi soalnya tetap dipilih AI.
+  // MJ tidak bergambar; B/S gaya lama (satu pernyataan) jarang butuh gambar (set 138: gambar meridian, pernyataan soal kilogram).
+  const bisaGambar = bentukNo.flatMap((b, i) => (b === "MJ" || (b === "BS" && p.tujuan !== TKA) ? [] : [i]));
+  const jatahGambar = adaGambar ? Math.min(bab!.gambar!.length, Math.ceil(bisaGambar.length / 5)) : 0;
+  const bergambar = new Set(Array.from({ length: jatahGambar }, (_, k) => bisaGambar[Math.floor(((k + 0.5) * bisaGambar.length) / jatahGambar)]));
   const rentang: string[] = [];
   for (let i = 0; i < total; ) {
     let j = i;
-    while (j + 1 < total && bentukNo[j + 1] === bentukNo[i] && kategori[j + 1] === kategori[i] && (grup[j + 1] ?? null) === (grup[i] ?? null) && (blok[j + 1] ?? 0) === (blok[i] ?? 0)) j++;
-    rentang.push(`- Nomor ${i === j ? i + 1 : `${i + 1}–${j + 1}`}: ${bentukNo[i]}, ${kategori[i]} (${RENTANG[kategori[i]]})${grup[i] ? `, GRUP ${grup[i]}` : ""}${blok[i] ? `, BLOK MJ ${blok[i]}` : ""}`);
+    while (j + 1 < total && bentukNo[j + 1] === bentukNo[i] && kategori[j + 1] === kategori[i] && (grup[j + 1] ?? null) === (grup[i] ?? null) && (blok[j + 1] ?? 0) === (blok[i] ?? 0) && bergambar.has(j + 1) === bergambar.has(i)) j++;
+    rentang.push(`- Nomor ${i === j ? i + 1 : `${i + 1}–${j + 1}`}: ${bentukNo[i]}, ${kategori[i]} (${RENTANG[kategori[i]]})${grup[i] ? `, GRUP ${grup[i]}` : ""}${blok[i] ? `, BLOK MJ ${blok[i]}` : ""}${bergambar.has(i) ? ", BERGAMBAR" : ""}`);
     i = j + 1;
   }
   return `Susun KISI-KISI untuk satu set ${total} soal. Belum menulis soal; setiap baris kisi-kisi = rencana satu soal.
@@ -588,7 +595,7 @@ ${p.tujuan === TKA ? `${SOAL_GRUP}${tanpaArab ? " Wacana tanpa huruf Arab." : " 
 
 // ATURAN-SOAL.md bagian 4 no. 5 (0.30.0): gambar dari materi guru. Hanya dikirim bila bab punya gambar.
 const ATURAN_GAMBAR = `- GAMBAR: DATA BAB memuat gambar materi (lihat "Gambar materi"; gambarnya dikirim bersama permintaan). Soal boleh memakai SATU gambar sebagai stimulus dengan mengisi "gambar_id"; aplikasi menampilkan gambar itu di bawah pokok soal, jadi tulis misalnya "Perhatikan gambar berikut!" lalu perintah/pertanyaannya. JANGAN menulis id gambar di teks. Soal bergambar harus benar-benar perlu melihat gambar untuk dijawab (menunjuk bagian berlabel, membaca grafik/diagram/peta, mengamati hasil percobaan), dan jawabannya sesuai yang TAMPAK di gambar: jangan mengarang bagian, label, angka, atau warna yang tidak ada di gambar. Pokok soal tidak menjelaskan isi gambar sampai jawabannya terbaca tanpa melihat gambar. Teks Arab di dalam gambar jangan diketik ulang. Soal tanpa gambar: "gambar_id": null, dan jangan menulis "perhatikan gambar" (gambar lain tidak bisa ditampilkan).`;
-const RENCANA_GAMBAR = `- "gambar_id": id gambar dari "Gambar materi" bila soal itu memakai gambar sebagai stimulus, atau null. Usahakan setiap gambar terpakai minimal satu soal (pada TP yang cocok); satu gambar boleh dipakai beberapa soal asalkan yang ditanyakan berbeda. Gambar paling cocok untuk soal yang menunjuk bagian, membaca data, atau mengamati; tidak untuk soal MJ. "stimulus" baris bergambar: "gambar: <apa yang diamati>".`;
+const RENCANA_GAMBAR = `- "gambar_id": id gambar dari "Gambar materi" bila soal itu memakai gambar sebagai stimulus, atau null. Nomor bertanda BERGAMBAR WAJIB memakai gambar (gambar_id terisi): untuk setiap nomor itu pilih gambar yang paling cocok dengan TP-nya sebagai stimulus (diagram, skema, grafik, tabel, peta, foto objek atau percobaan), gambar berbeda-beda antarnomor; gambar yang hanya hiasan atau ilustrasi suasana dilewati (bila gambar yang cocok kurang, satu gambar boleh dipakai lagi untuk pertanyaan yang berbeda). Nomor lain boleh bergambar juga bila cocok. Indikator baris bergambar WAJIB tentang isi yang TAMPAK di gambar itu sendiri (bagian berlabel, data, arah, susunan, langkah yang digambar), bukan soal lain yang kebetulan setopik: soal bergambar tidak bisa dijawab tanpa melihat gambarnya, dan angka/label di soal sama dengan yang ada di gambar. Gambar paling cocok untuk soal yang menunjuk bagian, membaca data, atau mengamati; tidak untuk soal MJ. "stimulus" baris bergambar: "gambar: <apa yang diamati>".`;
 
 // ATURAN-SOAL.md bagian 9 no. 4: soal grup TKA. Dibatasi bentuk sama supaya lembar soal tetap per bagian bentuk.
 const SOAL_GRUP = `SOAL GRUP (gaya TKA): nomor yang ditandai GRUP N di atas SUDAH DITENTUKAN sebagai soal grup: semua nomor dengan GRUP yang sama memakai SATU wacana bersama.

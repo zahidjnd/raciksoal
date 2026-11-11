@@ -147,7 +147,8 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   Jendelanya SENGAJA bukan `<dialog>` modal (papan ketik MathLive tak terlihat di atasnya).
 - **Gambar** (0.30.0): tabel `gambar` (bytea JPEG ≤ 1280 px, dikecilkan di browser `src/app/gambar.tsx`; server cek SOF
   `ukuranJpeg`). `bab.gambar` = [{id, keterangan}], soal & kisi `gambar_id` (kisi merencanakan, `samakanDenganKisi`
-  memaksa). AI melihat gambar (pesan pengguna, sebelum teks; `AIn_GAMBAR=0` = tidak dikirim): kisi = semua gambar, tahap
+  memaksa). 0.33.3: nomor BERGAMBAR ditentukan aplikasi di permintaan kisi (1 per 5 soal non-MJ & non-B/S gaya lama,
+  maks jumlah gambar, tersebar); "usahakan"/"minimal N" tidak dituruti AI. AI melihat gambar (pesan pengguna, sebelum teks; `AIn_GAMBAR=0` = tidak dikirim): kisi = semua gambar, tahap
   = gambar baris tahap itu saja. Gambar baru dari Edit disahkan `sahkanGambarBaru` (milik pemilik set) → masuk salinan
   bab set. Akses `/api/gambar/[id]` = pemilik/admin. Gambar PDF belum diambil (0.31.0: halaman PDF → AI).
   Analisa materi: `office.ts` menandai letak gambar `[[GAMBAR n]]` (dibuang dari isi oleh `susunDraf`), browser mengirim

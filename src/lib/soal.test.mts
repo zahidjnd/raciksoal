@@ -1141,6 +1141,17 @@ test("gambar (0.30.0): hanya gambar materi yang dipakai, soal yang menyebut gamb
   const p = { tujuan: "Latihan", kesulitan: "Sedang", jumlah: { PG: 2, PGK: 0, BS: 0, MJ: 0, ISIAN: 0, URAIAN: 0 }, level: { LOTS: 100, MOTS: 0, HOTS: 0 } } as Pengaturan;
   assert.match(buatPermintaanKisi(p, bab), /"gambar_id": id gambar/);
   assert.doesNotMatch(buatPermintaanKisi(p, { teksArab: "dalil" }), /gambar_id/);
+  // 0.33.3: nomor BERGAMBAR ditentukan aplikasi = 1 per 5 soal non-MJ & non-B/S gaya lama, tersebar, maks jumlah gambar.
+  const sepuluh = { gambar: Array.from({ length: 10 }, (_, i) => ({ id: i + 1, keterangan: "" })) };
+  const nomorGambar = (jumlah: Partial<Pengaturan["jumlah"]>, b = sepuluh, tujuan = "PAS") =>
+    [...buatPermintaanKisi({ ...p, tujuan, jumlah: { ...p.jumlah, ...jumlah } }, b).matchAll(/- Nomor (\d+)[^\n]*BERGAMBAR/g)].map((m) => Number(m[1]));
+  assert.deepEqual(nomorGambar({ PG: 10, PGK: 5, BS: 5, URAIAN: 5 }), [3, 8, 13, 23]); // B/S nomor 16–20 dilewati
+  assert.equal(nomorGambar({ PG: 10, PGK: 5, BS: 5 }, sepuluh, "Latihan TKA").length, 4); // TKA: B/S Kategori boleh bergambar
+  assert.deepEqual(nomorGambar({ PG: 2 }), [2]);
+  assert.ok(nomorGambar({ PG: 20, MJ: 5 }).every((n) => n <= 20)); // MJ (nomor 21–25) tidak bergambar
+  assert.equal(nomorGambar({ PG: 20, MJ: 5 }).length, 4);
+  assert.equal(nomorGambar({ PG: 30 }, { gambar: sepuluh.gambar.slice(0, 2) }).length, 2); // tak lebih dari jumlah gambar
+  assert.deepEqual(nomorGambar({ PG: 10 }, { gambar: [] }), []);
   assert.match(buatPengguna(p, p.jumlah, [], "", kisi.slice(0, 1)), /gambar_id: 7/);
 
   // Gabung materi (PTS/PAS): gambar ikut, dibatasi.
