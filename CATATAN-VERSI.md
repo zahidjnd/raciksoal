@@ -52,6 +52,14 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.33.0 — 11 November 2026
+- **Buku PDF Kemenag lebih leluasa**: file PDF boleh sampai 100 MB (dulu 30 MB) dan setebal apa pun (dulu maks 300
+  halaman), karena file dibaca di HP/laptop guru dan tidak diunggah. AI kini membaca sampai 30 halaman sekali lampir
+  (dulu 20), cukup untuk satu bab utuh.
+- **Materi boleh lebih panjang**: isi satu materi dan total materi yang digabung dalam satu set maks 100 ribu huruf
+  (dulu 30 ribu). Dulu 20 halaman buku Fisika ditolak SETELAH dibaca AI karena ±31 ribu huruf.
+- Diuji dengan buku Biologi XI (31,5 MB, 312 halaman), Fisika X, dan Bahasa Indonesia XII.
+
 ## 0.32.7 — 11 November 2026
 - **Bisa ditemukan di Google**: web terdaftar di Google Search Console (kode verifikasi dipasang). Yang boleh muncul di
   hasil pencarian hanya beranda dan halaman masuk; soal dan materi guru tidak (dijaga lewat `robots.txt` dan login).
