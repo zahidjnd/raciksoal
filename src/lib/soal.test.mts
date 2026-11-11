@@ -1105,6 +1105,17 @@ test("gambar (0.30.0): hanya gambar materi yang dipakai, soal yang menyebut gamb
   assert.ok(asing.peringatan?.some((w) => w.startsWith("Soal menyebut gambar")));
   assert.ok(tanpa.peringatan?.some((w) => w.startsWith("Soal menyebut gambar")));
   assert.ok(!biasa.peringatan?.some((w) => w.startsWith("Soal menyebut gambar"))); // "menggambarkan" bukan menyebut gambar
+  // Soal grup TKA (set 128): wacana bersama menyebut gambar, gambarnya di soal lain satu grup → tidak merah.
+  const wacana = "Perhatikan gambar berikut! Sel hewan memiliki ...";
+  const grup = [
+    { ...dasar, grup: 1, wacana, gambar_id: 7, pertanyaan: "Bagian X adalah ...." },
+    { ...dasar, grup: 1, wacana, pertanyaan: "Fungsi bagian Y adalah ...." },
+    { ...dasar, grup: 2, wacana, pertanyaan: "Bagian Z adalah ...." },
+  ] as Soal[];
+  const sebut = (s: Soal) => !!s.peringatan?.some((w) => w.startsWith("Soal menyebut gambar"));
+  assert.deepEqual(periksaSoal(grup, bab).map(sebut), [false, false, true]);
+  assert.equal(sebut(periksaSoal([grup[1]], bab, undefined, [grup[0]])[0]), false); // Edit satu soal: teman dari set
+  assert.equal(sebut(periksaSoal([grup[1]], bab)[0]), true);
   assert.equal(rapikanSoal({ ...dasar, pertanyaan: "x", gambar_id: "7" as unknown as number }, "PG").gambar_id, 7);
   assert.equal(rapikanSoal({ ...dasar, pertanyaan: "x", gambar_id: -3 }, "PG").gambar_id, null);
 

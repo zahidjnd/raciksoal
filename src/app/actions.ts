@@ -398,7 +398,7 @@ async function simpanSoalDi(set: IsiSet, no: number, isian: Soal, tx: Tx) {
     const lama = set.soal[no];
     const babBaru = await sahkanGambarBaru(set, isian?.gambar_id);
     // Nomor grup tetap dari server (bukan dari browser); hanya teks wacananya yang boleh diedit guru.
-    const [soal] = periksaSoal([rapikanSoal({ ...isian, grup: lama.grup }, lama.bentuk)], set.bab, cekAyat);
+    const [soal] = periksaSoal([rapikanSoal({ ...isian, grup: lama.grup }, lama.bentuk)], set.bab, cekAyat, set.soal.filter((_, j) => j !== no));
     set.soal[no] = soal;
     // TP/level yang diubah guru ikut ke baris kisi-kisinya, supaya kisi-kisi tetap cocok dengan soal.
     const kisi = set.h.kisi as BarisKisi[] | null;
@@ -553,7 +553,7 @@ async function soalBaruDariAI(id: number, no: number, mode: "ganti" | "ubah" | "
     void _g;
     void _w;
     const hasilUbah = { ...isiBaru, ...grupLama, gambar_id: baru.gambar_id === undefined ? lama.gambar_id : baru.gambar_id, bentuk: lama.bentuk, level: LEVEL.includes(baru.level) ? baru.level : lama.level, tp: bab.tp.some((t) => t.kode === baru.tp) ? baru.tp : lama.tp };
-    const [soal] = periksaSoal([ubah ? hasilUbah : baris ? samakanDenganKisi(baru, baris) : { ...isiBaru, ...grupLama, bentuk: lama.bentuk }], bab, cekAyat);
+    const [soal] = periksaSoal([ubah ? hasilUbah : baris ? samakanDenganKisi(baru, baris) : { ...isiBaru, ...grupLama, bentuk: lama.bentuk }], bab, cekAyat, set.soal.filter((_, j) => mode === "tambah" || j !== no));
     if (!ubah) ratakanKunci([soal]); // posisi kunci PG/PGK diacak (tidak saat "ubah", supaya guru tidak bingung)
     if (p.bobot) terapkanBobot([soal], p.bobot);
     // Skenario (dan pada "ubah": indikator, TP, level) baru dicatat di baris kisi-kisi.

@@ -753,14 +753,20 @@ function acakPernyataan(s: Soal, acak: () => number) {
 // "Perhatikan gambar berikut", "gambar di atas", "pada gambar tersebut" (bukan "menggambarkan" / "gambaran").
 const SEBUT_GAMBAR = /\bgambar\s+(berikut|di\s?(atas|bawah)|tersebut|ini)\b|\b(pada|dari|dalam)\s+gambar\b/i;
 
-/** Beri peringatan pada soal yang bermasalah. Aturan 5: teks Arab hanya boleh dari data terverifikasi. */
-export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
+/**
+ * Beri peringatan pada soal yang bermasalah. Aturan 5: teks Arab hanya boleh dari data terverifikasi.
+ * `teman` = soal lain di set (untuk soal grup: gambar boleh ada di soal lain satu grup). Bawaan: `soal` itu sendiri;
+ * pemeriksa satu soal (Edit/Ganti) mengirim isi set TANPA soal yang diperiksa.
+ */
+export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat, teman: Soal[] = soal): Soal[] {
   const arabAsingDi = pemeriksaArab(bab, cekAyat);
   // Angka dari teks materi saja (bukan kode TP "TP 3.1" atau nomor ayat di sumber dalil, yang membuat tahun palsu lolos).
   const teksMateri = [bab.judul, ...bab.tp.map((t) => t.teks), ...bab.materi, ...(bab.pokok ?? [])].join(" ");
   const angkaMateri = MAPEL_SEJARAH.test(identitasBab(bab).mapel) ? new Set((teksMateri.match(/\d+/g) ?? []).map((n) => String(Number(n)))) : null;
   const dalilAda = new Set(bab.dalil.map((d) => d.id));
   const gambarAda = new Set((bab.gambar ?? []).map((g) => g.id));
+  // Soal grup TKA berbagi wacana: "Perhatikan gambar berikut" di wacana cukup bila salah satu soal grup bergambar (set 128).
+  const grupBergambar = new Set(teman.filter((t) => t.grup && t.wacana && gambarAda.has(Number(t.gambar_id))).map((t) => t.grup));
   return soal.map((asli, i) => {
     // Bersihkan kode dalil yang bocor; kalau AI lupa mengisi dalil_id, pakai kode yang ditemukan di teks.
     let ditemukan: string | null = null;
@@ -782,7 +788,7 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat): Soal[] {
     // Gambar yang tidak ada di materi dibuang; soal yang menyebut gambar tanpa gambar ditandai.
     if (s.gambar_id != null && !gambarAda.has(Number(s.gambar_id))) s.gambar_id = null;
     const peringatan: string[] = [];
-    if (!s.gambar_id && SEBUT_GAMBAR.test(`${s.wacana ?? ""} ${s.pertanyaan}`)) peringatan.push("Soal menyebut gambar, tetapi tidak ada gambar yang ditampilkan. Pilih gambarnya lewat Edit, atau ubah kalimatnya.");
+    if (!s.gambar_id && !(s.grup && s.wacana && grupBergambar.has(s.grup)) && SEBUT_GAMBAR.test(`${s.wacana ?? ""} ${s.pertanyaan}`)) peringatan.push("Soal menyebut gambar, tetapi tidak ada gambar yang ditampilkan. Pilih gambarnya lewat Edit, atau ubah kalimatnya.");
     const semuaTeks = [s.wacana ?? "", s.pertanyaan, ...(s.pilihan ?? []), ...(s.pernyataan ?? []), ...(s.premis ?? []), ...(s.jawaban ?? []), ...[s.kunci].flat(), ...(s.kunciAlt ?? []), s.pembahasan, ...(s.rubrik ?? []).map((r) => r.kriteria)];
     const arabAsing = semuaTeks.flatMap((t) => arabAsingDi(String(t ?? "")));
     if (arabAsing.length)
