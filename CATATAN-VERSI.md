@@ -52,6 +52,11 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.32.1 — 11 November 2026
+- **PDF hasil scan yang dulu terbaca kosong kini bisa dibaca**, misalnya buku *Al-Muyassar fi 'Ilmi an-Nahwi*. Sebagian
+  PDF scan menyimpan halamannya dalam format gambar khusus (JPEG 2000 atau JBIG2); dulu halaman seperti ini terbaca
+  sebagai halaman putih. Contoh uji: 2 halaman buku Nahwu tulisan tangan terbaca lengkap dengan harakat dalam 15 detik.
+
 ## 0.32.0 — 11 November 2026
 - **Halaman Akun baru** (klik nama Anda di sidebar):
   - **Nama tampil** bisa diganti sendiri, boleh dengan gelar (mis. "Ust. Ahmad Fauzi"). Nama pengguna untuk masuk tetap
