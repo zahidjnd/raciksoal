@@ -52,6 +52,13 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.33.1 — 11 November 2026
+- **Soal grup Latihan TKA tidak lagi merah palsu**: kalau wacana bersama berbunyi "Perhatikan gambar berikut" dan
+  gambarnya sudah ada di salah satu soal grup itu, soal lain di grup yang sama tidak ditandai "menyebut gambar tanpa
+  gambar" lagi. Berlaku juga saat Edit, Ganti, dan Minta perubahan.
+
+---
+
 ## 0.33.0 — 11 November 2026
 - **Buku PDF Kemenag lebih leluasa**: file PDF boleh sampai 100 MB (dulu 30 MB) dan setebal apa pun (dulu maks 300
   halaman), karena file dibaca di HP/laptop guru dan tidak diunggah. AI kini membaca sampai 30 halaman sekali lampir
