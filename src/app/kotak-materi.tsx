@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { analisaMateri } from "./actions";
-import { Gambar, gambarTempelan, pratinjauAI, TombolGambar, unggah } from "./gambar";
+import { Gambar, gambarTempelan, pratinjauAI, TOMBOL_KECIL, TombolGambar, unggah } from "./gambar";
 import { PotongGambar } from "./potong-gambar";
 import { ambilAyat } from "./materi/actions";
 import { Teks } from "./kartu-soal";
@@ -500,7 +500,7 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
         <div className="mt-2 space-y-2">
           {draf.dalil.map((d, i) => (
             <div key={i} className={`space-y-1 rounded-lg border p-2 ${d.mushaf ? "border-hijau" : bukanDalil(d) ? "bg-krem" : "border-peringatan-garis bg-peringatan-muda"}`}>
-              <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+              <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
                 {d.mushaf ? (
                   <span className="text-hijau-teks">✓ Ayat dari mushaf: {d.sumber}</span>
                 ) : bukanDalil(d) ? (
@@ -525,7 +525,7 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
               )}
               {!d.mushaf && !bukanDalil(d) && <input className={kotak} placeholder="Sumber, mis. HR. Bukhari dan Muslim" value={d.sumber} onChange={(e) => ubahDalil(i, { sumber: e.target.value })} />}
               <input className={kotak} placeholder="Terjemah (opsional)" value={d.terjemah} onChange={(e) => ubahDalil(i, { terjemah: e.target.value })} />
-              <button className="text-xs text-pudar hover:text-bahaya" onClick={() => ubah({ dalil: draf.dalil.filter((_, j) => j !== i) })}>✕ Hapus dari materi</button>
+              <button className={`${TOMBOL_KECIL} text-pudar hover:text-bahaya`} onClick={() => ubah({ dalil: draf.dalil.filter((_, j) => j !== i) })}>✕ Hapus dari materi</button>
             </div>
           ))}
           {!penuh && (
@@ -553,7 +553,7 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
             </div>
           )}
           {istilah.length > 0 && (
-            <div className="text-xs text-pudar">
+            <div className="text-sm text-pudar">
               <p>Istilah Arab pendek (paling banyak 3 kata) dipakai apa adanya, tanpa verifikasi:</p>
               {/* Satu kotak per istilah: daftar Arab yang dipisah koma di paragraf LTR urutannya kacau. */}
               <p className="mt-1 flex flex-wrap gap-1">
@@ -569,7 +569,7 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
               Saya sudah memeriksa teks Arab dan harakat hadis/teks di atas yang bukan dari mushaf sesuai kitab sumbernya.
             </label>
           )}
-          <p className="text-xs text-pudar">
+          <p className="text-sm text-pudar">
             Teks Al-Qur&apos;an: <a className="underline" href="https://tanzil.net" target="_blank" rel="noreferrer">Tanzil Project (tanzil.net)</a>. Terjemah diisi guru.
           </p>
         </div>
@@ -634,7 +634,7 @@ function BagianGambar({ gambar, ubah, calon, ditolak, tempel, eksak }: { gambar:
         Gambar ({gambar.length}/{BATAS_GAMBAR.perMateri}){!gambar.length && <span className="text-pudar"> · untuk soal bergambar</span>}
       </summary>
       <div tabIndex={0} className="mt-2 space-y-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-hijau">
-        <p className="text-xs text-pudar">
+        <p className="text-sm text-pudar">
           AI melihat gambar ini dan memakainya untuk soal (&quot;Perhatikan gambar berikut!&quot;), minimal satu soal per gambar.
           Ingin lebih banyak soal bergambar? Tulis di <b>Catatan untuk AI</b>, misalnya &quot;buat 5 soal yang memakai gambar&quot;.
           AI tidak bisa membuat gambar sendiri. Keterangan singkat membantu AI, misalnya &quot;Struktur sel hewan, bagian bertanda A–E&quot;.
@@ -651,21 +651,21 @@ function BagianGambar({ gambar, ubah, calon, ditolak, tempel, eksak }: { gambar:
                 value={g.keterangan}
                 onChange={(e) => ubah(gambar.map((x, j) => (j === i ? { ...x, keterangan: e.target.value } : x)))}
               />
-              <div className="flex flex-wrap gap-x-4">
+              <div className="flex flex-wrap gap-2">
                 <PotongGambar id={g.id} nomor={i + 1} selesai={(id) => ubah(gambar.map((x, j) => (j === i ? { ...x, id } : x)))} />
-                <button className="text-xs text-pudar hover:text-bahaya max-md:min-h-11" onClick={() => ubah(gambar.filter((_, j) => j !== i))}>✕ Lepas dari materi</button>
+                <button className={`${TOMBOL_KECIL} text-pudar hover:text-bahaya`} onClick={() => ubah(gambar.filter((_, j) => j !== i))}>✕ Lepas dari materi</button>
               </div>
             </div>
           </div>
         ))}
         {biasa.length > 0 && !penuh && (
           <div className="space-y-1">
-            <p className="text-xs text-pudar">Gambar lain di file Anda ({biasa.length}). Klik gambar yang dipakai untuk soal:</p>
+            <p className="text-sm text-pudar">Gambar lain di file Anda ({biasa.length}). Klik gambar yang dipakai untuk soal:</p>
             <DaftarCalon daftar={biasa} sibuk={!!proses} pakai={(x) => tambah(x.map(blobCalon), x)} />
           </div>
         )}
         {tolak.length > 0 && !penuh && (
-          <details className="text-xs text-pudar">
+          <details className="text-sm text-pudar">
             <summary className="cursor-pointer">AI menilai {tolak.length} gambar bukan bagian materi (logo, hiasan, dan sejenisnya), tidak dipakai. Lihat</summary>
             <p className="mt-1">Kalau AI keliru, klik gambarnya untuk tetap memakainya.</p>
             <DaftarCalon daftar={tolak} sibuk={!!proses} pakai={(x) => tambah(x.map(blobCalon), x)} />
@@ -674,7 +674,7 @@ function BagianGambar({ gambar, ubah, calon, ditolak, tempel, eksak }: { gambar:
         {!penuh && (
           <div className="flex flex-wrap items-center gap-2">
             <TombolGambar label="+ Tambah gambar" disabled={!!proses} onPilih={(f) => tambah(f)} />
-            <span className="text-xs text-pudar">atau tempel gambar (Ctrl+V) di kolom mana saja pada kartu ini</span>
+            <span className="text-sm text-pudar">atau tempel gambar (Ctrl+V) di kolom mana saja pada kartu ini</span>
           </div>
         )}
         {proses && <p className="text-sm text-hijau-teks" role="status">{proses}</p>}
@@ -698,7 +698,7 @@ function DaftarCalon({ daftar, sibuk, pakai }: { daftar: { c: GambarFile; url: s
         ))}
       </div>
       {daftar.length > 1 && (
-        <button className="mt-1 text-xs underline disabled:opacity-40" disabled={sibuk} onClick={() => pakai(daftar.map(({ c }) => c))}>
+        <button className="mt-1 text-sm underline disabled:opacity-40 max-md:min-h-11" disabled={sibuk} onClick={() => pakai(daftar.map(({ c }) => c))}>
           Pakai semua
         </button>
       )}

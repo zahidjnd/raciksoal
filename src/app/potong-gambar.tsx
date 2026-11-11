@@ -4,7 +4,7 @@
 // browser (kanvas bawaan, tanpa library), hasilnya diunggah sebagai gambar BARU lewat `unggah` (batas & pemilik sama).
 // Gambar lama tidak diubah: set yang sudah dibuat tetap memakai gambar lamanya.
 import { useEffect, useRef, useState } from "react";
-import { unggah, urlGambar } from "./gambar";
+import { TOMBOL_KECIL, unggah, urlGambar } from "./gambar";
 import { geserKotak, type KotakPotong as Kotak, type Pegangan } from "@/lib/gambar";
 
 const PENUH: Kotak = { kiri: 0, atas: 0, kanan: 1, bawah: 1 };
@@ -89,7 +89,7 @@ export function PotongGambar({ id, nomor, selesai }: { id: number; nomor: number
       <button
         type="button"
         aria-haspopup="dialog"
-        className="text-xs text-pudar hover:text-hijau-teks max-md:min-h-11"
+        className={TOMBOL_KECIL}
         onClick={() => {
           setKotak(PENUH);
           setPesan("");

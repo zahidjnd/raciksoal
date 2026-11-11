@@ -6,6 +6,9 @@ import { BATAS_GAMBAR } from "@/lib/gambar";
 
 export const urlGambar = (id: number) => `/api/gambar/${id}`;
 
+/** Tombol kecil berbingkai (DESIGN.md: 32 px, HP 44 px, huruf 14 px): Tambah gambar, Potong, Lepas/Hapus dari materi. */
+export const TOMBOL_KECIL = "inline-flex h-8 items-center rounded-lg border bg-kartu px-3 text-sm hover:bg-krem max-md:min-h-11";
+
 /**
  * Kecilkan (sisi terpanjang <= 1280 px) lalu jadikan JPEG; latar putih supaya PNG transparan tidak jadi hitam.
  * Masih kebesaran → dikecilkan lagi sampai muat batas server.
@@ -60,7 +63,7 @@ export function Gambar({ id, alt, className = "" }: { id: number; alt?: string; 
 /** Tombol pilih file gambar (boleh beberapa sekaligus). */
 export function TombolGambar({ label, disabled, banyak = true, onPilih }: { label: string; disabled?: boolean; banyak?: boolean; onPilih: (f: File[]) => void }) {
   return (
-    <label className={`inline-flex h-8 cursor-pointer items-center rounded-lg border bg-kartu px-3 text-sm hover:bg-krem max-md:min-h-11 focus-within:ring-2 focus-within:ring-hijau ${disabled ? "pointer-events-none opacity-50" : ""}`}>
+    <label className={`${TOMBOL_KECIL} cursor-pointer focus-within:ring-2 focus-within:ring-hijau ${disabled ? "pointer-events-none opacity-50" : ""}`}>
       {label}
       <input
         type="file"

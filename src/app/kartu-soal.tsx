@@ -5,6 +5,7 @@ import "katex/dist/katex.min.css";
 import { gantiSatuSoal, hapusSoal, pindahSoal, simpanSoal, tambahSoalManual, tambahSoalSerupa } from "./actions";
 import { StepAngka } from "./step-angka";
 import { Gambar, gambarTempelan, TombolGambar, unggah } from "./gambar";
+import { PotongGambar } from "./potong-gambar";
 import { editRumus, isiKotak } from "./editor-rumus";
 import { adaRumus, bukanDalil, kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, POLA_RUMUS, type Bab, type Bentuk, type Soal } from "@/lib/soal";
 import { MAKS_INSTRUKSI, namaBentuk } from "@/lib/prompt";
@@ -478,7 +479,7 @@ function PilihGambar({ bab, nilai, ubah }: { bab: Bab; nilai: number | null; uba
     >
       <legend>Gambar soal (tampil di bawah pertanyaan)</legend>
       <div className="flex flex-wrap items-center gap-2">
-        <button type="button" aria-pressed={!nilai} className={`${pilihan(!nilai)} h-[5.5rem] w-[7.5rem] text-xs`} onClick={() => ubah(null)}>
+        <button type="button" aria-pressed={!nilai} className={`${pilihan(!nilai)} h-[5.5rem] w-[7.5rem] text-sm`} onClick={() => ubah(null)}>
           Tanpa gambar
         </button>
         {daftar.map((id, i) => (
@@ -488,7 +489,18 @@ function PilihGambar({ bab, nilai, ubah }: { bab: Bab; nilai: number | null; uba
         ))}
         <TombolGambar label={proses ? "Mengunggah..." : "Unggah gambar lain"} banyak={false} disabled={proses} onPilih={tambah} />
       </div>
-      <p className="text-xs text-pudar">Bisa juga: klik bagian ini lalu tempel gambar (Ctrl+V).</p>
+      {/* Potongan = gambar baru untuk soal ini saja; gambar asli tetap di set (soal lain yang memakainya tidak berubah). */}
+      {nilai && (
+        <PotongGambar
+          id={nilai}
+          nomor={daftar.indexOf(nilai) + 1}
+          selesai={(id) => {
+            setBaru([...baru, id]);
+            ubah(id);
+          }}
+        />
+      )}
+      <p className="text-sm text-pudar">Bisa juga: klik bagian ini lalu tempel gambar (Ctrl+V).</p>
       {pesan && <p className="text-sm text-bahaya" role="alert">{pesan}</p>}
     </fieldset>
   );
