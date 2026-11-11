@@ -6,6 +6,7 @@ import { DAFTAR_MAPEL } from "@/lib/mapel";
 import { KELAS } from "@/lib/soal";
 import { MAKS_MAPEL_SAYA, MAKS_NAMA, type Preferensi } from "@/lib/preferensi";
 import { gantiKataSandi, gantiNama, keluarkanPerangkatLain, simpanPreferensi } from "./actions";
+import { KataSandi } from "../masuk/form";
 
 const kotak = "mt-1 w-full rounded-lg border bg-kartu p-2";
 const tombol = "rounded-lg bg-hijau h-10 px-4 font-semibold text-white disabled:opacity-50 max-md:min-h-11";
@@ -103,18 +104,10 @@ export function FormKataSandi() {
   return (
     <form action={kirim} className="space-y-4" key={hasil?.ok ? "selesai" : "isi"}>
       <h3 className="font-semibold">Ganti kata sandi</h3>
-      <label className="block text-sm">
-        Kata sandi lama
-        <input name="lama" type="password" autoComplete="current-password" required className={kotak} />
-      </label>
-      <label className="block text-sm">
-        Kata sandi baru (minimal 8 karakter)
-        <input name="baru" type="password" autoComplete="new-password" minLength={8} required className={kotak} />
-      </label>
-      <label className="block text-sm">
-        Ulangi kata sandi baru
-        <input name="ulang" type="password" autoComplete="new-password" minLength={8} required className={kotak} />
-      </label>
+      {/* Tombol mata sama dengan halaman masuk. */}
+      <KataSandi label="Kata sandi lama" name="lama" autoComplete="current-password" />
+      <KataSandi label="Kata sandi baru (minimal 8 karakter)" name="baru" autoComplete="new-password" minLength={8} />
+      <KataSandi label="Ulangi kata sandi baru" name="ulang" autoComplete="new-password" minLength={8} />
       <button className={tombol} disabled={proses}>{proses ? "Menyimpan..." : "Simpan kata sandi baru"}</button>
       <Pesan hasil={hasil} />
     </form>

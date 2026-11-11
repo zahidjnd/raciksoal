@@ -124,6 +124,8 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   Set baru di tabel `preferensi_guru` (mapel diajar → optgroup "Mapel saya" & yang pertama terpilih, kelas, menit, kesulitan,
   catatan tetap = MENGISI kotak Catatan untuk AI, bukan instruksi tersembunyi), pemakaian hari ini, keluarkan perangkat lain.
   Penghitung pemakaian & `ambilPreferensi` di `lib/pemakaian.ts` (BUKAN file "use server": ekspor di sana = bisa dipanggil browser).
+  Tab (0.32.3) lewat `?tab=` (profil+pemakaian / bawaan / keamanan), hanya tab terpilih yang dirender server. Kotak kata
+  sandi = `KataSandi` dari `masuk/form.tsx` (tombol mata sama dengan halaman masuk).
 - **Panduan** (0.32.0): "Mulai cepat" 4 langkah + 8 gambar `public/panduan/*.webp` (tangkapan layar HP bertanda merah
   bernomor; nomor `<N>` di teks = nomor tanda), topik & tanya-jawab dalam `<details>` (`BukaLipatan` membuka lipatan dari
   `#id`). Tombol/tampilan berubah → perbarui teks DAN ambil ulang gambarnya: foto HP 375 px di preview (akun guru.uji.b,

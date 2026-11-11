@@ -191,13 +191,13 @@ const TOPIK: { id: string; judul: string; isi: React.ReactNode }[] = [
     judul: "Akun: nama, bawaan, kata sandi",
     isi: (
       <>
-        <p>Klik nama Anda di sidebar → <b>Akun</b>.</p>
+        <p>Klik nama Anda di sidebar → <b>Akun</b>. Halaman Akun punya tiga tab:</p>
         <ul>
-          <li><b>Mapel yang saya ajar</b>: tampil paling atas di Set baru; yang pertama dicentang langsung terpilih. Kelas, lama ujian, kesulitan, dan <b>Catatan tetap untuk AI</b> juga bisa diatur sekali, berlaku di HP maupun laptop.</li>
-          <li>Ganti nama tampil, ganti kata sandi, dan <b>Keluarkan perangkat lain</b> (mis. lupa keluar di komputer lab).</li>
-          <li><b>Pemakaian hari ini</b> menunjukkan sisa jatah.</li>
+          <li><b>Profil</b>: ganti nama tampil dan lihat <b>Pemakaian hari ini</b> (sisa jatah).</li>
+          <li><b>Bawaan soal</b>&nbsp;<N n={1} />: <b>Mapel yang saya ajar</b> tampil paling atas di Set baru; yang pertama dicentang langsung terpilih&nbsp;<N n={2} />. Kelas, lama ujian, kesulitan, dan <b>Catatan tetap untuk AI</b> juga bisa diatur sekali, berlaku di HP maupun laptop.</li>
+          <li><b>Keamanan</b>: ganti kata sandi (tekan ikon mata untuk melihat yang diketik) dan <b>Keluarkan perangkat lain</b> (mis. lupa keluar di komputer lab).</li>
         </ul>
-        <Gambar nama="8-akun-bawaan" alt="Halaman Akun bagian Bawaan membuat soal dengan dua mapel dicentang" lebar={750} tinggi={826} />
+        <Gambar nama="8-akun-bawaan" alt="Halaman Akun tab Bawaan soal dengan dua mapel dicentang" lebar={469} tinggi={619} />
       </>
     ),
   },

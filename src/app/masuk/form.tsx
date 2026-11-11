@@ -144,7 +144,8 @@ export function Panggung() {
   );
 }
 
-function KataSandi({ label, ...props }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
+/** Kotak kata sandi dengan tombol mata (lihat/sembunyikan). Dipakai juga di halaman Akun. */
+export function KataSandi({ label, ...props }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   const [lihat, setLihat] = useState(false);
   return (
     <label className="block text-sm">
