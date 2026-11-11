@@ -1243,3 +1243,22 @@ test("cakupan kata bacaan AI PDF (0.31.0): halaman yang dilewati AI ketahuan, PD
   assert.ok(cakupanKata(asli, ["Gerak lurus."])! < 0.85); // AI melewatkan paragraf
   assert.equal(cakupanKata(["Halaman scan"], ["apa saja"]), null); // teks asli terlalu sedikit: tidak dinilai
 });
+
+test("PDF 0.33.2: pangkat dari lapisan teks jadi contekan AI, kepala halaman berulang dibuang", async () => {
+  const { paragrafPdf, buangKepalaHalaman } = await import("./office.ts");
+  const it = (str: string, x: number, y: number, h: number) => ({ str, transform: [h, 0, 0, h, x, y], width: str.length * h * 0.5, height: h });
+  const baris = [it("Elektron", 0, 100, 10), it("10", 50, 100, 10), it("-30", 60, 104, 5.8), it("kg", 80, 100, 10)];
+  assert.deepEqual(paragrafPdf(baris, true), ["Elektron 10^{-30} kg"]);
+  assert.deepEqual(paragrafPdf(baris), ["Elektron 10-30 kg"]); // cara lama (materi) tidak berubah
+  assert.deepEqual(paragrafPdf([it("Air H", 0, 100, 10), it("2", 25, 97, 5.8), it("O", 28.5, 100, 10)], true), ["Air H_{2}O"]);
+
+  const kepalaGenap = "Fisika SMA/MA X";
+  const asli = [1, 2, 3, 4, 5].map((n) => [n % 2 ? `Bab 1 | Pengukuran ${n}` : `${n} ${kepalaGenap}`, `Isi halaman ${n}: dua gaya yang bekerja pada satu benda dijumlahkan dengan aturan penjumlahan vektor.`]);
+  const ai = [["8 Fisika SMA/MA X", "Penjumlahan Vektor", "Isi."], ["9", "Bab 1 | Pengukuran 9", "Aktivitas 1.1"]];
+  assert.deepEqual(buangKepalaHalaman(ai, asli), [["Penjumlahan Vektor", "Isi."], ["Aktivitas 1.1"]]);
+  assert.deepEqual(buangKepalaHalaman(ai, asli.slice(0, 3)), [ai[0], ["Bab 1 | Pengukuran 9", "Aktivitas 1.1"]]); // < 4 halaman: hanya nomor halaman
+
+  const { buatBacaHalaman } = await import("./prompt.ts");
+  assert.match(buatBacaHalaman("Elektron 10^{-30}").pengguna, /TEKS LAPISAN PDF[\s\S]*Elektron 10\^\{-30\}/);
+  assert.doesNotMatch(buatBacaHalaman("  ").pengguna, /TEKS LAPISAN/); // PDF scan: tanpa contekan
+});

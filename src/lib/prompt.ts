@@ -340,8 +340,10 @@ ${jumlahGambar ? `${ANALISA_GAMBAR}\n` : ""}- "catatan": satu kalimat bila teks 
  * 0.31.0: AI membaca SATU halaman PDF dari fotonya (gambar halaman dikirim bersama pesan). Diuji 2026-11-11 pada buku
  * Al-Qur'an Hadis XI Kemenag (hlm 16, 21) dan modul IPA: cakupan kata 99–100%, rumus/tabel rapi, kotak gambar tepat.
  * Jawaban dirapikan rapikanBacaanHalaman (materi.ts); teks Arab tidak dipakai apa adanya (aturan 5).
+ * `contekan` (0.33.2): teks lapisan PDF halaman itu (pangkat ditandai ^{...}), tanpa huruf Arab: minus di pangkat
+ * kecil sering terlewat dari foto (Fisika X: 10^{-30} terbaca 10^{30}). Kosong untuk PDF hasil scan.
  */
-export function buatBacaHalaman() {
+export function buatBacaHalaman(contekan = "") {
   const sistem = "Anda menyalin isi SATU halaman buku/modul pelajaran madrasah dari gambar halaman, untuk diolah aplikasi pembuat soal. Balas hanya JSON.";
   const pengguna = `Salin isi halaman ini PERSIS, urut seperti dibaca (atas ke bawah; halaman dua kolom: kolom kiri dulu). Jangan meringkas, jangan menambah, jangan memperbaiki isi.
 Abaikan kepala dan kaki halaman yang berulang (judul buku, nomor halaman) dan hiasan.
@@ -350,7 +352,17 @@ Balas JSON {"blok":[...]} berisi blok berurutan:
 - {"jenis":"tabel","baris":[["judul kolom",...],["sel",...],...]}: tabel, sel per sel (rumus di sel juga $...$).
 - {"jenis":"arab","isi":"..."}: kutipan Arab panjang di luar tabel (ayat, hadis, doa), satu blok per kutipan, huruf dan harakat seperti terlihat.
 - {"jenis":"gambar","kotak":[x0,y0,x1,y1],"keterangan":"...","pakai":true}: setiap gambar, diagram, grafik, foto, atau logo. "kotak" = batas gambar dalam skala 0–1000 terhadap lebar dan tinggi halaman (x0,y0 = kiri atas, x1,y1 = kanan bawah), mencakup label di dalam gambar tetapi tidak termasuk teks keterangan di bawahnya. "pakai": true bila isi pelajaran (diagram, skema, grafik, peta, foto objek/percobaan), false bila logo, kop, ikon, hiasan, atau latar. "keterangan": isi gambar maks 15 kata.`;
-  return { sistem, pengguna };
+  if (!contekan.trim()) return { sistem, pengguna };
+  return {
+    sistem,
+    pengguna: `${pengguna}
+
+TEKS LAPISAN PDF halaman ini (diambil langsung dari file; urutan dan spasinya bisa kacau; ^{...} = pangkat/superskrip, _{...} = indeks/subskrip; huruf Arab sengaja dibuang):
+<<<
+${contekan}
+>>>
+Isi dan urutan tetap disalin dari GAMBAR halaman. Teks lapisan ini HANYA untuk memastikan angka, tanda minus, pangkat, indeks, dan ejaan yang kecil atau kabur di gambar (mis. pangkat negatif: "10^{-30}" ditulis "$10^{-30}$", bukan "$10^{30}$"). Jangan menyalin bagian teks lapisan yang tidak tampak di gambar.`,
+  };
 }
 
 // 0.30.0: AI menilai gambar file materi (pratinjau kecil dikirim bersama pesan, berlabel [GAMBAR n]).

@@ -7,7 +7,7 @@ import { BATAS_GAMBAR, rapikanNilaiGambar, ukuranJpeg } from "@/lib/gambar";
 import { daftarModel, tanyaAI, type GambarAI } from "@/lib/ai";
 import { bagiTahap, jumlahSoal, miripIndikator, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, laranganIsian, ringkasSudah, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, buatSistem, buatAnalisaMateri, buatBacaHalaman, bersihkanIdentitas, pasangKunciPgk, rencanaGrup, rencanaLevelSet, sesuaikanLevel, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { BATAS_MATERI, modeArab, rapikanBacaanHalaman, susunDraf, terapkanAnalisa } from "@/lib/materi";
-import { bersihkanTanggapan, gabungBab, identitasBab, jawabanAman, kataTerpakai, KELAS, LEVEL, mjLama, pemeriksaArab, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
+import { bersihkanTanggapan, gabungBab, identitasBab, jawabanAman, kataTerpakai, KELAS, LEVEL, mjLama, pemeriksaArab, POLA_ARAB, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { babDariSet, babMilik, daftarBabMilik, dataGambar, gambarMilik } from "@/lib/bab";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
@@ -682,7 +682,8 @@ export async function unggahGambar(base64: string) {
  * Aturan 4: dibatasi BATAS_HALAMAN_PDF halaman per guru per hari (admin bebas), dihitung saat mencoba.
  * Gagal (jatah habis, AI gagal, model tanpa penglihatan) → browser memakai teks PDF biasa untuk halaman itu.
  */
-export async function bacaHalamanPdf(gambarHalaman: string, mapel: string) {
+const BATAS_CONTEKAN = 8000; // huruf teks lapisan PDF per halaman (halaman buku padat ±5 ribu)
+export async function bacaHalamanPdf(gambarHalaman: string, mapel: string, contekan?: string) {
   const saya = await penggunaSaatIni();
   if (!saya) return { ok: false as const, pesan: SESI_HABIS };
   const data = Buffer.from(String(gambarHalaman ?? "").replace(/^data:image\/jpeg;base64,/, ""), "base64");
@@ -693,7 +694,8 @@ export async function bacaHalamanPdf(gambarHalaman: string, mapel: string) {
       return { ok: false as const, pesan: `Batas ${BATAS_HALAMAN_PDF} halaman PDF dibaca AI hari ini sudah habis; halaman berikutnya memakai teks PDF biasa (tabel, rumus, dan gambar tidak terbaca).` };
     await db.insert(pemakaianAi).values({ guruId: saya.id, jenis: "halaman" });
   }
-  const { sistem, pengguna } = buatBacaHalaman();
+  // Contekan dari browser: dibatasi panjangnya dan huruf Arabnya dibuang lagi di sini (aturan 5; kiriman bisa diubah).
+  const { sistem, pengguna } = buatBacaHalaman(String(contekan ?? "").slice(0, BATAS_CONTEKAN).replace(new RegExp(POLA_ARAB, "g"), " "));
   try {
     const r = await tanyaDenganCadangan(sistem, pengguna, daftarModel()[0]?.slot ?? 1, true, (d) => d, Date.now() + 2 * 60_000, [{ label: "[HALAMAN]", url: `data:image/jpeg;base64,${data.toString("base64")}` }]);
     if (!r.lihatGambar) return { ok: false as const, pesan: "Model AI yang aktif tidak bisa membaca gambar halaman." };

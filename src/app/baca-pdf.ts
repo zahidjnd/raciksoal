@@ -4,8 +4,8 @@
 // Dimuat hanya saat guru melampirkan PDF (import dinamis dari kotak-materi.tsx).
 import { bacaHalamanPdf } from "./actions";
 import { BATAS_GAMBAR } from "@/lib/gambar";
-import { geserTandaGambar, POLA_TANDA_GAMBAR, tandaGambar } from "@/lib/materi";
-import { bukaPdf, cakupanKata, teksHalamanPdf, type GambarFile } from "@/lib/office";
+import { geserTandaGambar, POLA_TANDA_GAMBAR, TANDA_PDF, tandaGambar } from "@/lib/materi";
+import { bukaPdf, buangKepalaHalaman, cakupanKata, teksHalamanPdf, type GambarFile } from "@/lib/office";
 
 const SISI = 1600; // px sisi terpanjang foto halaman: huruf kecil & rumus masih terbaca (uji 2026-11-11)
 const SERENTAK = 3; // halaman yang dibaca bersamaan
@@ -46,6 +46,7 @@ export async function bacaPdfDenganAI(data: ArrayBuffer, mapel: string, dari: nu
   try {
     const nomor = Array.from({ length: Math.max(0, Math.min(sampai, doc.numPages) - dari + 1) }, (_, i) => dari + i);
     const hasil: { paragraf: string[]; gambar: GambarFile[] }[] = [];
+    const asliSemua: string[][] = [];
     const catatan = new Set<string>();
     let selesai = 0;
 
@@ -62,7 +63,10 @@ export async function bacaPdfDenganAI(data: ArrayBuffer, mapel: string, dari: nu
       let url = foto.toDataURL("image/jpeg", 0.8);
       if ((url.length - 23) * 0.75 > BATAS_GAMBAR.bita) url = foto.toDataURL("image/jpeg", 0.6);
       const asli = await teksHalamanPdf(doc, n);
-      const r = await bacaHalamanPdf(url, mapel).catch(() => ({ ok: false as const, pesan: "Koneksi terputus saat AI membaca PDF." }));
+      asliSemua[ke] = asli;
+      // 0.33.2: teks lapisan PDF (pangkat ditandai) ikut dikirim sebagai contekan angka/minus; Arab dibuang di server.
+      const contekan = (await teksHalamanPdf(doc, n, true)).filter((p) => !p.startsWith(TANDA_PDF)).join("\n");
+      const r = await bacaHalamanPdf(url, mapel, contekan).catch(() => ({ ok: false as const, pesan: "Koneksi terputus saat AI membaca PDF." }));
       let isi = { paragraf: asli, gambar: [] as GambarFile[] };
       if (!r.ok) catatan.add(r.pesan);
       else if ((cakupanKata(asli, r.paragraf) ?? 1) < BATAS_CAKUPAN) catatan.add(`Halaman ${n}: bacaan AI kurang lengkap, jadi dipakai teks PDF biasa.`);
@@ -93,8 +97,9 @@ export async function bacaPdfDenganAI(data: ArrayBuffer, mapel: string, dari: nu
 
     const paragraf: string[] = [];
     const gambar: GambarFile[] = [];
-    for (const h of hasil) {
-      paragraf.push(...h.paragraf.map((p) => geserTandaGambar(p, gambar.length)));
+    const bersih = buangKepalaHalaman(hasil.map((h) => h.paragraf), asliSemua); // judul buku & nomor halaman (0.33.2)
+    for (const [i, h] of hasil.entries()) {
+      paragraf.push(...bersih[i].map((p) => geserTandaGambar(p, gambar.length)));
       gambar.push(...h.gambar);
     }
     if (!paragraf.join("").replace(/\s/g, "")) throw new Error(`PDF ini tidak bisa dibaca. ${[...catatan][0] ?? ""} Ketik atau tempel materinya.`.trim());

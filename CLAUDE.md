@@ -156,7 +156,9 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
 - **PDF dibaca AI** (0.31.0): browser memfoto halaman (pdf.js, 1600 px, `intent: "print"` WAJIB: tanpa itu render
   memakai requestAnimationFrame yang berhenti di tab tersembunyi) → aksi `bacaHalamanPdf` (1 halaman/panggilan, JSON
   `blok` teks/tabel/arab/gambar, `buatBacaHalaman`) → `rapikanBacaanHalaman` (materi.ts) → paragraf seperti file Word.
-  Cakupan kata vs pdf.js < 85% → teks pdf.js (`cakupanKata`). Arab: blok → TANDA_PDF (penunjuk mushaf); lafal di
+  Cakupan kata vs pdf.js < 85% → teks pdf.js (`cakupanKata`). 0.33.2: teks lapisan pdf.js ikut dikirim sebagai
+  contekan angka (`paragrafPdf(..., pangkat)` menandai `^{-30}`; Arab dibuang di server) → minus pangkat Fisika 43/43;
+  kepala halaman & nomor halaman dibuang `buangKepalaHalaman` (patokan teks asli, ≥ 40% halaman, min. 4). Arab: blok → TANDA_PDF (penunjuk mushaf); lafal di
   teks/tabel → `potongAyat` dari ayat halaman itu, selain itu dibuang; mode bahasa: Arab dipertahankan. Gambar dipotong
   di browser dari kotak 0–1000 (+1,5% tepi) → ikut alur gambar 0.30.0. Batas `BATAS_HALAMAN_PDF` 100/guru/hari
   (`pemakaian_ai.jenis = "halaman"`), `MAKS_HALAMAN_PDF` 30 sekali lampir (bawaan 10). 0.33.0: file PDF maks 100 MB

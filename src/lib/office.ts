@@ -145,8 +145,10 @@ export type ItemPdf = { str: string; transform: number[]; width: number; height:
  * Item teks satu halaman PDF → paragraf urut. Item dikelompokkan per baris (y berdekatan; harakat yang tercetak
  * sedikit di atas hurufnya ikut barisnya), baris Arab diurutkan kanan→kiri. Baris Latin yang berdekatan digabung jadi
  * satu paragraf; baris Arab berurutan jadi satu blok bertanda TANDA_PDF.
+ * `pangkat` (0.33.2, contekan untuk AI): huruf kecil yang naik/turun dari garis baris ditulis `^{...}` / `_{...}`
+ * (buku Fisika: "10" + "-30" kecil = 10^{-30}; minus sekecil itu sering terlewat saat AI membaca foto halaman).
  */
-export function paragrafPdf(items: ItemPdf[]): string[] {
+export function paragrafPdf(items: ItemPdf[], pangkat = false): string[] {
   const baris: { y: number; tinggi: number; item: ItemPdf[] }[] = [];
   for (const it of [...items].filter((i) => i.str.trim()).sort((a, b) => b.transform[5] - a.transform[5])) {
     const b = baris.at(-1);
@@ -172,11 +174,18 @@ export function paragrafPdf(items: ItemPdf[]): string[] {
     const x = (i: ItemPdf) => i.transform[4];
     b.item.sort((p, q) => (arab ? x(q) - x(p) : x(p) - x(q)));
     let t = "";
+    const dasar = b.item.reduce((p, q) => (q.height > p.height ? q : p)); // huruf terbesar = garis baris
     b.item.forEach((it, n) => {
       const sebelum = b.item[n - 1];
       // Spasi hanya bila ada celah: kata yang terpotong jadi beberapa item ("a" + "ku") tetap menyatu.
       const celah = !sebelum ? 0 : arab ? x(sebelum) - (x(it) + it.width) : x(it) - (x(sebelum) + sebelum.width);
-      t += (celah > 0.15 * b.tinggi ? " " : "") + it.str;
+      let s = it.str;
+      if (pangkat && !arab && s.trim() && it.height < 0.75 * dasar.height) {
+        const naik = it.transform[5] - dasar.transform[5];
+        if (naik > 0.15 * dasar.height) s = `^{${s.trim()}}`;
+        else if (naik < -0.1 * dasar.height) s = `_{${s.trim()}}`;
+      }
+      t += (celah > 0.15 * b.tinggi ? " " : "") + s;
     });
     // Bentuk sambung (FB50–FEFF) → huruf biasa; lafaz Allah dari Word keluar terbalik "ّللا".
     t = t.normalize("NFKC").replace(/ّللا/g, "الله").replace(/\s+/g, " ").trim();
@@ -216,9 +225,28 @@ export async function bukaPdf(data: ArrayBuffer | Uint8Array) {
 type DokumenPdf = Awaited<ReturnType<typeof bukaPdf>>["doc"];
 
 /** Teks satu halaman PDF dengan cara lama (pdf.js): paragraf Latin + blok Arab bertanda TANDA_PDF. */
-export async function teksHalamanPdf(doc: DokumenPdf, n: number) {
+export async function teksHalamanPdf(doc: DokumenPdf, n: number, pangkat = false) {
   const isi = await (await doc.getPage(n)).getTextContent();
-  return paragrafPdf(isi.items.filter((i): i is ItemPdf & typeof i => "str" in i));
+  return paragrafPdf(isi.items.filter((i): i is ItemPdf & typeof i => "str" in i), pangkat);
+}
+
+/**
+ * 0.33.2: buang kepala/kaki halaman (judul buku, "Bab 1 | Menjelajah Sel", nomor halaman) dari paragraf hasil baca
+ * per halaman. Patokannya teks asli PDF (AI kadang membuangnya, kadang tidak): paragraf pendek yang juga menjadi
+ * paragraf pendek teks asli di >= 40% halaman = kepala halaman (buku genap/ganjil beda kepala). Minimal 4 halaman.
+ * Dicocokkan huruf saja (nomor halaman & tanda baca diabaikan). Judul bab yang sama persis dengan kepala ikut terbuang
+ * (judul sudah ada di kolom judul materi).
+ */
+export function buangKepalaHalaman(halaman: string[][], asli: string[][]): string[][] {
+  const huruf = (t: string) => t.toLowerCase().replace(/[^a-z]/g, "");
+  const pinggir = asli.map((a) => a.filter((p) => !p.startsWith(TANDA_PDF)).map(huruf).filter(Boolean)).filter((a) => a.length);
+  const kepala = (p: string) => {
+    const k = huruf(p);
+    // Paragraf asli juga harus pendek: paragraf isi yang kebetulan berakhir "... penjumlahan vektor." bukan kepala.
+    const cocok = (t: string) => t.length <= k.length + 20 && (t.startsWith(k) || t.endsWith(k));
+    return k.length >= 12 && k.length <= 80 && pinggir.filter((a) => a.some(cocok)).length >= 0.4 * pinggir.length;
+  };
+  return halaman.map((h) => h.filter((p) => !/^\s*\d{1,4}\s*$/.test(p) && !(pinggir.length >= 4 && kepala(p))));
 }
 
 /**
@@ -241,9 +269,10 @@ async function bacaPdf(data: ArrayBuffer | Uint8Array): Promise<string[]> {
     await tutup();
     throw new Error("PDF lebih dari 300 halaman tidak bisa dibaca semuanya. Pilih halaman bab yang diperlukan, lalu Baca dengan AI.");
   }
-  const semua: string[] = [];
-  for (let n = 1; n <= doc.numPages; n++) semua.push(...(await teksHalamanPdf(doc, n)));
+  const halaman: string[][] = [];
+  for (let n = 1; n <= doc.numPages; n++) halaman.push(await teksHalamanPdf(doc, n));
   await tutup();
+  const semua = buangKepalaHalaman(halaman, halaman).flat();
   if (!semua.join("").replace(/\s/g, "")) throw new Error("PDF ini berupa gambar (hasil scan), tidak ada teks yang bisa diambil. Ketik atau tempel materinya.");
   return semua;
 }
