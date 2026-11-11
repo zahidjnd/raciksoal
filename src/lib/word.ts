@@ -24,6 +24,7 @@ import {
 import { ukuranWord } from "./gambar";
 import { MAPEL_INGGRIS } from "./mapel";
 import { hariTanggal, mapelTka, NAMA_BENTUK, semesterDari, TKA, WAKTU_BAWAAN, type Pengaturan } from "./prompt";
+import { kunciSatu } from "./kunci";
 import { rumusWord } from "./rumus";
 import { bukanDalil, identitasBab, JUMLAH_PREMIS, kategoriBaru, mjLama, paragrafArab, pecahBaris, POLA_ARAB, POLA_RUMUS, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
 
@@ -474,6 +475,69 @@ export function buatWordKunci(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Da
     isi.push(par([new TextRun({ text: `PADANAN NOMOR PAKET ${paket} → PAKET A (untuk kisi-kisi)`, bold: true })], { spacing: { before: 200, after: 40 } }));
     isi.push(par([r(asal.map((a, i) => `${i + 1}→${a + 1}`).join(",  "))]));
   }
+
+  return Packer.toBuffer(
+    new Document({
+      creator: "Racik Soal",
+      styles: { default: { document: { run: { font: FONT, size: UKURAN } } } },
+      sections: [{ properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 720, right: 850, bottom: 900, left: 850 } } }, children: isi }],
+    }),
+  );
+}
+
+/**
+ * Kunci ringkas versi Word (0.35.0, permintaan pemilik; isinya = kotak "Kunci ringkas" di web): satu lembar koreksi cepat. Bentuk berkunci huruf (PG, PGK, B/S dan
+ * Menjodohkan gaya lama) dalam tabel 5 kolom "1. C"; bentuk berkunci panjang (Kategori, Menjodohkan blok, Isian,
+ * Uraian) satu baris per nomor. Tanpa pembahasan & rubrik (ada di file Kunci & pembahasan). Ikut urutan paket.
+ */
+export function buatWordKunciRingkas(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Date, paket?: string) {
+  const { judul, tp } = judulAsesmen(p, tanggal, bab);
+  const { mapel, kelas } = identitasBab(bab);
+  const total = soal.reduce((n, s) => n + (Number(s.skor) || 0), 0);
+  const tengah = (t: string, size = UKURAN, bold = true) => par([r(t, { bold, size })], { alignment: AlignmentType.CENTER, spacing: { after: 0 } });
+  const isi: (Paragraph | Table)[] = [
+    tengah(`KUNCI JAWABAN RINGKAS${paket ? ` — PAKET ${paket}` : ""}`, 26),
+    tengah(`${judul} ${mapel.toUpperCase()} KELAS ${kelas} (TP ${tp})`),
+    tengah(`${bab.judul} | ${soal.length} soal | Total skor: ${total}`, UKURAN, false),
+    par([r(`⚠️ ${PERINGATAN}`, { bold: true, color: "C00000" })], { alignment: AlignmentType.CENTER, spacing: { before: 120, after: 120 } }),
+  ];
+  const KOLOM = 5;
+  const lebarSel = Math.floor(LEBAR / KOLOM);
+  const rekap: string[] = [];
+  kelompok(soal).forEach(({ bentuk, butir }, k) => {
+    const skor = butir.reduce((n, x) => n + (Number(x.s.skor) || 0), 0);
+    const nama = bentuk === "BS" && butir.some((x) => kategoriBaru(x.s)) ? "PG Kompleks Kategori" : NAMA_BENTUK[bentuk];
+    rekap.push(`${nama} (${skor})`);
+    isi.push(par([r(`${ROMAWI[k]}. ${nama.toUpperCase()} (${butir.length} soal, skor ${skor})`, { bold: true })], { spacing: { before: 200, after: 80 } }));
+    const huruf: { no: number; kunci: string }[] = [];
+    for (const { s, no } of butir) {
+      // Isi kunci sama dengan kotak "Kunci ringkas" di web (kunciSatu); uraian diberi jawaban ideal, bukan "lihat rubrik".
+      if (bentuk === "PG" || bentuk === "PGK" || mjLama(s) || (bentuk === "BS" && !kategoriBaru(s))) huruf.push({ no, kunci: kunciSatu(s) });
+      else if (bentuk === "URAIAN") isi.push(bernomor(`${no}.`, teks(String([s.kunci].flat()[0] ?? ""))));
+      else {
+        isi.push(bernomor(`${no}.`, teks(kunciSatu(s))));
+        if (bentuk === "ISIAN" && s.kunciAlt?.length) isi.push(par([r("Juga diterima: ", { italics: true }), ...teks(s.kunciAlt.join("; "))], { indent: { left: 400 }, spacing: { after: 0 } }));
+      }
+    }
+    if (huruf.length)
+      isi.push(
+        new Table({
+          width: { size: lebarSel * KOLOM, type: WidthType.DXA },
+          rows: Array.from({ length: Math.ceil(huruf.length / KOLOM) }, (_, b) =>
+            new TableRow({
+              children: Array.from({ length: KOLOM }, (_, j) => {
+                const x = huruf[b * KOLOM + j];
+                return sel([par(x ? [r(`${x.no}.  `, { bold: true }), ...teks(x.kunci)] : [], { spacing: { before: 40, after: 40 } })], lebarSel);
+              }),
+            }),
+          ),
+        }),
+      );
+    const merah = butir.filter((x) => x.s.peringatan?.length).map((x) => x.no);
+    if (merah.length) isi.push(par([r(`⚠️ Soal ${merah.join(", ")} masih bertanda peringatan; lihat file Kunci & pembahasan.`, { bold: true, color: "C00000" })], { spacing: { before: 60 } }));
+  });
+  isi.push(par([r(`REKAPITULASI SKOR: ${rekap.join(" + ")} = ${total}`, { bold: true })], { spacing: { before: 200 } }));
+  isi.push(par([r("Pembahasan dan pedoman penskoran uraian ada di file Kunci & pembahasan.", { italics: true, color: "666666" })]));
 
   return Packer.toBuffer(
     new Document({

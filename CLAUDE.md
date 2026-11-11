@@ -170,6 +170,8 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   gabungan satu set maks 100 ribu huruf (`BATAS_MATERI.isi`; biaya token sebanding panjang), kiriman aksi 2 MB.
 - **Word**: kop dari cetakan asli (`scripts/buat-template-word.py`, jalankan ulang bila kop berubah); penanda {{judul}} {{tp}}
   {{isi}} {{mapel}} {{kelas}} {{sekolah}} {{hari}} {{waktu}}. Baris Arab = paragraf RTL. Nama file lewat `headerUnduh`.
+  Empat file (`/api/word?jenis=`): soal, kunci, ringkas (0.35.0: `buatWordKunciRingkas`, isi = `kunciSatu` kotak Kunci
+  ringkas web + jawaban ideal uraian; bawaan tidak dicentang di jendela Unduh), kisi. Jenis baru → tambah di uji-pemisahan.
 - **Tampilan** (`DESIGN.md`): gaya claude.ai, token warna di `@theme` globals.css (krem, hijau #006316, tinta, pudar, bahaya,
   peringatan). WAJIB pakai token: JANGAN `gray-*`, `red-*`, `amber-*`, `emerald-*`, `bg-white`. Tinggi kontrol 32/40 px (HP 44).
   Mode gelap lewat cookie `tema` + `[data-tema="gelap"]`. Sidebar laci 256/288 px.

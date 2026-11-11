@@ -749,6 +749,8 @@ const pakaiLabelPaket = (x: Paket[]) => !(x.length === 1 && x[0] === "A");
 const FILE_UNDUH = [
   { jenis: "soal", judul: "Lembar soal siswa", pendek: "Soal", ket: "Berkop madrasah, siap dicetak" },
   { jenis: "kunci", judul: "Kunci & pembahasan", pendek: "Kunci", ket: "Pegangan guru" },
+  // 0.35.0: satu lembar untuk koreksi cepat; bawaan TIDAK dicentang (lihat `jenis` di JendelaUnduh).
+  { jenis: "ringkas", judul: "Kunci ringkas", pendek: "Kunci ringkas", ket: "Satu lembar untuk koreksi cepat" },
   { jenis: "kisi", judul: "Kisi-kisi", pendek: "Kisi-kisi", ket: "Untuk administrasi" },
 ] as const;
 

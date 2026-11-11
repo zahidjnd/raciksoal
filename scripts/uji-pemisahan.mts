@@ -120,7 +120,7 @@ await ditolak("hapusSoal", setA, 0);
 await ditolak("ubahIdentitas", setA, { waktu: 1 });
 await ditolak("ubahNamaSet", setA, "DIRETAS");
 await ditolak("hapusSet", setA);
-for (const jenis of ["soal", "kunci", "kisi"])
+for (const jenis of ["soal", "kunci", "ringkas", "kisi"])
   for (const paket of ["", "&paket=B"]) {
     const s = (await halaman(B, `/api/word?id=${setA}&jenis=${jenis}${paket}`)).status;
     cek(s === 404, `B ditolak: unduh Word ${jenis}${paket}`, `HTTP ${s}`);

@@ -78,7 +78,7 @@ const LANGKAH: { judul: string; isi: React.ReactNode; gambar: React.ReactNode[] 
     ),
     gambar: [
       <Gambar key="4" nama="4-kartu-soal" alt="Kartu soal dengan tombol Kunci dan pembahasan, Edit, Lainnya, serta tombol Unduh" lebar={750} tinggi={1284} />,
-      <Gambar key="5" nama="5-unduh" alt="Jendela Unduh: pilihan paket, centang file, tombol Unduh 3 file" lebar={469} tinggi={832} />,
+      <Gambar key="5" nama="5-unduh" alt="Jendela Unduh: pilihan paket, centang file, tombol Unduh 3 file" lebar={750} tinggi={1500} />,
     ],
   },
 ];
@@ -171,7 +171,7 @@ const TOPIK: { id: string; judul: string; isi: React.ReactNode }[] = [
         <li>Tiap paket punya lembar soal dan kunci sendiri. Kisi-kisi cukup satu (urutan Paket A).</li>
         <li>File Word selalu mengikuti isi terbaru, termasuk soal yang sudah diedit.</li>
         <li>Kop ujian (semester, tanggal, waktu) bisa diubah lewat <b>Identitas ujian di kop Word</b> di bawah daftar soal, lalu unduh ulang.</li>
-        <li><b>Kunci ringkas</b> menampilkan semua kunci (mis. “1. C 2. D …”); tekan <b>Salin</b> untuk ditempel di WhatsApp.</li>
+        <li><b>Kunci ringkas</b> menampilkan semua kunci (mis. “1. C 2. D …”); tekan <b>Salin</b> untuk ditempel di WhatsApp. Versi Word-nya (satu lembar, tabel kunci per bagian, ikut paket): centang <b>Kunci ringkas</b> di jendela Unduh.</li>
         <li>Butuh PDF? Buka file Word-nya lalu simpan sebagai PDF.</li>
       </ul>
     ),
