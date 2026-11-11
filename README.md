@@ -322,7 +322,6 @@ saat server menyala (`src/instrumentation-node.ts`, catatan migrasi di tabel `pu
 | `pemakaian_ai` | Catatan Ganti/Ubah/Tambah dan analisa materi (untuk batas harian) |
 | `gambar` | Gambar materi/soal (JPEG ≤ 1280 px, kolom `bytea`), per guru; dibuka lewat `/api/gambar/[id]` (pemilik/admin saja). Tidak pernah dihapus; maks. 300 per guru |
 | `pengaturan_web` | Pengaturan admin (nama madrasah) |
-| `tes_data` | Sisa tes langkah 1, tidak dipakai |
 
 Catatan penting:
 - Kolom waktu **wajib** `timestamp(..., { withTimezone: true })`; tanpa itu jam tampil bergeser 7 jam.

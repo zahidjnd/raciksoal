@@ -2,13 +2,6 @@ import { boolean, customType, index, integer, jsonb, pgTable, serial, text, time
 
 const bytea = customType<{ data: Buffer }>({ dataType: () => "bytea" });
 
-// Tabel sementara dari tes langkah 1. Dibiarkan supaya datanya tidak terhapus.
-export const tesData = pgTable("tes_data", {
-  id: serial("id").primaryKey(),
-  isi: text("isi").notNull(),
-  dibuat: timestamp("dibuat").defaultNow().notNull(),
-});
-
 // ---- Login (Better Auth). Nama properti (camelCase) harus sama dengan nama field Better Auth. ----
 const waktu = (nama: string) => timestamp(nama, { withTimezone: true });
 

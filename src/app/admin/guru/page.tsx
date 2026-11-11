@@ -1,6 +1,6 @@
-import { and, asc, count, eq, gte, max, ne, sql } from "drizzle-orm";
+import { and, asc, count, eq, gte, inArray, max, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { db } from "@/db";
+import { awalHariIni, db } from "@/db";
 import { hasilSoal, pemakaianAi, pengguna } from "@/db/schema";
 import { BATAS_PER_GURU, BATAS_TOTAL, BATAS_UBAH_PER_GURU } from "@/lib/pembatas";
 import { wajibMasuk } from "@/lib/sesi";
@@ -28,7 +28,6 @@ export default async function KelolaGuru() {
 
   // Ringkasan pemakaian (audit 2026-11-04): "hari ini" dihitung sama dengan jatah harian (WIB, set gagal tidak
   // dihitung, set terhapus tetap dihitung); token = jumlah token masuk + keluar 30 hari terakhir (perkiraan biaya AI).
-  const awalHariIni = sql`date_trunc('day', now() at time zone 'Asia/Jakarta') at time zone 'Asia/Jakarta'`;
   const tigaPuluhHari = sql`now() - interval '30 days'`;
   const pakai = await db
     .select({
@@ -45,7 +44,7 @@ export default async function KelolaGuru() {
   const ubah = await db
     .select({ guruId: pemakaianAi.guruId, n: sql<number>`count(*)::int` })
     .from(pemakaianAi)
-    .where(and(gte(pemakaianAi.waktu, awalHariIni), ne(pemakaianAi.jenis, "analisa")))
+    .where(and(gte(pemakaianAi.waktu, awalHariIni), inArray(pemakaianAi.jenis, ["ganti", "ubah", "tambah"])))
     .groupBy(pemakaianAi.guruId);
   const ubahDari = (id: string) => ubah.find((x) => x.guruId === id)?.n ?? 0;
   const total = { hariIni: pakai.reduce((s, x) => s + x.hariIni, 0), token: pakai.reduce((s, x) => s + x.token, 0) };

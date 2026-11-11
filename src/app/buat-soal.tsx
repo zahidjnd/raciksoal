@@ -149,7 +149,9 @@ export function BuatSoal({ sapaan, awalId, awalMateri }: { sapaan: string; awalI
       const x = ubah(lama);
       try {
         localStorage.setItem(`raciksoal-paket-${id}`, JSON.stringify(x));
-      } catch {}
+      } catch {
+        // Penyimpanan browser diblokir/penuh: pilihan paket tetap berlaku, hanya tidak diingat.
+      }
       return x;
     });
   const [jatah, setJatah] = useState<Awaited<ReturnType<typeof ambilJatah>>>(null);
@@ -190,7 +192,9 @@ export function BuatSoal({ sapaan, awalId, awalMateri }: { sapaan: string; awalI
     setDraf(null);
     try {
       localStorage.setItem(INGAT, JSON.stringify({ mapel: m, kelas: k }));
-    } catch {}
+    } catch {
+      // Penyimpanan browser diblokir/penuh: mapel tetap terpilih, hanya tidak diingat untuk lain kali.
+    }
   }
 
   /** Materi baru (draf) disimpan dulu, lalu semua id materi untuk set ini. Mengembalikan pesan kalau gagal. */

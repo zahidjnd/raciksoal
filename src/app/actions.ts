@@ -1,7 +1,7 @@
 "use server";
 
 import { and, eq, gte, inArray, ne, sql } from "drizzle-orm";
-import { db } from "@/db";
+import { awalHariIni, db } from "@/db";
 import { gambar, hasilSoal, pemakaianAi } from "@/db/schema";
 import { BATAS_GAMBAR, rapikanNilaiGambar, ukuranJpeg } from "@/lib/gambar";
 import { daftarModel, tanyaAI, type GambarAI } from "@/lib/ai";
@@ -29,7 +29,6 @@ const BATAS_PROSES_WEB = 10;
 const TENGGAT_SET = 10 * 60_000;
 const TENGGAT_SATU_SOAL = 4 * 60_000;
 
-const awalHariIni = sql`date_trunc('day', now() at time zone 'Asia/Jakarta') at time zone 'Asia/Jakarta'`; // 00.00 WIB
 
 /** Jumlah set hari ini (WIB, mulai 00.00) yang tidak gagal; untuk satu guru atau seluruh web. */
 async function hitungHariIni(guruId?: string, q: Pick<typeof db, "select"> = db) {
