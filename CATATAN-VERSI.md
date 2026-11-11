@@ -52,6 +52,14 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.32.5 — 11 November 2026
+- **Halaman masuk lebih jelas**: kalau nama pengguna salah, muncul "Nama pengguna tidak terdaftar" dan namanya tetap
+  tertulis untuk dibetulkan. Kalau kata sandi salah, muncul "Kata sandi salah" dan **hanya kata sandi** yang perlu
+  diketik ulang (nama pengguna tidak ikut hilang).
+- **Ganti kata sandi di Akun**: hanya kotak yang salah yang dikosongkan dan ditandai merah. Sandi lama salah → hanya
+  sandi lama diketik ulang; ulangan tidak sama → hanya ulangannya.
+- Pengaman: perangkat yang mencoba-coba lebih dari 10 nama tak terdaftar dalam 15 menit hanya mendapat pesan umum.
+
 ## 0.32.4 — 11 November 2026
 - **Halaman Akun di laptop lebih lega**: menu tab di samping sidebar (tidak lagi di tengah), kartu lebih lebar.
   Profil dan Pemakaian hari ini berdampingan, Ganti kata sandi dan Perangkat lain berdampingan, centang mapel 4 kolom.
