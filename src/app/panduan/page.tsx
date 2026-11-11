@@ -156,6 +156,7 @@ const TOPIK: { id: string; judul: string; isi: React.ReactNode }[] = [
         <li><b>Rumus</b>: saat Edit, letakkan kursor, tekan <b>Σ Rumus</b>, susun rumusnya (ketik <b>/</b> untuk pecahan, <b>^</b> pangkat, <b>_</b> indeks), lalu <b>Masukkan</b>. Untuk mengubah, klik rumusnya di kotak <b>Pratinjau rumus</b>. Di file Word, rumus menjadi rumus Word asli.</li>
         <li>Di kotak teks, rumus tertulis sebagai kode di antara dua tanda <b>$</b>. Jangan hapus kode itu sebagian.</li>
         <li><b>Gambar dari materi</b>: saat Analisa, AI memilih gambar pelajaran (diagram, grafik, peta) dari file Word/PowerPoint/PDF; logo dan hiasan tidak dipakai. Bisa juga tempel gambar (<b>Ctrl+V</b>) atau <b>+ Tambah gambar</b>.</li>
+        <li><b>Potong gambar</b>: kalau potongan AI ikut tulisan, tekan <b>✂ Potong</b> di bawah gambar, geser kotaknya atau tarik sudutnya, lalu <b>Simpan potongan</b>. Set yang sudah dibuat tetap memakai gambar lama.</li>
         <li><b>Gambar per soal</b>: saat Edit, pilih <b>Tanpa gambar</b>, salah satu gambar materi, atau <b>Unggah gambar lain</b>.</li>
         <li>Ingin lebih banyak soal bergambar? Tulis di <b>Catatan untuk AI</b>, mis. “buat 5 soal yang memakai gambar”. AI tidak bisa membuat gambar sendiri.</li>
       </ul>

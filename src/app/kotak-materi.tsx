@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { analisaMateri } from "./actions";
 import { Gambar, gambarTempelan, pratinjauAI, TombolGambar, unggah } from "./gambar";
+import { PotongGambar } from "./potong-gambar";
 import { ambilAyat } from "./materi/actions";
 import { Teks } from "./kartu-soal";
 import { Panah } from "./panah";
@@ -650,7 +651,10 @@ function BagianGambar({ gambar, ubah, calon, ditolak, tempel, eksak }: { gambar:
                 value={g.keterangan}
                 onChange={(e) => ubah(gambar.map((x, j) => (j === i ? { ...x, keterangan: e.target.value } : x)))}
               />
-              <button className="text-xs text-pudar hover:text-bahaya" onClick={() => ubah(gambar.filter((_, j) => j !== i))}>✕ Lepas dari materi</button>
+              <div className="flex flex-wrap gap-x-4">
+                <PotongGambar id={g.id} nomor={i + 1} selesai={(id) => ubah(gambar.map((x, j) => (j === i ? { ...x, id } : x)))} />
+                <button className="text-xs text-pudar hover:text-bahaya max-md:min-h-11" onClick={() => ubah(gambar.filter((_, j) => j !== i))}>✕ Lepas dari materi</button>
+              </div>
             </div>
           </div>
         ))}

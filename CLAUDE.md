@@ -154,6 +154,8 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   Analisa materi: `office.ts` menandai letak gambar `[[GAMBAR n]]` (dibuang dari isi oleh `susunDraf`), browser mengirim
   pratinjau ≤ 384 px/25 KB (maks 20, batas kiriman aksi 1 MB), AI menilai pakai/tolak + keterangan
   (`rapikanNilaiGambar`; tempelan guru selalu pakai; `lihatGambar` false → semua dipakai).
+  Potong (0.34.0, `potong-gambar.tsx`): tombol ✂ di kartu gambar materi, kanvas di browser → `unggah` = gambar BARU
+  (isi gambar tetap tak pernah diubah; set lama memakai gambar lama). Hanya potong, sengaja tanpa putar/coret.
 - **PDF dibaca AI** (0.31.0): browser memfoto halaman (pdf.js, 1600 px, `intent: "print"` WAJIB: tanpa itu render
   memakai requestAnimationFrame yang berhenti di tab tersembunyi) → aksi `bacaHalamanPdf` (1 halaman/panggilan, JSON
   `blok` teks/tabel/arab/gambar, `buatBacaHalaman`) → `rapikanBacaanHalaman` (materi.ts) → paragraf seperti file Word.

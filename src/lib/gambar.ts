@@ -16,6 +16,27 @@ export const BATAS_GAMBAR = {
 /** Gambar di data bab: id = baris tabel `gambar`; keterangan opsional dari guru (dibaca AI & model tanpa penglihatan). */
 export type GambarBab = { id: number; keterangan: string };
 
+/** Kotak potong gambar (0.34.0, potong-gambar.tsx): pecahan 0–1 dari lebar/tinggi gambar. */
+export type KotakPotong = { kiri: number; atas: number; kanan: number; bawah: number };
+export type Pegangan = "geser" | "kiri-atas" | "kanan-atas" | "kiri-bawah" | "kanan-bawah";
+const MIN_POTONG = 0.05; // kotak potong paling kecil 5% sisi gambar
+const batasi = (n: number, bawah: number, atas: number) => Math.min(atas, Math.max(bawah, n));
+
+/** Geser kotak (dx, dy dalam pecahan) sesuai pegangan yang ditarik; tetap di dalam gambar dan tidak lebih kecil dari 5%. */
+export function geserKotak(k: KotakPotong, p: Pegangan, dx: number, dy: number): KotakPotong {
+  if (p === "geser") {
+    const x = batasi(dx, -k.kiri, 1 - k.kanan);
+    const y = batasi(dy, -k.atas, 1 - k.bawah);
+    return { kiri: k.kiri + x, kanan: k.kanan + x, atas: k.atas + y, bawah: k.bawah + y };
+  }
+  const b = { ...k };
+  if (p.startsWith("kiri")) b.kiri = batasi(k.kiri + dx, 0, k.kanan - MIN_POTONG);
+  else b.kanan = batasi(k.kanan + dx, k.kiri + MIN_POTONG, 1);
+  if (p.endsWith("atas")) b.atas = batasi(k.atas + dy, 0, k.bawah - MIN_POTONG);
+  else b.bawah = batasi(k.bawah + dy, k.atas + MIN_POTONG, 1);
+  return b;
+}
+
 /** Lebar & tinggi JPEG dari penanda SOF-nya, atau null kalau bukan JPEG yang sah. */
 export function ukuranJpeg(b: Uint8Array): { lebar: number; tinggi: number } | null {
   if (b[0] !== 0xff || b[1] !== 0xd8) return null;
