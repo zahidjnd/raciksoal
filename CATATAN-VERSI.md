@@ -52,6 +52,11 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.32.6 — 11 November 2026
+- **Halaman masuk di HP lebih rapi**: satu kartu putih polos (logo dan nama Racik Soal di atas kolom isian), posisinya
+  sedikit lebih ke tengah, dan "MA Al-Fatah · versi" tampil di bawah layar. Kolom isian dan tombol lebih besar untuk
+  jempol. Tampilan laptop tidak berubah.
+
 ## 0.32.5 — 11 November 2026
 - **Halaman masuk lebih jelas**: kalau nama pengguna salah, muncul "Nama pengguna tidak terdaftar" dan namanya tetap
   tertulis untuk dibetulkan. Kalau kata sandi salah, muncul "Kata sandi salah" dan **hanya kata sandi** yang perlu
