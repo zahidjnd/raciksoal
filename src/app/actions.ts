@@ -1,7 +1,7 @@
 "use server";
 
-import { and, eq, gte, inArray, ne, sql } from "drizzle-orm";
-import { awalHariIni, db } from "@/db";
+import { and, eq, sql } from "drizzle-orm";
+import { db } from "@/db";
 import { gambar, hasilSoal, pemakaianAi } from "@/db/schema";
 import { BATAS_GAMBAR, rapikanNilaiGambar, ukuranJpeg } from "@/lib/gambar";
 import { daftarModel, tanyaAI, type GambarAI } from "@/lib/ai";
@@ -11,6 +11,7 @@ import { bersihkanTanggapan, gabungBab, identitasBab, jawabanAman, kataTerpakai,
 import { babDariSet, babMilik, daftarBabMilik, dataGambar, gambarMilik } from "@/lib/bab";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
+import { hitungHariIni, hitungPemakaian } from "@/lib/pemakaian";
 import { mushaf, potongAyat } from "@/lib/mushaf";
 import { BATAS_ANALISA, BATAS_HALAMAN_PDF, BATAS_PER_GURU, BATAS_TOTAL, BATAS_UBAH_PER_GURU } from "@/lib/pembatas";
 
@@ -29,27 +30,6 @@ const BATAS_PROSES_WEB = 10;
 const TENGGAT_SET = 10 * 60_000;
 const TENGGAT_SATU_SOAL = 4 * 60_000;
 
-
-/** Jumlah set hari ini (WIB, mulai 00.00) yang tidak gagal; untuk satu guru atau seluruh web. */
-async function hitungHariIni(guruId?: string, q: Pick<typeof db, "select"> = db) {
-  const [{ n }] = await q
-    .select({ n: sql<number>`count(*)::int` })
-    .from(hasilSoal)
-    .where(and(gte(hasilSoal.dibuat, awalHariIni), ne(hasilSoal.status, "gagal"), guruId ? eq(hasilSoal.guruId, guruId) : undefined));
-  return n;
-}
-
-/**
- * Pemakaian AI di luar pembuatan set hari ini (WIB) oleh satu guru: Ganti/Ubah/Tambah soal, analisa materi, atau
- * halaman PDF yang dibaca AI (0.31.0; dulu "ubah" = semua selain analisa, jadi halaman PDF ikut memakan jatah Ganti).
- */
-async function hitungPemakaian(guruId: string, jenis: "ubah" | "analisa" | "halaman", q: Pick<typeof db, "select"> = db) {
-  const [{ n }] = await q
-    .select({ n: sql<number>`count(*)::int` })
-    .from(pemakaianAi)
-    .where(and(eq(pemakaianAi.guruId, guruId), gte(pemakaianAi.waktu, awalHariIni), jenis === "ubah" ? inArray(pemakaianAi.jenis, ["ganti", "ubah", "tambah"]) : eq(pemakaianAi.jenis, jenis)));
-  return n;
-}
 const PESAN_BATAS_SET = `Jatah ${BATAS_GANTI_PER_SET} kali ganti/ubah/tambah soal untuk set ini sudah habis dan tidak kembali. Perbaiki soal lewat Edit atau Tulis soal sendiri, atau buat set baru dengan "Pakai materi ini lagi".`;
 const PESAN_BATAS_UBAH = `Batas ${BATAS_UBAH_PER_GURU} kali ganti/ubah/tambah soal hari ini sudah habis. Edit manual dan tulis soal sendiri tetap bisa; coba lagi besok.`;
 

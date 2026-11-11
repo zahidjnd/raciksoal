@@ -13,12 +13,13 @@ const TERSIMPAN = "Materi tersimpan. Bisa dipilih lewat “Pakai materi sebelumn
  * Tambah/ubah materi di halaman Materi saya. Memakai kotak & kartu yang SAMA dengan Set baru (kotak-materi.tsx):
  * materi baru = tempel/lampirkan → Analisa materi → kartu → Simpan materi (tanpa membuat soal).
  */
-export function FormMateri({ id: idAwal, awal, tersimpan = false }: { id: number | null; awal: IsianMateri | null; tersimpan?: boolean }) {
+export function FormMateri({ id: idAwal, awal, tersimpan = false, bawaan }: { id: number | null; awal: IsianMateri | null; tersimpan?: boolean; bawaan: { mapel: string[]; kelas: string } }) {
   const router = useRouter();
   const [id, setId] = useState(idAwal);
   const [draf, setDraf] = useState<IsianMateri | null>(awal);
-  const [mapel, setMapel] = useState(awal?.mapel ?? "");
-  const [kelas, setKelas] = useState(awal?.kelas ?? "");
+  // Materi baru: mapel & kelas bawaan guru (halaman Akun, 0.32.0).
+  const [mapel, setMapel] = useState(awal ? awal.mapel ?? "" : bawaan.mapel[0] ?? "");
+  const [kelas, setKelas] = useState(awal ? awal.kelas ?? "" : bawaan.kelas);
   const [menyimpan, setMenyimpan] = useState(false);
   const [pesan, setPesan] = useState<{ ok: boolean; teks: string; dihapus?: string[] } | null>(tersimpan ? { ok: true, teks: TERSIMPAN } : null);
 
@@ -56,7 +57,7 @@ export function FormMateri({ id: idAwal, awal, tersimpan = false }: { id: number
     <section className="space-y-4">
       <Link href="/materi" className="text-sm text-pudar underline">← Materi saya</Link>
       <h1 className="text-2xl">{id ? "Ubah materi" : "Tambah materi"}</h1>
-      <PilihMapel mapel={mapel} kelas={kelas} ubah={pilihMapel} />
+      <PilihMapel mapel={mapel} kelas={kelas} ubah={pilihMapel} utama={bawaan.mapel} />
       {id && draf ? (
         <KartuMateri draf={draf} setDraf={setDraf} judul="Isi materi (semua bisa diubah)" />
       ) : (

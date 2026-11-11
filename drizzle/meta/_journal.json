@@ -85,6 +85,13 @@
       "when": 1794365410222,
       "tag": "0011_hapus_tes_data",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1794372023839,
+      "tag": "0012_preferensi_guru",
+      "breakpoints": true
     }
   ]
 }

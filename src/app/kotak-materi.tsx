@@ -649,9 +649,12 @@ function DaftarCalon({ daftar, sibuk, pakai }: { daftar: { c: GambarFile; url: s
   );
 }
 
-/** Mapel (daftar tetap + "Lainnya") dan kelas, di atas kotak materi (Set baru & Materi saya). */
-export function PilihMapel({ mapel, kelas, ubah }: { mapel: string; kelas: string; ubah: (mapel: string, kelas: string) => void }) {
-  const lain = !!mapel && !DAFTAR_MAPEL.includes(mapel);
+/**
+ * Mapel (daftar tetap + "Lainnya") dan kelas, di atas kotak materi (Set baru & Materi saya).
+ * `utama` = mapel yang diajar guru (halaman Akun, 0.32.0): tampil paling atas; mapel lain tetap bisa dipilih.
+ */
+export function PilihMapel({ mapel, kelas, ubah, utama = [] }: { mapel: string; kelas: string; ubah: (mapel: string, kelas: string) => void; utama?: string[] }) {
+  const lain = !!mapel && !DAFTAR_MAPEL.includes(mapel) && !utama.includes(mapel);
   const [ketik, setKetik] = useState(lain);
   const kotak = "h-10 rounded-lg border bg-kartu px-3 text-sm max-md:min-h-11";
   return (
@@ -667,7 +670,14 @@ export function PilihMapel({ mapel, kelas, ubah }: { mapel: string; kelas: strin
         }}
       >
         <option value="">Pilih mata pelajaran</option>
-        {DAFTAR_MAPEL.map((m) => <option key={m}>{m}</option>)}
+        {utama.length ? (
+          <>
+            <optgroup label="Mapel saya">{utama.map((m) => <option key={m}>{m}</option>)}</optgroup>
+            <optgroup label="Mapel lain">{DAFTAR_MAPEL.filter((m) => !utama.includes(m)).map((m) => <option key={m}>{m}</option>)}</optgroup>
+          </>
+        ) : (
+          DAFTAR_MAPEL.map((m) => <option key={m}>{m}</option>)
+        )}
         <option value="lain">Lainnya (ketik sendiri)</option>
       </select>
       {(ketik || lain) && (

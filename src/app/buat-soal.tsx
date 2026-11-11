@@ -11,9 +11,10 @@ import { Panah } from "./panah";
 import { skorOtomatis } from "@/lib/skor";
 import { kunciRingkas } from "@/lib/kunci";
 import { PAKET, susunPaket, type Paket } from "@/lib/paket";
-import { ASAS_ALFATAH, ATURAN_TUJUAN, BOBOT_BAWAAN, hitungLevel, jumlahSoal, KESULITAN, MAKS_CATATAN, MAKS_SOAL, MAPEL_EKSAK, mapelTka, NAMA_BENTUK, namaBentuk, namaLevelTka, namaTujuan, PESAN_MJ_MIN, semesterDari, TKA, TUJUAN, WAKTU_BAWAAN, type Identitas, type Pengaturan } from "@/lib/prompt";
+import { ASAS_ALFATAH, ATURAN_TUJUAN, BOBOT_BAWAAN, hitungLevel, jumlahSoal, KESULITAN, MAKS_CATATAN, MAKS_SOAL, MAPEL_EKSAK, mapelTka, NAMA_BENTUK, namaBentuk, namaLevelTka, namaTujuan, PESAN_MJ_MIN, semesterDari, TKA, TUJUAN, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { mjLama, pilihanAngka, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import type { IsianMateri } from "@/lib/materi";
+import type { Preferensi } from "@/lib/preferensi";
 import { useRouter } from "next/navigation";
 
 // Mapel & kelas terakhir diingat per perangkat (kenyamanan saja; boleh hilang).
@@ -104,15 +105,16 @@ function TabelKisi({ kisi }: { kisi: BarisKisi[] }) {
   );
 }
 
-export function BuatSoal({ sapaan, awalId, awalMateri }: { sapaan: string; awalId: number | null; awalMateri: string[] }) {
+export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: string; awalId: number | null; awalMateri: string[]; bawaan: Preferensi }) {
   const router = useRouter();
   const [p, setP] = useState<Pengaturan>({
     babId: "",
-    identitas: { ...semesterDari(new Date()), waktu: WAKTU_BAWAAN },
+    identitas: { ...semesterDari(new Date()), waktu: bawaan.waktu }, // bawaan guru (halaman Akun, 0.32.0)
     tujuan: TUJUAN[0],
     jumlah: JUMLAH_AWAL,
     level: ATURAN_TUJUAN[TUJUAN[0]].level,
-    kesulitan: "Sedang",
+    kesulitan: bawaan.kesulitan,
+    catatan: bawaan.catatan || undefined,
     bobot: BOBOT_BAWAAN,
     modelSlot: 1,
   });
@@ -175,14 +177,17 @@ export function BuatSoal({ sapaan, awalId, awalMateri }: { sapaan: string; awalI
     ambilDaftarBab()
       .then((d) => {
         setDaftarBab(d);
-        // Mapel & kelas: dari materi yang dibuka lewat "Pakai materi ini lagi", atau pilihan terakhir di perangkat ini.
+        // Mapel & kelas: dari materi yang dibuka lewat "Pakai materi ini lagi", pilihan terakhir di perangkat ini, atau
+        // bawaan guru di halaman Akun (perangkat baru, mis. pindah dari HP ke laptop).
         const dari = d.find((m) => m.id === awalMateri[0]) ?? bacaIngat();
-        if (dari.mapel) setMapel(dari.mapel);
-        if (dari.kelas) setKelas(dari.kelas);
+        const m = dari.mapel || bawaan.mapel[0];
+        const k = dari.kelas || bawaan.kelas;
+        if (m) setMapel(m);
+        if (k) setKelas(k);
       })
       .catch(() => {});
     muatJatah();
-  }, [awalMateri]);
+  }, [awalMateri, bawaan]);
 
   /** Ganti mapel/kelas: materi yang sudah dipilih (mapel lain) dilepas, pilihan diingat di perangkat ini. */
   function pilihMapel(m: string, k: string) {
@@ -313,7 +318,7 @@ export function BuatSoal({ sapaan, awalId, awalMateri }: { sapaan: string; awalI
             <p className="mt-1 text-sm text-pudar">Pilih mapel dan kelas, masukkan materi, lalu pilih jenis soal.</p>
           </div>
 
-          <PilihMapel mapel={mapel} kelas={kelas} ubah={pilihMapel} />
+          <PilihMapel mapel={mapel} kelas={kelas} ubah={pilihMapel} utama={bawaan.mapel} />
           {/* Identitas ujian (kop Word) di bawah mapel & kelas (pilihan pemilik), terisi otomatis. Dilipat supaya
               di HP guru cepat sampai ke Materi (audit 2026-11-04); ringkasannya tetap terlihat. */}
           <details className="group rounded-xl border bg-kartu px-3 text-sm">

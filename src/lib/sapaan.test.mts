@@ -17,5 +17,9 @@ test("sapaan: mengikuti waktu WIB, hari, dan musim ujian; nama depan saja", () =
   assert.ok(!daftarSapaan(wib("2026-08-11T12:00:00")).some((s) => s.includes("Dapur soal"))); // dicoret pemilik
   assert.equal(pilihSapaan("Zahid Jundullah", wib("2026-08-11T12:00:00"), () => 0), "Assalamu'alaikum, Zahid");
   assert.equal(pilihSapaan("  ", wib("2026-08-11T12:00:00"), () => 0), "Assalamu'alaikum, Bapak/Ibu");
+  // Gelar di depan ikut disebut (0.32.0: nama tampil bisa diubah guru), bukan "Assalamu'alaikum, Ust."
+  assert.equal(pilihSapaan("Ust. Ahmad Fauzi, S.Pd.", wib("2026-08-11T12:00:00"), () => 0), "Assalamu'alaikum, Ust. Ahmad");
+  assert.equal(pilihSapaan("Hj. Ustadzah Aisyah", wib("2026-08-11T12:00:00"), () => 0), "Assalamu'alaikum, Hj. Ustadzah Aisyah");
+  assert.equal(pilihSapaan("Ust.", wib("2026-08-11T12:00:00"), () => 0), "Assalamu'alaikum, Ust.");
   assert.ok(pilihSapaan("Zahid", wib("2026-08-11T12:00:00"), () => 0.9999).includes("Zahid")); // sapaan terakhir di daftar
 });

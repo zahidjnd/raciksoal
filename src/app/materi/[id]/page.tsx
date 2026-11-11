@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { materi } from "@/db/schema";
 import { keIsian, type IsianMateri } from "@/lib/materi";
 import { wajibMasuk } from "@/lib/sesi";
+import { ambilPreferensi } from "@/lib/pemakaian";
 import type { Bab } from "@/lib/soal";
 import { Kerangka } from "../../kepala";
 import { FormMateri } from "../form";
@@ -20,7 +21,7 @@ export default async function UbahMateri({ params, searchParams }: { params: Pro
   }
   return (
     <Kerangka p={p}>
-      <FormMateri id={id === "baru" ? null : Number(id)} awal={awal} tersimpan={id !== "baru" && (await searchParams).tersimpan === "1"} />
+      <FormMateri id={id === "baru" ? null : Number(id)} awal={awal} tersimpan={id !== "baru" && (await searchParams).tersimpan === "1"} bawaan={await ambilPreferensi(p.id)} />
     </Kerangka>
   );
 }

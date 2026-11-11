@@ -43,9 +43,14 @@ export function daftarSapaan(waktu: Date): string[] {
   ];
 }
 
-/** Satu sapaan acak dengan nama depan guru ("Zahid Jundullah" → "Zahid"). */
+// Gelar di depan nama (nama tampil bisa diubah guru sejak 0.32.0): ikut disebut bersama nama depan ("Ust. Ahmad").
+const GELAR_DEPAN = /^(ust(adz|adzah|az|azah)?|ustaz(ah)?|ustadz(ah)?|bapak|pak|ibu|bu|dr|drs|dra|h|hj|kh|kyai|kiai|prof)\.?$/i;
+
+/** Satu sapaan acak dengan nama depan guru ("Zahid Jundullah" → "Zahid", "Ust. Ahmad Fauzi" → "Ust. Ahmad"). */
 export function pilihSapaan(nama: string, waktu = new Date(), acak = Math.random): string {
-  const depan = nama.trim().split(/\s+/)[0] || "Bapak/Ibu";
+  const kata = nama.trim().split(/\s+/).filter(Boolean);
+  const gelar = kata.findIndex((k) => !GELAR_DEPAN.test(k));
+  const depan = (gelar < 0 ? kata : kata.slice(0, gelar + 1)).join(" ") || "Bapak/Ibu";
   const daftar = daftarSapaan(waktu);
   return daftar[Math.floor(acak() * daftar.length)].replace("{n}", depan);
 }

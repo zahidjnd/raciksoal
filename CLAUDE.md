@@ -120,6 +120,10 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
 - **Batas**: 10 set/guru/hari (admin bebas) + 100/web; 2 set proses serentak/guru; Ganti/Ubah/Tambah 30x per set & 60/guru/hari;
   analisa materi 30/guru/hari; halaman PDF dibaca AI 100/guru/hari; login dikunci 5x salah/15 menit per perangkat+nama. Batas ada di `pembatas.ts`.
 - **Peran**: guru hanya model utama, tanpa info teknis; admin = semua set, pilihan model, Bandingkan, pita peringatan.
+- **Akun** (0.32.0): guru mengganti nama tampil sendiri (`updateUser`; sapaan menyebut gelar depan + nama depan), bawaan
+  Set baru di tabel `preferensi_guru` (mapel diajar → optgroup "Mapel saya" & yang pertama terpilih, kelas, menit, kesulitan,
+  catatan tetap = MENGISI kotak Catatan untuk AI, bukan instruksi tersembunyi), pemakaian hari ini, keluarkan perangkat lain.
+  Penghitung pemakaian & `ambilPreferensi` di `lib/pemakaian.ts` (BUKAN file "use server": ekspor di sana = bisa dipanggil browser).
 - **Set**: hapus = hapus lunak (`dihapus`, tetap dihitung jatah); ganti nama & hapus lewat menu ⋯ riwayat sidebar.
   Paket A–D diacak bersemi (`susunPaket`), tanpa tabel baru. Set menyimpan salinan bab (`hasil_soal.bab`).
 - **Tabel** (0.28.0): ditulis di TEKS soal/wacana/pembahasan sebagai baris `| a | b |` (bukan kolom data baru), dikenali

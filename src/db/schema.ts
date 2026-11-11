@@ -106,6 +106,15 @@ export const hasilSoal = pgTable(
 );
 
 /** Pengaturan web yang diatur admin sekali (mis. nama madrasah di kop Word). Satu baris per kunci. */
+/** Preferensi guru (halaman Akun, 0.32.0): satu baris per guru, isi = Preferensi (src/lib/preferensi.ts). Aturan 3. */
+export const preferensiGuru = pgTable("preferensi_guru", {
+  guruId: text("guru_id")
+    .primaryKey()
+    .references(() => pengguna.id),
+  nilai: jsonb("nilai").notNull(),
+  diubah: timestamp("diubah", { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const pengaturanWeb = pgTable("pengaturan_web", {
   kunci: text("kunci").primaryKey(),
   nilai: jsonb("nilai").notNull(),
