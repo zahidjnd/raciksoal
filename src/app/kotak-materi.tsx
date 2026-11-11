@@ -8,6 +8,7 @@ import { ambilAyat } from "./materi/actions";
 import { Teks } from "./kartu-soal";
 import { Panah } from "./panah";
 import { BATAS_GAMBAR } from "@/lib/gambar";
+import { MAKS_HALAMAN_PDF } from "@/lib/pembatas";
 import { BATAS_MATERI, buangTandaGambar, geserTandaGambar, type IsianMateri } from "@/lib/materi";
 import type { GambarFile } from "@/lib/office";
 import { DAFTAR_MAPEL, MAPEL_EKSAK } from "@/lib/mapel";
@@ -64,7 +65,10 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
   const siap = !!mapel && !!kelas;
   const penuh = pilihan.length + (draf ? 1 : 0) >= MAKS_GABUNG;
 
-  async function analisa(daftarFile = file) {
+  // PDF lebih dari MAKS_HALAMAN_PDF halaman: guru memilih rentang halaman yang dibaca AI (0.31.0).
+  const [pilihPdf, setPilihPdf] = useState<{ f: File; jumlah: number; dari: number; sampai: number } | null>(null);
+
+  async function analisa(daftarFile = file, catatanBaca: string[] = []) {
     if (!siap) return setPesan({ ok: false, teks: "Pilih mata pelajaran dan kelas dulu." });
     // Nomor gambar untuk AI: tempelan guru dulu (1..t), lalu gambar file berurutan; tanda [[GAMBAR n]] tiap file digeser.
     let geser = tempelan.length;
@@ -84,7 +88,7 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
         teks:
           `Materi terlalu panjang: ±${angka(panjang)} huruf, maksimal ${angka(BATAS_MATERI.isi)}. ` +
           (terbesar && huruf(terbesar) > BATAS_MATERI.isi / 3
-            ? `File terbesar: ${terbesar.nama} (±${angka(huruf(terbesar))} huruf). Lepas file itu (✕), lalu lampirkan per bab saja.`
+            ? `File terbesar: ${terbesar.nama} (±${angka(huruf(terbesar))} huruf). Lepas file itu (✕), lalu lampirkan per bab saja${/\.pdf/i.test(terbesar.nama) ? " (untuk PDF: pilih halaman lebih sedikit)" : ""}.`
             : "Kurangi teks atau lepas sebagian file (✕), lalu tekan Analisa materi."),
       });
     }
@@ -134,7 +138,7 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
     setDitolak(tolak);
     setTempelan([]);
     setDraf(gambar.length ? { ...r.isian, gambar } : r.isian);
-    const catatan = [r.catatan, gagal && `Sebagian gambar tidak terunggah: ${gagal}`].filter(Boolean).join(" ");
+    const catatan = [r.catatan, gagal && `Sebagian gambar tidak terunggah: ${gagal}`, ...catatanBaca].filter(Boolean).join(" ");
     if (catatan) setPesan({ ok: false, teks: catatan });
   }
 
@@ -145,17 +149,73 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
     const besar = daftarFile.find((f) => f.size > BATAS_FILE);
     if (besar) return setPesan({ ok: false, teks: `${besar.name} terlalu besar (maks 30 MB).` });
     setProses("Membaca file...");
+    setPesan(null);
     try {
       const { bacaFileOffice } = await import("@/lib/office"); // dimuat hanya saat dipakai; file dibaca di perangkat guru
       const baru: FileMateri[] = [];
-      for (const f of daftarFile) {
+      const catatanBaca: string[] = [];
+      for (const [i, f] of daftarFile.entries()) {
+        if (/\.pdf$/i.test(f.name)) {
+          // PDF dibaca AI per halaman (0.31.0). PDF panjang: guru memilih halamannya dulu (file sesudahnya dilampirkan lagi nanti).
+          const { jumlahHalamanPdf } = await import("./baca-pdf");
+          const jumlah = await jumlahHalamanPdf(await f.arrayBuffer());
+          if (jumlah > MAKS_HALAMAN_PDF) {
+            setFile([...file, ...baru]);
+            setProses("");
+            // Bawaan 10 halaman: ±20 ribu huruf buku Kemenag, masih di bawah batas isi materi (30 ribu).
+            setPilihPdf({ f, jumlah, dari: 1, sampai: Math.min(10, MAKS_HALAMAN_PDF) });
+            if (i < daftarFile.length - 1) setPesan({ ok: false, teks: "File sesudah PDF ini belum dibaca. Lampirkan lagi setelah memilih halaman PDF." });
+            return;
+          }
+          const isi = await bacaPdf(f, 1, jumlah);
+          baru.push(isi.file);
+          catatanBaca.push(...isi.catatan);
+          continue;
+        }
         const isi = await bacaFileOffice(await f.arrayBuffer(), f.name);
         baru.push({ nama: f.name, paragraf: isi.semua, gambar: isi.gambar });
       }
       const gabung = [...file, ...baru];
       setFile(gabung);
       setProses("");
-      await analisa(gabung); // langsung dianalisa begitu file masuk
+      await analisa(gabung, catatanBaca); // langsung dianalisa begitu file masuk
+    } catch (err) {
+      setProses("");
+      setPesan({ ok: false, teks: (err as Error).message || "File tidak bisa dibaca." });
+    }
+  }
+
+  /** PDF halaman `dari`..`sampai` dibaca AI (tabel, rumus, gambar, juga PDF hasil scan). */
+  async function bacaPdf(f: File, dari: number, sampai: number) {
+    const { bacaPdfDenganAI } = await import("./baca-pdf");
+    setProses(`AI membaca PDF: halaman ${dari}–${sampai}...`);
+    const hasil = await bacaPdfDenganAI(await f.arrayBuffer(), mapel, dari, sampai, (s, t) => setProses(`AI membaca PDF: ${s} dari ${t} halaman...`));
+    const nama = dari === 1 && sampai >= hasil.halaman ? f.name : `${f.name} (hlm ${dari}–${sampai})`;
+    return { file: { nama, paragraf: hasil.paragraf, gambar: hasil.gambar }, catatan: hasil.catatan };
+  }
+
+  /** Lanjutan PDF panjang setelah guru memilih halaman: dibaca AI, atau seluruhnya dengan teks biasa (cara lama). */
+  async function lanjutPdf(pakaiAI: boolean) {
+    if (!pilihPdf) return;
+    const { f, jumlah } = pilihPdf;
+    const dari = Math.min(Math.max(1, Math.round(pilihPdf.dari) || 1), jumlah);
+    const sampai = Math.min(Math.max(dari, Math.round(pilihPdf.sampai) || dari), jumlah, dari + MAKS_HALAMAN_PDF - 1);
+    setPilihPdf(null);
+    setPesan(null);
+    try {
+      let baru: FileMateri;
+      let catatanBaca: string[] = [];
+      if (pakaiAI) ({ file: baru, catatan: catatanBaca } = await bacaPdf(f, dari, sampai));
+      else {
+        setProses("Membaca file...");
+        const { bacaFileOffice } = await import("@/lib/office");
+        const isi = await bacaFileOffice(await f.arrayBuffer(), f.name);
+        baru = { nama: f.name, paragraf: isi.semua, gambar: [] };
+      }
+      const gabung = [...file, baru];
+      setFile(gabung);
+      setProses("");
+      await analisa(gabung, catatanBaca);
     } catch (err) {
       setProses("");
       setPesan({ ok: false, teks: (err as Error).message || "File tidak bisa dibaca." });
@@ -269,6 +329,26 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
         </ul>
       )}
 
+      {pilihPdf && (
+        <div className="space-y-2 rounded-lg border border-peringatan-garis bg-peringatan-muda p-3 text-sm" role="group" aria-label="Pilih halaman PDF">
+          <p>
+            <b>{pilihPdf.f.name}</b> berisi {pilihPdf.jumlah} halaman. AI membaca paling banyak {MAKS_HALAMAN_PDF} halaman sekali lampir (tabel, rumus, dan gambar ikut terbaca). Pilih halaman bab yang diperlukan:
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            Halaman
+            <input type="number" min={1} max={pilihPdf.jumlah} aria-label="Dari halaman" className="h-8 w-20 rounded-lg border bg-kartu px-2 max-md:min-h-11" value={pilihPdf.dari} onChange={(e) => setPilihPdf({ ...pilihPdf, dari: Number(e.target.value) })} />
+            sampai
+            <input type="number" min={1} max={pilihPdf.jumlah} aria-label="Sampai halaman" className="h-8 w-20 rounded-lg border bg-kartu px-2 max-md:min-h-11" value={pilihPdf.sampai} onChange={(e) => setPilihPdf({ ...pilihPdf, sampai: Number(e.target.value) })} />
+            <button className="h-8 rounded-lg bg-hijau px-3 font-semibold text-white max-md:min-h-11" onClick={() => lanjutPdf(true)}>Baca dengan AI</button>
+          </div>
+          <p className="text-xs text-pudar">
+            Nomor halaman menurut file PDF (bukan nomor yang tercetak di buku).{" "}
+            <button className="underline" onClick={() => lanjutPdf(false)}>Pakai teks saja, semua halaman (tanpa AI: tabel, rumus, dan gambar tidak terbaca)</button>
+            {" · "}
+            <button className="underline" onClick={() => setPilihPdf(null)}>Batal</button>
+          </p>
+        </div>
+      )}
       {proses && (
         <p className="flex items-center gap-2 text-sm text-hijau-teks" role="status">
           <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-hijau/25 border-t-hijau" aria-hidden />

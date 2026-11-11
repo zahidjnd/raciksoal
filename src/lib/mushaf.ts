@@ -112,6 +112,23 @@ export function buatMushaf(file: string) {
   return { ambil, cari, basmalah, jumlahAyat: surah.reduce((n, s) => n + s.ayat.length, 0) };
 }
 
+/**
+ * Potongan `ayat` (teks resmi mushaf) yang kerangka hurufnya sama dengan `arab` (mis. lafal mufradat dari tabel PDF:
+ * عَلَقَةً di QS al-Mu'minun 12–14), dengan harakat/alif penempelnya; null kalau tidak ada di ayat itu (0.31.0).
+ */
+export function potongAyat(ayat: string, arab: string): string | null {
+  const q = normalArab(arab);
+  if (q.length < 2) return null;
+  const { isi, posisi } = petakan(ayat);
+  const a = isi.indexOf(q);
+  if (a < 0) return null;
+  let awal = posisi[a];
+  let akhir = posisi[a + q.length - 1] + 1;
+  while (awal > 0 && ayat[awal - 1] !== " " && !kunci(ayat[awal - 1])) awal--;
+  while (akhir < ayat.length && ayat[akhir] !== " " && !kunci(ayat[akhir])) akhir++;
+  return ayat.slice(awal, akhir);
+}
+
 let tersimpan: ReturnType<typeof buatMushaf> | undefined;
 /** Mushaf dimuat sekali saat pertama dipakai (±1,3 MB). */
 export const mushaf = () => (tersimpan ??= buatMushaf(readFileSync(path.join(process.cwd(), "public", "quran", "quran-simple.txt"), "utf8")));

@@ -1,18 +1,18 @@
 "use server";
 
-import { and, eq, gte, ne, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, ne, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { gambar, hasilSoal, pemakaianAi } from "@/db/schema";
 import { BATAS_GAMBAR, rapikanNilaiGambar, ukuranJpeg } from "@/lib/gambar";
 import { daftarModel, tanyaAI, type GambarAI } from "@/lib/ai";
-import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, laranganIsian, ringkasSudah, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, buatSistem, buatAnalisaMateri, bersihkanIdentitas, pasangKunciPgk, rencanaGrup, rencanaLevelSet, sesuaikanLevel, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
-import { BATAS_MATERI, susunDraf, terapkanAnalisa } from "@/lib/materi";
+import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, laranganIsian, ringkasSudah, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, buatSistem, buatAnalisaMateri, buatBacaHalaman, bersihkanIdentitas, pasangKunciPgk, rencanaGrup, rencanaLevelSet, sesuaikanLevel, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
+import { BATAS_MATERI, modeArab, rapikanBacaanHalaman, susunDraf, terapkanAnalisa } from "@/lib/materi";
 import { bersihkanTanggapan, gabungBab, identitasBab, kataTerpakai, KELAS, LEVEL, mjLama, pemeriksaArab, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { babDariSet, babMilik, daftarBabMilik, dataGambar, gambarMilik } from "@/lib/bab";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
-import { mushaf } from "@/lib/mushaf";
-import { BATAS_ANALISA, BATAS_PER_GURU, BATAS_TOTAL, BATAS_UBAH_PER_GURU } from "@/lib/pembatas";
+import { mushaf, potongAyat } from "@/lib/mushaf";
+import { BATAS_ANALISA, BATAS_HALAMAN_PDF, BATAS_PER_GURU, BATAS_TOTAL, BATAS_UBAH_PER_GURU } from "@/lib/pembatas";
 
 const SESI_HABIS = "Sesi masuk sudah berakhir. Muat ulang halaman lalu masuk lagi.";
 // Materi mode "bahasa" (Bahasa Arab): teks Arab yang dikenali sebagai ayat tetap ditandai (aturan 5). Mushaf dimuat
@@ -40,12 +40,15 @@ async function hitungHariIni(guruId?: string, q: Pick<typeof db, "select"> = db)
   return n;
 }
 
-/** Pemakaian AI di luar pembuatan set hari ini (WIB) oleh satu guru: Ganti/Ubah/Tambah soal, atau analisa materi. */
-async function hitungPemakaian(guruId: string, jenis: "ubah" | "analisa", q: Pick<typeof db, "select"> = db) {
+/**
+ * Pemakaian AI di luar pembuatan set hari ini (WIB) oleh satu guru: Ganti/Ubah/Tambah soal, analisa materi, atau
+ * halaman PDF yang dibaca AI (0.31.0; dulu "ubah" = semua selain analisa, jadi halaman PDF ikut memakan jatah Ganti).
+ */
+async function hitungPemakaian(guruId: string, jenis: "ubah" | "analisa" | "halaman", q: Pick<typeof db, "select"> = db) {
   const [{ n }] = await q
     .select({ n: sql<number>`count(*)::int` })
     .from(pemakaianAi)
-    .where(and(eq(pemakaianAi.guruId, guruId), gte(pemakaianAi.waktu, awalHariIni), jenis === "analisa" ? eq(pemakaianAi.jenis, "analisa") : ne(pemakaianAi.jenis, "analisa")));
+    .where(and(eq(pemakaianAi.guruId, guruId), gte(pemakaianAi.waktu, awalHariIni), jenis === "ubah" ? inArray(pemakaianAi.jenis, ["ganti", "ubah", "tambah"]) : eq(pemakaianAi.jenis, jenis)));
   return n;
 }
 const PESAN_BATAS_SET = `Jatah ${BATAS_GANTI_PER_SET} kali ganti/ubah/tambah soal untuk set ini sudah habis dan tidak kembali. Perbaiki soal lewat Edit atau Tulis soal sendiri, atau buat set baru dengan "Pakai materi ini lagi".`;
@@ -678,6 +681,35 @@ export async function unggahGambar(base64: string) {
   if (n >= BATAS_GAMBAR.perGuru) return { ok: false as const, pesan: `Batas ${BATAS_GAMBAR.perGuru} gambar per guru sudah tercapai. Hubungi admin.` };
   const [baris] = await db.insert(gambar).values({ guruId: saya.id, data, ...ukuran }).returning({ id: gambar.id });
   return { ok: true as const, id: baris.id };
+}
+
+/**
+ * 0.31.0: AI membaca SATU halaman PDF dari fotonya (JPEG dari browser, satu halaman per panggilan supaya kiriman tetap
+ * di bawah 1 MB). Hasil: paragraf materi (tabel, rumus, penanda gambar) + kotak gambar yang dipotong browser.
+ * Aturan 4: dibatasi BATAS_HALAMAN_PDF halaman per guru per hari (admin bebas), dihitung saat mencoba.
+ * Gagal (jatah habis, AI gagal, model tanpa penglihatan) → browser memakai teks PDF biasa untuk halaman itu.
+ */
+export async function bacaHalamanPdf(gambarHalaman: string, mapel: string) {
+  const saya = await penggunaSaatIni();
+  if (!saya) return { ok: false as const, pesan: SESI_HABIS };
+  const data = Buffer.from(String(gambarHalaman ?? "").replace(/^data:image\/jpeg;base64,/, ""), "base64");
+  const ukuran = data.length <= BATAS_GAMBAR.bita ? ukuranJpeg(data) : null;
+  if (!ukuran || Math.max(ukuran.lebar, ukuran.tinggi) > 2000) return { ok: false as const, pesan: "Gambar halaman tidak sah." };
+  if (saya.peran !== "admin") {
+    if ((await hitungPemakaian(saya.id, "halaman")) >= BATAS_HALAMAN_PDF)
+      return { ok: false as const, pesan: `Batas ${BATAS_HALAMAN_PDF} halaman PDF dibaca AI hari ini sudah habis; halaman berikutnya memakai teks PDF biasa (tabel, rumus, dan gambar tidak terbaca).` };
+    await db.insert(pemakaianAi).values({ guruId: saya.id, jenis: "halaman" });
+  }
+  const { sistem, pengguna } = buatBacaHalaman();
+  try {
+    const r = await tanyaDenganCadangan(sistem, pengguna, daftarModel()[0]?.slot ?? 1, true, (d) => d, Date.now() + 2 * 60_000, [{ label: "[HALAMAN]", url: `data:image/jpeg;base64,${data.toString("base64")}` }]);
+    if (!r.lihatGambar) return { ok: false as const, pesan: "Model AI yang aktif tidak bisa membaca gambar halaman." };
+    const m = mushaf();
+    return { ok: true as const, ...rapikanBacaanHalaman(r.hasil, m.cari, potongAyat, modeArab(String(mapel ?? "")) === "bahasa") };
+  } catch (e) {
+    console.error("[baca halaman PDF gagal]", pesanError(e));
+    return { ok: false as const, pesan: "AI gagal membaca halaman ini." };
+  }
 }
 
 /** Ubah identitas ujian (kop Word) setelah set jadi: tanpa AI, hanya pemilik/admin (aturan 3). */

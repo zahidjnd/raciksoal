@@ -114,7 +114,7 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   Indonesia; sejarah (SKI, Al-Quds, Sejarah) = tahun di bagian soal yang benar wajib ada di materi. Dalil & khilafiyah berlaku
   untuk SEMUA mapel. Ijtimaiyyah, PJOK, BK sengaja tidak dimasukkan.
 - **Batas**: 10 set/guru/hari (admin bebas) + 100/web; 2 set proses serentak/guru; Ganti/Ubah/Tambah 30x per set & 60/guru/hari;
-  analisa materi 30/guru/hari; login dikunci 5x salah/15 menit per perangkat+nama. Batas ada di `pembatas.ts`.
+  analisa materi 30/guru/hari; halaman PDF dibaca AI 100/guru/hari; login dikunci 5x salah/15 menit per perangkat+nama. Batas ada di `pembatas.ts`.
 - **Peran**: guru hanya model utama, tanpa info teknis; admin = semua set, pilihan model, Bandingkan, pita peringatan.
 - **Set**: hapus = hapus lunak (`dihapus`, tetap dihitung jatah); ganti nama & hapus lewat menu ⋯ riwayat sidebar.
   Paket A–D diacak bersemi (`susunPaket`), tanpa tabel baru. Set menyimpan salinan bab (`hasil_soal.bab`).
@@ -134,6 +134,13 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   Analisa materi: `office.ts` menandai letak gambar `[[GAMBAR n]]` (dibuang dari isi oleh `susunDraf`), browser mengirim
   pratinjau ≤ 384 px/25 KB (maks 20, batas kiriman aksi 1 MB), AI menilai pakai/tolak + keterangan
   (`rapikanNilaiGambar`; tempelan guru selalu pakai; `lihatGambar` false → semua dipakai).
+- **PDF dibaca AI** (0.31.0): browser memfoto halaman (pdf.js, 1600 px, `intent: "print"` WAJIB: tanpa itu render
+  memakai requestAnimationFrame yang berhenti di tab tersembunyi) → aksi `bacaHalamanPdf` (1 halaman/panggilan, JSON
+  `blok` teks/tabel/arab/gambar, `buatBacaHalaman`) → `rapikanBacaanHalaman` (materi.ts) → paragraf seperti file Word.
+  Cakupan kata vs pdf.js < 85% → teks pdf.js (`cakupanKata`). Arab: blok → TANDA_PDF (penunjuk mushaf); lafal di
+  teks/tabel → `potongAyat` dari ayat halaman itu, selain itu dibuang; mode bahasa: Arab dipertahankan. Gambar dipotong
+  di browser dari kotak 0–1000 (+1,5% tepi) → ikut alur gambar 0.30.0. Batas `BATAS_HALAMAN_PDF` 100/guru/hari
+  (`pemakaian_ai.jenis = "halaman"`), `MAKS_HALAMAN_PDF` 20 sekali lampir (bawaan 10).
 - **Word**: kop dari cetakan asli (`scripts/buat-template-word.py`, jalankan ulang bila kop berubah); penanda {{judul}} {{tp}}
   {{isi}} {{mapel}} {{kelas}} {{sekolah}} {{hari}} {{waktu}}. Baris Arab = paragraf RTL. Nama file lewat `headerUnduh`.
 - **Tampilan** (`DESIGN.md`): gaya claude.ai, token warna di `@theme` globals.css (krem, hijau #006316, tinta, pudar, bahaya,
@@ -174,6 +181,6 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
 ## Masalah terbuka / tertunda
 - Isian bocor masih terjadi di materi pendek dengan nama/tahun berulang (SKI set 104: 3 isian merah, 3 calon gagal).
 - Soal kembar B/S "menilai hasil hitung X" vs PG "menghitung X" kadang lolos pemeriksaan kisi.
-- MJ kadang mencampur istilah & sifat dalam satu blok. Tabel, rumus, & gambar dari PDF belum terbaca (rencana 0.31.0).
+- MJ kadang mencampur istilah & sifat dalam satu blok. PDF dibaca AI baru diuji 2 PDF (buku Qurdis XI, modul IPA buatan).
 - Belum diuji: balapan klik ganda & tenggat sungguhan; saringan /admin/set di browser; Latihan TKA grup campur bentuk.
 - Persiapan 1.0.0 di luar kode: saldo DeepSeek, tanya-jawab di Panduan, pemakaian saat ASAS.

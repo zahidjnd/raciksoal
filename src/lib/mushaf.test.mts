@@ -2,8 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { bacaRujukan, cariSurah, NAMA_SURAH } from "./surah.ts";
-import { mushaf, normalArab } from "./mushaf.ts";
-import { ayatDariPdf, keIsian, rapikanMateri, susunDraf, TANDA_PDF } from "./materi.ts";
+import { mushaf, normalArab, potongAyat } from "./mushaf.ts";
+import { ayatDariPdf, keIsian, rapikanBacaanHalaman, rapikanMateri, susunDraf, TANDA_PDF } from "./materi.ts";
 import { paragrafPdf } from "./office.ts";
 import type { Bab } from "./soal.ts";
 
@@ -138,4 +138,44 @@ test("PDF: baris dikelompokkan, Arab kanan→kiri; ayat diganti teks mushaf, tek
   const balik = [...an30.arab].reverse().join("");
   assert.equal(ayatDariPdf(`${balik}\nبِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ`, m.cari, m.basmalah).ayat[0].arab, an30.arab);
   assert.equal(ayatDariPdf("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ", m.cari, m.basmalah).dibuang, 0);
+});
+
+test("PDF dibaca AI (0.31.0): ayat jadi penunjuk mushaf, lafal Arab di tabel diganti ejaan resmi, sisanya dibuang", () => {
+  const m = mushaf();
+  // Bentuk jawaban AI seperti uji 2026-11-11 (buku Al-Qur'an Hadis XI hlm 21), dipersingkat.
+  const ai = {
+    blok: [
+      { jenis: "teks", isi: "1. QS al-Mu'minūn [23] ayat 12-14" },
+      { jenis: "arab", isi: "وَلَقَدْ خَلَقْنَا الْإِنسَانَ مِنْ سُلَالَةٍ مِّنْ طِينٍ (١٢) ثُمَّ جَعَلْنَاهُ نُطْفَةً فِي قَرَارٍ مَّكِينٍ (١٣)" },
+      { jenis: "tabel", baris: [["TERJEMAHAN", "LAFAL"], ["sesuatu yang melekat", "عَلَقَةٌ"], ["air mani", "نُطفَةً"], ["kata | asing", "كِتَابٌ"]] },
+      { jenis: "teks", isi: "Kata سُلَالَةٍ berarti saripati, sedangkan مَدْرَسَة bukan dari ayat ini." },
+      { jenis: "gambar", kotak: [300, 70, 690, 240], keterangan: "Diagram janin", pakai: true },
+      { jenis: "gambar", kotak: [100, 40, 170, 115], keterangan: "Logo", pakai: false },
+      { jenis: "gambar", kotak: [5, 5, 10, 10], pakai: true }, // terlalu kecil
+      { jenis: "gambar", kotak: [1, 2, "x", 4], pakai: true }, // rusak
+    ],
+  };
+  const r = rapikanBacaanHalaman(ai, m.cari, potongAyat);
+  assert.equal(r.paragraf[0], "1. QS al-Mu'minūn [23] ayat 12-14");
+  assert.ok(r.paragraf[1].startsWith(TANDA_PDF)); // ayat: hanya penunjuk mushaf
+  assert.equal(r.paragraf[2], "| TERJEMAHAN | LAFAL |");
+  assert.equal(r.paragraf[3], "|---|---|");
+  // عَلَقَةٌ tidak ada di ayat 12–13 halaman ini → dibuang; نُطفَةً → ejaan resmi mushaf; كِتَابٌ → dibuang; | di sel → /
+  assert.equal(r.paragraf[4], "| sesuatu yang melekat |  |");
+  assert.match(r.paragraf[5], /^\| air mani \| نُطْفَةً \|$/);
+  assert.equal(r.paragraf[6], "| kata / asing |  |");
+  assert.match(r.paragraf[7], /^Kata سُلَٰلَةٍ|^Kata سُلَالَةٍ|^Kata سُلَـٰلَةٍ/u);
+  assert.doesNotMatch(r.paragraf[7], /مَدْرَسَة/);
+  assert.equal(r.paragraf[8], "[[GAMBAR 1]]");
+  assert.deepEqual(r.gambar, [{ kotak: [300, 70, 690, 240], keterangan: "Diagram janin" }]);
+  assert.equal(r.paragraf.length, 9);
+
+  // Mode bahasa (Bahasa Arab): tulisan Arab isi pelajaran dipertahankan; ayat tetap penunjuk mushaf.
+  const b = rapikanBacaanHalaman({ blok: [{ jenis: "arab", isi: "ذَهَبَ أَحْمَدُ إِلَى الْمَدْرَسَةِ صَبَاحًا مَعَ أَخِيهِ" }, ai.blok[1], ai.blok[3]] }, m.cari, potongAyat, true);
+  assert.equal(b.paragraf[0], "ذَهَبَ أَحْمَدُ إِلَى الْمَدْرَسَةِ صَبَاحًا مَعَ أَخِيهِ");
+  assert.ok(b.paragraf[1].startsWith(TANDA_PDF));
+  assert.match(b.paragraf[2], /مَدْرَسَة/);
+  assert.deepEqual(rapikanBacaanHalaman("rusak", m.cari, potongAyat), { paragraf: [], gambar: [] });
+  assert.equal(potongAyat("وَلَقَدْ خَلَقْنَا الْإِنسَانَ", "الانسان"), "الْإِنسَانَ");
+  assert.equal(potongAyat("وَلَقَدْ خَلَقْنَا", "ق"), null); // terlalu pendek
 });

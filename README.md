@@ -60,6 +60,11 @@ pembahasan, dan rubrik**, lalu mengekspornya ke **Word** dengan kop madrasah.
   menulis keterangannya. Guru juga bisa mengunggah / menempel (Ctrl+V) gambar sendiri (selalu dipakai), maks. 10 per
   materi. Gambar dikecilkan jadi JPEG di browser; AI **melihat** gambarnya saat membuat soal dan boleh memakainya sebagai
   stimulus. AI tidak membuat gambar.
+- **PDF dibaca AI** (0.31.0): tiap halaman difoto di browser (pdf.js, `src/app/baca-pdf.ts`) dan dibaca AI lewat aksi
+  `bacaHalamanPdf` (satu halaman per panggilan): teks, tabel, rumus, letak gambar (dipotong browser), juga PDF scan.
+  Bacaan dicek terhadap teks pdf.js (cakupan kata < 85% → teks asli). Arab: blok ayat → penunjuk mushaf; lafal Arab di
+  teks/tabel → ejaan resmi ayat halaman itu (`rapikanBacaanHalaman`, `potongAyat`), selain itu dibuang (mode Bahasa Arab:
+  dipertahankan). PDF > 20 halaman: guru memilih rentang.
 - Satu set boleh menggabung **hingga 5 materi** (untuk AFTS/ASAS), asal satu mapel dan satu kelas.
 - Halaman **Kelola materi** (`/materi`): daftar, ubah, hapus materi (maks. 300 per guru).
 
@@ -564,7 +569,8 @@ Saat melapor masalah, sertakan **versi** (tertulis di sidebar), nomor set (`?id=
 - Mapel sejarah: hanya angka tahun yang diperiksa aplikasi; nama tokoh & tempat dijaga lewat instruksi AI saja.
 - Materi pendek dengan nama/tahun yang berulang membuat jawaban isian sering "bocor" ke soal lain (ditandai merah).
 - Teks Arab dari buku PDF Kemenag rusak saat diekstrak; hanya ayat yang dikenali mushaf yang dipakai.
-- Belum ada: bank soal, katalog CP/TP resmi. Gambar, tabel, dan rumus dari PDF belum terbaca (gambar PDF: tempel tangkapan layar).
+- Belum ada: bank soal, katalog CP/TP resmi.
+- PDF dibaca AI maks 20 halaman sekali lampir & 100 halaman/guru/hari; isi materi tetap maks 30 ribu huruf (±10 halaman buku).
 - AI tidak bisa membuat gambar (grafik fungsi, diagram baru): gambar soal hanya dari materi guru.
 - Word tidak bisa "boleh pindah kolom tapi jangan pindah halaman"; sesekali soal terbelah di dasar halaman.
 - PDF berkop tidak bisa dibuat di hosting (butuh Word/LibreOffice di server); guru menyimpan file Word sebagai PDF.

@@ -52,6 +52,21 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.31.0 — 11 November 2026
+- **PDF dibaca AI.** Setiap halaman PDF difoto di perangkat guru lalu dibaca AI, seperti orang membaca halaman buku.
+  Hasilnya: **tabel** jadi tabel, **rumus** jadi rumus sungguhan, **gambar** (diagram, grafik, peta) dipotong dari
+  halaman dan masuk ke bagian Gambar (logo dan hiasan tidak), dan **PDF hasil scan** sekarang bisa dipakai.
+- **Ayat di buku PDF Kemenag kini dikenali.** Dulu teks Arab buku Kemenag rusak saat diambil, jadi tidak ada ayat yang
+  dikenali. Sekarang ayatnya dikenali lalu diganti teks resmi mushaf (contoh uji: QS al-Mu'minun 12–14). Lafal Arab di
+  tabel mufradat diganti ejaan resmi mushaf dari ayat di halaman itu. Hadis tetap ditempel guru (aturan tidak berubah).
+- **PDF panjang**: lebih dari 20 halaman → guru memilih halaman bab yang diperlukan (bawaan 10 halaman). Ada juga
+  pilihan "Pakai teks saja" (cara lama, tanpa AI).
+- **Pemeriksa aplikasi**: bacaan AI dibandingkan dengan teks asli PDF; halaman yang kurang lengkap (< 85% kata) memakai
+  teks asli. Halaman yang gagal dibaca AI juga memakai teks asli.
+- Batas: 100 halaman PDF dibaca AI per guru per hari. Biaya ±Rp10–20 per halaman; ±1–5 detik per halaman (3 halaman
+  dibaca bersamaan). Tetap jalan walau guru pindah tab sambil menunggu.
+- Perbaikan: jatah Ganti/Ubah/Tambah harian kini hanya menghitung Ganti/Ubah/Tambah (tidak ikut terhitung pemakaian lain).
+
 ## 0.30.0 — 10 November 2026
 - **Gambar di soal.** Soal kini bisa memakai gambar (diagram sel, peta, grafik, rangkaian, bangun ruang, dan lain-lain).
   Gambar tampil di bawah pertanyaan, di web maupun di file Word lembar soal (ikut ke Paket A–D).

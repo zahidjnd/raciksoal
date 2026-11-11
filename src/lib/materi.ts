@@ -44,6 +44,62 @@ export const buangTandaGambar = (t: string) => t.replace(POLA_TANDA_GAMBAR, " ")
 /** Nomor tanda gambar digeser (file kedua dan seterusnya, serta gambar tempelan yang bernomor lebih dulu). */
 export const geserTandaGambar = (t: string, geser: number) => (geser ? t.replace(POLA_TANDA_GAMBAR, (_, n) => tandaGambar(Number(n) + geser)) : t);
 
+/** Bacaan satu halaman PDF oleh AI (0.31.0), sudah dirapikan: paragraf materi + gambar yang dipotong browser. */
+export type BacaanHalaman = { paragraf: string[]; gambar: { kotak: [number, number, number, number]; keterangan: string }[] };
+
+/**
+ * Jawaban AI pembaca halaman PDF → paragraf materi (format sama dengan file Word: tabel = baris "| a | b |", rumus $...$,
+ * letak gambar = [[GAMBAR n]] nomor per halaman). Aturan 5: teks Arab hasil bacaan AI TIDAK dipakai apa adanya:
+ * - blok Arab (ayat/hadis) → bertanda TANDA_PDF, jadi hanya penunjuk ayat di mushaf (susunDraf), sisanya dibuang;
+ * - tulisan Arab di teks/tabel (mis. lafal mufradat) → diganti potongan RESMI ayat halaman itu yang kerangka hurufnya
+ *   sama (`potong`, dari mushaf), selain itu dibuang.
+ * Mode "bahasa" (Bahasa Arab, Nahwu): tulisan Arab adalah isi pelajaran, jadi dipertahankan; yang dikenali mushaf sebagai
+ * ayat tetap jadi penunjuk mushaf.
+ */
+export function rapikanBacaanHalaman(
+  data: unknown,
+  cariAyat: CariAyat,
+  potong: (ayat: string, arab: string) => string | null,
+  bahasa = false,
+): BacaanHalaman {
+  const mentah = (data as { blok?: unknown })?.blok;
+  const blok = (Array.isArray(mentah) ? mentah : []).slice(0, 300) as Record<string, unknown>[];
+  const ayat = blok.flatMap((b) => (b?.jenis === "arab" ? [cariAyat(teks(b.isi), "")?.arab ?? ""] : [])).filter(Boolean);
+  const pola = new RegExp(POLA_ARAB, "g");
+  const aman = (t: string) =>
+    bahasa
+      ? t
+      : t.replace(pola, (arab) => ayat.map((a) => potong(a, arab)).find(Boolean) ?? "").replace(/[ \t]{2,}/g, " ").replace(/\(\s*\)/g, "").trim();
+  const paragraf: string[] = [];
+  const gambar: BacaanHalaman["gambar"] = [];
+  for (const b of blok) {
+    if (b?.jenis === "teks") {
+      const t = aman(teks(b.isi).slice(0, 5000));
+      if (t) paragraf.push(t);
+    } else if (b?.jenis === "arab") {
+      const t = teks(b.isi).slice(0, 5000);
+      if (t) paragraf.push(bahasa && !cariAyat(t, "") ? t : TANDA_PDF + t);
+    } else if (b?.jenis === "tabel" && Array.isArray(b.baris)) {
+      const baris = (b.baris as unknown[])
+        .slice(0, 40)
+        .map((r) => (Array.isArray(r) ? r : []).slice(0, 8).map((s) => aman(teks(s)).replace(/\|/g, "/").replace(/\s+/g, " ")))
+        .filter((r) => r.some(Boolean));
+      baris.forEach((r, i) => {
+        paragraf.push(`| ${r.join(" | ")} |`);
+        if (i === 0) paragraf.push(`|${"---|".repeat(r.length)}`);
+      });
+    } else if (b?.jenis === "gambar" && b.pakai !== false && gambar.length < 10) {
+      const k = (Array.isArray(b.kotak) ? b.kotak : []).map(Number);
+      if (k.length !== 4 || k.some((x) => !Number.isFinite(x))) continue;
+      const [x0, y0, x1, y1] = k.map((x) => Math.min(1000, Math.max(0, x)));
+      if (x1 - x0 < 20 || y1 - y0 < 20) continue; // terlalu kecil (atau terbalik): bukan gambar yang bisa dipakai
+      gambar.push({ kotak: [x0, y0, x1, y1], keterangan: teks(b.keterangan).replace(pola, "").slice(0, 200) });
+      paragraf.push(tandaGambar(gambar.length));
+    }
+  }
+  return { paragraf, gambar };
+}
+
 /** Pencari ayat di mushaf (mushaf().cari); disuntikkan supaya file ini tetap bisa dites tanpa membaca mushaf. */
 export type CariAyat = (arab: string, petunjuk: string) => { sumber: string; arab: string } | null;
 

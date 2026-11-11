@@ -193,8 +193,8 @@ export function paragrafPdf(items: ItemPdf[]): string[] {
   return hasil;
 }
 
-/** PDF dibaca dengan pdf.js (dimuat hanya saat guru memilih PDF). */
-async function bacaPdf(data: ArrayBuffer | Uint8Array): Promise<string[]> {
+/** Buka PDF dengan pdf.js (dimuat hanya saat guru memilih PDF). Melempar Error berbahasa Indonesia. */
+export async function bukaPdf(data: ArrayBuffer | Uint8Array) {
   const diBrowser = typeof window !== "undefined";
   // Versi "legacy" hanya untuk npm test (Node); di browser guru dipakai versi biasa + worker.
   const pdfjs = diBrowser ? await import("pdfjs-dist") : await import("pdfjs-dist/legacy/build/pdf.mjs");
@@ -208,12 +208,35 @@ async function bacaPdf(data: ArrayBuffer | Uint8Array): Promise<string[]> {
     throw new Error("File PDF tidak bisa dibaca (rusak atau bukan PDF).");
   }
   if (doc.numPages > 300) throw new Error("PDF terlalu banyak halamannya (maks 300). Ambil bab yang diperlukan saja.");
+  return { doc, tutup: () => tugas.destroy() };
+}
+
+type DokumenPdf = Awaited<ReturnType<typeof bukaPdf>>["doc"];
+
+/** Teks satu halaman PDF dengan cara lama (pdf.js): paragraf Latin + blok Arab bertanda TANDA_PDF. */
+export async function teksHalamanPdf(doc: DokumenPdf, n: number) {
+  const isi = await (await doc.getPage(n)).getTextContent();
+  return paragrafPdf(isi.items.filter((i): i is ItemPdf & typeof i => "str" in i));
+}
+
+/**
+ * 0.31.0: bagian kata Latin (>= 3 huruf) dari teks asli PDF yang juga ada di bacaan AI (0–1). Untuk memastikan AI tidak
+ * diam-diam melewatkan isi halaman; di uji 2026-11-11 hasilnya 99–100% (yang hilang hanya kaki halaman berulang).
+ * `null` = teks asli terlalu sedikit untuk dinilai (mis. PDF hasil scan).
+ */
+export function cakupanKata(asli: string[], bacaan: string[]): number | null {
+  const kata = (t: string[]) => t.filter((p) => !p.startsWith(TANDA_PDF)).join(" ").toLowerCase().match(/[a-z0-9]{3,}/g) ?? [];
+  const a = kata(asli);
+  if (a.length < 30) return null;
+  const b = new Set(kata(bacaan));
+  return a.filter((k) => b.has(k)).length / a.length;
+}
+
+async function bacaPdf(data: ArrayBuffer | Uint8Array): Promise<string[]> {
+  const { doc, tutup } = await bukaPdf(data);
   const semua: string[] = [];
-  for (let n = 1; n <= doc.numPages; n++) {
-    const isi = await (await doc.getPage(n)).getTextContent();
-    semua.push(...paragrafPdf(isi.items.filter((i): i is ItemPdf & typeof i => "str" in i)));
-  }
-  await tugas.destroy();
+  for (let n = 1; n <= doc.numPages; n++) semua.push(...(await teksHalamanPdf(doc, n)));
+  await tutup();
   if (!semua.join("").replace(/\s/g, "")) throw new Error("PDF ini berupa gambar (hasil scan), tidak ada teks yang bisa diambil. Ketik atau tempel materinya.");
   return semua;
 }

@@ -1175,3 +1175,11 @@ test("penilaian gambar AI (0.30.0): logo ditolak, tempelan guru selalu dipakai, 
   assert.match(pengguna, /logo, kop/);
   assert.doesNotMatch(buatAnalisaMateri("Biologi", "XI", "Sel.", false).pengguna, /"gambar"/);
 });
+
+test("cakupan kata bacaan AI PDF (0.31.0): halaman yang dilewati AI ketahuan, PDF scan tidak dinilai", async () => {
+  const { cakupanKata } = await import("./office.ts");
+  const asli = ["Gerak lurus berubah beraturan adalah gerak benda pada lintasan lurus dengan percepatan tetap. ".repeat(3), "[[PDF]]نص عربي", "AL-QUR'AN HADIS KELAS XI"];
+  assert.equal(cakupanKata(asli, ["Gerak lurus berubah beraturan adalah gerak benda pada lintasan lurus dengan percepatan tetap."]), 39 / 42); // kaki halaman hilang: tetap tinggi
+  assert.ok(cakupanKata(asli, ["Gerak lurus."])! < 0.85); // AI melewatkan paragraf
+  assert.equal(cakupanKata(["Halaman scan"], ["apa saja"]), null); // teks asli terlalu sedikit: tidak dinilai
+});

@@ -336,6 +336,23 @@ ${jumlahGambar ? `${ANALISA_GAMBAR}\n` : ""}- "catatan": satu kalimat bila teks 
   return { sistem, pengguna };
 }
 
+/**
+ * 0.31.0: AI membaca SATU halaman PDF dari fotonya (gambar halaman dikirim bersama pesan). Diuji 2026-11-11 pada buku
+ * Al-Qur'an Hadis XI Kemenag (hlm 16, 21) dan modul IPA: cakupan kata 99–100%, rumus/tabel rapi, kotak gambar tepat.
+ * Jawaban dirapikan rapikanBacaanHalaman (materi.ts); teks Arab tidak dipakai apa adanya (aturan 5).
+ */
+export function buatBacaHalaman() {
+  const sistem = "Anda menyalin isi SATU halaman buku/modul pelajaran madrasah dari gambar halaman, untuk diolah aplikasi pembuat soal. Balas hanya JSON.";
+  const pengguna = `Salin isi halaman ini PERSIS, urut seperti dibaca (atas ke bawah; halaman dua kolom: kolom kiri dulu). Jangan meringkas, jangan menambah, jangan memperbaiki isi.
+Abaikan kepala dan kaki halaman yang berulang (judul buku, nomor halaman) dan hiasan.
+Balas JSON {"blok":[...]} berisi blok berurutan:
+- {"jenis":"teks","isi":"..."}: satu judul, paragraf, atau butir daftar per blok (paragraf yang terpotong baris digabung). Rumus, pecahan, akar, pangkat, indeks, dan simbol matematika ditulis LaTeX diapit $...$ (di JSON garis miring terbalik ditulis ganda), mis. "$v_{t} = v_{0} + at$", "$\\\\frac{1}{2}$", "$\\\\sqrt{s}$".
+- {"jenis":"tabel","baris":[["judul kolom",...],["sel",...],...]}: tabel, sel per sel (rumus di sel juga $...$).
+- {"jenis":"arab","isi":"..."}: kutipan Arab panjang di luar tabel (ayat, hadis, doa), satu blok per kutipan, huruf dan harakat seperti terlihat.
+- {"jenis":"gambar","kotak":[x0,y0,x1,y1],"keterangan":"...","pakai":true}: setiap gambar, diagram, grafik, foto, atau logo. "kotak" = batas gambar dalam skala 0–1000 terhadap lebar dan tinggi halaman (x0,y0 = kiri atas, x1,y1 = kanan bawah), mencakup label di dalam gambar tetapi tidak termasuk teks keterangan di bawahnya. "pakai": true bila isi pelajaran (diagram, skema, grafik, peta, foto objek/percobaan), false bila logo, kop, ikon, hiasan, atau latar. "keterangan": isi gambar maks 15 kata.`;
+  return { sistem, pengguna };
+}
+
 // 0.30.0: AI menilai gambar file materi (pratinjau kecil dikirim bersama pesan, berlabel [GAMBAR n]).
 const ANALISA_GAMBAR = `- "gambar": untuk SETIAP gambar yang dikirim (label [GAMBAR n]; di TEKS MATERI, [GAMBAR n] menandai letak gambar itu di materi): {"no":n,"pakai":...,"keterangan":"..."}.
   "pakai": true bila gambar adalah ISI PELAJARAN yang bisa dipakai sebagai stimulus soal: diagram, skema, bagan, grafik, tabel, peta, denah, rangkaian, bangun/rumus, atau foto objek, percobaan, peristiwa, tokoh, atau tempat yang dibahas materi. false bila BUKAN isi pelajaran: logo, kop, lambang sekolah/instansi, ikon, bingkai, latar, garis hias, stiker/kartun/emoji yang tidak menjelaskan apa pun, foto sampul atau penulis, kode QR, tangkapan layar menu/tombol, atau gambar yang sama sekali tidak berhubungan dengan materi.
