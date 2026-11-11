@@ -52,6 +52,15 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.32.2 — 11 November 2026
+- **Halaman Set baru lebih rapi:**
+  - Kartu jenis ujian kini sejajar, dan kartu yang dipilih berlatar hijau muda dengan tanda centang.
+  - Kotak **Catatan untuk AI** diberi garis tepi supaya jelas bisa diketik.
+  - Di laptop, file Word/PowerPoint/PDF bisa **diseret** langsung ke kotak materi (sama dengan tombol Lampirkan).
+  - Tulisan "0/5 materi" diperjelas menjadi "Dipakai 0 dari maks. 5 materi".
+  - Teks materi yang sudah ditempel tapi belum dianalisa **tidak hilang** bila halaman tertutup atau dimuat ulang.
+- Gambar Panduan langkah 1 dan 3 diperbarui sesuai tampilan baru.
+
 ## 0.32.1 — 11 November 2026
 - **PDF hasil scan yang dulu terbaca kosong kini bisa dibaca**, misalnya buku *Al-Muyassar fi 'Ilmi an-Nahwi*. Sebagian
   PDF scan menyimpan halamannya dalam format gambar khusus (JPEG 2000 atau JBIG2); dulu halaman seperti ini terbaca
