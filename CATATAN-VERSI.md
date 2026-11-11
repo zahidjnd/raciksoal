@@ -52,6 +52,16 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.34.0 — 11 November 2026
+- **Potong gambar**: tombol **✂ Potong** di bawah setiap gambar materi (Set baru dan Materi saya → Ubah) dan di
+  bagian "Gambar soal" saat Edit soal. Geser kotaknya atau tarik sudutnya, lalu **Simpan potongan**. Berguna bila
+  potongan AI dari PDF ikut tulisan. Gambar lama tidak diubah, jadi set yang sudah dibuat tetap memakai gambar lamanya.
+- **Tulisan kecil diperbesar**: petunjuk, peringatan, dan pesan salah yang dulu 12 px kini 14 px (halaman masuk,
+  Set baru, hasil soal, jendela Unduh, sidebar). Tombol Potong, Lepas, Hapus, dan Batalkan kini berbingkai sehingga
+  jelas bisa dipencet. Tanggal, versi, dan label kecil sengaja tetap kecil.
+
+---
+
 ## 0.33.3 — 11 November 2026
 - **Gambar materi lebih banyak dipakai di soal**: aplikasi kini menentukan nomor mana yang bergambar (1 dari setiap
   5 soal, tersebar merata, tidak lebih dari jumlah gambar); AI memilih gambar yang paling cocok dan soalnya wajib
