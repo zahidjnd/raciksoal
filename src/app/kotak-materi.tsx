@@ -41,6 +41,7 @@ type Props = {
 };
 
 const kotak = "w-full rounded-lg border p-2 text-sm";
+const ikon = "inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border bg-kartu text-pudar hover:bg-krem hover:text-tinta max-md:size-11 focus-within:ring-2 focus-within:ring-hijau";
 type FileMateri = { nama: string; paragraf: string[]; gambar: GambarFile[] };
 const huruf = (f: FileMateri) => f.paragraf.join("\n").length;
 const angka = (n: number) => n.toLocaleString("id-ID");
@@ -320,7 +321,7 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
               aria-label="Tempel materi"
               placeholder={
                 seret ? "Lepaskan file di sini..." :
-                siap ? "Tempel materi di sini (ringkasan bab, modul, atau isi PPT), lampirkan/seret file Word/PowerPoint/PDF ke sini, atau foto halaman buku." :
+                siap ? "Tempel materi di sini, atau lampirkan Word/PowerPoint/PDF/foto buku lewat tombol klip." :
                 "Pilih mata pelajaran dan kelas dulu."
               }
               disabled={!siap || !!proses}
@@ -332,31 +333,37 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
               }}
             />
             <div className="flex flex-wrap items-center gap-2">
-              <label className={`inline-flex h-8 cursor-pointer items-center rounded-lg border bg-kartu px-3 text-sm hover:bg-krem max-md:min-h-11 focus-within:ring-2 focus-within:ring-hijau ${!siap || proses ? "pointer-events-none opacity-50" : ""}`}>
-                Lampirkan Word/PowerPoint/PDF
-                <input type="file" multiple accept=".docx,.pptx,.pdf" className="sr-only" disabled={!siap || !!proses} onChange={(e) => {
+              {/* 0.40.1: dua ikon. Klip = Word/PPT/PDF/foto galeri (banyak sekaligus). Kamera = capture, tanpa multiple:
+                  Android 13+ langsung membuka galeri untuk input multiple, jadi kamera perlu tombol sendiri (HP saja). */}
+              <label title="Lampirkan Word, PowerPoint, PDF, atau foto" className={`${ikon} ${!siap || proses ? "pointer-events-none opacity-50" : ""}`}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="m21.4 11.1-8.5 8.5a5.5 5.5 0 0 1-7.8-7.8l8.5-8.5a3.7 3.7 0 0 1 5.2 5.2l-8.5 8.5a1.8 1.8 0 0 1-2.6-2.6l7.8-7.8" />
+                </svg>
+                <input type="file" multiple accept=".docx,.pptx,.pdf,image/*" className="sr-only" aria-label="Lampirkan Word, PowerPoint, PDF, atau foto" disabled={!siap || !!proses} onChange={(e) => {
                   const f = [...(e.target.files ?? [])];
                   e.target.value = "";
                   lampirkan(f);
                 }} />
               </label>
-              {/* 0.40.0: di HP, accept image/* menawarkan Kamera atau Galeri. */}
-              <label className={`inline-flex h-8 cursor-pointer items-center rounded-lg border bg-kartu px-3 text-sm hover:bg-krem max-md:min-h-11 focus-within:ring-2 focus-within:ring-hijau ${!siap || proses ? "pointer-events-none opacity-50" : ""}`}>
-                Foto halaman buku
-                <input type="file" multiple accept="image/*" className="sr-only" disabled={!siap || !!proses} onChange={(e) => {
+              <label title="Potret halaman buku" className={`${ikon} pointer-fine:hidden ${!siap || proses ? "pointer-events-none opacity-50" : ""}`}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d="M14.5 4h-5L7.5 6.5H4a2 2 0 0 0-2 2V18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8.5a2 2 0 0 0-2-2h-3.5z" />
+                  <circle cx="12" cy="13" r="3.5" />
+                </svg>
+                <input type="file" accept="image/*" capture="environment" className="sr-only" aria-label="Potret halaman buku" disabled={!siap || !!proses} onChange={(e) => {
                   const f = [...(e.target.files ?? [])];
                   e.target.value = "";
                   lampirkan(f);
                 }} />
               </label>
-              <button className="h-8 rounded-lg bg-hijau px-3 text-sm font-semibold text-white disabled:opacity-40 max-md:min-h-11" disabled={!siap || !!proses || (!teks.trim() && !file.length)} onClick={() => analisa()}>
-                Analisa materi
-              </button>
               {gabung && sesuai.length > 0 && (
                 <button className="inline-flex h-8 items-center gap-1 rounded-lg border bg-kartu px-3 text-sm hover:bg-krem max-md:min-h-11" aria-expanded={lihatLama} onClick={() => setLihatLama(!lihatLama)}>
                   Pakai materi sebelumnya <Panah buka={lihatLama} />
                 </button>
               )}
+              <button className="ml-auto h-8 rounded-lg bg-hijau px-3 text-sm font-semibold text-white disabled:opacity-40 max-md:min-h-11" disabled={!siap || !!proses || (!teks.trim() && !file.length)} onClick={() => analisa()}>
+                Analisa materi
+              </button>
             </div>
             {tempelan.length > 0 && (
               <p className="flex items-center gap-2 rounded-lg border px-2 py-1 text-sm">

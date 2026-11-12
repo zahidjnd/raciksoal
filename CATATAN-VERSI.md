@@ -52,6 +52,13 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.40.1 — 12 November 2026
+- **Tombol materi lebih ringkas.** Tulisan "Lampirkan Word/PowerPoint/PDF" dan "Foto halaman buku" diganti dua ikon:
+  **klip** (Word, PowerPoint, PDF, atau foto dari galeri) dan **kamera** (langsung memotret satu halaman buku; hanya
+  muncul di HP). Dulu di HP Android kamera tidak ditawarkan, langsung galeri. **Analisa materi** pindah ke kanan.
+
+---
+
 ## 0.40.0 — 12 November 2026
 - **Foto halaman buku jadi materi.** Tombol baru **Foto halaman buku** di kotak materi: di HP bisa langsung memotret
   (Kamera) atau memilih dari Galeri, boleh beberapa foto sekaligus (maks 50). AI membaca tulisan, tabel, rumus, dan
