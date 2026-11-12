@@ -52,6 +52,14 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.40.0 — 12 November 2026
+- **Foto halaman buku jadi materi.** Tombol baru **Foto halaman buku** di kotak materi: di HP bisa langsung memotret
+  (Kamera) atau memilih dari Galeri, boleh beberapa foto sekaligus (maks 50). AI membaca tulisan, tabel, rumus, dan
+  gambar di foto seperti membaca halaman PDF, lalu materinya dianalisa seperti biasa. Biaya ±Rp10–20 per foto, sekali
+  saja; setiap foto memakai jatah "halaman PDF dibaca AI" harian. Ayat & hadis tetap diambil dari data aplikasi.
+
+---
+
 ## 0.39.0 — 12 November 2026
 - **Bahasa Indonesia: satu bacaan untuk beberapa soal.** Di Ulangan Harian, AFTS, ASAS, dan Latihan, kira-kira separuh
   soal PG (di akhir bagian PG) dibuat berkelompok: satu bacaan untuk 2–3 soal. Bacaannya mengikuti jenis teks di materi

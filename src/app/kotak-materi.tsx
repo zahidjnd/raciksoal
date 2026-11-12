@@ -49,6 +49,8 @@ const angka = (n: number) => n.toLocaleString("id-ID");
 const BATAS_FILE_MB = 100;
 const BATAS_FILE = BATAS_FILE_MB * 1024 * 1024;
 const FILE_DITERIMA = /\.(docx|pptx|pdf)$/i;
+// 0.40.0: foto halaman buku (kamera/galeri HP), dibaca AI seperti halaman PDF.
+const foto = (f: File) => f.type.startsWith("image/");
 /** Teks tempelan yang belum dipakai disimpan di browser (kenyamanan saja), dihapus setelah materinya tersimpan di server. */
 export const DRAF_TEKS = "raciksoal-draf-materi";
 
@@ -172,17 +174,28 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
   /** File dari tombol Lampirkan atau diseret ke kotak materi. */
   async function lampirkan(daftarFile: File[]) {
     if (!daftarFile.length) return;
-    const asing = daftarFile.find((f) => !FILE_DITERIMA.test(f.name));
-    if (asing) return setPesan({ ok: false, teks: `${asing.name} tidak bisa dibaca. Hanya file Word (.docx), PowerPoint (.pptx), atau PDF.` });
+    const asing = daftarFile.find((f) => !FILE_DITERIMA.test(f.name) && !foto(f));
+    if (asing) return setPesan({ ok: false, teks: `${asing.name} tidak bisa dibaca. Hanya file Word (.docx), PowerPoint (.pptx), PDF, atau foto halaman buku.` });
     const besar = daftarFile.find((f) => f.size > BATAS_FILE);
     if (besar) return setPesan({ ok: false, teks: `${besar.name} terlalu besar (maks ${BATAS_FILE_MB} MB).` });
+    const daftarFoto = daftarFile.filter(foto);
+    if (daftarFoto.length > MAKS_HALAMAN_PDF) return setPesan({ ok: false, teks: `Paling banyak ${MAKS_HALAMAN_PDF} foto sekali lampir.` });
     setProses("Membaca file...");
     setPesan(null);
     try {
       const { bacaFileOffice } = await import("@/lib/office"); // dimuat hanya saat dipakai; file dibaca di perangkat guru
       const baru: FileMateri[] = [];
       const catatanBaca: string[] = [];
+      // Foto-foto satu kali pilih = satu "file" materi, urut sesuai pilihan guru.
+      if (daftarFoto.length) {
+        const { bacaFotoDenganAI } = await import("./baca-pdf");
+        setProses(`AI membaca foto: 0 dari ${daftarFoto.length}...`);
+        const isi = await bacaFotoDenganAI(daftarFoto, mapel, (s, t) => setProses(`AI membaca foto: ${s} dari ${t}...`));
+        baru.push({ nama: daftarFoto.length === 1 ? "Foto halaman" : `${daftarFoto.length} foto halaman`, paragraf: isi.paragraf, gambar: isi.gambar });
+        catatanBaca.push(...isi.catatan);
+      }
       for (const [i, f] of daftarFile.entries()) {
+        if (foto(f)) continue;
         if (/\.pdf$/i.test(f.name)) {
           // PDF dibaca AI per halaman (0.31.0). PDF panjang: guru memilih halamannya dulu (file sesudahnya dilampirkan lagi nanti).
           const { jumlahHalamanPdf } = await import("./baca-pdf");
@@ -307,7 +320,7 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
               aria-label="Tempel materi"
               placeholder={
                 seret ? "Lepaskan file di sini..." :
-                siap ? "Tempel materi di sini (ringkasan bab, modul, atau isi PPT), atau lampirkan/seret file Word/PowerPoint/PDF ke sini." :
+                siap ? "Tempel materi di sini (ringkasan bab, modul, atau isi PPT), lampirkan/seret file Word/PowerPoint/PDF ke sini, atau foto halaman buku." :
                 "Pilih mata pelajaran dan kelas dulu."
               }
               disabled={!siap || !!proses}
@@ -322,6 +335,15 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
               <label className={`inline-flex h-8 cursor-pointer items-center rounded-lg border bg-kartu px-3 text-sm hover:bg-krem max-md:min-h-11 focus-within:ring-2 focus-within:ring-hijau ${!siap || proses ? "pointer-events-none opacity-50" : ""}`}>
                 Lampirkan Word/PowerPoint/PDF
                 <input type="file" multiple accept=".docx,.pptx,.pdf" className="sr-only" disabled={!siap || !!proses} onChange={(e) => {
+                  const f = [...(e.target.files ?? [])];
+                  e.target.value = "";
+                  lampirkan(f);
+                }} />
+              </label>
+              {/* 0.40.0: di HP, accept image/* menawarkan Kamera atau Galeri. */}
+              <label className={`inline-flex h-8 cursor-pointer items-center rounded-lg border bg-kartu px-3 text-sm hover:bg-krem max-md:min-h-11 focus-within:ring-2 focus-within:ring-hijau ${!siap || proses ? "pointer-events-none opacity-50" : ""}`}>
+                Foto halaman buku
+                <input type="file" multiple accept="image/*" className="sr-only" disabled={!siap || !!proses} onChange={(e) => {
                   const f = [...(e.target.files ?? [])];
                   e.target.value = "";
                   lampirkan(f);

@@ -43,10 +43,10 @@ const LANGKAH: { judul: string; isi: React.ReactNode; gambar: React.ReactNode[] 
     isi: (
       <>
         <p>Klik <b>Set baru</b>. Pilih <b>mata pelajaran</b> dan <b>kelas</b>&nbsp;<N n={1} />.</p>
-        <p>Tempel teks materi, atau tekan <b>Lampirkan Word/PowerPoint/PDF</b>&nbsp;<N n={2} /> (di laptop, file juga bisa diseret ke kotak materi). Lalu tekan <b>Analisa materi</b>&nbsp;<N n={3} />.</p>
+        <p>Tempel teks materi, tekan <b>Lampirkan Word/PowerPoint/PDF</b>&nbsp;<N n={2} />, atau <b>Foto halaman buku</b>&nbsp;<N n={3} /> (di HP bisa langsung memotret; di laptop, file juga bisa diseret ke kotak materi). Lalu tekan <b>Analisa materi</b>&nbsp;<N n={4} />.</p>
       </>
     ),
-    gambar: [<Gambar key="1" nama="1-mapel-materi" alt="Pilihan mata pelajaran dan kelas, kotak materi, tombol Lampirkan dan Analisa materi" lebar={750} tinggi={852} />],
+    gambar: [<Gambar key="1" nama="1-mapel-materi" alt="Pilihan mata pelajaran dan kelas, kotak materi, tombol Lampirkan, Foto halaman buku, dan Analisa materi" lebar={469} tinggi={533} />],
   },
   {
     judul: "Periksa kartu materi",
@@ -86,7 +86,7 @@ const LANGKAH: { judul: string; isi: React.ReactNode; gambar: React.ReactNode[] 
 const TOPIK: { id: string; judul: string; isi: React.ReactNode }[] = [
   {
     id: "materi",
-    judul: "Materi dari Word, PowerPoint, dan PDF",
+    judul: "Materi dari Word, PowerPoint, PDF, dan foto",
     isi: (
       <>
         <ul>
@@ -94,6 +94,7 @@ const TOPIK: { id: string; judul: string; isi: React.ReactNode }[] = [
           <li>Rumus Word (<b>Insert → Equation</b>) ikut terbaca, tampil sebagai <b>$...$</b> di kotak isi.</li>
           <li><b>PDF dibaca AI</b> halaman demi halaman, termasuk tabel, rumus, gambar, dan PDF hasil scan. Muncul tulisan “AI membaca PDF: … halaman”.</li>
           <li>PDF lebih dari {MAKS_HALAMAN_PDF} halaman: pilih halaman bab yang diperlukan (nomor halaman file, bukan nomor cetak buku), lalu tekan <b>Baca dengan AI</b>. Makin banyak halaman makin lama dibaca (10 halaman ±1 menit).</li>
+          <li><b>Foto halaman buku</b>: di HP pilih <b>Kamera</b> atau <b>Galeri</b>; beberapa foto sekaligus dibaca berurutan sesuai urutan dipilih. Foto tegak, terang, satu halaman penuh, tanpa bayangan. Setiap foto dihitung satu halaman dari jatah halaman PDF harian. Periksa hasilnya di kotak isi.</li>
           <li>Materi yang pernah dipakai bisa dipilih lagi lewat <b>Pakai materi sebelumnya</b>.</li>
         </ul>
         <Tips>menyiapkan beberapa bab di awal semester? Pakai menu <b>Materi saya</b> → <b>+ Tambah materi</b> → <b>Analisa materi</b> → <b>Simpan materi</b>.</Tips>
@@ -119,7 +120,7 @@ const TOPIK: { id: string; judul: string; isi: React.ReactNode }[] = [
             ditambah dengan <b>+ Tambah hadis</b>: begitu teks Arabnya selesai ditempel, hadis 9 kitab langsung berubah hijau.
           </li>
           <li>Teks Arab pendek (≤ 3 kata) dianggap istilah. Teks Arab yang bukan dalil (doa, niat, kaidah): tekan <b>Bukan ayat/hadis</b>.</li>
-          <li>Dari PDF: ayat dan hadis 9 kitab dikenali lalu diganti teks resmi dari data; teks Arab lain dibuang. Tempel sendiri bila perlu.</li>
+          <li>Dari PDF dan foto: ayat dan hadis 9 kitab dikenali lalu diganti teks resmi dari data; teks Arab lain dibuang. Tempel sendiri bila perlu.</li>
         </ul>
       </>
     ),

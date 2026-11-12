@@ -177,6 +177,8 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   (`pemakaian_ai.jenis = "halaman"`), `MAKS_HALAMAN_PDF` 50 sekali lampir (0.34.1; bawaan 10; ±batas 100 ribu huruf). 0.33.0: file PDF maks 100 MB
   (dibaca di browser, tidak diunggah), tebal buku bebas (batas 300 hanya untuk "teks saja"), isi materi DAN total
   gabungan satu set maks 100 ribu huruf (`BATAS_MATERI.isi`; biaya token sebanding panjang), kiriman aksi 2 MB.
+  Foto halaman (0.40.0): tombol "Foto halaman buku" (accept image/*; juga seret) → `bacaFotoDenganAI` (baca-pdf.ts) →
+  `bacaHalamanPdf` tanpa contekan; tanpa cek cakupan/cadangan teks & tanpa `buangKepalaHalaman`; 1 foto = 1 jatah "halaman".
 - **Word**: kop dari cetakan asli (`scripts/buat-template-word.py`, jalankan ulang bila kop berubah); penanda {{judul}} {{tp}}
   {{isi}} {{mapel}} {{kelas}} {{sekolah}} {{hari}} {{waktu}}. Baris Arab = paragraf RTL. Nama file lewat `headerUnduh`.
   Empat file (`/api/word?jenis=`): soal, kunci, ringkas (0.35.0: `buatWordKunciRingkas`, isi = `kunciSatu` kotak Kunci
