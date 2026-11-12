@@ -20,16 +20,15 @@ export async function ambilAyat(rujukan: string) {
 }
 
 /**
- * Langkah 9: cocokkan teks Arab dari file Word/PowerPoint ke mushaf. Per teks: ayat resmi + sumbernya,
- * "basmalah" (diabaikan), atau null (tidak ditemukan: hadis/doa, tetap usulan yang wajib diperiksa guru).
+ * 0.36.1: teks Arab yang ditempel guru di kotak kuning (+ Tambah hadis) langsung dicocokkan ke mushaf lalu data hadis
+ * 9 kitab, supaya tidak menunggu materi disimpan. Ketemu → teks & sumber dari data (`kitab: true` untuk hadis), selain
+ * itu null (tetap kotak kuning). Mode "bahasa": ayat saja. Hanya membaca teks kiriman, tidak menyentuh data guru.
  */
-export async function cocokkanAyat(daftar: string[]) {
+export async function cocokkanDalil(arab: string, sumber: string, bahasa: boolean) {
   if (!(await penggunaSaatIni())) return null;
-  const m = mushaf();
-  return (Array.isArray(daftar) ? daftar : []).slice(0, 200).map((a) => {
-    const arab = String(a ?? "").slice(0, 5000);
-    return m.basmalah(arab) ? ("basmalah" as const) : m.cari(arab);
-  });
+  const t = String(arab ?? "").slice(0, BATAS_MATERI.teksDalil);
+  const s = String(sumber ?? "").slice(0, 200);
+  return (bahasa ? mushaf().cari(t, s) : cariDalil(t, s)) ?? null;
 }
 
 /**

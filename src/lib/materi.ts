@@ -181,6 +181,28 @@ export function rapikanMateri(x: Partial<IsianMateri>, id: string, cariAyat?: Ca
   return { bab: { id, mapel: bersihkan(mapel), kelas, ...(bahasa && { teksArab: "bahasa" as const }), judul: bersihkan(judul), tp, dalil, materi, ...(pokok.length && { pokok }), ...(gambar.length && { gambar }) }, dihapus };
 }
 
+type DalilIsian = IsianMateri["dalil"][number];
+const kosong = (d: DalilIsian) => !(d.sumber.trim() || d.arab.trim() || d.terjemah.trim());
+/** Kotak hadis/teks Arab yang wajib dicentang (bukan dari mushaf/data hadis, bukan "Bukan ayat/hadis", tidak kosong). */
+export const perluCentang = (d: DalilIsian) => !d.mushaf && !d.kitab && !bukanDalil(d) && !kosong(d);
+
+/** Kekurangan satu kotak dalil (sama dengan pemeriksaan rapikanMateri; kotak kosong diabaikan server). null = lengkap. */
+export function kurangDalil(d: DalilIsian): "arab" | "sumber" | null {
+  if (d.mushaf || d.kitab || kosong(d)) return null;
+  if (!new RegExp(POLA_ARAB).test(d.arab)) return "arab";
+  return bukanDalil(d) || d.sumber.trim() ? null : "sumber";
+}
+
+/** Alasan kartu materi belum bisa dipakai karena kotak Ayat & hadis (pesan di dekat tombol; `no` = kotak ke berapa). */
+export function alasanDalil(draf: IsianMateri): { pesan: string; no: number; kolom: "arab" | "sumber" | "centang" } | null {
+  for (const [i, d] of draf.dalil.entries()) {
+    const k = kurangDalil(d);
+    if (k) return { no: i, kolom: k, pesan: k === "arab" ? `Teks Arab di kotak dalil ke-${i + 1} belum diisi.` : `Hadis ke-${i + 1} belum diberi sumber.` };
+  }
+  const n = draf.dalil.findIndex(perluCentang);
+  return n >= 0 && !draf.diverifikasi ? { no: n, kolom: "centang", pesan: "Centang pernyataan pemeriksaan hadis." } : null;
+}
+
 /** Mapel yang teks Arabnya isi pelajaran (Tahap F; Nahwu sejak 2026-11-09). */
 export const modeArab = (mapel: string): IsianMateri["teksArab"] => (MAPEL_BAHASA_ARAB.test(mapel) ? "bahasa" : "dalil");
 

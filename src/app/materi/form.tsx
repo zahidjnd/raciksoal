@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { KartuMateri, KotakMateri, PilihMapel } from "../kotak-materi";
-import { modeArab, type IsianMateri } from "@/lib/materi";
+import { KartuMateri, KotakMateri, lihatDalil, PilihMapel } from "../kotak-materi";
+import { alasanDalil, modeArab, type IsianMateri } from "@/lib/materi";
 import { hapusMateri, simpanMateri } from "./actions";
 
 const TERSIMPAN = "Materi tersimpan. Bisa dipilih lewat “Pakai materi sebelumnya” saat membuat soal.";
@@ -32,11 +32,13 @@ export function FormMateri({ id: idAwal, awal, tersimpan = false, bawaan }: { id
     else setDraf(null); // materi baru: analisa bergantung pada mapel, jadi diulang (sama seperti Set baru)
   }
 
+  const dalilKurang = draf ? alasanDalil(draf) : null;
   const alasan =
     !mapel || !kelas ? "Pilih mata pelajaran dan kelas dulu." :
     !draf ? "Tempel teks atau lampirkan file, lalu tekan Analisa materi." :
     !draf.tp.trim() ? "Isi Tujuan Pembelajaran (TP) di kartu materi dulu." :
-    draf.tpUsulan && !draf.tpDibaca ? "Baca TP usulan AI di kartu materi, lalu centang persetujuannya." : "";
+    draf.tpUsulan && !draf.tpDibaca ? "Baca TP usulan AI di kartu materi, lalu centang persetujuannya." :
+    dalilKurang ? dalilKurang.pesan : "";
 
   async function simpan() {
     if (!draf || alasan) return;
@@ -73,7 +75,14 @@ export function FormMateri({ id: idAwal, awal, tersimpan = false, bawaan }: { id
           <a href={`/?materi=materi-${id}`} className="inline-flex h-10 items-center rounded-lg border px-4 text-sm max-md:min-h-11">Buat soal dari materi ini</a>
         )}
       </div>
-      {alasan && <p className="text-sm text-pudar">{alasan}</p>}
+      {alasan && (
+        <p className="text-sm text-pudar">
+          {alasan}
+          {dalilKurang && alasan === dalilKurang.pesan && (
+            <> <button className="underline hover:text-tinta" onClick={() => lihatDalil(dalilKurang)}>Lihat kotaknya</button></>
+          )}
+        </p>
+      )}
       {pesan && (
         <div className={`text-sm ${pesan.ok ? "text-hijau-teks" : "text-bahaya"}`} role={pesan.ok ? "status" : "alert"}>
           <p>{pesan.teks}</p>

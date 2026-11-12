@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ambilDaftarBab, ambilDaftarModel, ambilJatah, cekHasil, mulaiBuatSoal, ubahIdentitas } from "./actions";
 import { simpanMateri } from "./materi/actions";
 import { KartuSoal, Teks, TeksPeringatan, TulisSoalSendiri } from "./kartu-soal";
-import { DRAF_TEKS, KotakMateri, PilihMapel, type MateriLama } from "./kotak-materi";
+import { DRAF_TEKS, KotakMateri, lihatDalil, PilihMapel, type MateriLama } from "./kotak-materi";
 import { FormIdentitas, ringkasIdentitas } from "./form-identitas";
 import { StepAngka } from "./step-angka";
 import { Panah } from "./panah";
@@ -13,7 +13,7 @@ import { kunciRingkas } from "@/lib/kunci";
 import { PAKET, susunPaket, type Paket } from "@/lib/paket";
 import { ASAS_ALFATAH, ATURAN_TUJUAN, BOBOT_BAWAAN, hitungLevel, jumlahSoal, KESULITAN, MAKS_CATATAN, MAKS_SOAL, MAPEL_EKSAK, mapelTka, NAMA_BENTUK, namaBentuk, namaLevelTka, namaTujuan, PESAN_MJ_MIN, semesterDari, TKA, TUJUAN, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { mjLama, pilihanAngka, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
-import type { IsianMateri } from "@/lib/materi";
+import { alasanDalil, type IsianMateri } from "@/lib/materi";
 import type { Preferensi } from "@/lib/preferensi";
 import { useRouter } from "next/navigation";
 
@@ -298,11 +298,14 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: strin
 
   // Form tampil saat belum ada set yang dibuka, atau set gagal (supaya bisa langsung dicoba lagi).
   const tampilForm = id === null || hasil?.status === "gagal";
+  // 0.36.1: kekurangan kotak Ayat & hadis ketahuan sebelum Buat soal (dulu baru ditolak server setelah ditekan).
+  const dalilKurang = draf ? alasanDalil(draf) : null;
   const alasanTerkunci =
     !mapel || !kelas ? "Pilih mata pelajaran dan kelas dulu." :
     !pilihan.length && !draf ? "Masukkan materi dulu (tempel teks, lampirkan file, atau pakai materi sebelumnya)." :
     draf && !draf.tp.trim() ? "Isi Tujuan Pembelajaran (TP) di kartu materi dulu." :
     draf?.tpUsulan && !draf.tpDibaca ? "Baca TP usulan AI di kartu materi, lalu centang persetujuannya." :
+    dalilKurang ? dalilKurang.pesan :
     total < 1 ? "Isi jumlah soal dulu." :
     total > MAKS_SOAL ? `Jumlah soal maksimal ${MAKS_SOAL}.` :
     totalLevel !== 100 ? `Komposisi level harus 100% (sekarang ${totalLevel}%), buka Lanjutan.` :
@@ -438,7 +441,14 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: strin
               </button>
             </div>
             {/* Alasan tombol terkunci tepat di bawah tombolnya (dulu di luar kotak, jauh dari tombol). */}
-            {alasanTerkunci && <p className="mt-2 text-right text-sm text-peringatan" role="status">{alasanTerkunci}</p>}
+            {alasanTerkunci && (
+              <p className="mt-2 text-right text-sm text-peringatan" role="status">
+                {alasanTerkunci}
+                {dalilKurang && alasanTerkunci === dalilKurang.pesan && (
+                  <> <button className="underline hover:text-tinta" onClick={() => lihatDalil(dalilKurang)}>Lihat kotaknya</button></>
+                )}
+              </p>
+            )}
 
             {buka === "jumlah" && (
               <fieldset className="mt-3 border-t pt-3">

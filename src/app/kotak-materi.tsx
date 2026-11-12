@@ -5,12 +5,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { analisaMateri } from "./actions";
 import { Gambar, gambarTempelan, pratinjauAI, TOMBOL_KECIL, TombolGambar, unggah } from "./gambar";
 import { PotongGambar } from "./potong-gambar";
-import { ambilAyat } from "./materi/actions";
+import { ambilAyat, cocokkanDalil } from "./materi/actions";
 import { Teks } from "./kartu-soal";
 import { Panah } from "./panah";
 import { BATAS_GAMBAR } from "@/lib/gambar";
 import { MAKS_HALAMAN_PDF } from "@/lib/pembatas";
-import { BATAS_MATERI, buangTandaGambar, geserTandaGambar, type IsianMateri } from "@/lib/materi";
+import { BATAS_MATERI, buangTandaGambar, geserTandaGambar, kurangDalil, type IsianMateri } from "@/lib/materi";
 import type { GambarFile } from "@/lib/office";
 import { DAFTAR_MAPEL, MAPEL_EKSAK } from "@/lib/mapel";
 import { bukanDalil, istilahArab, KELAS, MAKS_GABUNG, SUMBER_BUKAN } from "@/lib/soal";
@@ -414,6 +414,29 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
   );
 }
 
+/** 0.36.1: buka bagian Ayat & hadis lalu gulir ke kotak ke-`no` (dari pesan di dekat tombol Buat soal/Simpan). */
+export function lihatDalil({ no, kolom }: { no: number; kolom: "arab" | "sumber" | "centang" }) {
+  const bagian = document.getElementById("ayat-hadis") as HTMLDetailsElement | null;
+  if (bagian) bagian.open = true;
+  setTimeout(() => {
+    const kotak = document.getElementById(`dalil-${no}`);
+    const tuju =
+      kolom === "centang" ? document.getElementById("centang-hadis") : kotak?.querySelector<HTMLElement>(kolom === "sumber" ? "input[data-kolom=sumber]" : "textarea");
+    (tuju ?? kotak)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    tuju?.focus({ preventScroll: true });
+  }, 50);
+}
+
+/** Status kotak kuning: apa yang masih kurang (sama dengan pemeriksaan server, kurangDalil). */
+function StatusDalil({ d, diperiksa, mencocokkan }: { d: IsianMateri["dalil"][number]; diperiksa: boolean; mencocokkan: boolean }) {
+  if (mencocokkan) return <span className="text-pudar">Mencocokkan ke mushaf dan data hadis 9 kitab...</span>;
+  const kurang = kurangDalil(d);
+  if (!d.arab.trim()) return <span className="text-peringatan">Tempel teks Arab hadisnya di sini (hadis 9 kitab otomatis dikenali), lalu isi sumbernya.</span>;
+  if (kurang === "arab") return <span className="text-peringatan">Kolom teks Arab belum berisi huruf Arab.</span>;
+  if (kurang === "sumber") return <span className="text-peringatan">Tidak ada di mushaf maupun data hadis 9 kitab. Isi sumbernya (mis. HR. Baihaqi), lalu periksa teksnya.</span>;
+  return <span className="text-hijau-teks">{diperiksa ? "✓ Lengkap dan sudah diperiksa." : "✓ Lengkap. Tinggal centang pernyataan pemeriksaan di bawah."}</span>;
+}
+
 /**
  * Kartu materi: dipakai bersama oleh Set baru (hasil analisa AI) dan halaman Materi saya (tambah/ubah).
  * Semua bisa diedit guru. Ayat diambil dari mushaf ("Ambil ayat"); hadis diketik guru dan wajib dicentang (aturan 5).
@@ -428,6 +451,25 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
   const penuh = draf.dalil.length >= BATAS_MATERI.dalil;
   const [rujukan, setRujukan] = useState("");
   const [ayat, setAyat] = useState<{ proses: boolean; pesan?: string }>({ proses: false });
+  // 0.36.1: teks Arab kotak kuning dicocokkan ke mushaf/data hadis begitu guru selesai menempel (keluar dari kolom).
+  const [mencocokkan, setMencocokkan] = useState<number | null>(null);
+  const terkini = useRef(draf);
+  terkini.current = draf; // jawaban server datang belakangan: pakai isi kartu terbaru, bukan saat kolom ditinggalkan
+  async function cocokkan(i: number) {
+    const d = draf.dalil[i];
+    if (!d || d.mushaf || d.kitab || kurangDalil(d) === "arab" || !d.arab.trim()) return;
+    setMencocokkan(i);
+    // Batas 15 detik: permintaan yang terputus (mis. halaman dimuat ulang) tidak boleh membuat "Mencocokkan..." menggantung.
+    const r = await Promise.race([
+      cocokkanDalil(d.arab, d.sumber, draf.teksArab === "bahasa").catch(() => null),
+      new Promise<null>((selesai) => setTimeout(() => selesai(null), 15_000)),
+    ]);
+    setMencocokkan(null);
+    const kini = terkini.current;
+    if (!r || kini.dalil[i]?.arab !== d.arab) return;
+    const baru = { sumber: r.sumber, arab: r.arab, terjemah: kini.dalil[i].terjemah, ...("kitab" in r && r.kitab ? { kitab: true } : { mushaf: true }) };
+    setDraf({ ...kini, dalil: kini.dalil.map((x, j) => (j === i ? baru : x)) });
+  }
   // Tempel gambar (Ctrl+V) di kolom mana pun pada kartu ini → masuk ke bagian Gambar.
   const tempel = useRef<((f: Blob[]) => void) | null>(null);
 
@@ -495,11 +537,11 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
         </div>
       )}
       {/* Terbuka bila sudah ada dalil; mapel tanpa ayat/hadis cukup melihat judulnya. */}
-      <details open={draf.dalil.length > 0} className="space-y-2">
+      <details id="ayat-hadis" open={draf.dalil.length > 0} className="space-y-2">
         <summary className="cursor-pointer">Ayat & hadis ({draf.dalil.length})</summary>
         <div className="mt-2 space-y-2">
           {draf.dalil.map((d, i) => (
-            <div key={i} className={`space-y-1 rounded-lg border p-2 ${d.mushaf || d.kitab ? "border-hijau" : bukanDalil(d) ? "bg-krem" : "border-peringatan-garis bg-peringatan-muda"}`}>
+            <div key={i} id={`dalil-${i}`} className={`space-y-1 rounded-lg border p-2 ${d.mushaf || d.kitab ? "border-hijau" : bukanDalil(d) ? "bg-krem" : "border-peringatan-garis bg-peringatan-muda"}`}>
               <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
                 {d.mushaf ? (
                   <span className="text-hijau-teks">✓ Ayat dari mushaf: {d.sumber}</span>
@@ -512,7 +554,7 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
                   </>
                 ) : (
                   <>
-                    <span className="text-peringatan">Tidak ada di mushaf maupun data hadis 9 kitab: kalau hadis, isi sumbernya dan periksa teksnya</span>
+                    <StatusDalil d={d} diperiksa={draf.diverifikasi} mencocokkan={mencocokkan === i} />
                     {/* Satu klik untuk teks Arab yang memang bukan ayat/hadis (dulu guru mengetik "bukan ayat/hadis" di kolom sumber). */}
                     <button className="h-8 rounded-lg border bg-kartu px-3 text-sm text-tinta hover:bg-krem max-md:min-h-11" onClick={() => ubahDalil(i, { bukan: true, sumber: SUMBER_BUKAN })}>
                       Bukan ayat/hadis
@@ -523,9 +565,9 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
               {d.mushaf || d.kitab ? (
                 <p dir="rtl" lang="ar" className="font-arab text-xl leading-loose">{d.arab}</p>
               ) : (
-                <textarea dir="rtl" lang="ar" rows={2} className={`${kotak} font-arab text-xl`} placeholder="نص الحديث" aria-label={`Teks Arab dalil ${i + 1}`} value={d.arab} onChange={(e) => ubahDalil(i, { arab: e.target.value })} />
+                <textarea dir="rtl" lang="ar" rows={2} className={`${kotak} font-arab text-xl`} placeholder="نص الحديث" aria-label={`Teks Arab dalil ${i + 1}`} value={d.arab} onChange={(e) => ubahDalil(i, { arab: e.target.value })} onBlur={() => cocokkan(i)} />
               )}
-              {!d.mushaf && !d.kitab && !bukanDalil(d) && <input className={kotak} placeholder="Sumber, mis. HR. Bukhari dan Muslim" value={d.sumber} onChange={(e) => ubahDalil(i, { sumber: e.target.value })} />}
+              {!d.mushaf && !d.kitab && !bukanDalil(d) && <input data-kolom="sumber" className={kotak} placeholder="Sumber, mis. HR. Bukhari dan Muslim" value={d.sumber} onChange={(e) => ubahDalil(i, { sumber: e.target.value })} />}
               <input className={kotak} placeholder="Terjemah (opsional)" value={d.terjemah} onChange={(e) => ubahDalil(i, { terjemah: e.target.value })} />
               <button className={`${TOMBOL_KECIL} text-pudar hover:text-bahaya`} onClick={() => ubah({ dalil: draf.dalil.filter((_, j) => j !== i) })}>✕ Hapus dari materi</button>
             </div>
@@ -567,14 +609,14 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
           )}
           {adaHadis && (
             <label className="flex items-start gap-2">
-              <input type="checkbox" className="mt-1" checked={draf.diverifikasi} onChange={(e) => ubah({ diverifikasi: e.target.checked })} />
+              <input id="centang-hadis" type="checkbox" className="mt-1" checked={draf.diverifikasi} onChange={(e) => ubah({ diverifikasi: e.target.checked })} />
               Saya sudah memeriksa teks Arab dan harakat hadis/teks di atas yang bukan dari mushaf sesuai kitab sumbernya.
             </label>
           )}
           <p className="text-sm text-pudar">
             Teks Al-Qur&apos;an: <a className="underline" href="https://tanzil.net" target="_blank" rel="noreferrer">Tanzil Project (tanzil.net)</a>. Teks hadis
             (Bukhari, Muslim, Abu Dawud, Tirmidzi, Nasa&apos;i, Ibnu Majah, Malik, Ahmad, Darimi): data terbuka hadith-api &amp; Hadith-Data-Sets. Hadis yang Anda
-            ketik dicocokkan otomatis saat materi disimpan. Terjemah diisi guru.
+            tempel dicocokkan otomatis begitu selesai ditempel. Terjemah diisi guru.
           </p>
         </div>
       </details>

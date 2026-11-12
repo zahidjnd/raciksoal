@@ -114,8 +114,9 @@ const TOPIK: { id: string; judul: string; isi: React.ReactNode }[] = [
             Kitab yang ditulis di materi (mis. &quot;HR. Muslim&quot;) didahulukan.
           </li>
           <li>
-            Hadis yang tidak dikenali (Baihaqi, Thabrani, Hakim, atau lafalnya berbeda) bertanda kuning: isi sumbernya, periksa teksnya,
-            lalu centang pernyataan pemeriksaan. Hadis lain bisa ditambah dengan <b>+ Tambah hadis</b>.
+            Hadis yang tidak dikenali (Baihaqi, Thabrani, Hakim, atau lafalnya berbeda) bertanda kuning; tulisan di kotaknya
+            menyebut yang masih kurang. Isi sumbernya, periksa teksnya, lalu centang pernyataan pemeriksaan. Hadis lain bisa
+            ditambah dengan <b>+ Tambah hadis</b>: begitu teks Arabnya selesai ditempel, hadis 9 kitab langsung berubah hijau.
           </li>
           <li>Teks Arab pendek (≤ 3 kata) dianggap istilah. Teks Arab yang bukan dalil (doa, niat, kaidah): tekan <b>Bukan ayat/hadis</b>.</li>
           <li>Dari PDF: ayat dan hadis 9 kitab dikenali lalu diganti teks resmi dari data; teks Arab lain dibuang. Tempel sendiri bila perlu.</li>
@@ -228,7 +229,7 @@ const TANYA: { t: string; j: React.ReactNode }[] = [
   { t: "Kunci jawabannya salah. Bagaimana?", j: <>Tekan <b>Edit</b>, betulkan kuncinya, lalu <b>Simpan</b>. File Word ikut berubah. AI bisa salah, terutama soal hitungan.</> },
   { t: "Jatah hari ini habis.", j: <>Jatah kembali pukul 00.00 WIB. Sementara itu, <b>Edit</b> dan <b>Tulis soal sendiri</b> tetap bisa dipakai.</> },
   { t: "PDF saya tidak terbaca atau hasilnya kacau.", j: <>Pilih halaman bab saja (sebaiknya ≤ 10 halaman). Bila masih kacau, salin teksnya lalu tempel, atau simpan bab itu sebagai file Word.</> },
-  { t: "Hadis saya berwarna kuning dan Buat soal terkunci.", j: <>Lengkapi <b>sumber</b> hadis, periksa teksnya, lalu centang pernyataan pemeriksaan di kotak <b>Ayat &amp; hadis</b>.</> },
+  { t: "Hadis saya berwarna kuning dan Buat soal terkunci.", j: <>Tekan <b>Lihat kotaknya</b> di bawah tombol: aplikasi langsung menuju kotak yang kurang. Lengkapi <b>sumber</b> hadis, periksa teksnya, lalu centang pernyataan pemeriksaan di kotak <b>Ayat &amp; hadis</b>. Teks Arab yang bukan hadis (doa, niat, kaidah): tekan <b>Bukan ayat/hadis</b>.</> },
   { t: "Bagaimana membuat Paket B untuk kelas sebelah?", j: <>Tekan <b>Unduh</b>, pilih huruf <b>A</b> dan <b>B</b>, lalu unduh. Soalnya sama, urutannya diacak.</> },
   { t: "Bisa membuat soal dari dua bab sekaligus?", j: <>Bisa: di kotak materi pilih beberapa materi (paling banyak 5) lewat <b>Pakai materi sebelumnya</b>, cocok untuk AFTS dan ASAS.</> },
   { t: "Lupa kata sandi atau akun terkunci.", j: <>Minta admin mereset kata sandi. Salah 5 kali membuat perangkat itu terkunci 15 menit; reset dari admin langsung membukanya.</> },

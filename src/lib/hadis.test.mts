@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { cariDalil, hadis } from "./hadis.ts";
 import { mushaf } from "./mushaf.ts";
-import { rapikanMateri, susunDraf } from "./materi.ts";
+import { alasanDalil, rapikanMateri, susunDraf } from "./materi.ts";
 
 const h = hadis();
 
@@ -78,6 +78,26 @@ test("materi: hadis 9 kitab jadi kotak hijau tanpa centang; doa/niat tetap wajib
   // Mode Bahasa Arab memakai pencari ayat saja: hadis tetap teks biasa.
   const bahasa = susunDraf({ mapel: "Bahasa Arab", kelas: "X", paragraf: [isi, "إنما الأعمال بالنيات وإنما لكل امرئ ما نوى"] }, m.cari, m.basmalah);
   assert.equal(bahasa.isian.dalil.length, 0);
+});
+
+test("0.36.1: kekurangan kotak hadis terbaca sebelum Buat soal, sama dengan pemeriksaan server", () => {
+  const dasar = { mapel: "Fiqih", kelas: "X", teksArab: "dalil" as const, judul: "Puasa", tp: "TP 1: Menjelaskan puasa", isi: "x".repeat(120), diverifikasi: false };
+  const arab = "قال النبي صلى الله عليه وسلم كذا وكذا في حديث طويل";
+  const kasus = [
+    { dalil: [{ sumber: "", arab: "", terjemah: "" }], harap: null }, // kotak kosong diabaikan server
+    { dalil: [{ sumber: "HR. Baihaqi", arab: "", terjemah: "" }], harap: "Teks Arab di kotak dalil ke-1 belum diisi." },
+    { dalil: [{ sumber: "", arab, terjemah: "" }], harap: "Hadis ke-1 belum diberi sumber." },
+    { dalil: [{ sumber: "HR. Baihaqi", arab, terjemah: "" }], harap: "Centang pernyataan pemeriksaan hadis." },
+    { dalil: [{ sumber: "Bukan ayat/hadis", arab, terjemah: "", bukan: true }], harap: null },
+    { dalil: [{ sumber: "HR. Bukhari no. 1", arab, terjemah: "", kitab: true }], harap: null },
+  ];
+  for (const k of kasus) {
+    const isian = { ...dasar, dalil: k.dalil };
+    assert.equal(alasanDalil(isian)?.pesan ?? null, k.harap, JSON.stringify(k.dalil));
+    // Lolos pemeriksaan browser ⇔ lolos server (kotak kitab dicocokkan ulang, jadi pakai teks hadis sungguhan).
+    const server = rapikanMateri({ ...isian, dalil: isian.dalil.map((d) => ("kitab" in d ? { ...d, arab: "إنما الأعمال بالنيات" } : d)) }, "", cariDalil);
+    assert.equal(typeof server === "string", k.harap !== null, `${JSON.stringify(k.dalil)} → ${String(server)}`);
+  }
 });
 
 test("bukan hadis atau terlalu pendek → tidak ketemu (tetap kotak kuning)", () => {
