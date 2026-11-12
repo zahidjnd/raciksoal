@@ -52,6 +52,15 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.37.0 — 12 November 2026
+- **Racik Soal bisa dipasang seperti aplikasi di HP**: buka di Chrome → ⋮ → **Instal aplikasi**. Terbuka layar penuh
+  tanpa bilah judul & alamat, dengan ikon sendiri (bintang delapan putih di atas hijau, sama dengan logo halaman masuk).
+  Pintasan lama di layar HP perlu dihapus lalu dipasang ulang.
+- Bilah status HP ikut warna bilah atas aplikasi (krem, atau gelap saat mode gelap).
+- Panduan: tanya-jawab baru "Bagaimana memasang Racik Soal seperti aplikasi di HP?".
+
+---
+
 ## 0.36.1 — 12 November 2026
 - **Kotak hadis kuning kini menyebut yang kurang**: "Tempel teks Arab hadisnya", "Isi sumbernya (mis. HR. Baihaqi)",
   atau "✓ Lengkap. Tinggal centang". Tidak perlu menebak lagi.

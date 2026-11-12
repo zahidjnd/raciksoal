@@ -16,6 +16,8 @@ export function TombolTema({ awal }: { awal: "terang" | "gelap" }) {
     if (baru === "gelap") document.documentElement.dataset.tema = "gelap";
     else delete document.documentElement.dataset.tema;
     document.cookie = `tema=${baru}; path=/; max-age=${SETAHUN}; samesite=lax`;
+    // Bilah status HP ikut berganti (nilai sama dengan generateViewport di layout.tsx).
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", baru === "gelap" ? "#1f1e1d" : "#f4f3ee");
     setTema(baru);
   }
 

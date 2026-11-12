@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { Amiri, Plus_Jakarta_Sans, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
@@ -19,6 +19,12 @@ export const metadata: Metadata = {
   // Bukti kepemilikan untuk Google Search Console (bukan rahasia).
   verification: { google: "snzqKTN6gve9u_QtD4_964TyvgT54P0g-hMufeoWFxE" },
 };
+
+/** Warna bilah status HP = warna bilah atas aplikasi (krem-tua), ikut mode gelap. TombolTema mengganti nilainya langsung. */
+export async function generateViewport(): Promise<Viewport> {
+  const gelap = (await cookies()).get("tema")?.value === "gelap";
+  return { themeColor: gelap ? "#1f1e1d" : "#f4f3ee" };
+}
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   // Mode gelap dipasang dari server (cookie `tema`, diatur TombolTema), jadi tidak ada kedipan putih saat halaman dibuka.

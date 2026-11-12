@@ -182,6 +182,9 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
 - **Tampilan** (`DESIGN.md`): gaya claude.ai, token warna di `@theme` globals.css (krem, hijau #006316, tinta, pudar, bahaya,
   peringatan). WAJIB pakai token: JANGAN `gray-*`, `red-*`, `amber-*`, `emerald-*`, `bg-white`. Tinggi kontrol 32/40 px (HP 44).
   Mode gelap lewat cookie `tema` + `[data-tema="gelap"]`. Sidebar laci 256/288 px.
+- **PWA** (0.37.0): `src/app/manifest.ts` (standalone) + ikon `public/ikon/ikon-192/512.png` & `src/app/apple-icon.png`
+  (bintang delapan putih di atas hijau, dibuat dari HTML lewat Edge headless). Tanpa manifest Chrome hanya membuat
+  pintasan berbilah judul+alamat. `themeColor` dari cookie `tema` (`generateViewport`), TombolTema menggantinya langsung.
 - **Backup**: malam 02.00 di hosting → terenkripsi → repo privat `zahidjnd/raciksoal-backup`; cara pulihkan `deploy/pulihkan-backup.md`.
 
 ## Jebakan teknis (pernah memakan waktu)

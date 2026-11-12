@@ -232,6 +232,7 @@ const TANYA: { t: string; j: React.ReactNode }[] = [
   { t: "Hadis saya berwarna kuning dan Buat soal terkunci.", j: <>Tekan <b>Lihat kotaknya</b> di bawah tombol: aplikasi langsung menuju kotak yang kurang. Lengkapi <b>sumber</b> hadis, periksa teksnya, lalu centang pernyataan pemeriksaan di kotak <b>Ayat &amp; hadis</b>. Teks Arab yang bukan hadis (doa, niat, kaidah): tekan <b>Bukan ayat/hadis</b>.</> },
   { t: "Bagaimana membuat Paket B untuk kelas sebelah?", j: <>Tekan <b>Unduh</b>, pilih huruf <b>A</b> dan <b>B</b>, lalu unduh. Soalnya sama, urutannya diacak.</> },
   { t: "Bisa membuat soal dari dua bab sekaligus?", j: <>Bisa: di kotak materi pilih beberapa materi (paling banyak 5) lewat <b>Pakai materi sebelumnya</b>, cocok untuk AFTS dan ASAS.</> },
+  { t: "Bagaimana memasang Racik Soal seperti aplikasi di HP?", j: <>Buka Racik Soal di <b>Chrome</b>, tekan <b>⋮</b> di kanan atas, pilih <b>Instal aplikasi</b> (atau <b>Tambahkan ke layar utama</b> → <b>Instal</b>). Ikon bintang hijau muncul di layar HP dan Racik Soal terbuka layar penuh tanpa bilah alamat. Kalau dulu sudah memasang pintasan lama, hapus dulu pintasan itu.</> },
   { t: "Lupa kata sandi atau akun terkunci.", j: <>Minta admin mereset kata sandi. Salah 5 kali membuat perangkat itu terkunci 15 menit; reset dari admin langsung membukanya.</> },
 ];
 
