@@ -422,7 +422,7 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
   const ubah = (sebagian: Partial<IsianMateri>) => setDraf({ ...draf, ...sebagian });
   const ubahDalil = (i: number, sebagian: Partial<IsianMateri["dalil"][number]>) =>
     ubah({ dalil: draf.dalil.map((d, j) => (j === i ? { ...d, ...sebagian } : d)) });
-  const adaHadis = draf.dalil.some((d) => !d.mushaf && !bukanDalil(d));
+  const adaHadis = draf.dalil.some((d) => !d.mushaf && !d.kitab && !bukanDalil(d));
   // Istilah Arab pendek (<= 3 kata) diterima apa adanya (server: istilahArab di rapikanMateri); ditampilkan supaya guru tahu.
   const istilah = draf.teksArab === "bahasa" ? [] : [...new Set(draf.isi.split("\n").flatMap((b) => [...istilahArab(b)]))];
   const penuh = draf.dalil.length >= BATAS_MATERI.dalil;
@@ -499,10 +499,12 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
         <summary className="cursor-pointer">Ayat & hadis ({draf.dalil.length})</summary>
         <div className="mt-2 space-y-2">
           {draf.dalil.map((d, i) => (
-            <div key={i} className={`space-y-1 rounded-lg border p-2 ${d.mushaf ? "border-hijau" : bukanDalil(d) ? "bg-krem" : "border-peringatan-garis bg-peringatan-muda"}`}>
+            <div key={i} className={`space-y-1 rounded-lg border p-2 ${d.mushaf || d.kitab ? "border-hijau" : bukanDalil(d) ? "bg-krem" : "border-peringatan-garis bg-peringatan-muda"}`}>
               <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
                 {d.mushaf ? (
                   <span className="text-hijau-teks">✓ Ayat dari mushaf: {d.sumber}</span>
+                ) : d.kitab ? (
+                  <span className="text-hijau-teks">✓ Hadis dari data kitab: {d.sumber}</span>
                 ) : bukanDalil(d) ? (
                   <>
                     <span className="text-pudar">Teks Arab materi (bukan ayat/hadis): tidak perlu sumber</span>
@@ -510,7 +512,7 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
                   </>
                 ) : (
                   <>
-                    <span className="text-peringatan">Tidak ada di mushaf: kalau hadis, isi sumbernya dan periksa teksnya</span>
+                    <span className="text-peringatan">Tidak ada di mushaf maupun data hadis 9 kitab: kalau hadis, isi sumbernya dan periksa teksnya</span>
                     {/* Satu klik untuk teks Arab yang memang bukan ayat/hadis (dulu guru mengetik "bukan ayat/hadis" di kolom sumber). */}
                     <button className="h-8 rounded-lg border bg-kartu px-3 text-sm text-tinta hover:bg-krem max-md:min-h-11" onClick={() => ubahDalil(i, { bukan: true, sumber: SUMBER_BUKAN })}>
                       Bukan ayat/hadis
@@ -518,12 +520,12 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
                   </>
                 )}
               </p>
-              {d.mushaf ? (
+              {d.mushaf || d.kitab ? (
                 <p dir="rtl" lang="ar" className="font-arab text-xl leading-loose">{d.arab}</p>
               ) : (
                 <textarea dir="rtl" lang="ar" rows={2} className={`${kotak} font-arab text-xl`} placeholder="نص الحديث" aria-label={`Teks Arab dalil ${i + 1}`} value={d.arab} onChange={(e) => ubahDalil(i, { arab: e.target.value })} />
               )}
-              {!d.mushaf && !bukanDalil(d) && <input className={kotak} placeholder="Sumber, mis. HR. Bukhari dan Muslim" value={d.sumber} onChange={(e) => ubahDalil(i, { sumber: e.target.value })} />}
+              {!d.mushaf && !d.kitab && !bukanDalil(d) && <input className={kotak} placeholder="Sumber, mis. HR. Bukhari dan Muslim" value={d.sumber} onChange={(e) => ubahDalil(i, { sumber: e.target.value })} />}
               <input className={kotak} placeholder="Terjemah (opsional)" value={d.terjemah} onChange={(e) => ubahDalil(i, { terjemah: e.target.value })} />
               <button className={`${TOMBOL_KECIL} text-pudar hover:text-bahaya`} onClick={() => ubah({ dalil: draf.dalil.filter((_, j) => j !== i) })}>✕ Hapus dari materi</button>
             </div>
@@ -570,7 +572,9 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
             </label>
           )}
           <p className="text-sm text-pudar">
-            Teks Al-Qur&apos;an: <a className="underline" href="https://tanzil.net" target="_blank" rel="noreferrer">Tanzil Project (tanzil.net)</a>. Terjemah diisi guru.
+            Teks Al-Qur&apos;an: <a className="underline" href="https://tanzil.net" target="_blank" rel="noreferrer">Tanzil Project (tanzil.net)</a>. Teks hadis
+            (Bukhari, Muslim, Abu Dawud, Tirmidzi, Nasa&apos;i, Ibnu Majah, Malik, Ahmad, Darimi): data terbuka hadith-api &amp; Hadith-Data-Sets. Hadis yang Anda
+            ketik dicocokkan otomatis saat materi disimpan. Terjemah diisi guru.
           </p>
         </div>
       </details>

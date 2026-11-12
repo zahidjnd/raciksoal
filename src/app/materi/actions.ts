@@ -7,6 +7,7 @@ import { materi } from "@/db/schema";
 import { BATAS_MATERI, keIsian, rapikanMateri, type IsianMateri } from "@/lib/materi";
 import { gambarMilik } from "@/lib/bab";
 import { mushaf } from "@/lib/mushaf";
+import { cariDalil } from "@/lib/hadis";
 import { penggunaSaatIni } from "@/lib/sesi";
 
 const SESI_HABIS = "Sesi masuk sudah berakhir. Muat ulang halaman lalu masuk lagi.";
@@ -38,7 +39,8 @@ export async function cocokkanAyat(daftar: string[]) {
 export async function simpanMateri(id: number | null, isian: IsianMateri) {
   const saya = await penggunaSaatIni();
   if (!saya) return { ok: false as const, pesan: SESI_HABIS };
-  const r = rapikanMateri(isian, "", mushaf().cari);
+  // Mode "bahasa": hanya ayat yang dicocokkan (hadis di teks Bahasa Arab tetap isi pelajaran).
+  const r = rapikanMateri(isian, "", isian?.teksArab === "bahasa" ? mushaf().cari : cariDalil);
   if (typeof r === "string") return { ok: false as const, pesan: r };
   // Aturan 3: hanya gambar milik guru sendiri yang boleh masuk materinya (id gambar guru lain dibuang diam-diam).
   if (r.bab.gambar) {

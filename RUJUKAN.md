@@ -88,10 +88,11 @@ karena bukan aturan soal. Pengecualian: pemisahan data guru dan kerahasiaan (bag
 ### C. Hadis
 | Aturan | Di aplikasi | Tingkat | Dasar | Catatan |
 |---|---|---|---|---|
-| Hadis dari teks yang ditempel guru + centang verifikasi | `rapikanMateri` | R3 | aturan keras no. 5 | ✔ |
+| Hadis yang ditemukan di **data 9 kitab** (Bukhari, Muslim, Abu Dawud, Tirmidzi, Nasa'i, Ibnu Majah, Malik, Ahmad, Darimi) → teks Arab & "HR. Kitab no. N" diambil dari data, tanpa centang (0.36.0) | `hadis.ts`, `rapikanMateri` | R3 | keputusan pemilik 12 Nov 2026; uji: 24/25 hadis buku PAI ketemu | Data terbuka: hadith-api (fawazahmed0, nomor Fuad Abdul Baqi) & Hadith-Data-Sets (abdelrahmaan, Ahmad 26.363 & Darimi). Harakat belum dibandingkan dengan kitab cetak |
+| Hadis di luar data (Baihaqi, Thabrani, Hakim, lafal lain) → teks yang ditempel guru + centang verifikasi | `rapikanMateri` | R3 | aturan keras no. 5 | ✔ |
 | AI tidak memeriksa keaslian hadis | — | R3 | aturan keras no. 5 | ✔ |
 | Sumber hadis wajib ("HR. Bukhari") | form materi | R3 | — | ✔ |
-| **Kitab, nomor, dan derajat hadis** tidak tercatat | — | **R4** | D06 tidak menyebut hadis tertentu | Usul: kolom opsional "kitab & nomor" dan "derajat" |
+| **Derajat hadis** tidak tercatat; nomor hanya untuk hadis dari data | — | **R4** | D06 tidak menyebut hadis tertentu | Usul: kolom opsional "derajat" |
 | Mode Bahasa Arab: hadis karangan tidak terdeteksi otomatis | `pemeriksaArab` | R3 | — | celah lama |
 
 ### D. Materi, CP, dan Tujuan Pembelajaran

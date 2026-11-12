@@ -32,9 +32,11 @@ jobs:
           cp -r .next/static out/.next/static
           # Isi folder disalin dengan "/." : standalone kadang sudah membuat out/public (file yang dibaca server, mis.
           # template Word), dan "cp -r public out/public" lalu salah menaruhnya di out/public/public.
-          mkdir -p out/public out/drizzle
+          mkdir -p out/public out/drizzle out/data
           cp -r public/. out/public/
           cp -r drizzle/. out/drizzle/
+          # Data hadis 9 kitab (0.36.0), dibaca server dari disk (src/lib/hadis.ts); tidak di public supaya tidak bisa diunduh.
+          cp -r data/. out/data/
           rm -f out/.env*
       - name: Kirim ke branch deploy
         run: |

@@ -50,7 +50,10 @@ pembahasan, dan rubrik**, lalu mengekspornya ke **Word** dengan kop madrasah.
 - **Analisa materi** oleh AI: mengusulkan judul, Tujuan Pembelajaran (TP), dan pokok materi. Guru memeriksa dan
   mengedit kartu materinya; materi tersimpan otomatis saat soal dibuat.
 - **Ayat Al-Qur'an otomatis dari mushaf**: kotak "Ambil ayat" (mis. `QS An-Nur: 30-31`), dan ayat di file guru
-  dicocokkan ke data mushaf lalu diganti teks resminya. Hadis ditempel guru sendiri lalu dicentang sebagai sudah diperiksa.
+  dicocokkan ke data mushaf lalu diganti teks resminya.
+- **Hadis 9 kitab otomatis** (0.36.0): hadis di materi/PDF dicocokkan ke data Bukhari, Muslim, Abu Dawud, Tirmidzi,
+  Nasa'i, Ibnu Majah, Malik, Ahmad, Darimi (`data/hadis/`) lalu diganti teks & sumber data ("HR. Muslim no. 2999"),
+  tanpa centang. Hadis di luar data ditempel guru sendiri lalu dicentang sebagai sudah diperiksa.
 - **Teks Arab bukan dalil**: tulisan Arab paling banyak 3 kata (istilah, mis. مُعْجِزَةٌ atau ق) diterima apa adanya tanpa
   verifikasi; teks Arab yang lebih panjang tetapi bukan ayat/hadis (mis. mahfuzhat) cukup diklik **"Bukan ayat/hadis"**.
 - **TP**: yang tertulis di materi dipakai apa adanya (hijau); TP usulan AI (materi tanpa TP) wajib dibaca & dicentang guru.
@@ -125,7 +128,7 @@ Prinsip ini ditegakkan di **server**, bukan hanya di tampilan.
 | # | Prinsip | Cara ditegakkan |
 |---|---|---|
 | 1 | **Kunci API hanya di server** | Disimpan di `.env` (tidak masuk Git, tidak dikirim ke browser). Semua panggilan AI lewat `src/lib/ai.ts` di server |
-| 2 | **Ayat dan hadis tidak dikarang AI** | Ayat diambil dari data mushaf Tanzil (`public/quran/`). Hadis dari teks yang ditempel & dicentang guru. AI hanya menunjuk dalil lewat `dalil_id`; **setiap teks Arab dari AI dicek** harus persis ada di data bab, kalau tidak soal ditandai merah. AI tidak pernah dipakai sebagai pemeriksa ayat/hadis |
+| 2 | **Ayat dan hadis tidak dikarang AI** | Ayat diambil dari data mushaf Tanzil (`public/quran/`). Hadis dari data 9 kitab (`data/hadis/`), selain itu dari teks yang ditempel & dicentang guru. AI hanya menunjuk dalil lewat `dalil_id`; **setiap teks Arab dari AI dicek** harus persis ada di data bab, kalau tidak soal ditandai merah. AI tidak pernah dipakai sebagai pemeriksa ayat/hadis |
 | 3 | **Data tiap guru terpisah** | Setiap aksi yang membaca/mengubah set atau materi memeriksa pemilik (`bolehAkses`, `src/lib/akses.ts`). Set orang lain dijawab "tidak ditemukan". Dibuktikan oleh `npm run uji:pemisahan` |
 | 4 | **Pemakaian AI dibatasi** | Batas harian per guru dan seluruh web, batas waktu per panggilan dan per set (bagian 4.5) |
 | 5 | **Hasil AI wajib diperiksa guru** | Peringatan tampil di setiap hasil dan di lembar kunci |
@@ -208,8 +211,13 @@ menyalakan ulang** (bagian 10).
 - **Data mushaf**: `src/lib/mushaf.ts` membaca `quran-simple.txt`; `ambil` (rujukan → teks) dan `cari`
   (teks Arab → ayat resmi). Pencocokan memakai **kerangka huruf** (harakat, tanda waqaf, variasi alif/ya/waw/hamzah
   diabaikan; ة→ه) supaya teks PPT guru bergaya mushaf Indonesia tetap dikenali.
-- **Saat materi disimpan**, server mencocokkan ulang semua dalil ke mushaf: cocok → teks dan sumber diganti versi
-  mushaf; tidak cocok (hadis) → wajib dicentang guru, kecuali ditandai **"Bukan ayat/hadis"** (`bukan: true`, tanpa
+- **Data hadis** (0.36.0): `src/lib/hadis.ts` membaca `data/hadis/<kitab>.tsv` (dibuat `scripts/siapkan-hadis.mjs`,
+  ±62 MB, ikut disalin ke branch deploy; bukan di `public/`). Indeks kerangka huruf ±25 MB dibuat saat pertama dipakai
+  (±3 detik); teks berharakat dibaca dari file saat ketemu. Urutan: persis → tanpa pembuka buku ("عن ... قال رسول الله ﷺ")
+  → mirip (≥ 80% kata berurutan, LCS). Rujukan buku "(رواه مسلم)", "(البقرة/٢: ٤٣)" dibuang dulu (`buangRujukan`) dan
+  kitab yang disebut didahulukan. Mode Bahasa Arab: hanya ayat.
+- **Saat materi disimpan**, server mencocokkan ulang semua dalil ke mushaf lalu data hadis: cocok → teks dan sumber diganti
+  versi data (`mushaf: true` / `kitab: true`); tidak cocok → wajib dicentang guru, kecuali ditandai **"Bukan ayat/hadis"** (`bukan: true`, tanpa
   sumber & centang; AI diberi tahu itu bukan dalil, lembar siswa tanpa keterangan sumber). Tulisan Arab ≤ 3 kata
   (`istilahArab`) tetap di teks materi tanpa verifikasi dan tidak dicocokkan ke mushaf.
 - **Saat soal dibuat/diedit**, setiap potongan Arab harus substring persis dari data bab (`arabTakTerverifikasi`),

@@ -55,7 +55,8 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
 3. Data tiap guru **harus terpisah**: guru A tidak boleh bisa membuka soal guru B. Periksa ini di setiap fitur yang menyimpan atau membaca data.
 4. Batasi jumlah pembuatan soal per guru per hari, dan pasang batas waktu (timeout) pada pemanggilan AI.
 5. **Ayat Al-Qur'an dan hadis tidak boleh dikarang AI.** Ayat diambil dari data mushaf di aplikasi (Tanzil, `public/quran/`);
-   hadis dari teks yang ditempel & dicentang guru. AI hanya membuat soal dari teks itu. AI tidak pernah dipakai sebagai pemeriksa ayat/hadis.
+   hadis dari data 9 kitab di aplikasi (`data/hadis/`, 0.36.0), selain itu dari teks yang ditempel & dicentang guru.
+   AI hanya membuat soal dari teks itu. AI tidak pernah dipakai sebagai pemeriksa ayat/hadis.
 6. Setiap hasil soal wajib ada peringatan: "Soal dibuat AI, wajib diperiksa guru sebelum dipakai."
 7. Teks Arab: pakai font Arab yang jelas (Amiri atau Scheherazade) dan dukung arah tulisan kanan ke kiri (RTL).
    Pengecualian pemilik: di WORD teks Arab memakai Traditional Arabic 16 pt (sama dengan format AFTS).
@@ -97,7 +98,13 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
 - **Penjaga ayat**: teks Arab dari AI harus substring persis data bab (korpus = seluruh bab); tidak cocok → soal merah.
   AI menampilkan ayat lewat `dalil_id`, tidak mengetik ulang. Mode "bahasa" (Bahasa Arab, Nahwu): Arab bebas, hanya yang
   dikenali `mushaf().cari` sebagai ayat dijaga. Ayat dicocokkan memakai kerangka huruf (harakat/alif/hamzah dibuang).
-- **Materi**: ayat otomatis dari mushaf (kotak hijau); hadis = sumber + centang guru; tulisan Arab ≤ 3 kata = istilah, diterima
+- **Hadis 9 kitab** (0.36.0, `hadis.ts`, data `data/hadis/*.tsv` dari `scripts/siapkan-hadis.mjs`, disalin build.yml ke
+  branch deploy): hadis dicocokkan seperti ayat → kotak hijau `kitab: true` "HR. Kitab no. N", tanpa centang. Urutan cari:
+  persis → tanpa pembuka buku (`buangPembuka`) → mirip (`cariMirip`, LCS ≥ 80%, dua arah). `buangRujukan` (mushaf.ts)
+  membuang "(رواه ...)", "(البقرة/٢: ٤٣)" (dulu ayat PDF bertanda rujukan tak dikenali). Kitab yang disebut didahulukan.
+  `cariDalil` = mushaf lalu hadis; mode bahasa memakai `mushaf().cari` saja. Uji buku PAI: 12/14 hadis 9 kitab dikenali,
+  doa/niat/kaidah/definisi tidak. Indeks ±25 MB, dibangun ±3 dtk saat pertama dipakai.
+- **Materi**: ayat otomatis dari mushaf (kotak hijau); hadis di luar data = sumber + centang guru; tulisan Arab ≤ 3 kata = istilah, diterima
   apa adanya (`istilahArab`); teks Arab bukan dalil = tombol "Bukan ayat/hadis" (`bukan: true`, tanpa sumber & centang).
   Teks Arab dari PDF tidak pernah dipakai apa adanya (hanya penunjuk ayat). TP: tertulis di materi = hijau; usulan AI = wajib dicentang.
 - **Alur set**: kisi-kisi dulu (level per nomor ditentukan aplikasi `rencanaLevelSet`, AI tidak bisa menghitung komposisi) →

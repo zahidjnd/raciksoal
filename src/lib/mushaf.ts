@@ -12,7 +12,7 @@ export const SUMBER_MUSHAF = "Teks Al-Qur'an: Tanzil Project (tanzil.net), versi
  * mushaf (alif, ya, waw, hamzah: الزنى/الزنا, فاحشة/فٰحشة, الذى/الذي, زكوة/زكاة, إبرٰهـۧم/إبراهيم) juga dibuang,
  * jadi yang dibandingkan kerangka hurufnya. ة→ه.
  */
-function kunci(c: string): string {
+export function kunci(c: string): string {
   if (/[ء-اوىيٱی]/.test(c)) return "";
   if (c === "ة") return "ه";
   if (c === "ک") return "ك";
@@ -34,6 +34,46 @@ function petakan(teks: string) {
 }
 
 export const normalArab = (t: string) => petakan(t.normalize("NFC")).isi;
+
+/**
+ * Buang rujukan yang ditulis buku di samping dalil (0.36.0): "(البقرة/٢: ٤٣)", "(رواه مسلم)", "رواه البخاري" di akhir,
+ * "متفق عليه". Dulu ikut dicocokkan sehingga ayat/hadis dari PDF tidak dikenali. Kurung hias ﴿ ﴾ (pembungkus ayat) dibiarkan.
+ */
+export const buangRujukan = (t: string) =>
+  t
+    .replace(new RegExp(`[([][^()[\\]]*?(?:${RAWI}|[0-9٠-٩]|/)[^()[\\]]*[)\\]]`, "g"), " ")
+    .replace(new RegExp(`(?:^|\\s)(?:${RAWI})(?:\\s[^]*)?$`), " ")
+    .trim();
+
+/** Kata Arab dengan harakat/tatwil boleh di antara hurufnya (رَوَاهُ = رواه). */
+const longgar = (kata: string) => [...kata].map((c) => `${c === "ا" ? "[اأإآ]" : c}[\\u064B-\\u065F\\u0670\\u0640]*`).join("");
+/** "رواه / أخرجه / متفق عليه" (penanda rujukan hadis), tahan harakat. */
+export const RAWI = ["رواه", "اخرجه", "متفق عليه"].map(longgar).join("|");
+
+/**
+ * Batas potongan `teks` untuk kecocokan kerangka [a, a+n) : dilengkapi harakat/alif yang menempel di awal & akhir kata,
+ * plus kata TANPA huruf kunci (يَا, أَيْ, أَوْ) yang ada di awal/akhir `arab` (0.36.0: يَا أَيُّهَا dulu terbaca أَيُّهَا).
+ */
+function rentang(teks: string, posisi: number[], a: number, n: number, arab: string): [number, number] {
+  let awal = posisi[a];
+  let akhir = posisi[a + n - 1] + 1;
+  while (awal > 0 && teks[awal - 1] !== " " && !kunci(teks[awal - 1])) awal--;
+  while (akhir < teks.length && teks[akhir] !== " " && !kunci(teks[akhir])) akhir++;
+  const kata = arab.normalize("NFC").trim().split(/\s+/);
+  const kosong = (w: string) => !normalArab(w) && /[؀-ۿ]/.test(w);
+  for (let i = 0; i < kata.length && kosong(kata[i]); i++) {
+    const j = teks.lastIndexOf(" ", awal - 2) + 1;
+    if (awal < 2 || teks[awal - 1] !== " " || !kosong(teks.slice(j, awal - 1))) break;
+    awal = j;
+  }
+  for (let i = kata.length - 1; i >= 0 && kosong(kata[i]); i--) {
+    const j = teks.indexOf(" ", akhir + 1);
+    const k = j < 0 ? teks.length : j;
+    if (teks[akhir] !== " " || !kosong(teks.slice(akhir + 1, k))) break;
+    akhir = k;
+  }
+  return [awal, akhir];
+}
 
 /** Minimal huruf kunci agar sebuah potongan dianggap ayat (potongan pendek bisa cocok di mana-mana). */
 const MIN_HURUF = 10;
@@ -77,7 +117,8 @@ export function buatMushaf(file: string) {
    * Cari teks Arab (boleh tanpa harakat, beda ejaan alif, potongan ayat, atau beberapa ayat berurutan) di mushaf.
    * Ketemu → teks RESMI dari mushaf + sumbernya. `petunjuk` = sumber tulisan guru: surah itu dicari lebih dulu.
    */
-  function cari(arab: string, petunjuk = ""): HasilAyat | null {
+  function cari(teksArab: string, petunjuk = ""): HasilAyat | null {
+    const arab = buangRujukan(teksArab);
     const q = normalArab(arab);
     if (q.length < MIN_HURUF) return null;
     const p = bacaRujukan(petunjuk);
@@ -89,11 +130,7 @@ export function buatMushaf(file: string) {
       const a = dari >= 0 ? dari : s.isi.indexOf(q);
       if (a < 0) continue;
       s.posisi ??= petakan(s.teks).posisi;
-      let awal = s.posisi[a];
-      let akhir = s.posisi[a + q.length - 1] + 1;
-      // Lengkapi harakat/alif yang menempel di awal dan akhir kata.
-      while (awal > 0 && s.teks[awal - 1] !== " " && !kunci(s.teks[awal - 1])) awal--;
-      while (akhir < s.teks.length && s.teks[akhir] !== " " && !kunci(s.teks[akhir])) akhir++;
+      const [awal, akhir] = rentang(s.teks, s.posisi, a, q.length, arab);
       const ayatKe = (pos: number) => s.mulai.findLastIndex((m) => m <= pos) + 1;
       const [n1, n2] = [ayatKe(awal), ayatKe(akhir - 1)];
       const utuh = awal === s.mulai[n1 - 1] && akhir === s.mulai[n2 - 1] + s.ayat[n2 - 1].length;
@@ -122,11 +159,7 @@ export function potongAyat(ayat: string, arab: string): string | null {
   const { isi, posisi } = petakan(ayat);
   const a = isi.indexOf(q);
   if (a < 0) return null;
-  let awal = posisi[a];
-  let akhir = posisi[a + q.length - 1] + 1;
-  while (awal > 0 && ayat[awal - 1] !== " " && !kunci(ayat[awal - 1])) awal--;
-  while (akhir < ayat.length && ayat[akhir] !== " " && !kunci(ayat[akhir])) akhir++;
-  return ayat.slice(awal, akhir);
+  return ayat.slice(...rentang(ayat, posisi, a, q.length, arab));
 }
 
 let tersimpan: ReturnType<typeof buatMushaf> | undefined;

@@ -41,7 +41,8 @@ Ijtimaiyyah, PJOK, dan BK sengaja tidak dimasukkan.
 
 ## 5. Sumber materi
 - AI membuat soal **hanya dari materi guru**; pengetahuan umum hanya untuk cerita/stimulus.
-- **Ayat** diambil otomatis dari data mushaf (Tanzil). **Hadis** = teks guru + sumber + centang. Teks Arab yang bukan ayat/hadis
+- **Ayat** diambil otomatis dari data mushaf (Tanzil). **Hadis** dari 9 kitab diambil otomatis dari data hadis (0.36.0);
+  hadis lain = teks guru + sumber + centang. Teks Arab yang bukan ayat/hadis
   ditandai satu klik "Bukan ayat/hadis"; istilah Arab ≤ 3 kata diterima apa adanya.
 - TP: yang tertulis di materi dipakai apa adanya; usulan AI wajib dicentang guru.
 

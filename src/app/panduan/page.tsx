@@ -108,9 +108,17 @@ const TOPIK: { id: string; judul: string; isi: React.ReactNode }[] = [
         <ul>
           <li>Ayat Al-Qur’an <b>diambil dari data mushaf</b> di aplikasi, tidak dikarang AI. Ayat yang dikenali bertanda hijau.</li>
           <li>Di kotak <b>Ayat &amp; hadis</b> pada kartu materi, ketik rujukan (mis. <b>QS An-Nur: 2</b>) lalu tekan <b>Ambil ayat</b>.</li>
-          <li>Hadis: tekan <b>+ Tambah hadis</b>, tempel teks dari sumber terpercaya, isi sumbernya, lalu centang pernyataan pemeriksaan.</li>
-          <li>Teks Arab pendek (≤ 3 kata) dianggap istilah. Teks Arab yang bukan dalil: tekan <b>Bukan ayat/hadis</b>.</li>
-          <li>Dari PDF: ayat dikenali lalu diganti teks resmi mushaf; teks Arab lain (termasuk hadis) dibuang. Tempel hadisnya sendiri.</li>
+          <li>
+            Hadis dari <b>9 kitab</b> (Bukhari, Muslim, Abu Dawud, Tirmidzi, Nasa&apos;i, Ibnu Majah, Malik, Ahmad, Darimi) dikenali
+            otomatis: teks Arab dan sumbernya (mis. <b>HR. Muslim no. 2999</b>) diambil dari data kitab, bertanda hijau, tanpa centang.
+            Kitab yang ditulis di materi (mis. &quot;HR. Muslim&quot;) didahulukan.
+          </li>
+          <li>
+            Hadis yang tidak dikenali (Baihaqi, Thabrani, Hakim, atau lafalnya berbeda) bertanda kuning: isi sumbernya, periksa teksnya,
+            lalu centang pernyataan pemeriksaan. Hadis lain bisa ditambah dengan <b>+ Tambah hadis</b>.
+          </li>
+          <li>Teks Arab pendek (≤ 3 kata) dianggap istilah. Teks Arab yang bukan dalil (doa, niat, kaidah): tekan <b>Bukan ayat/hadis</b>.</li>
+          <li>Dari PDF: ayat dan hadis 9 kitab dikenali lalu diganti teks resmi dari data; teks Arab lain dibuang. Tempel sendiri bila perlu.</li>
         </ul>
       </>
     ),

@@ -13,6 +13,7 @@ import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
 import { hitungHariIni, hitungPemakaian } from "@/lib/pemakaian";
 import { mushaf, potongAyat } from "@/lib/mushaf";
+import { cariDalil } from "@/lib/hadis";
 import { BATAS_ANALISA, BATAS_HALAMAN_PDF, BATAS_PER_GURU, BATAS_TOTAL, BATAS_UBAH_PER_GURU } from "@/lib/pembatas";
 
 const SESI_HABIS = "Sesi masuk sudah berakhir. Muat ulang halaman lalu masuk lagi.";
@@ -623,9 +624,11 @@ export async function analisaMateri(input: { mapel: string; kelas: string; parag
     return { ok: false as const, pesan: `Materi terlalu panjang: ±${panjang.toLocaleString("id-ID")} huruf, maksimal ${BATAS_MATERI.isi.toLocaleString("id-ID")}. Pecah menjadi beberapa materi (per bab).` };
 
   const m = mushaf();
-  const { isian, untukAi, dibuangPdf } = susunDraf({ mapel, kelas, paragraf }, m.cari, m.basmalah);
+  // Mode "bahasa" (Bahasa Arab, Nahwu): teks Arab isi pelajaran, hanya ayat yang dijadikan kotak dalil.
+  const cari = modeArab(mapel) === "bahasa" ? m.cari : cariDalil;
+  const { isian, untukAi, dibuangPdf } = susunDraf({ mapel, kelas, paragraf }, cari, m.basmalah);
   const pesanPdf = dibuangPdf
-    ? `${dibuangPdf} baris teks Arab dari PDF tidak dikenali sebagai ayat dan dibuang (teks Arab PDF sering rusak). Ayat: pakai "Ambil ayat"; hadis: tempel sendiri dari sumber terpercaya.`
+    ? `${dibuangPdf} baris teks Arab dari PDF tidak dikenali sebagai ayat atau hadis 9 kitab dan dibuang (teks Arab PDF sering rusak). Ayat: pakai "Ambil ayat"; hadis lain: tempel sendiri dari sumber terpercaya.`
     : "";
   if (isian.isi.length < BATAS_MATERI.isiMin) return { ok: false as const, pesan: `Materi terlalu pendek (minimal ${BATAS_MATERI.isiMin} huruf teks).` };
 
@@ -648,7 +651,7 @@ export async function analisaMateri(input: { mapel: string; kelas: string; parag
   const { sistem, pengguna } = buatAnalisaMateri(mapel, kelas, untukAi, isian.teksArab === "bahasa", gambarAI.length);
   try {
     const r = await tanyaDenganCadangan(sistem, pengguna, daftarModel()[0]?.slot ?? 1, true, (d) => d, Date.now() + TENGGAT_SATU_SOAL, gambarAI);
-    const a = terapkanAnalisa(r.hasil, isian, untukAi);
+    const a = terapkanAnalisa(r.hasil, isian, untukAi, cari);
     // null = gambar tidak dinilai (tidak ada gambar, atau model yang menjawab tidak bisa melihat gambar): browser memakai semua.
     const gambar = r.lihatGambar ? rapikanNilaiGambar((r.hasil as { gambar?: unknown })?.gambar, pratinjau.length, tempel) : null;
     return { ok: true as const, isian: a.isian, gambar, catatan: [pesanPdf, a.catatan].filter(Boolean).join(" ") };
@@ -699,8 +702,8 @@ export async function bacaHalamanPdf(gambarHalaman: string, mapel: string, conte
   try {
     const r = await tanyaDenganCadangan(sistem, pengguna, daftarModel()[0]?.slot ?? 1, true, (d) => d, Date.now() + 2 * 60_000, [{ label: "[HALAMAN]", url: `data:image/jpeg;base64,${data.toString("base64")}` }]);
     if (!r.lihatGambar) return { ok: false as const, pesan: "Model AI yang aktif tidak bisa membaca gambar halaman." };
-    const m = mushaf();
-    return { ok: true as const, ...rapikanBacaanHalaman(r.hasil, m.cari, potongAyat, modeArab(String(mapel ?? "")) === "bahasa") };
+    const bahasa = modeArab(String(mapel ?? "")) === "bahasa";
+    return { ok: true as const, ...rapikanBacaanHalaman(r.hasil, bahasa ? mushaf().cari : cariDalil, potongAyat, bahasa) };
   } catch (e) {
     console.error("[baca halaman PDF gagal]", pesanError(e));
     return { ok: false as const, pesan: "AI gagal membaca halaman ini." };

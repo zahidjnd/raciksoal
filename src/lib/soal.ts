@@ -59,7 +59,8 @@ export type Bab = {
   teksArab?: "dalil" | "bahasa";
   tp: { kode: string; teks: string }[];
   // mushaf: teks Arab diambil/dicocokkan dari data mushaf (langkah 9), bukan ketikan guru
-  dalil: { id: string; sumber: string; arab: string; terjemah: string; mufradat: { arab: string; arti: string }[]; mushaf?: boolean; bukan?: boolean }[];
+  // kitab: teks hadis dari data 9 kitab (0.36.0, hadis.ts)
+  dalil: { id: string; sumber: string; arab: string; terjemah: string; mufradat: { arab: string; arti: string }[]; mushaf?: boolean; kitab?: boolean; bukan?: boolean }[];
   materi: string[];
   pokok?: string[]; // pokok-pokok materi hasil analisa AI (ringkasan untuk guru & sebaran soal)
   gambar?: GambarBab[]; // 0.30.0: gambar materi yang dipilih guru (AI melihatnya, soal boleh memakainya lewat gambar_id)
@@ -367,8 +368,8 @@ export function istilahArab(t: string): Set<string> {
 }
 
 /** Isian kotak dalil yang ditandai guru "Bukan ayat/hadis" (tombol), termasuk materi lama yang sumbernya ditulis begitu. */
-export const bukanDalil = (d: { bukan?: boolean; sumber?: string; mushaf?: boolean }) =>
-  !d.mushaf && (d.bukan === true || /^\s*bukan\s+(ayat|hadis)/i.test(d.sumber ?? ""));
+export const bukanDalil = (d: { bukan?: boolean; sumber?: string; mushaf?: boolean; kitab?: boolean }) =>
+  !d.mushaf && !d.kitab && (d.bukan === true || /^\s*bukan\s+(ayat|hadis)/i.test(d.sumber ?? ""));
 export const SUMBER_BUKAN = "Bukan ayat/hadis";
 
 /** Semua teks Arab terverifikasi milik bab (ayat, hadis, mufradat, materi) dalam satu teks. */
