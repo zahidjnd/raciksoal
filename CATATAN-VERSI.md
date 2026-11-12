@@ -52,6 +52,21 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.36.0 — 12 November 2026
+- **Hadis dikenali otomatis, seperti ayat**: hadis dari 9 kitab (Bukhari, Muslim, Abu Dawud, Tirmidzi, Nasa'i,
+  Ibnu Majah, Malik, Ahmad, Darimi) yang ada di materi langsung jadi kotak **hijau** "✓ Hadis dari data kitab:
+  HR. Muslim no. 2999". Teks Arab berharakat diambil dari data kitab, **tidak perlu dicentang**. Kitab yang ditulis
+  di materi (mis. "HR. Muslim" atau "رواه مسلم") didahulukan. Terjemah tetap dari materi guru.
+- **Hadis dari PDF tidak dibuang lagi** kalau cocok dengan data kitab. Cara buku menulis hadis tetap dikenali:
+  pembuka "عن أبي هريرة ... قال رسول الله ﷺ", tulisan "(رواه مسلم)", dan lafal yang sedikit berbeda.
+- Hadis yang tidak ada di data (Baihaqi, Thabrani, Hakim, atau lafal lain) tetap kotak **kuning** seperti dulu:
+  isi sumber, periksa, centang. Doa, niat, kaidah, dan definisi tidak dianggap hadis.
+- **Ayat**: "يَا أَيُّهَا الَّذِينَ آمَنُوا ..." kini terbaca utuh (dulu kata يَا hilang dan diberi "(potongan)"), dan ayat
+  dari PDF yang diberi rujukan buku seperti "(البقرة/٢: ٤٣)" kini dikenali (dulu dibuang).
+- Uji dengan buku PAI asli (Fiqih, Qurdis, Akidah): 12 dari 14 hadis 9 kitab dan 6 dari 6 ayat dikenali.
+
+---
+
 ## 0.35.0 — 11 November 2026
 - **Kunci ringkas bisa diunduh sebagai Word**: di jendela **Unduh** ada centang baru **Kunci ringkas** (bawaannya
   tidak dicentang). Isinya satu lembar untuk koreksi cepat: kunci pilihan ganda dalam tabel ("1. C  2. A ..."),
