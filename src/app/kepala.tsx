@@ -125,6 +125,7 @@ export async function Kerangka({ p, lebar = false, setAktif = null, children }: 
       : []),
     { href: "/panduan", label: "Panduan" },
     { href: "/materi", label: "Materi saya" },
+    { href: "/tentang", label: "Tentang aplikasi" },
   ];
 
   // Tautan ke halaman utama sengaja <a> biasa (bukan Link): halaman Buat Soal membaca ?id= hanya saat dimuat.

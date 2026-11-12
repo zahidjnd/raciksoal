@@ -52,6 +52,13 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.38.0 — 12 November 2026
+- Menu baru **Tentang aplikasi** di sidebar: versi, cara kerja singkat, peringatan wajib periksa, **rujukan aturan soal**
+  (KMA, Kepdirjen Pendis, kerangka TKA, surat Kepala MA untuk ASAS, dll.), sumber teks Al-Qur'an & hadis, dan cara
+  melapor masalah (hubungi admin).
+
+---
+
 ## 0.37.0 — 12 November 2026
 - **Racik Soal bisa dipasang seperti aplikasi di HP**: buka di Chrome → ⋮ → **Instal aplikasi**. Terbuka layar penuh
   tanpa bilah judul & alamat, dengan ikon sendiri (bintang delapan putih di atas hijau, sama dengan logo halaman masuk).
