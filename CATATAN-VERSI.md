@@ -52,6 +52,16 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.36.1 — 12 November 2026
+- **Kotak hadis kuning kini menyebut yang kurang**: "Tempel teks Arab hadisnya", "Isi sumbernya (mis. HR. Baihaqi)",
+  atau "✓ Lengkap. Tinggal centang". Tidak perlu menebak lagi.
+- **Hadis yang ditempel lewat "+ Tambah hadis" langsung dicocokkan**: begitu selesai menempel, hadis dari 9 kitab
+  langsung berubah hijau (teks & sumber dari data kitab), tidak perlu menunggu materi disimpan.
+- **Kekurangan hadis ketahuan sebelum menekan Buat soal**: tombol Buat soal (dan Simpan materi) terkunci dengan pesan
+  seperti "Hadis ke-2 belum diberi sumber." Tautan **Lihat kotaknya** langsung membawa ke kolom yang kurang.
+
+---
+
 ## 0.36.0 — 12 November 2026
 - **Hadis dikenali otomatis, seperti ayat**: hadis dari 9 kitab (Bukhari, Muslim, Abu Dawud, Tirmidzi, Nasa'i,
   Ibnu Majah, Malik, Ahmad, Darimi) yang ada di materi langsung jadi kotak **hijau** "✓ Hadis dari data kitab:
