@@ -5,7 +5,7 @@ import { db } from "@/db";
 import { gambar, hasilSoal, pemakaianAi } from "@/db/schema";
 import { BATAS_GAMBAR, rapikanNilaiGambar, ukuranJpeg } from "@/lib/gambar";
 import { daftarModel, tanyaAI, type GambarAI } from "@/lib/ai";
-import { bagiTahap, jumlahSoal, miripIndikator, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, laranganIsian, ringkasSudah, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, buatSistem, buatAnalisaMateri, buatBacaHalaman, bersihkanIdentitas, pasangKunciPgk, rencanaGrup, rencanaLevelSet, sesuaikanLevel, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
+import { bagiTahap, jumlahSoal, miripIndikator, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, laranganIsian, ringkasSudah, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, buatSistem, buatAnalisaMateri, buatBacaHalaman, bersihkanIdentitas, pasangKunciPgk, grupSet, rencanaLevelSet, sesuaikanLevel, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { BATAS_MATERI, modeArab, rapikanBacaanHalaman, susunDraf, terapkanAnalisa } from "@/lib/materi";
 import { bersihkanTanggapan, gabungBab, identitasBab, jawabanAman, kataTerpakai, KELAS, LEVEL, mjLama, pemeriksaArab, POLA_ARAB, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { babDariSet, babMilik, daftarBabMilik, dataGambar, gambarMilik } from "@/lib/bab";
@@ -223,13 +223,13 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan, guruId: string) {
     await simpan({ pesan: "Menyusun kisi-kisi" });
     const { kisi: kisiAwal, tanggapan } = await tanya("Kisi-kisi", buatPermintaanKisi(p, bab),(d) => {
       const isi = d as { kisi?: unknown; tanggapan?: unknown; wacana?: unknown };
-      // Wacana soal grup hanya untuk Latihan TKA; jenis lain: semua soal tunggal.
-      // Nomor grup dari rencana aplikasi (rencanaGrup), bukan dari AI; AI hanya menulis wacananya.
-      const grup = p.tujuan === TKA ? rencanaGrup(p.jumlah) : [];
+      // Wacana soal grup: Latihan TKA, dan PG Bahasa Indonesia (0.39.0); selain itu semua soal tunggal.
+      // Nomor grup dari rencana aplikasi (grupSet), bukan dari AI; AI hanya menulis wacananya.
+      const grup = grupSet(p, bab.mapel ?? "");
       // Level tiap baris dikunci ke kategori rencana aplikasi (komposisi LOTS/MOTS/HOTS harus persis, mis. surat ASAS).
       const rencana = rencanaLevelSet(p);
       const kisi = pasangKunciPgk(
-        pasangWacana(periksaKisi(isi?.kisi, p.jumlah, bab, cekAyat).map((k, i) => ({ ...k, grup: grup[i] ?? null, level: sesuaikanLevel(k.level, rencana[i]) })), p.tujuan === TKA ? isi?.wacana : null, bab, cekAyat),
+        pasangWacana(periksaKisi(isi?.kisi, p.jumlah, bab, cekAyat).map((k, i) => ({ ...k, grup: grup[i] ?? null, level: sesuaikanLevel(k.level, rencana[i]) })), grup.some(Boolean) ? isi?.wacana : null, bab, cekAyat),
         p.tujuan === TKA,
       );
       return { kisi, tanggapan: p.catatan ? bersihkanTanggapan(isi?.tanggapan, bab, cekAyat) : "" };

@@ -169,6 +169,10 @@ mengatur skor). Persen level dipilih supaya jumlahnya persis surat (34/43/23 dan
    teks bacaan, percakapan, kutipan tokoh, hasil percobaan, peta/denah (dideskripsikan), potongan dokumen sejarah.
 3. ✅ **Satu stimulus boleh dipakai untuk beberapa soal berurutan** ("soal grup"), umum di asesmen madrasah dan inti TKA.
    Dipakai di jenis **Latihan TKA** (bagian 9).
+   ✅ (0.39.0, permintaan pemilik 2026-11-12) **Bahasa Indonesia**, semua jenis selain Latihan TKA (UH, AFTS, ASAS,
+   Latihan): soal **PG saja** yang dibuat soal grup, cara bagi sama dengan TKA (separuh nomor PG di akhir bagian PG,
+   2–3 soal per bacaan). Bacaan = jenis teks yang dipelajari di materi (cerpen, eksposisi, berita, hikayat, dsb.),
+   80–200 kata. Bentuk lain tetap soal tunggal (B/S gaya lama dan menjodohkan memakai nomor grup untuk hal lain).
 4. ✅ Satu skenario hanya dipakai sekali per set; pola "dua orang berbeda pendapat" maks 2 kali.
 5. ✅ 🔍 (0.30.0) **Gambar dari guru.** AI tidak bisa membuat gambar. Gambar hanya berasal dari **materi guru**
    (diambil dari file Word/PowerPoint, diunggah, atau ditempel), dan AI melihat gambarnya. Soal boleh memakai satu gambar

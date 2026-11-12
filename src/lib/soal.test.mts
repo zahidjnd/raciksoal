@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { adalahTahun, arabTakTerverifikasi, istilahArab, jawabanAman, bersihkanTanggapan, gabungBab, identitasBab, blokMj, kataTerpakai, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Soal } from "./soal.ts";
-import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, laranganIsian, miripIndikator, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, semesterDari, buatAnalisaMateri, MAKS_CATATAN, MAKS_INSTRUKSI, namaLevelTka, namaTujuan, pasangKunciPgk, rencanaLevel, type Pengaturan } from "./prompt.ts";
+import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, laranganIsian, miripIndikator, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, grupSet,semesterDari, buatAnalisaMateri, MAKS_CATATAN, MAKS_INSTRUKSI, namaLevelTka, namaTujuan, pasangKunciPgk, rencanaLevel, type Pengaturan } from "./prompt.ts";
 import { bolehAkses, rapikanUsername } from "./akses.ts";
 import { headerUnduh } from "./nama-file.ts";
 import { geserTandaGambar, keIsian, rapikanMateri, susunDraf, terapkanAnalisa } from "./materi.ts";
@@ -423,6 +423,14 @@ test("Latihan TKA: tanpa uraian, kisi-kisi meminta soal grup + wacana; grup sah 
   assert.deepEqual(r25.slice(15), [null, null, null, 4, 4, null, null, null, 5, 5]);
   assert.ok(buatPermintaanKisi({ ...p, jumlah: { PG: 4, PGK: 0, BS: 0, URAIAN: 0 } }).match(/Nomor 3: PG, \w+ \([^)]+\), GRUP 1\n- Nomor 4: PG, \w+ \([^)]+\), GRUP 1/));
   assert.ok(!buatPermintaanKisi(p).includes("GRUP 1")); // 3 PG: separuhnya 1 soal, tidak cukup untuk grup
+  // 0.39.0: Bahasa Indonesia jenis lain → grup hanya di PG; mapel lain tetap tunggal
+  const uh = { ...p, tujuan: "Ulangan Harian", jumlah: { PG: 6, PGK: 0, BS: 4, MJ: 0, ISIAN: 4, URAIAN: 2 } } as Pengaturan;
+  assert.deepEqual(grupSet(uh, "Bahasa Indonesia"), [null, null, null, 1, 1, 1, ...Array(10).fill(null)]);
+  assert.deepEqual(grupSet(uh, "Fiqih"), []);
+  const mintaBi = buatPermintaanKisi(uh, { ...bab, mapel: "Bahasa Indonesia" });
+  assert.ok(mintaBi.includes("SOAL GRUP") && mintaBi.includes("jenis teks yang dipelajari") && mintaBi.includes('"wacana"'));
+  assert.ok(!buatPermintaanKisi(uh, { ...bab, mapel: "Fiqih" }).includes("SOAL GRUP"));
+  assert.ok(!buatPermintaanKisi(p).includes("jenis teks yang dipelajari")); // TKA: wacana tetap bebas jenisnya
 
   const baris = (bentuk: string, grup: unknown) => ({ bentuk, tp: "TP 3.1", materi: "m", indikator: `i${Math.random()}`, level: "C4", dalil_id: null, stimulus: "s", grup });
   // AI: nomor 1-2 grup 7, nomor 3 grup 7 juga tapi PG → ikut; nomor 4 PGK grup 7 (beda bentuk) → tunggal; grup 9 tanpa wacana → tunggal

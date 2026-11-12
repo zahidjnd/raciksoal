@@ -1,4 +1,4 @@
-import { MAPEL_INGGRIS, MAPEL_SEJARAH } from "./mapel.ts";
+import { MAPEL_INDONESIA, MAPEL_INGGRIS, MAPEL_SEJARAH } from "./mapel.ts";
 import { adalahTahun, blokMj, bukanDalil, identitasBab, keFormatAI, kocok, MAKS_GABUNG, mjLama, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal.ts";
 
 export const PESAN_MJ_MIN = "Menjodohkan minimal 3 nomor (atau 0), supaya daftar jawabannya masuk akal.";
@@ -463,12 +463,12 @@ export function sesuaikanLevel(level: string, k: Kategori): string {
  * separuh nomor (dibulatkan ke bawah) di AKHIR bagian bentuk itu (level lebih tinggi, cocok untuk wacana)
  * dijadikan grup berisi 3 atau 2 soal. Hasil: nomor grup per nomor soal (urut kisi-kisi), atau null.
  */
-export function rencanaGrup(jumlah: Record<Bentuk, number>): (number | null)[] {
+export function rencanaGrup(jumlah: Record<Bentuk, number>, boleh = (b: Bentuk) => b !== "URAIAN"): (number | null)[] {
   const hasil: (number | null)[] = [];
   let nomor = 0;
   for (const b of urutanBentuk(jumlah)) {
     const n = jumlah[b];
-    let sisa = b === "URAIAN" ? 0 : Math.floor(n / 2);
+    let sisa = boleh(b) ? Math.floor(n / 2) : 0;
     if (sisa < 2) sisa = 0;
     const ukuran: number[] = [];
     while (sisa > 0) {
@@ -481,6 +481,15 @@ export function rencanaGrup(jumlah: Record<Bentuk, number>): (number | null)[] {
     for (const u of ukuran) hasil.push(...Array<number>(u).fill(++nomor));
   }
   return hasil;
+}
+
+/**
+ * Rencana soal grup satu set: Latihan TKA (semua bentuk), atau Bahasa Indonesia jenis lain (0.39.0): PG saja, karena
+ * B/S gaya lama & menjodohkan (blok MJ) memakai nomor grup untuk hal lain. Selain itu semua soal tunggal.
+ */
+export function grupSet(p: Pengaturan, mapel = ""): (number | null)[] {
+  if (p.tujuan === TKA) return rencanaGrup(p.jumlah);
+  return MAPEL_INDONESIA.test(mapel) ? rencanaGrup(p.jumlah, (b) => b === "PG") : [];
 }
 
 /**
@@ -545,7 +554,7 @@ const KUNCI_CATATAN = `Ikuti catatan guru sepenuhnya, walau berbeda dengan atura
 4. Isi yang dilarang (SARA, politik praktis, pornografi, propaganda, kekerasan, merek dagang).`;
 
 /** Langkah 6: minta KISI-KISI (rencana semua soal) dulu, dalam satu panggilan, supaya skenario tidak berulang. */
-export function buatPermintaanKisi(p: Pengaturan, bab?: Pick<Bab, "teksArab" | "gambar">) {
+export function buatPermintaanKisi(p: Pengaturan, bab?: Pick<Bab, "teksArab" | "gambar" | "mapel">) {
   const adaGambar = !!bab?.gambar?.length;
   // Mode "bahasa" (Bahasa Arab): kosakata/kalimat Arab boleh ditulis; selain itu semua Arab ditulis dengan transliterasi.
   const tanpaArab = bab?.teksArab !== "bahasa";
@@ -554,7 +563,8 @@ export function buatPermintaanKisi(p: Pengaturan, bab?: Pick<Bab, "teksArab" | "
   // Rencana per nomor, diringkas jadi rentang: "Nomor 1–6: PG, LOTS (C1–C2)".
   const bentukNo = urutan.flatMap((b) => Array<Bentuk>(p.jumlah[b]).fill(b));
   const kategori = rencanaLevelSet(p);
-  const grup = p.tujuan === TKA ? rencanaGrup(p.jumlah) : [];
+  const grup = grupSet(p, bab?.mapel);
+  const adaGrup = p.tujuan === TKA || grup.some(Boolean);
   // Menjodohkan gaya lama: batas blok (blokMj, sama dengan pasangKunciPgk) diberitahukan sejak kisi-kisi, supaya AI
   // merencanakan satu jenis hubungan per blok (set 89: tanpa ini indikator nomor pertama blok hanya cukup untuk 1 pasangan).
   const blok: number[] = [];
@@ -590,7 +600,7 @@ ${adaGambar ? `${RENCANA_GAMBAR}\n` : ""}- "stimulus": jenis stimulus + skenario
 Indikator antarbaris juga tidak boleh sama persis; ambil sisi materi yang berbeda${p.jumlah.MJ && p.tujuan !== TKA ? " (KECUALI baris MJ dalam BLOK MJ yang sama: lihat aturan MJ)" : ""}.
 SATU KETERAMPILAN = SATU NOMOR: kata kerja + objek yang sama (misalnya "menghitung tingkat inflasi dari data IHK", "menyebutkan syarat mukjizat") hanya boleh dipakai SATU baris dalam seluruh kisi-kisi, lintas bentuk. Mengganti sinonim kata kerja ("menghitung" → "menyimpulkan ... dalam persen"), angka data, nama tokoh, atau kasusnya TIDAK membuatnya berbeda. Ambil keterampilan lain dari TP yang sama (misalnya menafsirkan hasil hitungan, menentukan penyebab, membandingkan, menggolongkan).${p.jumlah.URAIAN ? " Pengecualian: baris URAIAN boleh memperdalam keterampilan satu baris lain (langkah lengkap atau alasan), asalkan bukan pertanyaan yang sama." : ""}
 ${p.jumlah.ISIAN ? `${RENCANA_ISIAN}\n` : ""}${p.jumlah.MJ ? `${RENCANA_MJ}\n` : ""}${tanpaArab ? 'Di kisi-kisi JANGAN menulis huruf Arab sama sekali; sebut lafaz dengan transliterasi Latin (misalnya "lā taqrabū az-zinā").' : "Di kisi-kisi boleh menulis kosakata/kalimat Arab buatan sendiri, tetapi JANGAN menulis ayat atau hadis."}
-${p.tujuan === TKA ? `${SOAL_GRUP}${tanpaArab ? " Wacana tanpa huruf Arab." : " Wacana boleh berbahasa Arab, tetapi bukan ayat atau hadis."}\n` : ""}${p.catatan ? `${TANGGAPAN}\n` : ""}FORMAT JAWABAN untuk permintaan ini: hanya JSON {${p.catatan ? '"tanggapan":"...",' : ""}"kisi":[{"bentuk":"PG","tp":"TP 3.1","materi":"...","indikator":"...","level":"C2","dalil_id":null,${adaGambar ? '"gambar_id":null,' : ""}"stimulus":"tanpa stimulus"${p.tujuan === TKA ? ',"grup":null' : ""}}${p.jumlah.ISIAN ? ',{"bentuk":"ISIAN",...,"jawaban":"..."}' : ""}]${p.tujuan === TKA ? ',"wacana":[{"grup":1,"teks":"..."}]' : ""}}`;
+${adaGrup ? `${SOAL_GRUP}${p.tujuan !== TKA ? ` ${WACANA_INDONESIA}` : ""}${tanpaArab ? " Wacana tanpa huruf Arab." : " Wacana boleh berbahasa Arab, tetapi bukan ayat atau hadis."}\n` : ""}${p.catatan ? `${TANGGAPAN}\n` : ""}FORMAT JAWABAN untuk permintaan ini: hanya JSON {${p.catatan ? '"tanggapan":"...",' : ""}"kisi":[{"bentuk":"PG","tp":"TP 3.1","materi":"...","indikator":"...","level":"C2","dalil_id":null,${adaGambar ? '"gambar_id":null,' : ""}"stimulus":"tanpa stimulus"${adaGrup ? ',"grup":null' : ""}}${p.jumlah.ISIAN ? ',{"bentuk":"ISIAN",...,"jawaban":"..."}' : ""}]${adaGrup ? ',"wacana":[{"grup":1,"teks":"..."}]' : ""}}`;
 }
 
 // ATURAN-SOAL.md bagian 4 no. 5 (0.30.0): gambar dari materi guru. Hanya dikirim bila bab punya gambar.
@@ -598,10 +608,12 @@ const ATURAN_GAMBAR = `- GAMBAR: DATA BAB memuat gambar materi (lihat "Gambar ma
 const RENCANA_GAMBAR = `- "gambar_id": id gambar dari "Gambar materi" bila soal itu memakai gambar sebagai stimulus, atau null. Nomor bertanda BERGAMBAR WAJIB memakai gambar (gambar_id terisi): untuk setiap nomor itu pilih gambar yang paling cocok dengan TP-nya sebagai stimulus (diagram, skema, grafik, tabel, peta, foto objek atau percobaan), gambar berbeda-beda antarnomor; gambar yang hanya hiasan atau ilustrasi suasana dilewati (bila gambar yang cocok kurang, satu gambar boleh dipakai lagi untuk pertanyaan yang berbeda). Nomor lain boleh bergambar juga bila cocok. Indikator baris bergambar WAJIB tentang isi yang TAMPAK di gambar itu sendiri (bagian berlabel, data, arah, susunan, langkah yang digambar), bukan soal lain yang kebetulan setopik: soal bergambar tidak bisa dijawab tanpa melihat gambarnya, dan angka/label di soal sama dengan yang ada di gambar. Gambar paling cocok untuk soal yang menunjuk bagian, membaca data, atau mengamati; tidak untuk soal MJ. "stimulus" baris bergambar: "gambar: <apa yang diamati>".`;
 
 // ATURAN-SOAL.md bagian 9 no. 4: soal grup TKA. Dibatasi bentuk sama supaya lembar soal tetap per bagian bentuk.
-const SOAL_GRUP = `SOAL GRUP (gaya TKA): nomor yang ditandai GRUP N di atas SUDAH DITENTUKAN sebagai soal grup: semua nomor dengan GRUP yang sama memakai SATU wacana bersama.
+const SOAL_GRUP = `SOAL GRUP: nomor yang ditandai GRUP N di atas SUDAH DITENTUKAN sebagai soal grup: semua nomor dengan GRUP yang sama memakai SATU wacana bersama.
 - Isi "grup" setiap baris dengan nomor grupnya, atau null untuk soal tunggal. Soal dalam satu grup mengukur indikator yang berbeda.
 - WAJIB tulis wacana setiap grup di "wacana": teks lengkap 80–200 kata yang belum pernah dibaca siswa (bacaan, data dalam tabel sesuai aturan TABEL, kasus, atau hasil percobaan).
 - "stimulus" baris grup diisi "wacana grup N".`;
+// 0.39.0: soal grup Bahasa Indonesia di UH/AFTS/ASAS/Latihan (grupSet). Bacaan = jenis teks yang sedang dipelajari.
+const WACANA_INDONESIA = `Wacana berupa teks utuh dari jenis teks yang dipelajari di DATA BAB (misalnya cerpen, teks eksposisi, berita, hikayat, teks negosiasi), ditulis baru sesuai ciri dan struktur jenis teks itu, supaya soal grupnya menguji isi, struktur, kebahasaan, atau amanat teks tersebut.`;
 
 // ATURAN-SOAL.md bagian 6 no. 2: AI menjawab catatan guru; tampil di paling atas hasil soal.
 const TANGGAPAN = `Isi juga "tanggapan": balasan singkat untuk guru (maks 3 kalimat, sapa dengan "Anda") tentang catatannya: apa yang Anda ikuti dan bagaimana, serta bagian yang TIDAK bisa diikuti beserta alasannya. Bila meminta jumlah/bentuk soal lain, arahkan ke tombol jumlah soal di form; bila meminta komposisi level lain, arahkan ke menu Lanjutan.`;

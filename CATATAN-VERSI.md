@@ -52,6 +52,14 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.39.0 — 12 November 2026
+- **Bahasa Indonesia: satu bacaan untuk beberapa soal.** Di Ulangan Harian, AFTS, ASAS, dan Latihan, kira-kira separuh
+  soal PG (di akhir bagian PG) dibuat berkelompok: satu bacaan untuk 2–3 soal. Bacaannya mengikuti jenis teks di materi
+  (cerpen, eksposisi, berita, dsb.) dan tampil sekali di atas soal pertama kelompoknya, di web maupun di Word.
+  Bentuk lain (isian, uraian, B/S, menjodohkan) tetap soal biasa.
+
+---
+
 ## 0.38.0 — 12 November 2026
 - Menu baru **Tentang aplikasi** di sidebar: versi, cara kerja singkat, peringatan wajib periksa, **rujukan aturan soal**
   (KMA, Kepdirjen Pendis, kerangka TKA, surat Kepala MA untuk ASAS, dll.), sumber teks Al-Qur'an & hadis, dan cara
