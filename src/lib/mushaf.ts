@@ -4,6 +4,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { bacaRujukan, tulisRujukan } from "./surah.ts";
+import type { Bab } from "./soal.ts";
 
 export const SUMBER_MUSHAF = "Teks Al-Qur'an: Tanzil Project (tanzil.net), versi Simple.";
 
@@ -161,6 +162,49 @@ export function potongAyat(ayat: string, arab: string): string | null {
   if (a < 0) return null;
   return ayat.slice(...rentang(ayat, posisi, a, q.length, arab));
 }
+
+export const SUMBER_TERJEMAH = "Terjemah ayat: Kementerian Agama RI (id.indonesian, tanzil.net).";
+
+/** Terjemah per ayat dari file Tanzil "sura|aya|teks" → "surah|ayat" → teks. */
+export function bacaTerjemah(file: string) {
+  return new Map(file.split(/\r?\n/).flatMap((b) => {
+    const m = /^(\d+)\|(\d+)\|(.+)$/.exec(b);
+    return m ? [[`${m[1]}|${m[2]}`, m[3].trim()] as const] : [];
+  }));
+}
+
+/**
+ * Terjemah Kemenag untuk rujukan ayat utuh ("QS. Al-Baqarah [2]: 43", boleh beberapa ayat). Potongan ayat
+ * ("(potongan)") atau rujukan tak dikenal → "" (terjemah satu ayat penuh akan menyesatkan untuk potongannya).
+ */
+export function terjemahAyat(sumber: string, data: Map<string, string> = terjemahKemenag()): string {
+  if (/potongan/i.test(sumber)) return "";
+  const r = bacaRujukan(sumber);
+  if (!r) return "";
+  const t: string[] = [];
+  for (let a = r.dari; a <= r.sampai; a++) {
+    const x = data.get(`${r.surah}|${a}`);
+    if (!x) return "";
+    t.push(x);
+  }
+  return t.join(" ");
+}
+
+/** Ayat dari mushaf yang terjemahnya kosong (guru tidak menulisnya) diisi terjemah Kemenag (0.42.0, ATURAN-SOAL 5a no. 4). */
+export function lengkapiTerjemah(bab: Bab, data?: Map<string, string>): Bab {
+  return {
+    ...bab,
+    dalil: bab.dalil.map((d) => {
+      if (!d.mushaf || d.bukan || d.terjemah?.trim()) return d;
+      const terjemah = terjemahAyat(d.sumber, data);
+      return terjemah ? { ...d, terjemah, terjemahKemenag: true } : d;
+    }),
+  };
+}
+
+let terjemahTersimpan: Map<string, string> | undefined;
+/** Data di folder `data/` (bukan public): hanya dibaca server, tidak dibagikan ulang (ketentuan Tanzil). */
+const terjemahKemenag = () => (terjemahTersimpan ??= bacaTerjemah(readFileSync(path.join(process.cwd(), "data", "quran", "id.indonesian.txt"), "utf8")));
 
 let tersimpan: ReturnType<typeof buatMushaf> | undefined;
 /** Mushaf dimuat sekali saat pertama dipakai (±1,3 MB). */

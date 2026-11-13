@@ -65,6 +65,10 @@ export default async function Tentang() {
             Teks Al-Qur&apos;an: <a className="underline" href="https://tanzil.net" target="_blank" rel="noreferrer">Tanzil Project (tanzil.net)</a>, versi Simple, tanpa diubah.
           </li>
           <li>
+            Terjemah ayat (bila guru tidak menulis terjemah di materi): Kementerian Agama RI, dari{" "}
+            <a className="underline" href="https://tanzil.net/trans/" target="_blank" rel="noreferrer">Tanzil</a> (id.indonesian), untuk pemakaian non-komersial.
+          </li>
+          <li>
             Teks hadis 9 kitab: <a className="underline" href="https://github.com/fawazahmed0/hadith-api" target="_blank" rel="noreferrer">hadith-api</a> (7 kitab)
             dan <a className="underline" href="https://github.com/abdelrahmaan/Hadith-Data-Sets" target="_blank" rel="noreferrer">Hadith-Data-Sets</a> (Musnad Ahmad &amp; Sunan ad-Darimi).
           </li>

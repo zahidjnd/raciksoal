@@ -8,7 +8,7 @@ import { Gambar, gambarTempelan, TombolGambar, unggah } from "./gambar";
 import { PotongGambar } from "./potong-gambar";
 import { editRumus, isiKotak } from "./editor-rumus";
 import { EditorTabel } from "./editor-tabel";
-import { adaRumus, bukanDalil, cariTabel, JOROK, kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, POLA_RUMUS, tulisTabel, type Bab, type Bentuk, type Soal } from "@/lib/soal";
+import { adaRumus, bukanDalil, CARA_DALIL, caraDalil, cariTabel, cocokCara, dalilKunci, kataArab, kataTerjemah, NAMA_CARA_DALIL, potonganSah, tampilanDalil, type CaraDalil, JOROK, kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, POLA_RUMUS, tulisTabel, type Bab, type Bentuk, type Soal } from "@/lib/soal";
 import { MAKS_INSTRUKSI, namaBentuk } from "@/lib/prompt";
 
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
@@ -265,7 +265,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
     const r = await gantiSatuSoal(hasilId, no - 1, jenis === "ubah" ? instruksi : undefined).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
     setProses("");
     if (!r.ok) return setError(r.pesan);
-    const isi = (x: Soal) => JSON.stringify([x.pertanyaan, x.pilihan, x.pernyataan, x.kunci, x.pembahasan, x.dalil_id, x.gambar_id]);
+    const isi = (x: Soal) => JSON.stringify([x.pertanyaan, x.pilihan, x.pernyataan, x.kunci, x.pembahasan, x.dalil_id, x.dalil_tampil, x.dalil_potong, x.gambar_id]);
     if (jenis === "ubah" && isi(r.soal) === isi(s))
       setError("AI tidak mengubah soal ini. Mungkin instruksinya bertentangan dengan aturan (mis. meminta ayat/hadis di luar data bab). Coba tulis instruksi lain.");
     else setBerhasil(jenis === "ubah" ? "Soal sudah diubah ✓" : "Soal sudah diganti ✓");
@@ -313,7 +313,9 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
       />
     );
 
-  const dalil = bab.dalil.find((d) => d.id === s.dalil_id);
+  // 0.42.0: yang tampil di soal mengikuti cara tampil dalil (Arab/terjemah/potongan); dalil lengkap di kotak kunci.
+  const tampil = tampilanDalil(s, bab);
+  const dalilLengkap = dalilKunci(s, bab);
   return (
     <>
     {nomorGrup && mjLama(s) && (
@@ -345,10 +347,11 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
       {!!s.gambar_id && (
         <Gambar id={s.gambar_id} alt={bab.gambar?.find((g) => g.id === s.gambar_id)?.keterangan || `Gambar soal nomor ${no}`} className="max-h-80 max-w-full rounded-lg border bg-kartu" />
       )}
-      {dalil && (
+      {tampil && (
         <figure className="rounded bg-krem p-3">
-          <p dir="rtl" lang="ar" className="font-arab text-2xl">{dalil.arab}</p>
-          <figcaption className="mt-1 text-xs text-pudar">{bukanDalil(dalil) ? "Teks Arab materi" : `${dalil.sumber} · teks terverifikasi`}</figcaption>
+          {tampil.arab && <p dir="rtl" lang="ar" className="font-arab text-2xl">{tampil.arab}</p>}
+          {tampil.terjemah && <p className={tampil.arab ? "mt-2" : ""}>“{tampil.terjemah}”</p>}
+          <figcaption className="mt-1 text-xs text-pudar">{tampil.bukan ? "Teks Arab materi" : [tampil.sumber, "teks terverifikasi"].filter(Boolean).join(" · ")}</figcaption>
         </figure>
       )}
       {s.pilihan && (
@@ -368,6 +371,13 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
           </ul>
         )}
         <div><span className="font-semibold">Pembahasan:</span> <TeksBaris teks={s.pembahasan} /></div>
+        {dalilLengkap && (
+          <div className="space-y-1 border-t border-hijau/30 pt-1">
+            <p className="font-semibold">Dalil ({dalilLengkap.sumber}):</p>
+            <p dir="rtl" lang="ar" className="font-arab text-xl">{dalilLengkap.arab}</p>
+            {dalilLengkap.terjemah && <p>“{dalilLengkap.terjemah}”</p>}
+          </div>
+        )}
         <p className="text-pudar">{s.level} · {s.tp} · skor {s.skor}</p>
       </div>
       )}
@@ -458,6 +468,46 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
 }
 
 type FormProps = { no: number; awal: Soal; bab: Bab; onBatal: () => void; onSimpan: (s: Soal) => Promise<string | void>; judul?: string };
+
+/**
+ * Dalil di form Edit / Tulis soal sendiri (0.42.0, ATURAN-SOAL 5a): dalil, cara tampil, dan potongan (nomor kata).
+ * Cara yang tidak bisa dipakai dalil itu (mis. hadis tanpa terjemah) tidak ditawarkan; teksnya selalu dari data.
+ */
+function PilihDalil({ s, bab, ubah }: { s: Soal; bab: Bab; ubah: (x: Partial<Soal>) => void }) {
+  const d = bab.dalil.find((x) => x.id === s.dalil_id);
+  const cara = d ? caraDalil(s, d) : null;
+  const kata = d && cara === "potong" ? kataArab(d) : d && cara === "potong-terjemah" ? kataTerjemah(d) : [];
+  const [awal, akhir] = potonganSah(s.dalil_potong, kata.length) ?? [1, kata.length];
+  const angka = "w-20 rounded-lg border p-2";
+  return (
+    <fieldset className="space-y-2">
+      <legend>Dalil (teks terverifikasi, bukan ketikan AI)</legend>
+      <div className="flex flex-wrap gap-2">
+        <select aria-label="Dalil" className={`${kotak} min-w-0 flex-1`} value={s.dalil_id ?? ""} onChange={(e) => ubah({ dalil_id: e.target.value || null, dalil_potong: null })}>
+          <option value="">(tidak ada)</option>
+          {bab.dalil.map((x) => <option key={x.id} value={x.id}>{bukanDalil(x) ? `Teks Arab materi: ${x.arab.slice(0, 40)}` : x.sumber}</option>)}
+        </select>
+        {d && (
+          <select aria-label="Cara tampil dalil" className="rounded-lg border p-2 text-sm" value={cara ?? "arab"} onChange={(e) => ubah({ dalil_tampil: e.target.value as CaraDalil, dalil_potong: null })}>
+            {CARA_DALIL.filter((c) => cocokCara(c, d)).map((c) => <option key={c} value={c}>{NAMA_CARA_DALIL[c]}</option>)}
+          </select>
+        )}
+      </div>
+      {kata.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-pudar">Potongan: kata ke</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <input type="number" aria-label="Kata awal potongan" className={angka} min={1} max={kata.length} value={awal} onChange={(e) => ubah({ dalil_potong: [Number(e.target.value), Math.max(Number(e.target.value), akhir)] })} />
+            <span>sampai</span>
+            <input type="number" aria-label="Kata akhir potongan" className={angka} min={awal} max={kata.length} value={akhir} onChange={(e) => ubah({ dalil_potong: [awal, Number(e.target.value)] })} />
+            <span className="text-pudar">dari {kata.length} kata</span>
+          </div>
+          <p dir={cara === "potong" ? "rtl" : undefined} lang={cara === "potong" ? "ar" : undefined} className={`rounded bg-krem p-2 ${cara === "potong" ? "font-arab text-xl" : ""}`}>{kata.slice(awal - 1, akhir).join(" ")}</p>
+        </div>
+      )}
+    </fieldset>
+  );
+}
 
 /**
  * Gambar soal di form Edit / Tulis soal sendiri (0.30.0): tanpa gambar, salah satu gambar materi, atau unggah/tempel
@@ -653,13 +703,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
         <Pratinjau teks={s.pertanyaan} />
       </label>
 
-      <label className="block">
-        Dalil yang ditampilkan (teks Arab terverifikasi)
-        <select className={kotak} value={s.dalil_id ?? ""} onChange={(e) => ubah({ dalil_id: e.target.value || null })}>
-          <option value="">(tidak ada)</option>
-          {bab.dalil.map((d) => <option key={d.id} value={d.id}>{bukanDalil(d) ? `Teks Arab materi: ${d.arab.slice(0, 40)}` : d.sumber}</option>)}
-        </select>
-      </label>
+      <PilihDalil s={s} bab={bab} ubah={ubah} />
 
       {!mjLama(s) && s.bentuk !== "MJ" && <PilihGambar bab={bab} nilai={s.gambar_id ?? null} ubah={(gambar_id) => ubah({ gambar_id })} />}
 

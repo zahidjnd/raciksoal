@@ -215,6 +215,37 @@ belajar, dsb.), **tanpa menggurui** dan **tanpa mengubah kunci jawaban**. Tidak 
 | Materi **hitungan** (Matematika, Fisika, Kimia, Ekonomi, Faraid, dsb.) | ✅ pembahasan wajib memuat **langkah hitung**; pilihan angka diurutkan, tidak diacak. (Peringatan tambahan "periksa hitungan" pernah diusulkan tapi **belum dibuat**; peringatan umum "wajib diperiksa guru" sudah mencakupnya.) |
 | Mapel **Bahasa Arab** | ✅ teks Arab adalah isi pelajaran, bukan dalil. Pilihan materi "Teks Arab: **dalil** (dijaga ketat) / **bahasa** (Arab boleh ditulis AI, tapi potongan yang ternyata ayat dan tidak persis data tetap ditandai 🔍)" |
 
+### 5a. Ayat dan hadis di soal: beragam, tidak asal tempel (disetujui pemilik 13 Nov 2026)
+
+Masalah lama: dalil hanya bisa tampil satu cara (kotak Arab di atas pertanyaan, tanpa terjemah) dan AI menempelkannya ke
+soal mana saja ("sebar ke semua dalil"), termasuk soal yang tidak membahasnya. Ubah soal tidak bisa mengubah bentuknya.
+
+1. ✅ (0.42.0) **Aplikasi yang merencanakan** nomor berdalil (seperti level dan nomor bergambar): porsi pilihan guru di
+   Lanjutan (**tanpa / sedikit ±15% / sedang ±30% (bawaan) / banyak ±50%** dari soal non-menjodohkan, maks 3 nomor per
+   dalil), tersebar merata. Nomor lain **tanpa dalil**. AI hanya memilih dalil yang paling cocok untuk nomor itu.
+2. ✅ (0.42.0) **Cara tampil** tiap nomor berdalil digilir aplikasi supaya merata:
+   | Cara | Yang tampil di soal | Cocok untuk |
+   |---|---|---|
+   | Arab + terjemah | teks Arab + terjemah | isi kandungan, pesan, perilaku yang sesuai |
+   | Arab saja | teks Arab | menentukan surah/ayat atau perawi, lafaz, hukum bacaan |
+   | Terjemah saja | terjemah | pemahaman makna |
+   | Potongan Arab | sebagian kata (1 kata = arti mufradat) | arti kata/frasa, lafaz kunci, kelanjutan ayat |
+   | Potongan terjemah | sebagian terjemah | makna frasa |
+   | Nama sumber saja | tidak ada kotak; soal menyebut "QS. …" (ayat saja) | hafalan isi kandungan |
+   | Hanya di pembahasan | tidak ada di soal; dalil menjadi penguat di kunci & pembahasan | soal biasa |
+3. ✅ (0.42.0) **AI tidak mengetik Arab maupun terjemah**: data bab mengirim kata-kata dalil bernomor, AI cukup menunjuk
+   nomor kata ("dalil_potong": [3, 5]); teksnya disusun aplikasi dari data terverifikasi.
+4. ✅ (0.42.0) **Terjemah ayat** = terjemah yang ditulis guru di materi; bila kosong, **terjemah Kementerian Agama RI**
+   (Tanzil `id.indonesian`, diisi otomatis untuk ayat dari mushaf). Terjemah hadis hanya dari materi guru; hadis tanpa
+   terjemah tidak memakai cara yang butuh terjemah. Nama sumber disembunyikan di soal bila sumber itu jawabannya.
+5. ✅ (0.42.0) **Pemeriksa** (soal merah): dalil tampil tetapi pertanyaan tidak membahasnya; soal menyebut "terjemah"
+   padahal terjemah tidak tampil; soal menyuruh memperhatikan ayat/hadis padahal tidak ada yang tampil; potongan tidak sah;
+   "nama sumber saja" tanpa menyebut sumbernya.
+6. ✅ (0.42.0) **Ubah soal** boleh mengganti dalil dan cara tampilnya ("tampilkan artinya saja"); **Edit** punya pilihan
+   cara tampil + nomor kata potongan. Kunci & pembahasan (web dan Word) memuat dalil lengkap bila di soal tidak utuh.
+7. 🔜 Tahap 2: dalil di pilihan jawaban (A–E berupa potongan ayat), Arab/terjemah rumpang (melengkapi), menyusun urutan
+   potongan. 🔜 Tahap 3: dalil di Benar/Salah, PG kompleks, menjodohkan, isian; memilih potongan dengan klik di Edit.
+
 ---
 
 ## 6. Catatan guru untuk AI (kolom prompt)

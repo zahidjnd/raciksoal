@@ -52,6 +52,25 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.42.0 — 13 November 2026
+- **Ayat & hadis di soal tidak lagi asal tempel.** Aplikasi yang menentukan nomor mana memakai ayat/hadis (tersebar
+  merata); soal lain tanpa dalil. Banyaknya diatur di **Lanjutan → Soal berayat/hadis**: tanpa, sedikit, sedang
+  (bawaan, ±1 dari 3 soal), atau banyak.
+- **Cara tampil beragam**, digilir supaya merata: Arab + terjemah, Arab saja, terjemah saja, potongan ayat/hadis
+  (termasuk satu kata untuk arti kosakata), potongan terjemah, cukup disebut nama sumbernya ("QS. …"), atau hanya di
+  pembahasan. Teksnya selalu dari data terverifikasi, tidak diketik AI. Bila jawabannya nama surah/perawi, sumber di
+  bawah dalil disembunyikan.
+- **Terjemah ayat otomatis** dari Kementerian Agama RI (lewat Tanzil) bila guru tidak menulis terjemahnya di materi.
+  Terjemah hadis tetap dari materi guru.
+- **Ubah soal** sekarang bisa mengganti cara tampil, misalnya "tampilkan artinya saja". **Edit** punya pilihan cara
+  tampil dan potongan (kata ke berapa sampai ke berapa).
+- **Kunci & pembahasan** (web dan Word) memuat dalil lengkap beserta terjemahnya bila di soal hanya potongan atau sebagian.
+- Soal baru ditandai merah bila: ayat/hadis ditempel tetapi pertanyaannya tidak membahasnya, menyebut "terjemah"
+  padahal terjemah tidak tampil, atau menyuruh memperhatikan ayat/hadis padahal tidak ada yang ditampilkan.
+- Set lama tetap tampil seperti dulu.
+
+---
+
 ## 0.41.0 — 13 November 2026
 - **Tabel soal bisa diubah tanpa tanda "|".** Saat Edit, tabel tampil rapi di kotak **Pratinjau**; klik tabelnya
   (atau letakkan kursor di tabel lalu tekan **▦ Tabel**) untuk membuka jendela **Ubah tabel**: isi sel per sel,

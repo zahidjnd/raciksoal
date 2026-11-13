@@ -104,6 +104,12 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   membuang "(رواه ...)", "(البقرة/٢: ٤٣)" (dulu ayat PDF bertanda rujukan tak dikenali). Kitab yang disebut didahulukan.
   `cariDalil` = mushaf lalu hadis; mode bahasa memakai `mushaf().cari` saja. Uji buku PAI: 12/14 hadis 9 kitab dikenali,
   doa/niat/kaidah/definisi tidak. Indeks ±25 MB, dibangun ±3 dtk saat pertama dipakai.
+- **Dalil di soal** (0.42.0, ATURAN-SOAL 5a): nomor berdalil + cara tampil ditentukan APLIKASI (`rencanaDalil` → kisi
+  "DALIL (cara)", `pasangDalil`, `samakanDenganKisi`), porsi di Lanjutan (tanpa/sedikit/sedang/banyak; bawaan sedang).
+  Cara: utuh, arab, terjemah, potong, potong-terjemah, rujukan, pembahasan (`CARA_DALIL`). AI menunjuk nomor kata
+  (`dalil_potong`), teks disusun `tampilanDalil`; kunci memuat dalil lengkap (`dalilKunci`). Soal tanpa `dalil_tampil`
+  = soal lama (Arab saja, tidak diperiksa "asal tempel"). Terjemah ayat kosong → Kemenag (`data/quran/id.indonesian.txt`,
+  Tanzil, non-komersial; `lengkapiTerjemah` di `babDariSet` & `mulaiBuatSoal`). Hadis tanpa terjemah → hanya cara Arab.
 - **Materi**: ayat otomatis dari mushaf (kotak hijau); hadis di luar data = sumber + centang guru; tulisan Arab ≤ 3 kata = istilah, diterima
   apa adanya (`istilahArab`); teks Arab bukan dalil = tombol "Bukan ayat/hadis" (`bukan: true`, tanpa sumber & centang).
   Teks Arab dari PDF tidak pernah dipakai apa adanya (hanya penunjuk ayat). TP: tertulis di materi = hijau; usulan AI = wajib dicentang.

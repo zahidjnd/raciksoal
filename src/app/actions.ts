@@ -5,14 +5,14 @@ import { db } from "@/db";
 import { gambar, hasilSoal, pemakaianAi } from "@/db/schema";
 import { BATAS_GAMBAR, rapikanNilaiGambar, ukuranJpeg } from "@/lib/gambar";
 import { daftarModel, tanyaAI, type GambarAI } from "@/lib/ai";
-import { bagiTahap, jumlahSoal, miripIndikator, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, laranganIsian, ringkasSudah, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, buatSistem, buatAnalisaMateri, buatBacaHalaman, bersihkanIdentitas, pasangKunciPgk, grupSet, rencanaLevelSet, sesuaikanLevel, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
+import { bagiTahap, jumlahSoal, miripIndikator, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, laranganIsian, ringkasSudah, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, buatSistem, buatAnalisaMateri, buatBacaHalaman, bersihkanIdentitas, pasangKunciPgk, grupSet, rencanaDalil, rencanaLevelSet, sesuaikanLevel, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { BATAS_MATERI, modeArab, rapikanBacaanHalaman, susunDraf, terapkanAnalisa } from "@/lib/materi";
-import { bersihkanTanggapan, gabungBab, identitasBab, jawabanAman, kataTerpakai, KELAS, LEVEL, mjLama, pemeriksaArab, POLA_ARAB, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
+import { bersihkanTanggapan, gabungBab, identitasBab, jawabanAman, kataTerpakai, KELAS, LEVEL, mjLama, pasangDalil, pemeriksaArab, POLA_ARAB, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { babDariSet, babMilik, daftarBabMilik, dataGambar, gambarMilik } from "@/lib/bab";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
 import { hitungHariIni, hitungPemakaian } from "@/lib/pemakaian";
-import { mushaf, potongAyat } from "@/lib/mushaf";
+import { lengkapiTerjemah, mushaf, potongAyat } from "@/lib/mushaf";
 import { cariDalil } from "@/lib/hadis";
 import { BATAS_ANALISA, BATAS_HALAMAN_PDF, BATAS_PER_GURU, BATAS_TOTAL, BATAS_UBAH_PER_GURU } from "@/lib/pembatas";
 
@@ -138,7 +138,8 @@ export async function mulaiBuatSoal(input: Pengaturan) {
     const id0 = identitasBab(babs[0]!);
     if (babs.some((b) => identitasBab(b!).mapel.toLowerCase() !== id0.mapel.toLowerCase() || identitasBab(b!).kelas !== id0.kelas))
       return { ok: false as const, pesan: "Materi yang digabung harus satu mapel dan satu kelas." };
-    const bab = gabungBab(babs as Bab[]);
+    // 0.42.0: ayat dari mushaf tanpa terjemah guru diberi terjemah Kemenag (disimpan di salinan bab set).
+    const bab = lengkapiTerjemah(gabungBab(babs as Bab[]));
     // 0.33.0: batas total sama dengan batas satu materi (biaya token & panjang pesan yang diterima AI).
     const totalHuruf = bab.materi.join("\n").length;
     if (totalHuruf > BATAS_MATERI.isi)
@@ -232,7 +233,8 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan, guruId: string) {
         pasangWacana(periksaKisi(isi?.kisi, p.jumlah, bab, cekAyat).map((k, i) => ({ ...k, grup: grup[i] ?? null, level: sesuaikanLevel(k.level, rencana[i]) })), grup.some(Boolean) ? isi?.wacana : null, bab, cekAyat),
         p.tujuan === TKA,
       );
-      return { kisi, tanggapan: p.catatan ? bersihkanTanggapan(isi?.tanggapan, bab, cekAyat) : "" };
+      // 0.42.0: nomor berdalil & cara tampil dari rencana aplikasi (set tanpa porsi dalil = set lama: kisi apa adanya).
+      return { kisi: p.porsiDalil ? pasangDalil(kisi, rencanaDalil(p, bab), bab, !!p.catatan) : kisi, tanggapan: p.catatan ? bersihkanTanggapan(isi?.tanggapan, bab, cekAyat) : "" };
     }, pilihGambar());
     if (tanggapan) info.tanggapan = tanggapan;
     // Pemeriksaan kisi-kisi (0.25.0): AI mencari baris kembar lintas bentuk dan menulis ulang yang belakangan. Gagal → kisi
@@ -563,7 +565,7 @@ async function soalBaruDariAI(id: number, no: number, mode: "ganti" | "ubah" | "
       const t = String(x ?? "").trim();
       return t && !pemeriksaArab(bab, cekAyat)(t).length ? t : null;
     };
-    const barisBaru = baris && { ...baris, stimulus: aman(stimulus) ?? baris.stimulus, ...(ubah && { indikator: aman(indikator) ?? baris.indikator, tp: soal.tp, level: soal.level }) };
+    const barisBaru = baris && { ...baris, stimulus: aman(stimulus) ?? baris.stimulus, ...(ubah && { indikator: aman(indikator) ?? baris.indikator, tp: soal.tp, level: soal.level, ...(baris.dalil_tampil !== undefined && { dalil_id: soal.dalil_id, dalil_tampil: soal.dalil_tampil ?? null }) }) };
 
     // Tulis ke isi TERBARU set (bisa sudah diedit guru selama AI bekerja), dengan baris dikunci.
     const tulis = await denganSetTerkunci(id, no, async (kini, tx) => {

@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { gambar, materi } from "@/db/schema";
 import { DAFTAR_BAB } from "@/data";
 import type { Bab } from "./soal";
+import { lengkapiTerjemah } from "./mushaf";
 
 const POLA_MATERI = /^materi-(\d+)$/;
 
@@ -54,7 +55,12 @@ export async function gambarMilik(ids: number[], guruId: string) {
 }
 
 /** Bab sebuah set: salinan yang disimpan saat set dibuat; set lama (tanpa salinan) memakai bab bawaan. */
-export const babDariSet = (h: { bab: unknown; babId: string }): Bab | undefined => (h.bab as Bab | null) ?? DAFTAR_BAB[h.babId];
+// 0.42.0: ayat tanpa terjemah guru diberi terjemah Kemenag juga untuk set lama (tampilan, Word, Ubah soal). Soal lama
+// tanpa cara tampil tetap tampil seperti dulu (Arab saja), jadi set lama tidak berubah.
+export const babDariSet = (h: { bab: unknown; babId: string }): Bab | undefined => {
+  const bab = (h.bab as Bab | null) ?? DAFTAR_BAB[h.babId];
+  return bab && lengkapiTerjemah(bab);
+};
 
 /** Judul pendek untuk daftar ("Bab III"). */
 export const judulPendek = (judul: string | null | undefined, babId: string) =>

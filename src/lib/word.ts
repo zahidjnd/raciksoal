@@ -26,7 +26,7 @@ import { MAPEL_INGGRIS } from "./mapel";
 import { hariTanggal, mapelTka, NAMA_BENTUK, semesterDari, TKA, WAKTU_BAWAAN, type Pengaturan } from "./prompt";
 import { kunciSatu } from "./kunci";
 import { rumusWord } from "./rumus";
-import { bukanDalil, identitasBab, JOROK, JUMLAH_PREMIS, kategoriBaru, mjLama, paragrafArab, pecahBaris, POLA_ARAB, POLA_RUMUS, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
+import { dalilKunci, identitasBab, JOROK, JUMLAH_PREMIS, kategoriBaru, mjLama, paragrafArab, pecahBaris, POLA_ARAB, POLA_RUMUS, tampilanDalil, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
 
 const PERINGATAN = "Soal dibuat AI, wajib diperiksa guru sebelum dipakai.";
 
@@ -254,11 +254,13 @@ export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tangga
       // Gambar soal (0.30.0): di bawah pokok soal, muat satu kolom lembar soal.
       const g = s.gambar_id ? gambar.get(s.gambar_id) : undefined;
       if (g) isi.push(par([new ImageRun({ type: "jpg", data: g.data, transformation: ukuranWord(g.lebar, g.tinggi) })], { indent: { left: 400 }, keepNext: true, spacing: { before: 40, after: 60 } }));
-      const dalil = bab.dalil.find((d) => d.id === s.dalil_id);
+      // 0.42.0: bagian dalil yang tampil mengikuti cara tampilnya (Arab / terjemah / potongan; sumber disembunyikan bila ditanyakan).
+      const dalil = tampilanDalil(s, bab);
       if (dalil) {
-        isi.push(par(teks(dalil.arab), { bidirectional: true, alignment: AlignmentType.START, indent: { right: 400 }, keepNext: true, spacing: { after: 0 } }));
+        if (dalil.arab) isi.push(par(teks(dalil.arab), { bidirectional: true, alignment: AlignmentType.START, indent: { right: 400 }, keepNext: true, spacing: { after: 0 } }));
+        if (dalil.terjemah) isi.push(par(teks(`“${dalil.terjemah}”`, { italics: true }), { indent: { left: 400 }, keepNext: true, spacing: { before: dalil.arab ? 40 : 0, after: 0 } }));
         // Teks Arab materi yang ditandai "Bukan ayat/hadis": tanpa keterangan sumber di lembar siswa.
-        if (!bukanDalil(dalil)) isi.push(par([r(`(${dalil.sumber})`, { italics: true, size: 18 })], { alignment: AlignmentType.RIGHT, keepNext: true }));
+        if (dalil.sumber) isi.push(par([r(`(${dalil.sumber})`, { italics: true, size: 18 })], { alignment: AlignmentType.RIGHT, keepNext: true }));
       }
       if (s.pilihan) s.pilihan.forEach((o, i) => isi.push(...butirBaris(`${HURUF[i]}.`, o, 800, { spacing: { after: 0 }, keepNext: i === 0 || i === 3 })));
       if (bentuk === "MJ") isi.push(tabelMenjodohkan(s, undefined, L));
@@ -467,6 +469,13 @@ export function buatWordKunci(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Da
           );
       }
       if (s.pembahasan) isi.push(...teksCampur([new TextRun({ text: "Pembahasan: ", bold: true })], s.pembahasan, 400, LEBAR));
+      // 0.42.0: dalil lengkap bila di soal hanya potongan/Arab/terjemah/nama sumber/di pembahasan.
+      const dalil = dalilKunci(s, bab);
+      if (dalil) {
+        isi.push(par([r(`Dalil (${dalil.sumber}):`, { bold: true })], { indent: { left: 400 }, keepNext: true, spacing: { after: 0 } }));
+        isi.push(par(teks(dalil.arab), { bidirectional: true, alignment: AlignmentType.START, indent: { right: 400 }, keepNext: !!dalil.terjemah, spacing: { after: 0 } }));
+        if (dalil.terjemah) isi.push(par(teks(`“${dalil.terjemah}”`, { italics: true }), { indent: { left: 400 }, spacing: { after: 0 } }));
+      }
       isi.push(kecil(`${s.level} · ${s.tp} · skor ${s.skor}`));
       isi.push(par([], { spacing: { after: 80 } }));
     }

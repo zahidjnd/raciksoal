@@ -35,7 +35,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         {children}
         {/* Wajib menurut ketentuan pemakaian teks Tanzil (langkah 9). */}
         <footer className="py-4 text-center text-xs text-pudar">
-          Teks Al-Qur&apos;an: <a className="underline" href="https://tanzil.net" target="_blank" rel="noreferrer">Tanzil Project (tanzil.net)</a>
+          Teks Al-Qur&apos;an: <a className="underline" href="https://tanzil.net" target="_blank" rel="noreferrer">Tanzil Project (tanzil.net)</a> · Terjemah ayat: Kementerian Agama RI (via Tanzil)
         </footer>
       </body>
     </html>

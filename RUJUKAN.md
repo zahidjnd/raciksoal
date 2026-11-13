@@ -82,8 +82,11 @@ karena bukan aturan soal. Pengecualian: pemisahan data guru dan kerahasiaan (bag
 ### B. Terjemah ayat
 | Aturan | Di aplikasi | Tingkat | Dasar | Catatan |
 |---|---|---|---|---|
-| Terjemah diisi guru, tidak dibuat AI, tidak dibundel | form materi | R3 | D04 belum berizin | ✔ |
-| Sumber terjemah tidak tercatat | — | **R4** | — | Usul: kolom "sumber terjemah" |
+| Terjemah tidak dibuat AI; terjemah guru di materi didahulukan | form materi | R3 | aturan keras no. 5 | ✔ |
+| Ayat dari mushaf tanpa terjemah guru → **terjemah Kementerian Agama RI** dari Tanzil (`data/quran/id.indonesian.txt`, versi Tanzil 2010; di folder server, tidak bisa diunduh browser), dibundel sejak 0.42.0 | `mushaf.ts` `terjemahAyat` | R3 | keputusan pemilik 13 Nov 2026; ketentuan Tanzil: terjemah "for non-commercial purposes only", sumber dicantumkan | ⚠️ Edisi lama (bukan Terjemah Kemenag 2019 / D04). Aman untuk pemakaian internal non-komersial; di luar itu perlu izin penerbit |
+| Terjemah hadis hanya dari materi guru | `soal.ts` `caraDalil` | R3 | belum ada data terjemah hadis yang terpercaya | ✔ |
+| Sumber terjemah ayat tidak tercatat per dalil | — | **R4** | — | Sebagian: tanda `terjemahKemenag` untuk terjemah otomatis |
+| Ragam cara tampil dalil di soal (Arab+terjemah, Arab, terjemah, potongan, nama sumber, di pembahasan), direncanakan aplikasi | `rencanaDalil`, `tampilanDalil` | R2 + R3 | kaidah penulisan soal (stimulus relevan dengan pertanyaan) + keputusan pemilik 13 Nov 2026 | ATURAN-SOAL 5a |
 
 ### C. Hadis
 | Aturan | Di aplikasi | Tingkat | Dasar | Catatan |

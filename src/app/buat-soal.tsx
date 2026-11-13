@@ -11,7 +11,7 @@ import { Panah } from "./panah";
 import { skorOtomatis } from "@/lib/skor";
 import { kunciRingkas } from "@/lib/kunci";
 import { PAKET, susunPaket, type Paket } from "@/lib/paket";
-import { ASAS_ALFATAH, ATURAN_TUJUAN, BOBOT_BAWAAN, hitungLevel, jumlahSoal, KESULITAN, MAKS_CATATAN, MAKS_SOAL, MAPEL_EKSAK, mapelTka, NAMA_BENTUK, namaBentuk, namaLevelTka, namaTujuan, PESAN_MJ_MIN, semesterDari, TKA, TUJUAN, type Identitas, type Pengaturan } from "@/lib/prompt";
+import { ASAS_ALFATAH, ATURAN_TUJUAN, BOBOT_BAWAAN, hitungLevel, jumlahSoal, KESULITAN, MAKS_CATATAN, MAKS_SOAL, MAPEL_EKSAK, mapelTka, NAMA_BENTUK, namaBentuk, namaLevelTka, namaTujuan, PESAN_MJ_MIN, semesterDari, TKA, TUJUAN, type Identitas, type Pengaturan, type PorsiDalil } from "@/lib/prompt";
 import { mjLama, pilihanAngka, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { alasanDalil, type IsianMateri } from "@/lib/materi";
 import type { Preferensi } from "@/lib/preferensi";
@@ -117,6 +117,7 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: strin
     catatan: bawaan.catatan || undefined,
     bobot: BOBOT_BAWAAN,
     modelSlot: 1,
+    porsiDalil: "sedang",
   });
   const [daftarModel, setDaftarModel] = useState<{ slot: number; nama: string }[]>([]);
   const [mapel, setMapel] = useState("");
@@ -505,6 +506,17 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: strin
                   <Angka label={`${tka ? `${namaLevelTka(mapel).MOTS} / ` : ""}MOTS (C3) %`} nilai={p.level.MOTS} ubah={(n) => setP({ ...p, level: { ...p.level, MOTS: n } })} />
                   <Angka label={`${tka ? `${namaLevelTka(mapel).HOTS} / ` : ""}HOTS (C4–C6) %`} nilai={p.level.HOTS} ubah={(n) => setP({ ...p, level: { ...p.level, HOTS: n } })} />
                 </fieldset>
+                {/* 0.42.0 (ATURAN-SOAL 5a): banyaknya soal yang memakai ayat/hadis materi; nomor & cara tampilnya diatur aplikasi. */}
+                <label className="block text-sm">
+                  <span className="font-semibold">Soal berayat/hadis</span>
+                  <select className="mt-1 w-full rounded-lg border p-2" value={p.porsiDalil ?? "sedang"} onChange={(e) => setP({ ...p, porsiDalil: e.target.value as PorsiDalil })}>
+                    <option value="tanpa">Tanpa ayat/hadis</option>
+                    <option value="sedikit">Sedikit (±1 dari 7 soal)</option>
+                    <option value="sedang">Sedang (±1 dari 3 soal)</option>
+                    <option value="banyak">Banyak (±1 dari 2 soal)</option>
+                  </select>
+                  <span className="mt-1 block text-pudar">Hanya bila materi memuat ayat/hadis. Cara tampilnya beragam: Arab + terjemah, Arab saja, terjemah saja, potongan, atau di pembahasan.</span>
+                </label>
                 {/* Daftar model hanya dikirim server untuk admin; guru tidak melihat pilihan ini. */}
                 {daftarModel.length > 0 && (
                   <label className="block text-sm">
