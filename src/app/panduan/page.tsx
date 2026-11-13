@@ -154,7 +154,7 @@ const TOPIK: { id: string; judul: string; isi: React.ReactNode }[] = [
           <li>Tombol <b>↑</b> / <b>↓</b> memindah urutan soal di dalam bagiannya.</li>
           <li>Menjodohkan memakai satu daftar jawaban bersama, jadi hanya bisa diperbaiki lewat <b>Edit</b>.</li>
         </ul>
-        <Gambar nama="7-lainnya" alt="Menu Lainnya: Ganti soal ini, Tambah soal serupa, Hapus soal ini, Ubah soal" lebar={469} tinggi={469} />
+        <Gambar nama="7-lainnya" alt="Menu Lainnya: Ganti soal ini, Tambah soal serupa, Hapus soal ini, Ubah soal" lebar={469} tinggi={497} />
       </>
     ),
   },

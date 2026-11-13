@@ -162,6 +162,8 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   bernomor; nomor `<N>` di teks = nomor tanda), topik & tanya-jawab dalam `<details>` (`BukaLipatan` membuka lipatan dari
   `#id`). Tombol/tampilan berubah → perbarui teks DAN ambil ulang gambarnya: foto HP 375 px di preview (akun guru.uji.b,
   sembunyikan `nextjs-portal`), koordinat CSS di `scripts/panduan-gambar.json`, lalu `scripts/panduan-tandai.py`.
+  Foto panel preview tidak bisa disimpan jadi file: 7-lainnya (0.46.0) difoto Edge headless lewat CDP (375 px, DPR 1,25,
+  mobile, cookie dari login skrip; kata sandi dibaca skrip, tidak dicetak), koordinat dari `getBoundingClientRect`.
 - **Form Set baru**: file bisa diseret ke kotak materi (sama dengan Lampirkan). Teks tempelan yang belum dipakai disimpan
   di localStorage `raciksoal-draf-materi` (`DRAF_TEKS`, hanya halaman Set baru), dihapus setelah materinya tersimpan di server.
 - **Set**: hapus = hapus lunak (`dihapus`, tetap dihitung jatah); ganti nama & hapus lewat menu ⋯ riwayat sidebar.
