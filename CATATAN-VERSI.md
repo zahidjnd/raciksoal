@@ -52,6 +52,12 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.46.1 — 13 November 2026
+- **Panduan**: gambar menu "Lainnya" diperbarui (kotak permintaan Ubah soal kini dua baris), contoh permintaan
+  ditambah ("ganti kasusnya jadi tentang pasar", "jadikan uraian").
+
+---
+
 ## 0.46.0 — 13 November 2026
 - **Ubah soal bisa mengganti bentuk soal**: tulis misalnya "jadikan uraian", "ubah jadi PG kompleks", atau "jadikan
   benar/salah". Soal ditulis ulang lengkap dalam bentuk baru (pilihan, rubrik, kunci, pembahasan), lalu dipindah ke
