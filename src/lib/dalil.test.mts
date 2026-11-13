@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { bagianUrutan, caraDalil, cocokCara, dalilKunci, korpusArab, pasangDalil, periksaSoal, RUMPANG, samakanDenganKisi, susunPilihanDalil, tampilanDalil, type Bab, type BarisKisi, type Soal } from "./soal.ts";
+import { isiKodeSisip, isiSisipan, SISIP_GAGAL, bagianUrutan, caraDalil, cocokCara, dalilKunci, korpusArab, pasangDalil, periksaSoal, RUMPANG, samakanDenganKisi, susunPilihanDalil, tampilanDalil, type Bab, type BarisKisi, type Soal } from "./soal.ts";
 import { bersihkanPengaturan, buatPermintaanKisi, buatSistem, rencanaDalil, type Pengaturan } from "./prompt.ts";
 import { bacaTerjemah, lengkapiTerjemah, terjemahAyat } from "./mushaf.ts";
 
@@ -15,9 +15,9 @@ const soal = (x: Partial<Soal>): Soal => ({ bentuk: "PG", dalil_id: null, pertan
 test("rencana dalil: porsi dari nomor non-menjodohkan, tersebar, cara digilir, set lama/tanpa dalil kosong", () => {
   const r = rencanaDalil(p({ PG: 20, MJ: 5 }, "sedang"), bab);
   assert.equal(r.length, 25);
-  assert.equal(r.filter(Boolean).length, 6); // 30% dari 20 PG
-  assert.ok(r.slice(20).every((c) => c === null)); // menjodohkan tanpa dalil
-  assert.deepEqual(r.filter(Boolean).slice(0, 4), ["utuh", "rumpang", "terjemah", "pilihan"]);
+  assert.equal(r.slice(0, 20).filter(Boolean).length, 6); // 30% dari 20 PG
+  assert.ok(r.slice(20).every((c) => c === "sisip")); // 0.44.0: blok menjodohkan pertama = lafaz ↔ arti
+  assert.deepEqual(r.filter(Boolean).slice(0, 4), ["utuh", "rumpang", "sisip", "terjemah"]);
   // cara PG (rumpang, pilihan, urutan) tidak jatuh ke nomor bukan PG
   const campur = rencanaDalil(p({ PG: 4, URAIAN: 6 }, "banyak"), bab);
   campur.forEach((c, i) => i >= 4 && assert.ok(!c || !["rumpang", "rumpang-terjemah", "pilihan", "pilihan-terjemah", "urutan"].includes(c), `${i} ${c}`));
@@ -140,4 +140,41 @@ test("tahap 2: pengecoh yang sama dengan kunci (beda awalan/harakat saja) ditola
   const s = susunPilihanDalil(soal({ dalil_id: "a", dalil_tampil: "pilihan", dalil_potong: [4, 4], pilihan: [], pertanyaan: "Lafaz yang berarti pembeda adalah ....", dalil_pengecoh: [{ dalil_id: "b", potong: [1, 1] }] }), { dalil: [a, b] });
   assert.equal(s.pilihan!.length, 5);
   assert.ok(!s.pilihan!.includes("الْفُرْقَانَ"), s.pilihan!.join(" | "));
+});
+
+test("tahap 3: kode sisipan [[A a-b]] / [[T a-b]] diganti teks asli di semua bentuk", () => {
+  const isra = bab.dalil.find((d) => d.id === "isra-32")!;
+  const nur = bab.dalil.find((d) => d.id === "nur-2")!;
+  const ka = isra.arab.split(/\s+/), kt = isra.terjemah.split(/\s+/);
+  assert.equal(isiKodeSisip("Lafaz [[A 1-2]] berarti ....", "isra-32", bab), `Lafaz ${ka.slice(0, 2).join(" ")} berarti ....`);
+  assert.equal(isiKodeSisip("[[T 2]]", "isra-32", bab), kt[1]);
+  assert.equal(isiKodeSisip("[[nur-2 A 1-3]]", "isra-32", bab), nur.arab.split(/\s+/).slice(0, 3).join(" "));
+  assert.equal(isiKodeSisip("[[A 50-60]] dan [[tidak-ada A 1]]", "isra-32", bab), `${SISIP_GAGAL} dan ${SISIP_GAGAL}`);
+  // Benar/salah, menjodohkan (jodoh), isian (kunci), PG kompleks (pilihan)
+  const bs = isiSisipan(soal({ bentuk: "BS", dalil_id: "isra-32", dalil_tampil: "sisip", pertanyaan: "Lafaz [[A 1-2]] berisi larangan mendekati zina.", kunci: "Benar", pilihan: undefined }), bab);
+  assert.equal(periksaSoal([bs], bab)[0].peringatan!.join(" | "), "");
+  const mj = isiSisipan(soal({ bentuk: "MJ", dalil_id: "isra-32", dalil_tampil: "sisip", pertanyaan: "[[A 1-2]]", jodoh: "[[T 1-3]]", pilihan: undefined }), bab);
+  assert.deepEqual([mj.pertanyaan, mj.jodoh], [ka.slice(0, 2).join(" "), kt.slice(0, 3).join(" ")]);
+  const isian = isiSisipan(soal({ bentuk: "ISIAN", dalil_id: "isra-32", dalil_tampil: "sisip", pertanyaan: "Lanjutan lafaz [[A 1-2]] adalah ....", kunci: "[[A 3-4]]", pilihan: undefined }), bab);
+  assert.equal(isian.kunci, ka.slice(2, 4).join(" "));
+  assert.equal(periksaSoal([isian], bab)[0].peringatan!.join(" | "), "");
+  const pgk = isiSisipan(soal({ bentuk: "PGK", dalil_id: "isra-32", dalil_tampil: "sisip", pertanyaan: "Lafaz yang berisi larangan adalah ....", pilihan: ["[[A 1-2]]", "[[A 3-4]]", "[[nur-2 A 1-2]]", "[[nur-2 A 3-4]]", "[[nur-2 A 5-6]]"], kunci: ["A", "B"] }), bab);
+  assert.ok(pgk.pilihan!.every((x) => !x.includes("[[")));
+  // Sisipan tidak sah / cara sisip tanpa potongan → ditandai
+  assert.match(periksaSoal([isiSisipan(soal({ dalil_id: "isra-32", dalil_tampil: "sisip", pertanyaan: "Lafaz [[A 70]] berarti ...." }), bab)], bab)[0].peringatan!.join(), /tidak sah/);
+  assert.match(periksaSoal([soal({ dalil_id: "isra-32", dalil_tampil: "sisip", pertanyaan: "Lafaz larangan dalam ayat itu berarti ...." })], bab)[0].peringatan!.join(), /tidak ada potongan dalil/);
+  assert.equal(tampilanDalil(bs, bab), null); // tanpa kotak dalil
+});
+
+test("tahap 3: tanpa tanda palsu & tanpa jawaban menjodohkan kembar", () => {
+  const w = (x: Partial<Soal>) => periksaSoal([soal(x)], bab)[0].peringatan!.join(" | ");
+  assert.equal(w({ pertanyaan: "Perhatikan dua kutipan definisi berikut! Unsur yang membedakannya adalah ...." }), "");
+  assert.equal(w({ pertanyaan: "Perhatikan bunyi Pasal 33 ayat (3) UUD 1945 berikut! Maknanya adalah ...." }), "");
+  assert.match(w({ pertanyaan: "Perhatikan firman Allah Swt. berikut! Isinya adalah ...." }), /tidak ada yang ditampilkan/);
+  const nur = bab.dalil.find((d) => d.id === "nur-2")!;
+  const t = nur.terjemah.split(/\s+/);
+  const ujung = t.findIndex((x) => /[,.]$/.test(x)) + 1; // kata terjemah bertanda baca
+  assert.ok(ujung > 0 && !/[,.]$/.test(isiKodeSisip(`[[T 1-${ujung}]]`, "nur-2", bab)));
+  const mj = (pertanyaan: string, kunci: string) => soal({ bentuk: "MJ", pertanyaan, jawaban: ["al-Qur'an", "Kitab", "petunjuk", "al-Qur'an,"], kunci, grup: 1, pilihan: undefined });
+  assert.match(periksaSoal([mj("الْكِتَابُ", "B"), mj("الْكِتَابَ", "A")], bab)[1].peringatan!.join(), /jawaban yang sama persis[\s\S]*hanya beda harakat/);
 });

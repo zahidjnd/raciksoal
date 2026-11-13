@@ -7,7 +7,7 @@ import { BATAS_GAMBAR, rapikanNilaiGambar, ukuranJpeg } from "@/lib/gambar";
 import { daftarModel, tanyaAI, type GambarAI } from "@/lib/ai";
 import { bagiTahap, jumlahSoal, miripIndikator, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, laranganIsian, ringkasSudah, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, buatSistem, buatAnalisaMateri, buatBacaHalaman, bersihkanIdentitas, pasangKunciPgk, grupSet, rencanaDalil, rencanaLevelSet, sesuaikanLevel, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { BATAS_MATERI, modeArab, rapikanBacaanHalaman, susunDraf, terapkanAnalisa } from "@/lib/materi";
-import { bersihkanTanggapan, gabungBab, identitasBab, jawabanAman, kataTerpakai, KELAS, LEVEL, mjLama, pasangDalil, pemeriksaArab, POLA_ARAB, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, susunPilihanDalil, terapkanBobot, type Bab, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
+import { bersihkanTanggapan, gabungBab, identitasBab, jawabanAman, kataTerpakai, KELAS, LEVEL, mjLama, pasangDalil, pemeriksaArab, POLA_ARAB, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, isiSisipan, samakanDenganKisi, susunMenjodohkan, susunMjLama, susunPilihanDalil, terapkanBobot, type Bab, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { babDariSet, babMilik, daftarBabMilik, dataGambar, gambarMilik } from "@/lib/bab";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
@@ -264,7 +264,8 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan, guruId: string) {
       const soal = await tanya(`Tahap ${i + 1}`, pengguna, (d) => ambilSoal(d, baris.length), gambarTahap.length ? pilihGambar(gambarTahap) : []);
       // Menjodohkan gaya lama: daftar jawaban bersama per blok disusun & diacak aplikasi (susunMjLama).
       // 0.43.0: pilihan A–E soal PG berdalil (rumpang/pilihan/urutan) disusun aplikasi dari teks terverifikasi.
-      semua.push(...susunMjLama(soal.map((s, j) => samakanDenganKisi(s, baris[j]))).map((s) => susunPilihanDalil(susunMenjodohkan(s), bab)));
+      // 0.44.0: kode sisipan dalil ([[A 3-4]]) diganti teks asli SEBELUM daftar jawaban menjodohkan disusun.
+      semua.push(...susunMjLama(soal.map((s, j) => isiSisipan(samakanDenganKisi(s, baris[j]), bab))).map((s) => susunPilihanDalil(susunMenjodohkan(s), bab)));
       // Draf untuk tampilan bertahap (status tetap "proses"): sudah lewat penjaga ayat, tetapi kunci belum
       // diratakan dan skor belum diisi; keduanya baru di akhir untuk seluruh set.
       await simpan({ soal: periksaSoal(semua, bab, cekAyat) });
@@ -307,7 +308,7 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan, guruId: string) {
         const hasil = daftar.map((baru) => {
           // 0.43.0: dalil tetap (kisi); potongan & pengecoh lama dipakai bila AI tidak menuliskannya lagi (set 150 no. 9).
           const potongLama = baru.dalil_potong ? {} : { dalil_potong: s.dalil_potong };
-          const { stimulus: _s, indikator, ...isi } = susunPilihanDalil(susunMenjodohkan(samakanDenganKisi({ ...baru, ...potongLama }, kisi[i])), bab);
+          const { stimulus: _s, indikator, ...isi } = susunPilihanDalil(susunMenjodohkan(isiSisipan(samakanDenganKisi({ ...baru, ...potongLama }, kisi[i]), bab)), bab);
           void _s;
           // Konsep pengganti tidak boleh mengulang baris kisi lain (0.31.2, set 117: isian 21 "PPnBM" dan 23 "Pajak Penjualan
           // atas Barang Mewah" diperbaiki ke konsep yang sama; indikatornya kembar, kuncinya beda tulisan).
@@ -551,7 +552,7 @@ async function soalBaruDariAI(id: number, no: number, mode: "ganti" | "ubah" | "
     const idGambar = [lama.gambar_id, baris?.gambar_id].filter(Boolean);
     const gambarAI = idGambar.length ? (await gambarUntukAI(bab, h.guruId))(idGambar) : [];
     const r = await tanyaDenganCadangan(sistem, pengguna, p.modelSlot ?? 1, !p.bandingkan, (d) => ambilSoal(d), Date.now() + TENGGAT_SATU_SOAL, gambarAI);
-    const { stimulus, indikator, ...baru } = susunMenjodohkan({ ...r.hasil[0], bentuk: lama.bentuk }); // Menjodohkan: pasangan AI → premis, jawaban acak, kunci
+    const { stimulus, indikator, ...baru } = susunMenjodohkan(isiSisipan({ ...r.hasil[0], bentuk: lama.bentuk }, bab)); // Menjodohkan: pasangan AI → premis, jawaban acak, kunci
     // Ubah: level/TP dari AI dipakai hanya kalau valid. Ganti/tambah: disamakan dengan kisi-kisi.
     // Grup & wacana tidak diambil dari jawaban AI: tetap milik soal lama (soal grup tetap di grupnya).
     const grupLama = lama.grup && lama.wacana ? { grup: lama.grup, wacana: lama.wacana } : {};

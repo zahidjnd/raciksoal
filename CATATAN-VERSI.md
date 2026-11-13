@@ -52,6 +52,20 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.44.0 — 13 November 2026
+- **Ayat/hadis kini bisa ada di semua bentuk soal**, disisipkan langsung di dalam teksnya (teks asli dari data,
+  bukan ketikan AI):
+  - **Benar/Salah**: misalnya "Lafaz وَآتُوا الزَّكَاةَ berisi perintah menunaikan zakat."
+  - **PG kompleks**: lafaz di kalimat soal atau di pilihan jawaban.
+  - **Menjodohkan**: satu blok bisa menjadi **lafaz ↔ artinya** (lajur kanan potongan terjemah).
+  - **Isian**: misalnya "Lanjutan lafaz … adalah ….", kuncinya lafaz Arab.
+- **Edit lebih mudah**: potongan ayat/hadis dipilih dengan **mengklik kata** (kata awal lalu kata akhir). Ada tombol
+  **Sisipkan** untuk memasukkan lafaz atau terjemah asli ke kotak teks yang sedang diisi.
+- Perbaikan: "Perhatikan kutipan definisi berikut" atau "Pasal 33 ayat (3) berikut" tidak lagi dikira ayat Al-Qur'an;
+  jawaban menjodohkan yang hanya beda koma/harakat ditandai.
+
+---
+
 ## 0.43.0 — 13 November 2026
 - **Soal ayat/hadis jenis baru (pilihan ganda)**, disusun aplikasi dari teks terverifikasi:
   - **Melengkapi (rumpang)**: ayat/hadis atau terjemahnya tampil dengan satu bagian "……"; pilihan A–E berupa potongan.

@@ -256,7 +256,13 @@ soal mana saja ("sebar ke semua dalil"), termasuk soal yang tidak membahasnya. U
    lalu mengacak. Pengecoh hanya dari dalil materi (bukan ayat lain di mushaf), jadi materi dengan satu ayat pendek
    cukup untuk potongan pendek saja. Edit punya tombol **Susun pilihan dari dalil**. Pemeriksa menandai soal yang
    kuncinya bukan potongan dalil yang dipilih.
-8. 🔜 Tahap 3: dalil di Benar/Salah, PG kompleks, menjodohkan, isian; memilih potongan dengan klik di Edit.
+8. ✅ (0.44.0, tahap 3) Cara **disisipkan** (semua bentuk): potongan dalil masuk ke DALAM teks soal: pernyataan
+   Benar/Salah ("Lafaz وَآتُوا الزَّكَاةَ berisi …"), pilihan PG kompleks (beberapa lafaz), lajur menjodohkan, dan kunci
+   isian ("Lanjutan lafaz … adalah …." → kunci lafaz Arab). AI menulis kode `[[A 3-4]]` (kata Arab ke-3–4) atau
+   `[[T 2-5]]` (kata terjemah), aplikasi menggantinya dengan teks asli; kode tidak sah ditandai merah.
+   **Satu blok menjodohkan** (porsi sedang/banyak, gaya Al-Fatah) menjadi **lafaz dalil ↔ artinya**: lajur kiri potongan
+   Arab, lajur kanan potongan terjemah (keduanya dari data). Di **Edit**, potongan dipilih dengan **mengklik kata**
+   (kata awal lalu kata akhir), dan tombol **Sisipkan** memasukkan lafaz/terjemah asli ke kotak teks yang sedang diisi.
 
 ---
 

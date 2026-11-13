@@ -114,7 +114,9 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   disusun `susunPilihanDalil` (kunci = `dalil_potong`, pengecoh AI `dalil_pengecoh` dicek + diisi otomatis dari dalil
   materi, `kerangkaPilihan` menolak kata sama beda awalan/harakat), dipanggil di tahap soal, perbaikan, Ganti/Ubah
   (BUKAN di periksaSoal: kunci diacak). Urutan tampil disimpan `dalil_urutan`. Nomor BERGAMBAR tidak dijatah dalil.
-  Tahap 3 (belum): dalil di B/S, PGK, MJ, isian.
+  0.44.0 (tahap 3): cara "sisip" (semua bentuk, tanpa kotak): AI menulis kode `[[A 3-4]]`/`[[T 2-5]]`/`[[id A a-b]]`,
+  `isiSisipan` menggantinya (SEBELUM susunMjLama; tahap soal, perbaikan, Ganti/Ubah). Blok MJ pertama = lafaz ↔ arti
+  bila porsi ≥ sedang. Edit: `PilihKata` (klik kata awal-akhir) + tombol Sisipkan (`sisipTeks`, kotak teks terakhir).
 - **Materi**: ayat otomatis dari mushaf (kotak hijau); hadis di luar data = sumber + centang guru; tulisan Arab ≤ 3 kata = istilah, diterima
   apa adanya (`istilahArab`); teks Arab bukan dalil = tombol "Bukan ayat/hadis" (`bukan: true`, tanpa sumber & centang).
   Teks Arab dari PDF tidak pernah dipakai apa adanya (hanya penunjuk ayat). TP: tertulis di materi = hijau; usulan AI = wajib dicentang.

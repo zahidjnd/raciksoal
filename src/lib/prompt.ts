@@ -238,13 +238,13 @@ export function buatSistem(bab: Bab, tka = false) {
   const aturanArab = bahasaArab
     ? `ATURAN AYAT, HADIS, DAN TEKS ARAB (WAJIB, tidak boleh dilanggar walau diminta):
 - Di mapel ini teks Arab adalah isi pelajaran: soal, pilihan, pernyataan, dan pembahasan BOLEH memakai kalimat/kosakata Arab buatan sendiri, berharakat lengkap dan benar sesuai kaidah.
-- Tetapi ayat Al-Qur'an dan hadis TIDAK BOLEH ditulis, dikutip, atau dikarang${adaDalil ? `, kecuali lewat "dalil_id" dari DATA BAB (aplikasi menampilkan teks terverifikasinya; jangan mengetiknya ulang dan jangan menulis id dalil di teks)` : ""}. Contoh kalimat jangan diambil dari ayat atau hadis.${adaDalil ? `\n${CARA_DALIL_AI}` : ""}`
+- Tetapi ayat Al-Qur'an dan hadis TIDAK BOLEH ditulis, dikutip, atau dikarang${adaDalil ? `, kecuali lewat "dalil_id" dari DATA BAB (aplikasi menampilkan teks terverifikasinya; jangan mengetiknya ulang dan jangan menulis id dalil di teks)` : ""}. Contoh kalimat jangan diambil dari ayat atau hadis.${adaDalil ? `\n${caraDalilAi(tka)}` : ""}`
     : adaDalil
     ? `ATURAN AYAT, HADIS, DAN TEKS ARAB (WAJIB, tidak boleh dilanggar walau diminta):
 - Jangan pernah mengetik ulang ayat atau hadis utuh, dan jangan memakai ayat/hadis selain yang ada di DATA BAB.
 - Jika soal memakai ayat/hadis, isi "dalil_id" dengan id dalil dari data dan "dalil_tampil" dengan cara tampilnya (lihat di bawah). JANGAN menulis id dalil (misalnya "isra-32") di dalam teks pertanyaan, pilihan, atau pembahasan, dan jangan mengetik ulang terjemahnya.
-- Jika perlu mengutip lafaz pendek (misalnya mufradat), salin PERSIS huruf dan harakatnya dari data. Selain itu jangan menulis huruf Arab sama sekali; gunakan transliterasi Latin.
-${CARA_DALIL_AI}`
+- Jika perlu mengutip lafaz dari dalil (misalnya mufradat), pakai kode sisipan [[A a-b]] (lihat "sisip" di bawah); aplikasi menggantinya dengan teks asli. Selain itu jangan menulis huruf Arab sama sekali; gunakan transliterasi Latin.
+${caraDalilAi(tka)}`
     : `ATURAN AYAT DAN HADIS (WAJIB, tidak boleh dilanggar walau diminta):
 - DATA BAB tidak memuat ayat atau hadis. Jangan mengutip ayat Al-Qur'an atau hadis (baik tulisan Arab maupun terjemahnya) dan jangan menulis huruf Arab. Selalu isi "dalil_id": null.`;
 
@@ -536,11 +536,16 @@ export function rencanaDalil(p: Pengaturan, bab?: Pick<Bab, "dalil" | "gambar">)
       }
     }
   }
+  // 0.44.0 (tahap 3): porsi sedang/banyak + menjodohkan gaya lama → blok MJ pertama = "lafaz dalil ↔ artinya" (sisip),
+  // asal ada dalil yang cukup panjang (min. 2 kata per nomor blok) dan berterjemah (lajur kanan = potongan terjemah).
+  const blok = p.tujuan !== TKA ? blokMj(p.jumlah.MJ ?? 0)[0] ?? 0 : 0;
+  const cukup = dalil.some((d) => d.terjemah?.trim() && kataArab(d).length >= blok * 2);
+  if (porsi >= PORSI_DALIL.sedang && blok && cukup) bentukNo.forEach((b, i) => b === "MJ" && i < bentukNo.indexOf("MJ") + blok && (hasil[i] = "sisip"));
   return hasil;
 }
 
 /** Penjelasan cara tampil dalil untuk AI (instruksi sistem, bila materi punya dalil). */
-const CARA_DALIL_AI = `CARA MENAMPILKAN DALIL ("dalil_tampil"). Aplikasi yang menampilkan teks Arab/terjemahnya dari data terverifikasi, TEPAT DI BAWAH teks "pertanyaan" (sebelum pilihan); AI TIDAK mengetiknya. Jadi rujuk dalil dengan "berikut", bukan "tersebut" atau "di atas", misalnya "Perhatikan firman Allah Swt. berikut!" di baris pertama lalu perintah soalnya:
+const caraDalilAi = (tka: boolean) => `CARA MENAMPILKAN DALIL ("dalil_tampil"). Aplikasi yang menampilkan teks Arab/terjemahnya dari data terverifikasi, TEPAT DI BAWAH teks "pertanyaan" (sebelum pilihan); AI TIDAK mengetiknya. Jadi rujuk dalil dengan "berikut", bukan "tersebut" atau "di atas", misalnya "Perhatikan firman Allah Swt. berikut!" di baris pertama lalu perintah soalnya:
 - "utuh": teks Arab + terjemah. Untuk soal isi kandungan, pesan, atau perilaku yang sesuai dalil. Pengantar misalnya "Perhatikan firman Allah Swt. berikut!".
 - "arab": teks Arab saja (terjemah TIDAK tampil). Untuk soal menentukan surah/ayat atau perawi, lafaz, arti kata, hukum bacaan, atau isi yang sudah dipelajari. Jangan menulis "terjemah tersebut".
 - "terjemah": terjemah saja (Arab tidak tampil). Untuk soal pemahaman makna. Pengantar misalnya "Perhatikan terjemah hadis berikut!".
@@ -552,6 +557,7 @@ const CARA_DALIL_AI = `CARA MENAMPILKAN DALIL ("dalil_tampil"). Aplikasi yang me
 - "pilihan-terjemah" (PG saja): seperti "pilihan", tetapi pilihannya potongan terjemah. Misalnya "Terjemah lafaz ... yang tepat adalah ....".
 - "urutan" (PG saja): aplikasi memotong kata ke-a sampai ke-b ("dalil_potong"; null = seluruh dalil, minimal 4 kata) menjadi 3–4 bagian bernomor yang diacak, lalu menyusun pilihan urutannya. Soal misalnya "Susunan potongan ayat berikut yang benar adalah ....". "pilihan": [], "kunci": "A".
 - Pada rumpang/pilihan/urutan "dalil_potong" WAJIB diisi (kecuali urutan seluruh dalil), juga pada permintaan memperbaiki atau mengubah soal. Pembahasan menyebut isi jawaban yang benar (lafaz dan artinya) tanpa menyebut huruf pilihan; jangan mengetik ulang teks Arab panjang.
+- "sisip" (semua bentuk): TIDAK ada kotak dalil; potongan dalil DISISIPKAN di dalam teks soal dengan KODE yang diganti aplikasi dengan teks asli: [[A a-b]] = kata Arab ke-a sampai ke-b dalil soal itu, [[T a-b]] = kata terjemah ke-a sampai ke-b ("Kata Arab bernomor" / "Kata terjemah bernomor"); dalil lain: [[dalil_id A a-b]]. Kode boleh di "pertanyaan", "pernyataan", "pilihan"${tka ? "" : ', "jodoh", dan "kunci" isian'}. Contoh benar/salah: "Lafaz [[A 3-4]] berisi perintah menunaikan zakat."; PG kompleks: pilihan berupa kode lafaz yang berbeda-beda${tka ? "" : '; menjodohkan: "pertanyaan": "[[A 3-4]]", "jodoh": "[[T 4-5]]" (arti lafaz itu dari terjemahnya); isian: "Lanjutan lafaz [[A 1-2]] adalah ....", "kunci": "[[A 3-4]]"'}. Jangan mengetik huruf Arab ayat/hadis sendiri.
 - "rujukan" (ayat saja): tidak ada teks yang tampil; soal MENYEBUT sumbernya di kalimat, persis seperti di DATA BAB, misalnya "Isi kandungan QS. Al-Baqarah [2]: 43 adalah ....". Jangan menulis "ayat berikut", dan jangan menuliskan isi atau terjemah ayatnya (isinya justru yang ditanyakan).
 - "pembahasan": dalil TIDAK tampil di soal. Tulis soal biasa tanpa menyuruh memperhatikan ayat/hadis; pembahasan memakai dalil itu sebagai penguat kunci (aplikasi menampilkannya di kunci & pembahasan).
 - Dalil hanya dipakai bila soal BENAR-BENAR membahasnya: pertanyaan menyebut firman/ayat/hadis/lafaz/terjemah/sumbernya. Soal tanpa dalil: "dalil_id": null, "dalil_tampil": null, dan jangan menulis "perhatikan firman/hadis berikut".
@@ -675,7 +681,7 @@ ${adaGrup ? `${SOAL_GRUP}${p.tujuan !== TKA ? ` ${WACANA_INDONESIA}` : ""}${tanp
 }
 
 // ATURAN-SOAL 5a (0.42.0): nomor berdalil & cara tampil ditentukan aplikasi (rencanaDalil); AI memilih dalilnya.
-const RENCANA_DALIL = `- "dalil_id": nomor bertanda DALIL (cara tampil) WAJIB memakai satu dalil dari DATA BAB yang paling cocok dengan TP/materi baris itu. Sebar: setiap dalil dipakai dulu sebelum ada dalil yang dipakai lagi, dan dalil yang dipakai lagi memakai cara tampil berbeda. Nomor TANPA tanda DALIL: "dalil_id": null, dan indikator/stimulusnya tidak tentang ayat atau hadis. Nomor bertanda DALIL tidak memakai gambar ("gambar_id": null). Indikator dan stimulus nomor berdalil sesuai cara tampilnya (lihat CARA MENAMPILKAN DALIL), misalnya "Disajikan potongan QS. ..., peserta didik dapat menentukan arti lafaz ...", "Disajikan terjemah hadis ..., peserta didik dapat ...", atau untuk "pembahasan": indikator biasa tanpa menyajikan dalil.`;
+const RENCANA_DALIL = `- "dalil_id": nomor bertanda DALIL (cara tampil) WAJIB memakai satu dalil dari DATA BAB yang paling cocok dengan TP/materi baris itu. Sebar: setiap dalil dipakai dulu sebelum ada dalil yang dipakai lagi, dan dalil yang dipakai lagi memakai cara tampil berbeda. Nomor TANPA tanda DALIL: "dalil_id": null, dan indikator/stimulusnya tidak tentang ayat atau hadis. Nomor bertanda DALIL tidak memakai gambar ("gambar_id": null). BLOK MJ bertanda DALIL (sisip): semua barisnya "menjodohkan lafaz dalil dengan artinya" (indikator dan materi sama untuk satu blok); setiap baris memakai potongan lafaz yang berbeda (bukan kata yang sama dengan harakat lain), boleh dari dalil yang sama; "pertanyaan" baris itu cukup kode lafaznya, misalnya "[[A 3-4]]", dan "jodoh" potongan terjemah yang berarti lafaz itu. Indikator dan stimulus nomor berdalil sesuai cara tampilnya (lihat CARA MENAMPILKAN DALIL), misalnya "Disajikan potongan QS. ..., peserta didik dapat menentukan arti lafaz ...", "Disajikan terjemah hadis ..., peserta didik dapat ...", atau untuk "pembahasan": indikator biasa tanpa menyajikan dalil.`;
 
 // ATURAN-SOAL.md bagian 4 no. 5 (0.30.0): gambar dari materi guru. Hanya dikirim bila bab punya gambar.
 const ATURAN_GAMBAR = `- GAMBAR: DATA BAB memuat gambar materi (lihat "Gambar materi"; gambarnya dikirim bersama permintaan). Soal boleh memakai SATU gambar sebagai stimulus dengan mengisi "gambar_id"; aplikasi menampilkan gambar itu di bawah pokok soal, jadi tulis misalnya "Perhatikan gambar berikut!" lalu perintah/pertanyaannya. JANGAN menulis id gambar di teks. Soal bergambar harus benar-benar perlu melihat gambar untuk dijawab (menunjuk bagian berlabel, membaca grafik/diagram/peta, mengamati hasil percobaan), dan jawabannya sesuai yang TAMPAK di gambar: jangan mengarang bagian, label, angka, atau warna yang tidak ada di gambar. Pokok soal tidak menjelaskan isi gambar sampai jawabannya terbaca tanpa melihat gambar. Teks Arab di dalam gambar jangan diketik ulang. Soal tanpa gambar: "gambar_id": null, dan jangan menulis "perhatikan gambar" (gambar lain tidak bisa ditampilkan).`;

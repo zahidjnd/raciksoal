@@ -388,7 +388,7 @@ export const SUMBER_BUKAN = "Bukan ayat/hadis";
  * Cara dalil tampil di soal. Urutan = urutan giliran rencanaDalil (keluarga cara diselang-seling supaya set kecil pun
  * beragam). 0.43.0 (tahap 2): rumpang, pilihan, urutan = PG saja, pilihan jawabannya disusun aplikasi (susunPilihanDalil).
  */
-export const CARA_DALIL = ["utuh", "rumpang", "terjemah", "pilihan", "potong", "urutan", "arab", "pilihan-terjemah", "pembahasan", "rumpang-terjemah", "potong-terjemah", "rujukan"] as const;
+export const CARA_DALIL = ["utuh", "rumpang", "sisip", "terjemah", "pilihan", "potong", "urutan", "arab", "pilihan-terjemah", "pembahasan", "rumpang-terjemah", "potong-terjemah", "rujukan"] as const;
 export type CaraDalil = (typeof CARA_DALIL)[number];
 export const NAMA_CARA_DALIL: Record<CaraDalil, string> = {
   utuh: "Arab + terjemah",
@@ -401,6 +401,7 @@ export const NAMA_CARA_DALIL: Record<CaraDalil, string> = {
   pilihan: "Potongan Arab di pilihan jawaban (PG)",
   "pilihan-terjemah": "Potongan terjemah di pilihan jawaban (PG)",
   urutan: "Menyusun urutan potongan (PG)",
+  sisip: "Disisipkan di kalimat, pernyataan, pilihan, lajur, atau kunci",
   rujukan: "Nama sumber saja (tanpa kotak)",
   pembahasan: "Hanya di pembahasan",
 };
@@ -424,7 +425,7 @@ const dalilAyat = (d: Dalil) => !!d.mushaf || /^\s*Q\.?\s*S\b/i.test(d.sumber);
  * min. 4 kata Arab; teks Arab materi (bukan ayat/hadis): Arab saja/potongan.
  */
 export function cocokCara(c: CaraDalil, d: Dalil) {
-  if (bukanDalil(d)) return c === "arab" || c === "potong";
+  if (bukanDalil(d)) return c === "arab" || c === "potong" || c === "sisip";
   if (butuhTerjemah(c) && !d.terjemah?.trim()) return false;
   if (c.startsWith("rumpang") && kataCara(d, c).length < 3) return false;
   if (c === "urutan" && kataArab(d).length < 4) return false;
@@ -471,7 +472,7 @@ export const RUMPANG = "……";
 export type TampilDalil = { arab?: string; terjemah?: string; sumber?: string; bukan?: boolean; urutan?: string[] };
 
 /** Cara yang tidak menampilkan kotak dalil di soal (dalil ada di kalimat, di pilihan jawaban, atau di pembahasan). */
-const TANPA_KOTAK: ReadonlySet<CaraDalil> = new Set(["rujukan", "pembahasan", "pilihan", "pilihan-terjemah"]);
+const TANPA_KOTAK: ReadonlySet<CaraDalil> = new Set(["rujukan", "pembahasan", "pilihan", "pilihan-terjemah", "sisip"]);
 
 /**
  * Bagian-bagian "menyusun urutan" (0.43.0): potongan (atau seluruh dalil) dibagi 3–4 bagian sama banyak kata.
@@ -600,6 +601,63 @@ export function susunPilihanDalil(s: Soal, bab: Pick<Bab, "dalil">, acak: () => 
   if (calon.length < 4) return s;
   const pilihan = kocok([kunci, ...calon.slice(0, 4)], acak);
   return { ...sisa, pilihan, kunci: HURUF[pilihan.indexOf(kunci)] };
+}
+
+/**
+ * Kode sisipan dalil (0.44.0, tahap 3): "[[A 3-4]]" = kata Arab ke-3 s.d. ke-4 dalil soal itu, "[[T 2-5]]" = kata
+ * terjemahnya, "[[nur-2 A 1-3]]" = dalil lain. AI menulis kodenya di kalimat/pernyataan/pilihan/lajur/kunci; aplikasi
+ * menggantinya dengan teks terverifikasi (aturan keras no. 5: AI tidak mengetik huruf Arab ayat/hadis).
+ */
+export const POLA_SISIP = /\[\[\s*(?:([a-z0-9-]+)\s+)?([AT])\s*(\d+)(?:\s*[-–]\s*(\d+))?\s*\]\]/gi;
+/** Kode yang tidak sah (dalil/nomor kata tidak ada) ditulis begini supaya pemeriksa menandainya. */
+export const SISIP_GAGAL = "[potongan dalil tidak sah]";
+
+/** Ganti semua kode sisipan di satu teks. */
+export function isiKodeSisip(teks: string, dalilSoal: string | null, bab: Pick<Bab, "dalil">): string {
+  return String(teks ?? "").replace(POLA_SISIP, (_, id: string | undefined, jenis: string, a: string, b: string | undefined) => {
+    const d = bab.dalil.find((x) => x.id === (id?.toLowerCase() ?? dalilSoal));
+    if (!d) return SISIP_GAGAL;
+    const arab = jenis.toUpperCase() === "A";
+    const kata = arab ? kataArab(d) : kataTerjemah(d);
+    const p = potonganSah([Number(a), Number(b ?? a)], kata.length);
+    if (!p) return SISIP_GAGAL;
+    // Potongan terjemah tanpa tanda baca penutup ("al-Qur'an," → "al-Qur'an"; set 151: dua jawaban menjodohkan kembar).
+    const isi = kata.slice(p[0] - 1, p[1]).join(" ");
+    return arab ? isi : isi.replace(/[\s,.;:]+$/, "").replace(/^[\s,.;:]+/, "");
+  });
+}
+
+/** Semua kode sisipan di soal diganti teks dari data: pokok, pilihan, pernyataan, lajur menjodohkan, kunci, pembahasan. */
+export function isiSisipan(s: Soal, bab: Pick<Bab, "dalil">): Soal {
+  const t = (x: unknown) => (typeof x === "string" ? isiKodeSisip(x, s.dalil_id, bab) : x);
+  const daftar = (x: unknown) => (Array.isArray(x) ? x.map(t) : x);
+  if (!JSON.stringify(s).includes("[[")) return s;
+  return {
+    ...s,
+    pertanyaan: t(s.pertanyaan) as string,
+    pembahasan: t(s.pembahasan) as string,
+    kunci: (Array.isArray(s.kunci) ? s.kunci.map(t) : t(s.kunci)) as Soal["kunci"],
+    ...(s.pilihan && { pilihan: daftar(s.pilihan) as string[] }),
+    ...(s.pernyataan && { pernyataan: daftar(s.pernyataan) as string[] }),
+    ...(s.premis && { premis: daftar(s.premis) as string[] }),
+    ...(s.jawaban && { jawaban: daftar(s.jawaban) as string[] }),
+    ...(s.kunciAlt && { kunciAlt: daftar(s.kunciAlt) as string[] }),
+    ...(s.pengecoh && { pengecoh: daftar(s.pengecoh) as string[] }),
+    ...(typeof s.jodoh === "string" && { jodoh: t(s.jodoh) as string }),
+    ...(s.pasangan && { pasangan: s.pasangan.map((x) => ({ premis: t(x?.premis) as string, jawaban: t(x?.jawaban) as string })) }),
+    ...(s.rubrik && { rubrik: s.rubrik.map((r) => ({ ...r, kriteria: t(r?.kriteria) as string })) }),
+  };
+}
+
+/** Teks soal yang tampil ke siswa (untuk memeriksa sisipan): pokok, pilihan, pernyataan, lajur, kunci isian. */
+const teksSiswa = (s: Soal) => [s.pertanyaan, ...(s.pilihan ?? []), ...(s.pernyataan ?? []), ...(s.premis ?? []), ...(s.jawaban ?? []), ...(s.bentuk === "ISIAN" ? [s.kunci].flat() : [])].map((x) => String(x ?? ""));
+
+/** Soal "sisip" benar-benar memuat potongan dalilnya (minimal satu kata Arab, atau tiga kata terjemah berurutan). */
+function adaSisipan(s: Soal, d: Dalil): boolean {
+  const teks = teksSiswa(s).join("\n");
+  if (kataArab(d).some((w) => rapikan(w).length > 1 && teks.includes(w))) return true;
+  const t = kataTerjemah(d);
+  return t.some((_, i) => i + 3 <= t.length && teks.includes(t.slice(i, i + 3).join(" ")));
 }
 
 /**
@@ -856,10 +914,13 @@ function periksaMjLama(soal: Soal[], i: number, s: Soal): string[] {
   if (!String(s.pertanyaan ?? "").trim()) w.push("Pernyataan menjodohkan kosong.");
   if (jawaban.length < 3 || jawaban.some((j) => !j)) w.push("Daftar jawaban menjodohkan harus terisi (minimal 3).");
   if (!k || HURUF_MJ.indexOf(k) < 0 || HURUF_MJ.indexOf(k) >= jawaban.length) w.push("Kunci menjodohkan harus satu huruf dari daftar jawaban.");
-  if (new Set(jawaban.map(norm)).size !== jawaban.length) w.push("Ada jawaban yang sama persis di daftar menjodohkan.");
+  // 0.44.0: dibandingkan tanpa tanda baca & harakat ("al-Qur'an" = "al-Qur'an,"), seperti pengecoh dalil.
+  if (new Set(jawaban.map(kerangkaPilihan)).size !== jawaban.length) w.push("Ada jawaban yang sama persis di daftar menjodohkan.");
   const blok = s.grup ? soal.filter((x, j) => j !== i && mjLama(x) && x.grup === s.grup) : [];
   if (blok.length) {
     if (k && blok.some((x) => huruf(x) === k)) w.push("Dua nomor menjodohkan memakai jawaban yang sama.");
+    // Lafaz yang sama beda harakat saja (set 151: الْكِتَابُ dan الْكِتَابَ) di dua nomor satu blok.
+    if (blok.some((x) => kerangkaPilihan(String(x.pertanyaan ?? "")) === kerangkaPilihan(String(s.pertanyaan ?? "")))) w.push("Dua nomor menjodohkan berisi pernyataan/lafaz yang sama (hanya beda harakat). Pakai lafaz lain.");
     if (jawaban.length <= blok.length + 1) w.push("Daftar jawaban harus lebih banyak dari jumlah nomor menjodohkan (satu pengecoh).");
   }
   return w;
@@ -1060,15 +1121,19 @@ function acakPernyataan(s: Soal, acak: () => number) {
 // Pertanyaan yang membahas dalil: menyebut ayat/hadis/lafaz/terjemah/sumbernya (0.42.0).
 const SEBUT_DALIL = /firman|\bayat\b|surah|surat\b|hadis|sabda|lafa[zl]|potongan|terjemah|kutipan|dalil|\bQS\b|\bHR\b/i;
 // "Perhatikan firman Allah berikut!", "hadis di atas", "potongan ayat berikut": menunjuk dalil yang ditampilkan.
-const TUNJUK_DALIL = /(firman|\bayat|hadis|sabda|potongan|terjemah(an)?|lafa[zl]|kutipan)\b[^!?\n]{0,40}?\b(berikut|di\s?atas)\b/i; // titik boleh: "firman Allah Swt. berikut"
+const TUNJUK_DALIL = /(firman|\bayat|hadis|sabda)\b[^!?\n]{0,40}?\b(berikut|di\s?atas)\b/i; // titik boleh: "firman Allah Swt. berikut"
 
 /** Pemeriksa dalil (ATURAN-SOAL 5a no. 5). Soal lama (tanpa cara tampil) hanya diperiksa soal "terjemah" dan dalil yang hilang. */
 function periksaDalil(s: Soal, bab: Bab): string[] {
   const w: string[] = [];
   const teks = `${s.wacana ?? ""} ${s.pertanyaan ?? ""}`;
   const d = bab.dalil.find((x) => x.id === s.dalil_id);
+  // 0.44.0: kode sisipan yang tertinggal / tidak sah (AI menunjuk dalil atau nomor kata yang tidak ada).
+  const semua = JSON.stringify([s.pertanyaan, s.pilihan, s.pernyataan, s.premis, s.jawaban, s.kunci, s.kunciAlt, s.pembahasan]);
+  if (semua.includes(SISIP_GAGAL) || new RegExp(POLA_SISIP.source, "i").test(semua)) w.push("Ada potongan dalil yang tidak sah (nomor kata tidak ada di data). Pilih ulang potongannya lewat Edit.");
   if (!d) {
-    if (TUNJUK_DALIL.test(teks)) w.push("Soal menyuruh memperhatikan ayat/hadis, tetapi tidak ada yang ditampilkan. Pilih dalilnya lewat Edit, atau ubah kalimatnya.");
+    // "pasal 33 ayat (3) berikut" (PPKn) bukan ayat Al-Qur'an.
+    if (TUNJUK_DALIL.test(teks) && !/\bpasal\b|\bUUD\b|undang-undang/i.test(teks)) w.push("Soal menyuruh memperhatikan ayat/hadis, tetapi tidak ada yang ditampilkan. Pilih dalilnya lewat Edit, atau ubah kalimatnya.");
     return w;
   }
   if (bukanDalil(d)) return w;
@@ -1076,7 +1141,9 @@ function periksaDalil(s: Soal, bab: Bab): string[] {
   const tampil = !TANPA_KOTAK.has(c);
   if (tampil && !butuhTerjemah(c) && /terjemah/i.test(teks)) w.push("Soal menyebut terjemah, tetapi terjemahnya tidak ditampilkan. Pilih cara tampil yang memuat terjemah, atau ubah kalimatnya.");
   if (!s.dalil_tampil) return w;
-  if ((tampil || CARA_PG.has(c)) && !SEBUT_DALIL.test(teks)) w.push("Ayat/hadis dipakai di soal, tetapi pertanyaannya tidak membahasnya. Tanyakan isi dalil itu, atau hapus dalilnya (Edit: Dalil = tidak ada).");
+  if (c === "sisip" && !adaSisipan(s, d)) w.push("Cara tampil dalil \"disisipkan\", tetapi tidak ada potongan dalil di soal. Sisipkan potongannya lewat Edit, atau pilih cara tampil lain.");
+  // Menjodohkan gaya lama: lajur kirinya memang hanya lafaz, tanpa kata "ayat/lafaz".
+  if ((tampil || CARA_PG.has(c) || c === "sisip") && !mjLama(s) && !SEBUT_DALIL.test(teks)) w.push("Ayat/hadis dipakai di soal, tetapi pertanyaannya tidak membahasnya. Tanyakan isi dalil itu, atau hapus dalilnya (Edit: Dalil = tidak ada).");
   if (PAKAI_POTONG.has(c) && c !== "urutan" && !potonganSah(s.dalil_potong, kataCara(d, c).length))
     w.push("Potongan dalil belum sah (nomor kata awal dan akhir). Atur lewat Edit.");
   // 0.43.0: pilihan A–E soal rumpang/pilihan/urutan harus tersusun dari dalil, dengan kunci = jawaban dari dalil.

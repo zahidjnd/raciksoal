@@ -8,7 +8,7 @@ import { Gambar, gambarTempelan, TombolGambar, unggah } from "./gambar";
 import { PotongGambar } from "./potong-gambar";
 import { editRumus, isiKotak } from "./editor-rumus";
 import { EditorTabel } from "./editor-tabel";
-import { adaRumus, bukanDalil, CARA_DALIL, CARA_PG, caraDalil, cariTabel, cocokCara, dalilKunci, kataCara, NAMA_CARA_DALIL, PAKAI_POTONG, potonganSah, susunPilihanDalil, tampilanDalil, type CaraDalil, JOROK, kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, POLA_RUMUS, tulisTabel, type Bab, type Bentuk, type Soal } from "@/lib/soal";
+import { adaRumus, bukanDalil, CARA_DALIL, CARA_PG, caraDalil, cariTabel, cocokCara, dalilKunci, kataArab, kataCara, kataTerjemah, NAMA_CARA_DALIL, PAKAI_POTONG, potonganSah, susunPilihanDalil, tampilanDalil, type CaraDalil, JOROK, kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, POLA_RUMUS, tulisTabel, type Bab, type Bentuk, type Soal } from "@/lib/soal";
 import { MAKS_INSTRUKSI, namaBentuk } from "@/lib/prompt";
 
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
@@ -480,13 +480,48 @@ type FormProps = { no: number; awal: Soal; bab: Bab; onBatal: () => void; onSimp
  * Dalil di form Edit / Tulis soal sendiri (0.42.0, ATURAN-SOAL 5a): dalil, cara tampil, dan potongan (nomor kata).
  * Cara yang tidak bisa dipakai dalil itu (mis. hadis tanpa terjemah) tidak ditawarkan; teksnya selalu dari data.
  */
-function PilihDalil({ s, bab, ubah }: { s: Soal; bab: Bab; ubah: (x: Partial<Soal>) => void }) {
+/** Kata-kata dalil sebagai tombol: klik kata awal lalu kata akhir (0.44.0, pengganti kotak nomor kata). */
+function PilihKata({ kata, arab, rentang, ubah }: { kata: string[]; arab: boolean; rentang: [number, number] | null; ubah: (r: [number, number]) => void }) {
+  const [mulai, setMulai] = useState<number | null>(null);
+  return (
+    <div dir={arab ? "rtl" : undefined} className="flex flex-wrap gap-1 rounded bg-krem p-2">
+      {kata.map((k, i) => {
+        const n = i + 1;
+        const pilih = !!rentang && n >= rentang[0] && n <= rentang[1];
+        return (
+          <button
+            key={i}
+            type="button"
+            aria-pressed={pilih}
+            title={`Kata ke-${n}`}
+            className={`rounded border px-1.5 ${arab ? "font-arab text-xl" : ""} ${pilih ? "border-hijau bg-hijau-muda" : "border-transparent hover:bg-kartu"} ${mulai === n ? "ring-2 ring-hijau" : ""}`}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => {
+              if (mulai === null) {
+                setMulai(n);
+                ubah([n, n]);
+              } else {
+                ubah([Math.min(mulai, n), Math.max(mulai, n)]);
+                setMulai(null);
+              }
+            }}
+          >
+            {k}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function PilihDalil({ s, bab, ubah, sisipkan }: { s: Soal; bab: Bab; ubah: (x: Partial<Soal>) => void; sisipkan?: (teks: string) => boolean }) {
   const d = bab.dalil.find((x) => x.id === s.dalil_id);
   const cara = d ? caraDalil(s, d) : null;
   const kata = d && cara && PAKAI_POTONG.has(cara) ? kataCara(d, cara) : [];
   const [awal, akhir] = potonganSah(s.dalil_potong, kata.length) ?? [1, kata.length];
-  const angka = "w-20 rounded-lg border p-2";
   const arab = cara !== null && !cara.endsWith("terjemah");
+  const [sisip, setSisip] = useState<{ jenis: "A" | "T"; r: [number, number] | null }>({ jenis: "A", r: null });
+  const [pesanSisip, setPesanSisip] = useState("");
   // 0.43.0: rumpang/pilihan/urutan: pilihan A–E disusun ulang dari dalil (teks terverifikasi) setelah potongan diubah.
   const [pesanSusun, setPesanSusun] = useState("");
   const susun = () => {
@@ -512,15 +547,36 @@ function PilihDalil({ s, bab, ubah }: { s: Soal; bab: Bab; ubah: (x: Partial<Soa
       </div>
       {kata.length > 0 && (
         <div className="space-y-1">
-          <p className="text-pudar">Potongan: kata ke</p>
-          <div className="flex flex-wrap items-center gap-2">
-            <input type="number" aria-label="Kata awal potongan" className={angka} min={1} max={kata.length} value={awal} onChange={(e) => ubah({ dalil_potong: [Number(e.target.value), Math.max(Number(e.target.value), akhir)] })} />
-            <span>sampai</span>
-            <input type="number" aria-label="Kata akhir potongan" className={angka} min={awal} max={kata.length} value={akhir} onChange={(e) => ubah({ dalil_potong: [awal, Number(e.target.value)] })} />
-            <span className="text-pudar">dari {kata.length} kata</span>
-          </div>
-          <p dir={arab ? "rtl" : undefined} lang={arab ? "ar" : undefined} className={`rounded bg-krem p-2 ${arab ? "font-arab text-xl" : ""}`}>{kata.slice(awal - 1, akhir).join(" ")}</p>
+          <p className="text-pudar">Potongan ({cara && NAMA_CARA_DALIL[cara]}): klik kata awal, lalu kata akhir.</p>
+          <PilihKata kata={kata} arab={arab} rentang={[awal, akhir]} ubah={(r) => ubah({ dalil_potong: r })} />
         </div>
+      )}
+      {d && sisipkan && (
+        // 0.44.0: lafaz/terjemah dari data disisipkan ke kotak teks terakhir yang disentuh (kalimat, pernyataan, pilihan, kunci).
+        <details className="rounded-lg border p-2" open={cara === "sisip"}>
+          <summary className="cursor-pointer">Sisipkan potongan dalil ke kotak teks</summary>
+          <div className="mt-2 space-y-2">
+            <p className="text-pudar">Letakkan kursor di kotak teks, klik kata awal lalu kata akhir, lalu tekan Sisipkan.</p>
+            <PilihKata kata={kataArab(d)} arab rentang={sisip.jenis === "A" ? sisip.r : null} ubah={(r) => setSisip({ jenis: "A", r })} />
+            {kataTerjemah(d).length > 0 && <PilihKata kata={kataTerjemah(d)} arab={false} rentang={sisip.jenis === "T" ? sisip.r : null} ubah={(r) => setSisip({ jenis: "T", r })} />}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                className="rounded-lg border h-10 px-3 disabled:opacity-50"
+                disabled={!sisip.r}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  const kataSisip = sisip.jenis === "A" ? kataArab(d) : kataTerjemah(d);
+                  const ok = sisip.r && sisipkan(kataSisip.slice(sisip.r[0] - 1, sisip.r[1]).join(" "));
+                  setPesanSisip(ok ? "Tersisip ✓" : "Klik dulu kotak teks tujuan (pertanyaan, pernyataan, pilihan, atau kunci).");
+                }}
+              >
+                Sisipkan
+              </button>
+              {pesanSisip && <span className="text-pudar" role="status">{pesanSisip}</span>}
+            </div>
+          </div>
+        </details>
       )}
       {cara && CARA_PG.has(cara) && (
         <div className="flex flex-wrap items-center gap-2">
@@ -649,6 +705,18 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
     isiKotak(t.el, v.slice(0, t.awal) + sisip + v.slice(t.akhir), t.awal + sisip.length);
   }
 
+  /** 0.44.0: sisipkan teks dalil (dari data) di posisi kursor kotak teks terakhir yang disentuh. false = belum ada kotak. */
+  function sisipTeks(teks: string) {
+    const el = terakhir.current?.isConnected ? terakhir.current : null;
+    if (!el) return false;
+    const v = el.value;
+    const a = el.selectionStart ?? v.length;
+    const b = el.selectionEnd ?? a;
+    const sisip = `${a > 0 && !/\s/.test(v[a - 1]) ? " " : ""}${teks}${b < v.length && !/\s/.test(v[b]) ? " " : ""}`;
+    isiKotak(el, v.slice(0, a) + sisip + v.slice(b), a + sisip.length);
+    return true;
+  }
+
   /** Sisipkan rumus di posisi kursor; bila kursor di dalam "$...$", rumus itu yang dibuka untuk diubah. */
   async function sisipRumus(e: React.MouseEvent<HTMLElement>) {
     const form = e.currentTarget.closest("article");
@@ -726,7 +794,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
         <Pratinjau teks={s.pertanyaan} />
       </label>
 
-      <PilihDalil s={s} bab={bab} ubah={ubah} />
+      <PilihDalil s={s} bab={bab} ubah={ubah} sisipkan={sisipTeks} />
 
       {!mjLama(s) && s.bentuk !== "MJ" && <PilihGambar bab={bab} nilai={s.gambar_id ?? null} ubah={(gambar_id) => ubah({ gambar_id })} />}
 
