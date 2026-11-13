@@ -1,6 +1,6 @@
 {
   "name": "raciksoal",
-  "version": "0.40.1",
+  "version": "0.41.0",
   "private": true,
   "scripts": {
     "predev": "node scripts/salin-wasm-pdf.mjs",

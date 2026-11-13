@@ -7,7 +7,8 @@ import { StepAngka } from "./step-angka";
 import { Gambar, gambarTempelan, TombolGambar, unggah } from "./gambar";
 import { PotongGambar } from "./potong-gambar";
 import { editRumus, isiKotak } from "./editor-rumus";
-import { adaRumus, bukanDalil, kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, POLA_RUMUS, type Bab, type Bentuk, type Soal } from "@/lib/soal";
+import { EditorTabel } from "./editor-tabel";
+import { adaRumus, bukanDalil, cariTabel, JOROK, kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, POLA_RUMUS, tulisTabel, type Bab, type Bentuk, type Soal } from "@/lib/soal";
 import { MAKS_INSTRUKSI, namaBentuk } from "@/lib/prompt";
 
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
@@ -69,12 +70,20 @@ async function ubahRumusDiPratinjau(e: React.MouseEvent<HTMLElement>) {
   isiKotak(el, el.value.slice(0, i) + sisip + el.value.slice(i + cari.length), i + sisip.length);
 }
 
-/** Pratinjau di form Edit: tampil hanya bila teksnya memuat rumus "$...$", supaya guru melihat hasilnya saat mengetik. */
+/**
+ * Pratinjau di form Edit: tampil hanya bila teksnya memuat rumus "$...$" atau tabel, supaya guru melihat hasilnya saat
+ * mengetik. Klik tabel → jendela Ubah tabel (ditangani FormSoal lewat `data-pratinjau`).
+ */
 function Pratinjau({ teks }: { teks: string }) {
-  if (!adaRumus(teks)) return null;
+  const tabel = pecahBaris(teks).some((b) => b.tabel);
+  if (!adaRumus(teks) && !tabel) return null;
   return (
-    <div className="mt-1 rounded-lg bg-krem px-2 py-1 [&_[data-tex]]:cursor-pointer [&_[data-tex]]:rounded [&_[data-tex]:hover]:bg-hijau-muda" onClick={ubahRumusDiPratinjau}>
-      <span className="text-sm text-pudar">Pratinjau rumus (klik rumus untuk mengubahnya): </span>
+    <div
+      data-pratinjau
+      className="mt-1 rounded-lg bg-krem px-2 py-1 [&_[data-tex]]:cursor-pointer [&_[data-tex]]:rounded [&_[data-tex]:hover]:bg-hijau-muda [&_[data-tabel]]:cursor-pointer [&_[data-tabel]:hover]:outline-2 [&_[data-tabel]:hover]:outline-hijau"
+      onClick={ubahRumusDiPratinjau}
+    >
+      <span className="text-sm text-pudar">Pratinjau (klik {tabel ? (adaRumus(teks) ? "rumus atau tabel" : "tabel") : "rumus"} untuk mengubahnya): </span>
       <TeksBaris teks={teks} />
     </div>
   );
@@ -106,11 +115,12 @@ export function TeksPeringatan({ w }: { w: string }) {
 export function TeksBaris({ teks, jarak }: { teks: string; jarak?: boolean }) {
   const baris = pecahBaris(teks);
   if (baris.length <= 1 && !baris[0]?.tabel) return <Teks teks={baris[0]?.teks ?? ""} />;
+  let n = 0; // nomor urut tabel di teks ini (Pratinjau: klik tabel ke-n → jendela Ubah tabel)
   return (
     <>
       {baris.map((b, i) =>
         b.tabel ? (
-          <TabelData key={i} isi={b.tabel} />
+          <TabelData key={i} isi={b.tabel} n={n++} />
         ) : i === 0 ? (
           <span key={i}><Teks teks={b.teks} /></span>
         ) : b.arab ? (
@@ -123,17 +133,21 @@ export function TeksBaris({ teks, jarak }: { teks: string; jarak?: boolean }) {
   );
 }
 
-/** Tabel data di soal/wacana/pembahasan (0.28.0). Baris pertama = judul kolom. HP: tabel lebar digeser ke samping. */
-function TabelData({ isi }: { isi: string[][] }) {
+/**
+ * Tabel data di soal/wacana/pembahasan (0.28.0). Baris pertama = judul kolom. HP: tabel lebar digeser ke samping.
+ * Sel berawalan JOROK (0.41.0) menjorok ke kanan, mis. akun kredit di jurnal umum.
+ */
+function TabelData({ isi, n }: { isi: string[][]; n: number }) {
   const [judul, ...badan] = isi;
+  const jorok = (t: string) => t.startsWith(JOROK);
   return (
-    <div className="my-2 overflow-x-auto">
+    <div className="my-2 overflow-x-auto" data-tabel={n}>
       <table className="border-collapse text-sm">
         <thead>
-          <tr>{judul.map((t, i) => <th key={i} className="border bg-krem px-2 py-1 text-left font-semibold"><Teks teks={t} /></th>)}</tr>
+          <tr>{judul.map((t, i) => <th key={i} className={`border bg-krem py-1 pr-2 text-left font-semibold ${jorok(t) ? "pl-8" : "pl-2"}`}><Teks teks={t.replace(JOROK, "")} /></th>)}</tr>
         </thead>
         <tbody>
-          {badan.map((b, i) => <tr key={i}>{b.map((t, j) => <td key={j} className="border px-2 py-1"><Teks teks={t} /></td>)}</tr>)}
+          {badan.map((b, i) => <tr key={i}>{b.map((t, j) => <td key={j} className={`border py-1 pr-2 ${jorok(t) ? "pl-8" : "pl-2"}`}><Teks teks={t.replace(JOROK, "")} /></td>)}</tr>)}
         </tbody>
       </table>
     </div>
@@ -514,9 +528,53 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
   const kunciPgk = [s.kunci].flat();
   // Kotak teks terakhir yang disentuh guru: tujuan tombol "Σ Rumus".
   const terakhir = useRef<HTMLTextAreaElement | HTMLInputElement | null>(null);
+  // Kotak teks panjang terakhir yang disentuh: tujuan tombol "▦ Tabel" (kotak satu baris tidak bisa berisi tabel).
+  const terakhirPanjang = useRef<HTMLTextAreaElement | null>(null);
   const catatFokus = (e: React.FocusEvent) => {
+    if ((e.target as Element).closest("dialog")) return; // kotak di jendela Ubah tabel bukan tujuan Σ Rumus
     if (bisaRumus(e.target)) terakhir.current = e.target;
+    if (e.target instanceof HTMLTextAreaElement) terakhirPanjang.current = e.target;
   };
+
+  // Jendela Ubah tabel (0.41.0): kotak teks pemilik tabel + letak teks tabelnya (isi null = tabel baru di posisi kursor).
+  const [tabel, setTabel] = useState<{ el: HTMLTextAreaElement; awal: number; akhir: number; isi: string[][] | null } | null>(null);
+
+  /** Klik tabel di Pratinjau → buka tabel ke-n dari kotak teks pemiliknya (label yang sama). Klik rumus di sel = jendela rumus. */
+  function bukaTabelDiPratinjau(e: React.MouseEvent<HTMLElement>) {
+    const t = e.target as Element;
+    const kotakTabel = t.closest("[data-pratinjau] [data-tabel]");
+    if (!kotakTabel || t.closest("[data-tex]")) return;
+    e.preventDefault();
+    const el = kotakTabel.closest("label, fieldset")?.querySelector("textarea");
+    const k = el && cariTabel(el.value)[Number(kotakTabel.getAttribute("data-tabel"))];
+    if (k) setTabel({ el, ...k });
+  }
+
+  /** Tombol "▦ Tabel": kursor di dalam teks tabel = ubah tabel itu; selain itu sisipkan tabel baru di posisi kursor. */
+  function sisipTabel(e: React.MouseEvent<HTMLElement>) {
+    const form = e.currentTarget.closest("article");
+    const aktif = document.activeElement;
+    const el = aktif instanceof HTMLTextAreaElement && form?.contains(aktif) ? aktif : terakhirPanjang.current?.isConnected ? terakhirPanjang.current : form?.querySelector("textarea");
+    if (!el) return;
+    const a = el.selectionStart ?? el.value.length;
+    const k = cariTabel(el.value).find((x) => x.awal <= a && a <= x.akhir);
+    setTabel(k ? { el, ...k } : { el, awal: a, akhir: el.selectionEnd ?? a, isi: null });
+  }
+
+  /** Hasil jendela Ubah tabel → teks "| a | b |" menggantikan tabel lama (atau disisipkan di baris sendiri). [] = hapus. */
+  function selesaiTabel(isi: string[][] | null) {
+    const t = tabel;
+    setTabel(null);
+    if (!t || isi === null || !t.el.isConnected) return;
+    if (!t.isi && isi.flat().every((x) => !x.replace(JOROK, "").trim())) return; // tabel baru yang dibiarkan kosong
+    const v = t.el.value;
+    let sisip = isi.length ? tulisTabel(isi) : "";
+    if (sisip && !t.isi) {
+      if (t.awal > 0 && v[t.awal - 1] !== "\n") sisip = `\n${sisip}`;
+      if (t.akhir < v.length && v[t.akhir] !== "\n") sisip += "\n";
+    }
+    isiKotak(t.el, v.slice(0, t.awal) + sisip + v.slice(t.akhir), t.awal + sisip.length);
+  }
 
   /** Sisipkan rumus di posisi kursor; bila kursor di dalam "$...$", rumus itu yang dibuka untuk diubah. */
   async function sisipRumus(e: React.MouseEvent<HTMLElement>) {
@@ -557,6 +615,15 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
       >
         Σ Rumus
       </button>
+      <button
+        type="button"
+        className="rounded-lg border h-10 px-3"
+        title="Sisipkan tabel di posisi kursor (kursor di dalam tabel = ubah tabel itu)"
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={sisipTabel}
+      >
+        ▦ Tabel
+      </button>
       <button className="rounded-lg bg-hijau h-10 px-4 font-semibold text-white disabled:opacity-50" disabled={menyimpan} onClick={simpan}>
         {menyimpan ? "Menyimpan..." : "Simpan"}
       </button>
@@ -565,7 +632,8 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
     </div>
   );
   return (
-    <article className="space-y-3 rounded-lg border-2 border-hijau p-4 text-sm" onFocus={catatFokus}>
+    <article className="space-y-3 rounded-lg border-2 border-hijau p-4 text-sm" onFocus={catatFokus} onClick={bukaTabelDiPratinjau}>
+      {tabel && <EditorTabel awal={tabel.isi} selesai={selesaiTabel} />}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="font-semibold">{judul ?? `Edit soal nomor ${no}`}</p>
         {tombolSimpan}

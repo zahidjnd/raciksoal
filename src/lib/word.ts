@@ -26,7 +26,7 @@ import { MAPEL_INGGRIS } from "./mapel";
 import { hariTanggal, mapelTka, NAMA_BENTUK, semesterDari, TKA, WAKTU_BAWAAN, type Pengaturan } from "./prompt";
 import { kunciSatu } from "./kunci";
 import { rumusWord } from "./rumus";
-import { bukanDalil, identitasBab, JUMLAH_PREMIS, kategoriBaru, mjLama, paragrafArab, pecahBaris, POLA_ARAB, POLA_RUMUS, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
+import { bukanDalil, identitasBab, JOROK, JUMLAH_PREMIS, kategoriBaru, mjLama, paragrafArab, pecahBaris, POLA_ARAB, POLA_RUMUS, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
 
 const PERINGATAN = "Soal dibuat AI, wajib diperiksa guru sebelum dipakai.";
 
@@ -158,7 +158,8 @@ function tabelData(isi: string[][], kiri: number, lebar = LEBAR_KOLOM) {
           children: b.map(
             (t) =>
               new TableCell({
-                children: [par(teks(t, { size: 20, bold: i === 0 }), { spacing: { after: 0 } })],
+                // Sel menjorok (0.41.0, akun kredit jurnal): ±0,6 cm dari tepi kiri sel
+                children: [par(teks(t.replace(JOROK, ""), { size: 20, bold: i === 0 }), { spacing: { after: 0 }, ...(t.startsWith(JOROK) && { indent: { left: 340 } }) })],
                 width: { size: w, type: WidthType.DXA },
                 shading: i === 0 ? { fill: "E7E6E6" } : undefined,
                 margins: { left: 60, right: 60 },

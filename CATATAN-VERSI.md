@@ -52,6 +52,15 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.41.0 — 13 November 2026
+- **Tabel soal bisa diubah tanpa tanda "|".** Saat Edit, tabel tampil rapi di kotak **Pratinjau**; klik tabelnya
+  (atau letakkan kursor di tabel lalu tekan **▦ Tabel**) untuk membuka jendela **Ubah tabel**: isi sel per sel,
+  tambah/hapus baris dan kolom (paling banyak 6 kolom), atau hapus tabel. **▦ Tabel** di tempat lain = sisipkan tabel baru.
+- **Sel menjorok**: tombol **→** di jendela Ubah tabel menggeser isi sel ke kanan, misalnya akun kredit pada jurnal
+  umum. Ikut tampil di web dan di file Word.
+
+---
+
 ## 0.40.1 — 12 November 2026
 - **Tombol materi lebih ringkas.** Tulisan "Lampirkan Word/PowerPoint/PDF" dan "Foto halaman buku" diganti dua ikon:
   **klip** (Word, PowerPoint, PDF, atau foto dari galeri) dan **kamera** (langsung memotret satu halaman buku; hanya

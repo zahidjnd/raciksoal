@@ -148,6 +148,8 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   Paket A–D diacak bersemi (`susunPaket`), tanpa tabel baru. Set menyimpan salinan bab (`hasil_soal.bab`).
 - **Tabel** (0.28.0): ditulis di TEKS soal/wacana/pembahasan sebagai baris `| a | b |` (bukan kolom data baru), dikenali
   `pecahBaris` → `TabelData` (web) / `tabelData` (Word). Tabel Word/PPT materi → baris `|` di `office.ts`. Tidak di pilihan.
+  Edit (0.41.0): klik tabel di Pratinjau / tombol "▦ Tabel" → `EditorTabel` (`editor-tabel.tsx`, `<dialog>`), letak
+  lewat `cariTabel`, ditulis ulang `tulisTabel`. Sel menjorok = ≥ 3 spasi setelah "|" di teks → awalan `JOROK` di sel.
 - **Rumus** (0.29.0): LaTeX `$...$` di teks mana pun (`POLA_RUMUS` gaya Pandoc di soal.ts: "US$ 5" bukan rumus). Web: KaTeX
   dimuat dinamis (`Rumus` di kartu-soal, salah tulis → teks asli). Word: `rumus.ts` LaTeX → OMML (subset; perintah tak
   dikenal → LaTeX dicetak apa adanya). Jawaban AI: `betulkanGarisMiring` (ai.ts) menggandakan `\` di dalam `$...$` sebelum

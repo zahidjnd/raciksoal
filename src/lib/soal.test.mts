@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { adalahTahun, arabTakTerverifikasi, istilahArab, jawabanAman, bersihkanTanggapan, gabungBab, identitasBab, blokMj, kataTerpakai, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Soal } from "./soal.ts";
+import { adalahTahun, arabTakTerverifikasi, cariTabel, istilahArab, JOROK, tulisTabel, jawabanAman, bersihkanTanggapan, gabungBab, identitasBab, blokMj, kataTerpakai, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Soal } from "./soal.ts";
 import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPengguna, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, laranganIsian, miripIndikator, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, grupSet,semesterDari, buatAnalisaMateri, MAKS_CATATAN, MAKS_INSTRUKSI, namaLevelTka, namaTujuan, pasangKunciPgk, rencanaLevel, type Pengaturan } from "./prompt.ts";
 import { bolehAkses, rapikanUsername } from "./akses.ts";
 import { headerUnduh } from "./nama-file.ts";
@@ -671,6 +671,21 @@ test("pecahBaris: baris '| a | b |' berurutan jadi satu tabel; satu baris saja t
   // Satu baris berpipa (atau judul + pemisah tanpa isi) bukan tabel: tetap teks biasa, tidak hilang.
   assert.deepEqual(pecahBaris("a\n| x | y |\nb").map((x) => [x.teks, !!x.tabel]), [["a", false], ["| x | y |", false], ["b", false]]);
   assert.deepEqual(pecahBaris("| x |\n|---|").map((x) => x.teks), ["| x |", "|---|"]);
+});
+
+test("cariTabel & tulisTabel: jurnal dengan akun kredit menjorok bolak-balik utuh, teks di luar tabel tidak tersentuh", () => {
+  const jurnal = "| Akun | Debit | Kredit |\n|---|---|---|\n| Kas | 5.000 | |\n|    Pendapatan Jasa | | 5.000 |";
+  const t = `Perhatikan jurnal berikut!\n${jurnal}\n\nAyat jurnal yang tepat ....`;
+  const [k] = cariTabel(t);
+  assert.deepEqual(k.isi, [["Akun", "Debit", "Kredit"], ["Kas", "5.000", ""], [`${JOROK}Pendapatan Jasa`, "", "5.000"]]);
+  assert.equal(t.slice(k.awal, k.akhir), jurnal);
+  assert.deepEqual(pecahBaris(t)[1].tabel, k.isi); // tampilan web/Word membaca menjorok yang sama
+  assert.deepEqual(cariTabel(tulisTabel(k.isi))[0].isi, k.isi);
+  // "|" atau baris baru yang diketik guru di dalam sel tidak memecah tabel; baris pendek dilengkapi sel kosong
+  assert.equal(tulisTabel([["a", "emas | perak"], ["x\ny"]]), "| a | emas perak |\n|---|---|\n| x y |  |");
+  // dua tabel dipisah kalimat = dua letak; satu baris berpipa bukan tabel
+  assert.equal(cariTabel("| a | b |\n| 1 | 2 |\nteks\n| c |\n| d |\n| e |").length, 2);
+  assert.equal(cariTabel("| a | b |").length, 0);
 });
 
 test("nama file unduhan: judul berhuruf Arab tidak merusak header HTTP (bug 500 di hosting)", () => {

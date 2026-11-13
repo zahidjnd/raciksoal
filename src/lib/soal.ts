@@ -396,6 +396,40 @@ const BARIS_TABEL = /^\|.*\|$/;
 const PEMISAH_TABEL = /^\|(\s*:?-+:?\s*\|)+$/;
 
 /**
+ * Sel menjorok (0.41.0, mis. akun kredit di jurnal umum): di teks ditulis dengan ≥ 3 spasi setelah "|"
+ * ("|    Pendapatan Jasa |"); di hasil `pecahBaris`/`cariTabel` selnya diawali JOROK, isi selnya tanpa spasi.
+ */
+export const JOROK = "\t";
+const sel = (s: string) => (/^ {3,}\S/.test(s) ? JOROK : "") + s.trim();
+const isiBaris = (b: string) => b.slice(1, -1).split("|").map(sel);
+
+/** Baris-baris tabel → teks "| a | b |" (baris pertama judul, lalu pemisah). "|" & baris baru di dalam sel dibuang. */
+export function tulisTabel(isi: string[][]): string {
+  const kolom = Math.max(...isi.map((b) => b.length));
+  const baris = isi.map(
+    (b) => `| ${[...b, ...Array(kolom - b.length).fill("")].map((t) => (t.startsWith(JOROK) ? "   " : "") + t.replace(/\s*[|\r\n\t]+\s*/g, " ").trim()).join(" | ")} |`,
+  );
+  return [baris[0], `|${"---|".repeat(kolom)}`, ...baris.slice(1)].join("\n");
+}
+
+/** Letak setiap tabel di teks mentah (urutannya sama dengan tabel di `pecahBaris`): untuk jendela Ubah tabel. */
+export function cariTabel(t: string): { awal: number; akhir: number; isi: string[][] }[] {
+  const hasil: { awal: number; akhir: number; isi: string[][] }[] = [];
+  const baris = [...String(t ?? "").matchAll(/[^\r\n]*/g)].filter((m) => m[0].trim()).map((m) => ({ awal: m.index, akhir: m.index + m[0].length, teks: m[0].trim() }));
+  for (let i = 0; i < baris.length; ) {
+    let j = i;
+    while (j < baris.length && BARIS_TABEL.test(baris[j].teks)) j++;
+    const isi = baris.slice(i, j).filter((b) => !PEMISAH_TABEL.test(b.teks)).map((b) => isiBaris(b.teks));
+    if (isi.length >= 2) {
+      const kolom = Math.max(...isi.map((x) => x.length));
+      hasil.push({ awal: baris[i].awal, akhir: baris[j - 1].akhir, isi: isi.map((x) => [...x, ...Array(kolom - x.length).fill("")]) });
+    }
+    i = Math.max(j, i + 1);
+  }
+  return hasil;
+}
+
+/**
  * Pecah teks soal menjadi baris (baris kosong dibuang). `arab` = baris hampir seluruhnya huruf Arab (mis. satu ucapan
  * hiwar): ditampilkan sebagai satu blok kanan-ke-kiri, supaya titik dua, angka, dan tanda baca ikut urutan yang benar.
  * Tabel (0.28.0): baris-baris berurutan berbentuk "| a | b |" (minimal judul + 1 baris isi; baris "|---|---|" dibuang)
@@ -410,7 +444,7 @@ export function pecahBaris(t: string): Baris[] {
   for (let i = 0; i < baris.length; ) {
     let j = i;
     while (j < baris.length && BARIS_TABEL.test(baris[j])) j++;
-    const isi = baris.slice(i, j).filter((b) => !PEMISAH_TABEL.test(b)).map((b) => b.slice(1, -1).split("|").map((s) => s.trim()));
+    const isi = baris.slice(i, j).filter((b) => !PEMISAH_TABEL.test(b)).map(isiBaris);
     if (isi.length >= 2) {
       const kolom = Math.max(...isi.map((x) => x.length));
       hasil.push({ teks: "", arab: false, tabel: isi.map((x) => [...x, ...Array(kolom - x.length).fill("")]) });

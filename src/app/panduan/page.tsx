@@ -163,7 +163,8 @@ const TOPIK: { id: string; judul: string; isi: React.ReactNode }[] = [
     judul: "Rumus dan gambar di soal",
     isi: (
       <ul>
-        <li><b>Rumus</b>: saat Edit, letakkan kursor, tekan <b>Σ Rumus</b>, susun rumusnya (ketik <b>/</b> untuk pecahan, <b>^</b> pangkat, <b>_</b> indeks), lalu <b>Masukkan</b>. Untuk mengubah, klik rumusnya di kotak <b>Pratinjau rumus</b>. Di file Word, rumus menjadi rumus Word asli.</li>
+        <li><b>Rumus</b>: saat Edit, letakkan kursor, tekan <b>Σ Rumus</b>, susun rumusnya (ketik <b>/</b> untuk pecahan, <b>^</b> pangkat, <b>_</b> indeks), lalu <b>Masukkan</b>. Untuk mengubah, klik rumusnya di kotak <b>Pratinjau</b>. Di file Word, rumus menjadi rumus Word asli.</li>
+        <li><b>Tabel</b>: saat Edit, klik tabelnya di kotak <b>Pratinjau</b> (atau letakkan kursor di tabel lalu tekan <b>▦ Tabel</b>). Di jendela <b>Ubah tabel</b> isi sel bisa diganti, baris dan kolom ditambah atau dihapus, dan tombol <b>→</b> membuat isi sel menjorok (misalnya akun kredit pada jurnal umum). Untuk tabel baru, letakkan kursor di kotak Pertanyaan atau Pembahasan lalu tekan <b>▦ Tabel</b>.</li>
         <li>Di kotak teks, rumus tertulis sebagai kode di antara dua tanda <b>$</b>. Jangan hapus kode itu sebagian.</li>
         <li><b>Gambar dari materi</b>: saat Analisa, AI memilih gambar pelajaran (diagram, grafik, peta) dari file Word/PowerPoint/PDF; logo dan hiasan tidak dipakai. Bisa juga tempel gambar (<b>Ctrl+V</b>) atau <b>+ Tambah gambar</b>.</li>
         <li><b>Potong gambar</b>: kalau potongan AI ikut tulisan, tekan <b>✂ Potong</b> di bawah gambar, geser kotaknya atau tarik sudutnya, lalu <b>Simpan potongan</b>. Set yang sudah dibuat tetap memakai gambar lama.</li>
