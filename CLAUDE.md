@@ -143,6 +143,9 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   gaya; yang dikunci hanya ayat/hadis, kunci benar, bentuk, JSON, isi terlarang). AI mengisi `catatan` (tampil ke guru)
   dan boleh menulis `wacana` baru (soal grup → ikut ke semua soal & kisi grupnya). Hasil sama persis (`isiSama`) → coba
   ulang 1x dengan teguran. Perbaikan otomatis soal merah TETAP lewat `buatPenggantiPengguna`. Permintaan maks 1000 huruf.
+  0.46.0: ganti bentuk bila `bentukUbahan` (bukan grup/MJ; TKA hanya PG/PGK/BS) DAN permintaan cocok `MINTA_BENTUK`;
+  `sesuaikanBentuk` membuang field bentuk lama, soal+kisi pindah ke `posisiBentuk`, rencana kisi (kunciPgk dll.) diganti.
+  AI menulis bentuk terlarang → `PesanGuru`, tidak disimpan/tak memakai jatah (dulu tersimpan PG tanpa pilihan, set 129).
 - **Batas**: 10 set/guru/hari (admin bebas) + 100/web; 2 set proses serentak/guru; Ganti/Ubah/Tambah 30x per set & 60/guru/hari;
   analisa materi 30/guru/hari; halaman PDF dibaca AI 200/guru/hari (0.34.1); login dikunci 5x salah/15 menit per perangkat+nama. Batas ada di `pembatas.ts`.
 - **Pesan masuk** (0.32.5, pilihan pemilik): "nama tidak terdaftar" / "kata sandi salah" terpisah (kolom yang salah saja

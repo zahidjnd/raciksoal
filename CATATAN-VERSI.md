@@ -52,6 +52,16 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.46.0 — 13 November 2026
+- **Ubah soal bisa mengganti bentuk soal**: tulis misalnya "jadikan uraian", "ubah jadi PG kompleks", atau "jadikan
+  benar/salah". Soal ditulis ulang lengkap dalam bentuk baru (pilihan, rubrik, kunci, pembahasan), lalu dipindah ke
+  bagian bentuknya; halaman langsung menggulir ke nomor barunya. Skor mengikuti bobot set, kisi-kisi ikut menyesuaikan.
+- Bentuk hanya diganti bila guru menyebut bentuknya ("jadikan lebih sulit" tidak akan mengubah PG jadi PG kompleks).
+- Tidak bisa (dan dijelaskan, tanpa memakai jatah): menjodohkan, soal grup (wacana bersama), serta isian/uraian di
+  Latihan TKA.
+
+---
+
 ## 0.45.0 — 13 November 2026
 - **"Ubah soal" jauh lebih ampuh**: guru bisa meminta perubahan apa saja pada satu soal (ganti kasus/tokoh, jadikan
   HOTS, pengecoh lebih menjebak, pembahasan lebih singkat, pakai tabel, ganti gambar, dan sebagainya). Dulu AI sering

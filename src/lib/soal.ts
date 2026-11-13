@@ -237,9 +237,29 @@ export function susunMjLama(soal: Soal[], acak: () => number = Math.random): Soa
 
 /** "Ubah soal": apakah isi soal hasil AI sama persis dengan soal lama (server mencoba sekali lagi, browser memberi tahu guru). */
 export const isiSama = (a: Soal, b: Soal) => {
-  const isi = (x: Soal) => JSON.stringify([x.pertanyaan, x.pilihan, x.pernyataan, x.kunci, x.kunciAlt, x.pembahasan, x.rubrik, x.level, x.tp, x.dalil_id, x.dalil_tampil, x.dalil_potong, x.gambar_id, x.wacana]);
+  const isi = (x: Soal) => JSON.stringify([x.bentuk, x.pertanyaan, x.pilihan, x.pernyataan, x.kunci, x.kunciAlt, x.pembahasan, x.rubrik, x.level, x.tp, x.dalil_id, x.dalil_tampil, x.dalil_potong, x.gambar_id, x.wacana]);
   return isi(a) === isi(b);
 };
+
+/**
+ * "Ubah soal" (0.46.0): pasang `bentuk` dan buang field milik bentuk lain (mis. PG → URAIAN: pilihan lama tidak ikut
+ * tersimpan). Bukan rapikanSoal: field pemeriksaan AI (jawaban_benar, dalil_pengecoh) masih dibutuhkan sesudahnya.
+ */
+export function sesuaikanBentuk(s: Soal, bentuk: Bentuk): Soal {
+  const { pilihan, pernyataan, label, rubrik, kunciAlt, ...sisa } = s;
+  return {
+    ...sisa,
+    bentuk,
+    ...((bentuk === "PG" || bentuk === "PGK") && { pilihan }),
+    ...(bentuk === "BS" && Array.isArray(pernyataan) && { pernyataan, label }),
+    ...(bentuk === "URAIAN" && { rubrik }),
+    ...(bentuk === "ISIAN" && { kunciAlt }),
+  };
+}
+
+/** Letak soal berbentuk `bentuk` yang baru: akhir bagian bentuknya (urutan bagian di Word baku). */
+export const posisiBentuk = (soal: Pick<Soal, "bentuk">[], bentuk: Bentuk) =>
+  soal.reduce((akhir, s, i) => (URUTAN_BENTUK.indexOf(s.bentuk) <= URUTAN_BENTUK.indexOf(bentuk) ? i + 1 : akhir), 0);
 
 /** Kebalikan susunMenjodohkan, untuk "Ubah soal": soal MJ dikirim ke AI dalam format pasangan + pengecoh. */
 export function keFormatAI(s: Soal): Omit<Soal, "premis" | "jawaban" | "kunci"> & { pasangan?: { premis: string; jawaban: string }[]; pengecoh?: string[]; kunci?: string | string[] } {

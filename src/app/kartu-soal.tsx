@@ -231,12 +231,14 @@ function kunciTampil(s: Soal) {
 /** Jatah Ganti/Ubah/Tambah pakai AI: dipakai di set ini (maks batasSet, permanen) dan hari ini (guru; admin = null). */
 export type JatahUbah = { set: number; batasSet: number; hari: number | null; batasHari: number | null };
 
-type Props = { hasilId: number; no: number; s: Soal; bab: Bab; semuaKunci: boolean; nomorGrup?: string | null; onUbah: (s: Soal) => void; onSetBerubah?: (lompatKe?: number) => void; draf?: boolean;
+type Props = { hasilId: number; no: number; s: Soal; bab: Bab; semuaKunci: boolean; nomorGrup?: string | null; onUbah: (s: Soal) => void; onSetBerubah?: (lompatKe?: number, pesan?: string) => void; draf?: boolean;
+  // Pesan untuk soal ini yang dibawa dari kartu lain (Ubah soal mengganti bentuk → soal pindah nomor).
+  pesanPindah?: string;
   jatahUbah?: JatahUbah | null;
   // Tombol ↑/↓ (pindah urutan): hanya di dalam bagian bentuk yang sama, bukan soal grup (dihitung halaman hasil).
   bisaNaik?: boolean; bisaTurun?: boolean };
 
-export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, onSetBerubah, draf, bisaNaik, bisaTurun, jatahUbah }: Props) {
+export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, onSetBerubah, draf, bisaNaik, bisaTurun, jatahUbah, pesanPindah }: Props) {
   const [edit, setEdit] = useState(false);
   const [lihatKunci, setLihatKunci] = useState(false); // kunci & pembahasan dilipat, dibuka per soal atau semua sekaligus
   const tampilKunci = !draf && (semuaKunci || lihatKunci);
@@ -274,8 +276,16 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
       setBerhasil(jenis === "ubah" ? "Soal sudah diubah ✓" : "Soal sudah diganti ✓");
       setCatatanAI(r.catatan);
     }
-    onUbah(r.soal);
     setInstruksi("");
+    // 0.46.0: bentuk diganti → soal pindah ke bagian bentuk barunya; seluruh set dimuat ulang lalu digulir ke sana.
+    // Kartu ini (kunci = nomor) kini memegang soal lain, jadi pesannya dibawa halaman ke kartu nomor barunya.
+    if (r.pindah && onSetBerubah) {
+      setLainnya(false);
+      setBerhasil("");
+      setCatatanAI("");
+      return onSetBerubah(r.no, r.catatan);
+    }
+    onUbah(r.soal);
   }
 
   /** Tukar dengan soal di atas/bawahnya; halaman memuat ulang set lalu menggulir ke posisi barunya. */
@@ -477,7 +487,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
       </>
       )}
       {error && <p className="text-sm text-bahaya">{error}</p>}
-      {catatanAI && <p className="text-sm text-pudar">Catatan AI: {catatanAI}</p>}
+      {(catatanAI || pesanPindah) && <p className="text-sm text-pudar">Catatan AI: {catatanAI || pesanPindah}</p>}
       {berhasil &&<p role="status" className="text-sm font-semibold text-hijau-teks">{berhasil}</p>}
     </article>
     </>

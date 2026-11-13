@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { adalahTahun, arabTakTerverifikasi, cariTabel, istilahArab, JOROK, tulisTabel, jawabanAman, bersihkanTanggapan, gabungBab, identitasBab, isiSama, blokMj, kataTerpakai, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Soal } from "./soal.ts";
-import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPermintaanUbah, buatPengguna, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, laranganIsian, miripIndikator, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, grupSet,semesterDari, buatAnalisaMateri, MAKS_CATATAN, MAKS_INSTRUKSI, namaLevelTka, namaTujuan, pasangKunciPgk, rencanaLevel, type Pengaturan } from "./prompt.ts";
+import { adalahTahun, arabTakTerverifikasi, cariTabel, istilahArab, JOROK, tulisTabel, jawabanAman, bersihkanTanggapan, gabungBab, identitasBab, isiSama, posisiBentuk, sesuaikanBentuk, blokMj, kataTerpakai, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Soal } from "./soal.ts";
+import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPermintaanUbah, bentukUbahan, MINTA_BENTUK, buatPengguna, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, laranganIsian, miripIndikator, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, grupSet,semesterDari, buatAnalisaMateri, MAKS_CATATAN, MAKS_INSTRUKSI, namaLevelTka, namaTujuan, pasangKunciPgk, rencanaLevel, type Pengaturan } from "./prompt.ts";
 import { bolehAkses, rapikanUsername } from "./akses.ts";
 import { headerUnduh } from "./nama-file.ts";
 import { geserTandaGambar, keIsian, rapikanMateri, susunDraf, terapkanAnalisa } from "./materi.ts";
@@ -179,6 +179,30 @@ test("ubah soal (0.45.0): permintaan guru jadi tugas utama, wacana boleh diubah,
   assert.ok(!r.includes("SAMA PERSIS") && buatPermintaanUbah(p, lama, [lama], undefined, "x", true).includes("SAMA PERSIS"));
   assert.ok(!buatPermintaanUbah(p, lain, [lain], undefined, "x").includes('field "wacana"')); // soal biasa: tanpa wacana
   assert.ok(isiSama(lama, { ...lama, peringatan: [] }) && !isiSama(lama, { ...lama, wacana: "lain" }));
+});
+
+test("ubah soal ganti bentuk (0.46.0): bentuk yang boleh, kata bentuk di permintaan, field lama dibuang, letak di bagian bentuknya", () => {
+  const uh = { tujuan: "Ulangan Harian" } as Pengaturan;
+  const tka = { tujuan: "Latihan TKA" } as Pengaturan;
+  assert.deepEqual(bentukUbahan(uh, { bentuk: "PG" }), ["PGK", "BS", "ISIAN", "URAIAN"]);
+  assert.deepEqual(bentukUbahan(tka, { bentuk: "PG" }), ["PGK", "BS"]); // TKA tanpa isian/uraian
+  assert.deepEqual(bentukUbahan(uh, { bentuk: "PG", grup: 2 }), []); // soal grup tetap
+  assert.deepEqual(bentukUbahan(uh, { bentuk: "MJ" }), []);
+  assert.ok(!bentukUbahan(uh, { bentuk: "URAIAN" }).includes("MJ"));
+  for (const t of ["jadikan uraian", "ubah ke PG kompleks", "jadi soal Benar/Salah", "ganti bentuknya", "jadikan esai", "jadi isian singkat"]) assert.ok(MINTA_BENTUK.test(t), t);
+  for (const t of ["jadikan lebih sulit", "pengecoh lebih menjebak", "pembahasan lebih kompleks"]) assert.ok(!MINTA_BENTUK.test(t), t);
+  const pg: Soal = { bentuk: "PG", dalil_id: null, pertanyaan: "x", pilihan: ["a", "b", "c", "d", "e"], kunci: "A", pembahasan: "", level: "C2", tp: "TP 1", skor: 1, jawaban_benar: "a" };
+  const uraian = sesuaikanBentuk({ ...pg, rubrik: [{ kriteria: "k", skor: 2 }] }, "URAIAN");
+  assert.equal(uraian.bentuk, "URAIAN");
+  assert.ok(!("pilihan" in uraian && uraian.pilihan) && uraian.rubrik?.length === 1 && uraian.jawaban_benar === "a");
+  assert.deepEqual(sesuaikanBentuk(pg, "PGK").pilihan, pg.pilihan);
+  const set = ["PG", "PG", "PGK", "ISIAN", "URAIAN"].map((bentuk) => ({ bentuk }) as Soal);
+  assert.equal(posisiBentuk(set, "PG"), 2);
+  assert.equal(posisiBentuk(set, "BS"), 3); // bagian B/S belum ada: setelah PGK
+  assert.equal(posisiBentuk(set, "URAIAN"), 5);
+  const r = buatPermintaanUbah(uh, pg, [pg], undefined, "jadikan uraian");
+  assert.ok(r.includes("URAIAN (Uraian)") && !r.includes("MJ ("));
+  assert.ok(buatPermintaanUbah(uh, { ...pg, grup: 1, wacana: "w" }, [], undefined, "x").includes("soal grup tidak bisa diganti bentuknya"));
 });
 
 test("teks Arab yang sama persis dengan data lolos", () => {

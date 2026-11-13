@@ -129,6 +129,8 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: strin
   const [banding, setBanding] = useState<{ nama: string; id?: number; pesan?: string }[]>([]);
   const [id, setId] = useState<number | null>(awalId); // dari ?id= (dibaca server), mis. buka set dari riwayat
   const [hasil, setHasil] = useState<Hasil | null>(null);
+  // Catatan AI untuk soal yang pindah nomor karena bentuknya diganti (Ubah soal, 0.46.0).
+  const [pesanPindah, setPesanPindah] = useState<{ no: number; teks: string } | null>(null);
   const [error, setError] = useState("");
   const [detik, setDetik] = useState(0);
   const [buka, setBuka] = useState<"jumlah" | "lanjutan" | null>(null); // panel di bawah kotak ketik
@@ -723,20 +725,23 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: strin
                         semuaKunci={semuaKunci}
                         nomorGrup={nomorGrup(soal, i)}
                         jatahUbah={hasil.jatahUbah}
+                        pesanPindah={pesanPindah?.no === i + 1 ? pesanPindah.teks : undefined}
                         onUbah={(baru) => {
+                          setPesanPindah(null);
                           setHasil({ ...hasil, soal: soal.map((x, j) => (j === i ? baru : x)) });
                           cekHasil(id!).then((h) => h && setHasil(h)).catch(() => {}); // kisi-kisi ikut berubah di server
                         }}
                         bisaNaik={soal[i - 1]?.bentuk === s.bentuk && !s.grup && !soal[i - 1]?.grup}
                         bisaTurun={soal[i + 1]?.bentuk === s.bentuk && !s.grup && !soal[i + 1]?.grup}
-                        onSetBerubah={(ke) =>
-                          cekHasil(id!)
+                        onSetBerubah={(ke, pesan) => {
+                          setPesanPindah(ke && pesan ? { no: ke, teks: pesan } : null);
+                          return cekHasil(id!)
                             .then((h) => {
                               if (h) setHasil(h);
-                              if (ke) lompat(ke); // soal tambahan langsung terlihat
+                              if (ke) lompat(ke); // soal tambahan / soal yang pindah bentuk langsung terlihat
                             })
-                            .catch(() => {})
-                        }
+                            .catch(() => {});
+                        }}
                       />
                     ),
                 )}

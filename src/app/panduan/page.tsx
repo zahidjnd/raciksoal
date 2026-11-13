@@ -148,7 +148,7 @@ const TOPIK: { id: string; judul: string; isi: React.ReactNode }[] = [
       <>
         <ul>
           <li><b>Edit</b>: ubah teks soal, pilihan, kunci, pembahasan, level, TP, atau skor, lalu <b>Simpan</b> (muncul “Tersimpan ✓”).</li>
-          <li><b>Lainnya</b>: <b>Ganti soal ini</b>&nbsp;<N n={1} /> (soal baru dari AI), <b>Tambah soal serupa di bawahnya</b>&nbsp;<N n={2} />, atau tulis permintaan lalu <b>Ubah soal</b>&nbsp;<N n={3} /> (mis. “jadikan lebih sulit”).</li>
+          <li><b>Lainnya</b>: <b>Ganti soal ini</b>&nbsp;<N n={1} /> (soal baru dari AI), <b>Tambah soal serupa di bawahnya</b>&nbsp;<N n={2} />, atau tulis permintaan lalu <b>Ubah soal</b>&nbsp;<N n={3} /> (mis. “jadikan lebih sulit”, “ganti kasusnya jadi tentang pasar”, atau “jadikan uraian”).</li>
           <li>Ganti/Ubah/Tambah: {30} kali per set dan {BATAS_UBAH_PER_GURU} kali per hari. Edit tidak dibatasi.</li>
           <li><b>+ Tulis soal … sendiri</b> di akhir tiap bagian: tanpa AI, tidak memakai jatah, tetap diperiksa pemeriksa ayat.</li>
           <li>Tombol <b>↑</b> / <b>↓</b> memindah urutan soal di dalam bagiannya.</li>

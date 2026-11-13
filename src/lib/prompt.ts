@@ -887,6 +887,23 @@ Buat tepat 1 soal ${sasaran}. Gunakan ${kisi?.grup && lama.wacana ? "" : "skenar
 }
 
 /**
+ * Bentuk tujuan yang boleh dipilih "Ubah soal" (0.46.0). Tidak untuk soal grup (wacana bersama/blok MJ harus satu
+ * bentuk) dan tidak ke/dari MJ (daftar jawaban bersama satu blok). Latihan TKA: hanya PG, PGK, Kategori.
+ */
+export function bentukUbahan(p: Pick<Pengaturan, "tujuan">, lama: Pick<Soal, "bentuk" | "grup">): Bentuk[] {
+  if (lama.grup || lama.bentuk === "MJ") return [];
+  const semua: Bentuk[] = p.tujuan === TKA ? ["PG", "PGK", "BS"] : ["PG", "PGK", "BS", "ISIAN", "URAIAN"];
+  return semua.filter((b) => b !== lama.bentuk);
+}
+
+/**
+ * Permintaan guru menyebut bentuk soal. Pengaman kedua (selain instruksi ke AI): bentuk hanya diganti bila guru
+ * menyebutnya, supaya "jadikan lebih sulit" tidak diam-diam mengubah PG jadi PGK.
+ * ponytail: daftar kata sederhana; tambah sinonim bila guru memakai istilah lain.
+ */
+export const MINTA_BENTUK = /\b(pg|pgk|pilihan ganda|ganda kompleks|benar[\s/-]*salah|b\/s|kategori|isian|uraian|esai|essay|bentuk)(nya)?\b/i;
+
+/**
  * 0.45.0 "Ubah soal" dari guru: AI bekerja sebagai EDITOR satu soal, permintaan guru = tugas utama. Dulu permintaan
  * ditempel di akhir permintaan "Buat soal" yang penuh larangan, sehingga AI sering mengembalikan soal yang sama persis.
  * Bentuk tetap; selain itu semua bagian boleh diubah, termasuk wacana grup. `ulang`: percobaan kedua setelah jawaban
@@ -896,12 +913,17 @@ export function buatPermintaanUbah(p: Pengaturan, lama: Soal, semua: Soal[], kis
   const { peringatan, stimulus, grup, wacana, ...isiAsli } = lama;
   void peringatan;
   void stimulus;
-  void grup;
   const lain = semua.filter((s) => s !== lama).map(ringkasSudah);
   const bagianWacana = wacana
     ? `\nWACANA bersama soal ini (dipakai juga oleh soal lain di grupnya, ditampilkan aplikasi di atas soal; jangan ditulis ulang di "pertanyaan"):\n${wacana}\n`
     : "";
-  return `TUGAS: Anda EDITOR satu soal ${namaBentuk(lama.bentuk, p.tujuan === TKA)}. Ubah soal di bawah sesuai PERMINTAAN GURU.
+  const tka = p.tujuan === TKA;
+  const boleh = bentukUbahan(p, lama);
+  // 0.46.0 (tahap 2): bentuk boleh diganti bila guru memintanya; aplikasi memindah soal ke bagian bentuk barunya.
+  const aturanBentuk = boleh.length
+    ? `- Bentuk soal sekarang ${lama.bentuk} (${namaBentuk(lama.bentuk, tka)}). Ganti bentuk HANYA bila guru jelas memintanya, ke salah satu: ${boleh.map((b) => `${b} (${b === "BS" && !tka ? "Benar/Salah satu pernyataan" : namaBentuk(b, tka)})`).join(", ")}. Bila diganti: tulis kode bentuk baru di "bentuk", tulis soal LENGKAP sesuai format bentuk itu di instruksi sistem (field bentuk lama yang tidak dipakai dibuang), dan tetap menguji konsep yang sama kecuali guru meminta lain.${boleh.includes("URAIAN") && p.bobot?.URAIAN ? ` Untuk URAIAN, jumlah skor rubrik harus tepat ${p.bobot.URAIAN}.` : ""}${boleh.includes("PGK") ? " Untuk PGK, jumlah jawaban benar 2 atau 3." : ""}`
+    : `- Bentuk tetap ${lama.bentuk}${grup ? " (soal grup tidak bisa diganti bentuknya; bila diminta, jelaskan di \"catatan\" bahwa bentuk bisa diganti lewat Edit atau Tulis soal sendiri)" : ""}.`;
+  return `TUGAS: Anda EDITOR satu soal ${namaBentuk(lama.bentuk, tka)}. Ubah soal di bawah sesuai PERMINTAAN GURU.
 
 PERMINTAAN GURU (tugas utama, WAJIB dijalankan):
 """${bersihkanInstruksi(instruksi)}"""
@@ -911,7 +933,8 @@ ${JSON.stringify(keFormatAI(isiAsli as Soal))}
 ${kisi ? `Kisi-kisi soal ini: indikator "${kisi.indikator}", stimulus "${kisi.stimulus}".\n` : ""}${bagianWacana}
 CARA MENGUBAH:
 - Permintaan guru boleh menyentuh bagian mana pun: pokok soal, stimulus/kasus, tokoh, pilihan, pengecoh, kunci, pembahasan, rubrik, kesulitan, level kognitif, TP, panjang dan gaya kalimat, bahasa, tabel, rumus, gambar ("gambar_id" dari DATA BAB), dan dalil ("dalil_id" dari DATA BAB)${wacana ? `, juga wacana (tulis wacana baru UTUH di field "wacana"; bila wacana tidak diubah, jangan tulis field "wacana")` : ""}.
-- Permintaan guru MENGALAHKAN aturan gaya di instruksi sistem dan catatan set di bawah (gaya dan panjang stimulus, variasi, sebaran, pilihan kata). Yang TIDAK boleh dilanggar walau diminta hanya: ayat/hadis tidak boleh diketik atau dikarang (pakai "dalil_id" dari DATA BAB), kunci harus benar, bentuk tetap ${lama.bentuk}, format JSON, dan isi yang dilarang.
+- Permintaan guru MENGALAHKAN aturan gaya di instruksi sistem dan catatan set di bawah (gaya dan panjang stimulus, variasi, sebaran, pilihan kata). Yang TIDAK boleh dilanggar walau diminta hanya: ayat/hadis tidak boleh diketik atau dikarang (pakai "dalil_id" dari DATA BAB), kunci harus benar, bentuk hanya yang diizinkan di bawah, format JSON, dan isi yang dilarang.
+${aturanBentuk}
 - Permintaan umum ("perbaiki", "buat lebih bagus", "lebih jelas") = perbaiki kelemahan yang Anda temukan; jangan kembalikan soal yang sama.
 - Bagian yang tidak terkait permintaan boleh tetap, tetapi soal harus tetap utuh dan konsisten: bila pokok soal, pilihan, atau kunci berubah, sesuaikan kunci dan pembahasannya.
 - Bila hanya sebagian permintaan bisa dijalankan, jalankan bagian yang bisa dan jelaskan sisanya di "catatan".
