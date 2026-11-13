@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { cocokCara, dalilKunci, pasangDalil, periksaSoal, samakanDenganKisi, tampilanDalil, type Bab, type BarisKisi, type Soal } from "./soal.ts";
+import { bagianUrutan, caraDalil, cocokCara, dalilKunci, korpusArab, pasangDalil, periksaSoal, RUMPANG, samakanDenganKisi, susunPilihanDalil, tampilanDalil, type Bab, type BarisKisi, type Soal } from "./soal.ts";
 import { bersihkanPengaturan, buatPermintaanKisi, buatSistem, rencanaDalil, type Pengaturan } from "./prompt.ts";
 import { bacaTerjemah, lengkapiTerjemah, terjemahAyat } from "./mushaf.ts";
 
@@ -17,7 +17,10 @@ test("rencana dalil: porsi dari nomor non-menjodohkan, tersebar, cara digilir, s
   assert.equal(r.length, 25);
   assert.equal(r.filter(Boolean).length, 6); // 30% dari 20 PG
   assert.ok(r.slice(20).every((c) => c === null)); // menjodohkan tanpa dalil
-  assert.deepEqual(r.filter(Boolean).slice(0, 4), ["utuh", "potong", "terjemah", "arab"]);
+  assert.deepEqual(r.filter(Boolean).slice(0, 4), ["utuh", "rumpang", "terjemah", "pilihan"]);
+  // cara PG (rumpang, pilihan, urutan) tidak jatuh ke nomor bukan PG
+  const campur = rencanaDalil(p({ PG: 4, URAIAN: 6 }, "banyak"), bab);
+  campur.forEach((c, i) => i >= 4 && assert.ok(!c || !["rumpang", "rumpang-terjemah", "pilihan", "pilihan-terjemah", "urutan"].includes(c), `${i} ${c}`));
   assert.equal(rencanaDalil(p({ PG: 20 }, "banyak"), bab).filter(Boolean).length, 10);
   assert.ok(rencanaDalil(p({ PG: 20 }, "tanpa"), bab).every((c) => c === null));
   assert.ok(rencanaDalil(p({ PG: 20 }), bab).every((c) => c === null)); // set lama tanpa porsi
@@ -90,4 +93,51 @@ test("terjemah Kemenag: ayat utuh dari data, potongan & rujukan tak dikenal koso
   assert.deepEqual(b.dalil.map((d) => [d.terjemah.slice(0, 10), !!d.terjemahKemenag]), [["Dan dirika", true], ["terjemah g", false], ["", false]]);
   // file asli Tanzil (6236 ayat)
   assert.match(terjemahAyat("QS. Al-Fātiḥah [1]: 2"), /Segala puji bagi Allah/);
+});
+
+test("tahap 2: rumpang, pilihan, urutan disusun aplikasi dari teks terverifikasi", () => {
+  const isra = bab.dalil.find((d) => d.id === "isra-32")!;
+  const kata = isra.arab.split(/\s+/);
+  const acak = (() => { let x = 7; return () => ((x = (x * 9301 + 49297) % 233280) / 233280); })();
+  // Rumpang: kata 2–3 dikosongkan, pilihan = kunci + 4 potongan sepanjang 2 kata (pilihan AI dulu, sisanya otomatis)
+  const rumpang = soal({ dalil_id: "isra-32", dalil_tampil: "rumpang", dalil_potong: [2, 3], pilihan: [], pertanyaan: "Lengkapilah potongan ayat berikut!", dalil_pengecoh: [{ dalil_id: "nur-2", potong: [1, 2] }, { dalil_id: "isra-32", potong: [2, 3] }] });
+  assert.equal(tampilanDalil(rumpang, bab)!.arab, [kata[0], RUMPANG, ...kata.slice(3)].join(" "));
+  const r = susunPilihanDalil(rumpang, bab, acak);
+  assert.equal(r.pilihan!.length, 5);
+  assert.equal(r.pilihan![["A", "B", "C", "D", "E"].indexOf(String(r.kunci))], kata.slice(1, 3).join(" "));
+  assert.ok(r.pilihan!.includes(bab.dalil.find((d) => d.id === "nur-2")!.arab.split(/\s+/).slice(0, 2).join(" "))); // pengecoh pilihan AI
+  assert.equal(new Set(r.pilihan).size, 5);
+  assert.equal(r.dalil_pengecoh, undefined); // bahan saja, tidak disimpan
+  assert.equal(periksaSoal([r], bab, undefined)[0].peringatan!.join(" | "), ""); // semua Arab pilihan terverifikasi
+  // Kunci diubah tangan sehingga tidak cocok → ditandai
+  assert.match(periksaSoal([{ ...r, kunci: r.kunci === "A" ? "B" : "A" }], bab)[0].peringatan!.join(), /belum tersusun dari dalil/);
+  // Pilihan: tanpa kotak dalil; pilihan terjemah dari kata terjemah
+  const pt = susunPilihanDalil(soal({ dalil_id: "isra-32", dalil_tampil: "pilihan-terjemah", dalil_potong: [1, 3], pilihan: [], pertanyaan: "Terjemah lafaz pembuka ayat tersebut adalah ...." }), bab, acak);
+  assert.equal(tampilanDalil(pt, bab), null);
+  assert.ok(pt.pilihan!.includes(isra.terjemah.split(/\s+/).slice(0, 3).join(" ")));
+  // Urutan: 4 bagian diacak (tersimpan), pilihan berupa susunan label, kunci = susunan asli
+  const u = susunPilihanDalil(soal({ dalil_id: "isra-32", dalil_tampil: "urutan", pilihan: [], pertanyaan: "Susunan potongan ayat berikut yang benar adalah ...." }), bab, acak);
+  const b = bagianUrutan(u, isra)!;
+  assert.equal(b.segmen.join(" "), isra.arab.split(/\s+/).join(" "));
+  assert.ok(b.tampil.some((x, i) => x !== i));
+  assert.deepEqual(tampilanDalil(u, bab)!.urutan, b.tampil.map((j) => b.segmen[j]));
+  const benar = b.segmen.map((_, i) => `(${b.tampil.indexOf(i) + 1})`).join(" – ");
+  assert.equal(u.pilihan![["A", "B", "C", "D", "E"].indexOf(String(u.kunci))], benar);
+  assert.equal(periksaSoal([u], bab)[0].peringatan!.join(" | "), "");
+  // Bukan PG: cara PG diganti cara biasa
+  assert.equal(caraDalil({ bentuk: "URAIAN", dalil_tampil: "rumpang" }, isra), "potong");
+  assert.equal(susunPilihanDalil(soal({ bentuk: "URAIAN", dalil_id: "isra-32", dalil_tampil: "pilihan", dalil_potong: [1, 2] }), bab).pilihan!.length, 5); // tidak disentuh
+  // Bahan tidak cukup (kunci = seluruh satu-satunya dalil) → apa adanya
+  const satu = { dalil: [isra] };
+  const x = soal({ dalil_id: "isra-32", dalil_tampil: "pilihan", dalil_potong: [1, kata.length], pilihan: [] });
+  assert.equal(susunPilihanDalil(x, satu), x);
+  assert.ok(korpusArab(bab).length > 0);
+});
+
+test("tahap 2: pengecoh yang sama dengan kunci (beda awalan/harakat saja) ditolak", () => {
+  const a = { id: "a", sumber: "QS. A", arab: "وَبَيِّنَاتٍ مِّنَ الْهُدَىٰ وَالْفُرْقَانِ", terjemah: "", mufradat: [], mushaf: true };
+  const b = { id: "b", sumber: "QS. B", arab: "الْفُرْقَانَ عَلَىٰ عَبْدِهِ لِيَكُونَ لِلْعَالَمِينَ نَذِيرًا", terjemah: "", mufradat: [], mushaf: true };
+  const s = susunPilihanDalil(soal({ dalil_id: "a", dalil_tampil: "pilihan", dalil_potong: [4, 4], pilihan: [], pertanyaan: "Lafaz yang berarti pembeda adalah ....", dalil_pengecoh: [{ dalil_id: "b", potong: [1, 1] }] }), { dalil: [a, b] });
+  assert.equal(s.pilihan!.length, 5);
+  assert.ok(!s.pilihan!.includes("الْفُرْقَانَ"), s.pilihan!.join(" | "));
 });

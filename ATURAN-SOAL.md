@@ -243,8 +243,20 @@ soal mana saja ("sebar ke semua dalil"), termasuk soal yang tidak membahasnya. U
    "nama sumber saja" tanpa menyebut sumbernya.
 6. ✅ (0.42.0) **Ubah soal** boleh mengganti dalil dan cara tampilnya ("tampilkan artinya saja"); **Edit** punya pilihan
    cara tampil + nomor kata potongan. Kunci & pembahasan (web dan Word) memuat dalil lengkap bila di soal tidak utuh.
-7. 🔜 Tahap 2: dalil di pilihan jawaban (A–E berupa potongan ayat), Arab/terjemah rumpang (melengkapi), menyusun urutan
-   potongan. 🔜 Tahap 3: dalil di Benar/Salah, PG kompleks, menjodohkan, isian; memilih potongan dengan klik di Edit.
+7. ✅ (0.43.0, tahap 2) Cara khusus **PG** yang pilihan A–E-nya **disusun aplikasi** dari teks terverifikasi:
+   | Cara | Di soal | Pilihan A–E |
+   |---|---|---|
+   | Arab rumpang | teks Arab dengan satu bagian "……" | potongan Arab: bagian yang hilang + 4 pengecoh |
+   | Terjemah rumpang | terjemah dengan satu bagian "……" | potongan terjemah |
+   | Arab di pilihan | tanpa kotak ("Lafaz yang berisi perintah zakat adalah ….") | potongan Arab |
+   | Terjemah di pilihan | tanpa kotak | potongan terjemah |
+   | Menyusun urutan | 3–4 potongan ayat/hadis berlabel (1)–(4), diacak | susunan label, mis. "(2) – (4) – (1) – (3)" |
+   AI menunjuk kunci (nomor kata) dan boleh mengusulkan pengecoh (nomor kata dari dalil yang sama atau dalil lain);
+   aplikasi memeriksanya, melengkapi bila kurang (potongan sepanjang kunci dari dalil lain, lalu dari dalil yang sama),
+   lalu mengacak. Pengecoh hanya dari dalil materi (bukan ayat lain di mushaf), jadi materi dengan satu ayat pendek
+   cukup untuk potongan pendek saja. Edit punya tombol **Susun pilihan dari dalil**. Pemeriksa menandai soal yang
+   kuncinya bukan potongan dalil yang dipilih.
+8. 🔜 Tahap 3: dalil di Benar/Salah, PG kompleks, menjodohkan, isian; memilih potongan dengan klik di Edit.
 
 ---
 

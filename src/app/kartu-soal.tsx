@@ -8,7 +8,7 @@ import { Gambar, gambarTempelan, TombolGambar, unggah } from "./gambar";
 import { PotongGambar } from "./potong-gambar";
 import { editRumus, isiKotak } from "./editor-rumus";
 import { EditorTabel } from "./editor-tabel";
-import { adaRumus, bukanDalil, CARA_DALIL, caraDalil, cariTabel, cocokCara, dalilKunci, kataArab, kataTerjemah, NAMA_CARA_DALIL, potonganSah, tampilanDalil, type CaraDalil, JOROK, kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, POLA_RUMUS, tulisTabel, type Bab, type Bentuk, type Soal } from "@/lib/soal";
+import { adaRumus, bukanDalil, CARA_DALIL, CARA_PG, caraDalil, cariTabel, cocokCara, dalilKunci, kataCara, NAMA_CARA_DALIL, PAKAI_POTONG, potonganSah, susunPilihanDalil, tampilanDalil, type CaraDalil, JOROK, kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, POLA_RUMUS, tulisTabel, type Bab, type Bentuk, type Soal } from "@/lib/soal";
 import { MAKS_INSTRUKSI, namaBentuk } from "@/lib/prompt";
 
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
@@ -350,6 +350,13 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
       {tampil && (
         <figure className="rounded bg-krem p-3">
           {tampil.arab && <p dir="rtl" lang="ar" className="font-arab text-2xl">{tampil.arab}</p>}
+          {tampil.urutan && (
+            <ol dir="rtl" className="space-y-1">
+              {tampil.urutan.map((b, i) => (
+                <li key={i} className="flex gap-2"><span dir="ltr" className="shrink-0 font-semibold">({i + 1})</span><span lang="ar" className="font-arab text-2xl">{b}</span></li>
+              ))}
+            </ol>
+          )}
           {tampil.terjemah && <p className={tampil.arab ? "mt-2" : ""}>“{tampil.terjemah}”</p>}
           <figcaption className="mt-1 text-xs text-pudar">{tampil.bukan ? "Teks Arab materi" : [tampil.sumber, "teks terverifikasi"].filter(Boolean).join(" · ")}</figcaption>
         </figure>
@@ -476,9 +483,19 @@ type FormProps = { no: number; awal: Soal; bab: Bab; onBatal: () => void; onSimp
 function PilihDalil({ s, bab, ubah }: { s: Soal; bab: Bab; ubah: (x: Partial<Soal>) => void }) {
   const d = bab.dalil.find((x) => x.id === s.dalil_id);
   const cara = d ? caraDalil(s, d) : null;
-  const kata = d && cara === "potong" ? kataArab(d) : d && cara === "potong-terjemah" ? kataTerjemah(d) : [];
+  const kata = d && cara && PAKAI_POTONG.has(cara) ? kataCara(d, cara) : [];
   const [awal, akhir] = potonganSah(s.dalil_potong, kata.length) ?? [1, kata.length];
   const angka = "w-20 rounded-lg border p-2";
+  const arab = cara !== null && !cara.endsWith("terjemah");
+  // 0.43.0: rumpang/pilihan/urutan: pilihan A–E disusun ulang dari dalil (teks terverifikasi) setelah potongan diubah.
+  const [pesanSusun, setPesanSusun] = useState("");
+  const susun = () => {
+    const isian = { ...s, dalil_potong: [awal, akhir] };
+    const baru = susunPilihanDalil(isian, bab);
+    const berhasil = baru !== isian && !!baru.pilihan?.length;
+    if (berhasil) ubah({ dalil_potong: [awal, akhir], dalil_urutan: baru.dalil_urutan ?? null, pilihan: baru.pilihan, kunci: baru.kunci });
+    setPesanSusun(berhasil ? "Pilihan disusun ulang dari dalil ✓" : "Bahan pengecoh dari dalil tidak cukup. Pendekkan potongannya, atau pilih cara tampil lain.");
+  };
   return (
     <fieldset className="space-y-2">
       <legend>Dalil (teks terverifikasi, bukan ketikan AI)</legend>
@@ -489,7 +506,7 @@ function PilihDalil({ s, bab, ubah }: { s: Soal; bab: Bab; ubah: (x: Partial<Soa
         </select>
         {d && (
           <select aria-label="Cara tampil dalil" className="rounded-lg border p-2 text-sm" value={cara ?? "arab"} onChange={(e) => ubah({ dalil_tampil: e.target.value as CaraDalil, dalil_potong: null })}>
-            {CARA_DALIL.filter((c) => cocokCara(c, d)).map((c) => <option key={c} value={c}>{NAMA_CARA_DALIL[c]}</option>)}
+            {CARA_DALIL.filter((c) => cocokCara(c, d) && (s.bentuk === "PG" || !CARA_PG.has(c))).map((c) => <option key={c} value={c}>{NAMA_CARA_DALIL[c]}</option>)}
           </select>
         )}
       </div>
@@ -502,7 +519,13 @@ function PilihDalil({ s, bab, ubah }: { s: Soal; bab: Bab; ubah: (x: Partial<Soa
             <input type="number" aria-label="Kata akhir potongan" className={angka} min={awal} max={kata.length} value={akhir} onChange={(e) => ubah({ dalil_potong: [awal, Number(e.target.value)] })} />
             <span className="text-pudar">dari {kata.length} kata</span>
           </div>
-          <p dir={cara === "potong" ? "rtl" : undefined} lang={cara === "potong" ? "ar" : undefined} className={`rounded bg-krem p-2 ${cara === "potong" ? "font-arab text-xl" : ""}`}>{kata.slice(awal - 1, akhir).join(" ")}</p>
+          <p dir={arab ? "rtl" : undefined} lang={arab ? "ar" : undefined} className={`rounded bg-krem p-2 ${arab ? "font-arab text-xl" : ""}`}>{kata.slice(awal - 1, akhir).join(" ")}</p>
+        </div>
+      )}
+      {cara && CARA_PG.has(cara) && (
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" className="rounded-lg border h-10 px-3" onClick={susun}>Susun pilihan dari dalil</button>
+          {pesanSusun && <span className="text-pudar" role="status">{pesanSusun}</span>}
         </div>
       )}
     </fieldset>

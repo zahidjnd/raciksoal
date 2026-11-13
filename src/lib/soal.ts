@@ -11,6 +11,10 @@ export type Soal = {
   // [awal, akhir] (mulai 1) dari teks Arab ("potong") atau terjemah ("potong-terjemah"), disusun aplikasi dari data.
   dalil_tampil?: CaraDalil | null;
   dalil_potong?: number[] | null;
+  // 0.43.0: pengecoh pilihan AI untuk cara PG berdalil (potongan dalil lain/yang sama), hanya bahan susunPilihanDalil,
+  // tidak disimpan; urutan tampil bagian soal "menyusun urutan" (indeks bagian asli, disimpan).
+  dalil_pengecoh?: { dalil_id: string; potong: number[] }[] | null;
+  dalil_urutan?: number[] | null;
   // 0.30.0: gambar materi yang ditampilkan di bawah pokok soal (id tabel `gambar`, harus ada di bab.gambar), atau kosong.
   gambar_id?: number | null;
   pertanyaan: string;
@@ -337,7 +341,7 @@ export function samakanDenganKisi(soal: Soal, k: BarisKisi): Soal {
     // Gambar mengikuti rencana kisi-kisi: AI hanya melihat gambar yang direncanakan untuk soal itu.
     gambar_id: k.gambar_id ?? null,
     // 0.42.0: dalil & cara tampilnya mengikuti rencana aplikasi; potongan dari AI dipertahankan bila cara tampilnya potongan.
-    ...(k.dalil_tampil !== undefined && { dalil_id: k.dalil_id, dalil_tampil: k.dalil_tampil ?? null, dalil_potong: k.dalil_tampil?.startsWith("potong") ? (soal.dalil_potong ?? null) : null }),
+    ...(k.dalil_tampil !== undefined && { dalil_id: k.dalil_id, dalil_tampil: k.dalil_tampil ?? null, dalil_potong: k.dalil_tampil && PAKAI_POTONG.has(k.dalil_tampil) ? (soal.dalil_potong ?? null) : null }),
     // grup = wacana bersama (TKA) atau blok menjodohkan gaya lama (tanpa wacana)
     ...(k.grup && k.wacana ? { grup: k.grup, wacana: k.wacana } : k.grup && k.bentuk === "MJ" ? { grup: k.grup } : {}),
   };
@@ -380,8 +384,11 @@ export const bukanDalil = (d: { bukan?: boolean; sumber?: string; mushaf?: boole
 export const SUMBER_BUKAN = "Bukan ayat/hadis";
 
 // ---------- Ayat & hadis di soal (0.42.0, ATURAN-SOAL 5a) ----------
-/** Cara dalil tampil di soal. Urutan = urutan giliran rencanaDalil. */
-export const CARA_DALIL = ["utuh", "potong", "terjemah", "arab", "pembahasan", "potong-terjemah", "rujukan"] as const;
+/**
+ * Cara dalil tampil di soal. Urutan = urutan giliran rencanaDalil (keluarga cara diselang-seling supaya set kecil pun
+ * beragam). 0.43.0 (tahap 2): rumpang, pilihan, urutan = PG saja, pilihan jawabannya disusun aplikasi (susunPilihanDalil).
+ */
+export const CARA_DALIL = ["utuh", "rumpang", "terjemah", "pilihan", "potong", "urutan", "arab", "pilihan-terjemah", "pembahasan", "rumpang-terjemah", "potong-terjemah", "rujukan"] as const;
 export type CaraDalil = (typeof CARA_DALIL)[number];
 export const NAMA_CARA_DALIL: Record<CaraDalil, string> = {
   utuh: "Arab + terjemah",
@@ -389,28 +396,50 @@ export const NAMA_CARA_DALIL: Record<CaraDalil, string> = {
   terjemah: "Terjemah saja",
   potong: "Potongan Arab",
   "potong-terjemah": "Potongan terjemah",
+  rumpang: "Arab rumpang (melengkapi, PG)",
+  "rumpang-terjemah": "Terjemah rumpang (melengkapi, PG)",
+  pilihan: "Potongan Arab di pilihan jawaban (PG)",
+  "pilihan-terjemah": "Potongan terjemah di pilihan jawaban (PG)",
+  urutan: "Menyusun urutan potongan (PG)",
   rujukan: "Nama sumber saja (tanpa kotak)",
   pembahasan: "Hanya di pembahasan",
 };
+/** Cara yang pilihan A–E-nya disusun aplikasi dari dalil (hanya PG). */
+export const CARA_PG: ReadonlySet<CaraDalil> = new Set(["rumpang", "rumpang-terjemah", "pilihan", "pilihan-terjemah", "urutan"]);
+/** Cara yang memakai potongan (nomor kata awal–akhir di `dalil_potong`). */
+export const PAKAI_POTONG: ReadonlySet<CaraDalil> = new Set(["potong", "potong-terjemah", "rumpang", "rumpang-terjemah", "pilihan", "pilihan-terjemah", "urutan"]);
+/** Cara yang potongannya diambil dari kata-kata terjemah (bukan Arab). */
+const DARI_TERJEMAH: ReadonlySet<CaraDalil> = new Set(["potong-terjemah", "rumpang-terjemah", "pilihan-terjemah"]);
 type Dalil = Bab["dalil"][number];
-export const butuhTerjemah = (c: CaraDalil) => c === "utuh" || c === "terjemah" || c === "potong-terjemah";
+export const butuhTerjemah = (c: CaraDalil) => c === "utuh" || c === "terjemah" || DARI_TERJEMAH.has(c);
 /** Kata-kata dalil bernomor (mulai 1): AI menunjuk potongan lewat nomor, aplikasi yang menyusun teksnya. */
 export const kataArab = (d: Pick<Dalil, "arab">) => d.arab.normalize("NFC").trim().split(/\s+/).filter(Boolean);
 export const kataTerjemah = (d: Pick<Dalil, "terjemah">) => String(d.terjemah ?? "").trim().split(/\s+/).filter(Boolean);
+/** Kata yang dipotong untuk cara `c` (Arab atau terjemah). */
+export const kataCara = (d: Dalil, c: CaraDalil) => (DARI_TERJEMAH.has(c) ? kataTerjemah(d) : kataArab(d));
 const dalilAyat = (d: Dalil) => !!d.mushaf || /^\s*Q\.?\s*S\b/i.test(d.sumber);
 
-/** Cara ini bisa dipakai dalil `d`? (terjemah harus ada; "nama sumber saja" hanya untuk ayat; teks Arab materi: Arab saja/potongan). */
+/**
+ * Cara ini bisa dipakai dalil `d`? Terjemah harus ada; "nama sumber saja" hanya untuk ayat; rumpang min. 3 kata, urutan
+ * min. 4 kata Arab; teks Arab materi (bukan ayat/hadis): Arab saja/potongan.
+ */
 export function cocokCara(c: CaraDalil, d: Dalil) {
   if (bukanDalil(d)) return c === "arab" || c === "potong";
   if (butuhTerjemah(c) && !d.terjemah?.trim()) return false;
+  if (c.startsWith("rumpang") && kataCara(d, c).length < 3) return false;
+  if (c === "urutan" && kataArab(d).length < 4) return false;
   return c !== "rujukan" || dalilAyat(d);
 }
 
-/** Cara tampil yang benar-benar dipakai. Soal lama (tanpa cara) = Arab saja; cara yang tidak cocok dengan dalilnya → Arab saja. */
-export function caraDalil(s: Pick<Soal, "dalil_tampil">, d: Dalil): CaraDalil {
-  const c = CARA_DALIL.includes(s.dalil_tampil as CaraDalil) ? (s.dalil_tampil as CaraDalil) : "arab";
+/** Pengganti cara PG untuk soal bukan PG (mis. Ubah soal mengirim cara PG ke soal uraian). */
+const CARA_BUKAN_PG: Partial<Record<CaraDalil, CaraDalil>> = { rumpang: "potong", "rumpang-terjemah": "potong-terjemah", pilihan: "potong", "pilihan-terjemah": "potong-terjemah", urutan: "arab" };
+
+/** Cara tampil yang benar-benar dipakai. Soal lama (tanpa cara) = Arab saja; cara yang tidak cocok dengan dalil/bentuknya diganti. */
+export function caraDalil(s: Pick<Soal, "dalil_tampil" | "bentuk">, d: Dalil): CaraDalil {
+  let c = CARA_DALIL.includes(s.dalil_tampil as CaraDalil) ? (s.dalil_tampil as CaraDalil) : "arab";
+  if (CARA_PG.has(c) && s.bentuk !== "PG") c = CARA_BUKAN_PG[c]!;
   if (cocokCara(c, d)) return c;
-  return c === "potong-terjemah" && cocokCara("potong", d) ? "potong" : "arab";
+  return DARI_TERJEMAH.has(c) && cocokCara("potong", d) ? "potong" : "arab";
 }
 
 /** Potongan [awal, akhir] yang sah untuk `n` kata, atau null. */
@@ -436,23 +465,141 @@ export function sumberDitanya(s: Soal, d: Dalil): boolean {
   return isi.some((t) => polos(t).includes(` ${nama} `));
 }
 
-export type TampilDalil = { arab?: string; terjemah?: string; sumber?: string; bukan?: boolean };
+/** Bagian rumpang: teks kosong pengganti potongan yang harus dilengkapi siswa. */
+export const RUMPANG = "……";
 
-/** Bagian dalil yang tampil DI SOAL (web & Word). null = tidak ada kotak dalil (tanpa dalil, "nama sumber saja", "di pembahasan"). */
+export type TampilDalil = { arab?: string; terjemah?: string; sumber?: string; bukan?: boolean; urutan?: string[] };
+
+/** Cara yang tidak menampilkan kotak dalil di soal (dalil ada di kalimat, di pilihan jawaban, atau di pembahasan). */
+const TANPA_KOTAK: ReadonlySet<CaraDalil> = new Set(["rujukan", "pembahasan", "pilihan", "pilihan-terjemah"]);
+
+/**
+ * Bagian-bagian "menyusun urutan" (0.43.0): potongan (atau seluruh dalil) dibagi 3–4 bagian sama banyak kata.
+ * `tampil` = urutan bagian yang ditampilkan berlabel (1), (2), ... (disimpan di `dalil_urutan` supaya tetap).
+ */
+export function bagianUrutan(s: Pick<Soal, "dalil_potong" | "dalil_urutan">, d: Dalil): { segmen: string[]; tampil: number[] } | null {
+  const kata = kataArab(d);
+  const p = potonganSah(s.dalil_potong, kata.length) ?? [1, kata.length];
+  const bag = kata.slice(p[0] - 1, p[1]);
+  const k = Math.min(4, bag.length);
+  if (k < 3) return null;
+  const segmen = Array.from({ length: k }, (_, i) => bag.slice(Math.floor((i * bag.length) / k), Math.floor(((i + 1) * bag.length) / k)).join(" "));
+  const u = s.dalil_urutan;
+  const sah = Array.isArray(u) && u.length === k && [...u].sort().every((x, i) => x === i) && u.some((x, i) => x !== i);
+  // Tanpa urutan tersimpan (soal belum disusun): geser satu, supaya tidak pernah sudah urut.
+  return { segmen, tampil: sah ? u! : segmen.map((_, i) => (i + 1) % k) };
+}
+
+/** Label jawaban urutan: bagian asli ke-0..k-1 ditulis dengan label tampilnya, mis. "(2) – (4) – (1) – (3)". */
+const labelUrutan = (tampil: number[], urut: number[]) => urut.map((j) => `(${tampil.indexOf(j) + 1})`).join(" – ");
+
+/** Bagian dalil yang tampil DI SOAL (web & Word). null = tidak ada kotak dalil (tanpa dalil, nama sumber, di pilihan, di pembahasan). */
 export function tampilanDalil(s: Soal, bab: Pick<Bab, "dalil">): TampilDalil | null {
   const d = bab.dalil.find((x) => x.id === s.dalil_id);
   if (!d) return null;
   const c = caraDalil(s, d);
-  if (c === "rujukan" || c === "pembahasan") return null;
+  if (TANPA_KOTAK.has(c)) return null;
   const bukan = bukanDalil(d);
   const sumber = bukan || sumberDitanya(s, d) ? undefined : d.sumber;
-  if (c === "potong" || c === "potong-terjemah") {
-    const kata = c === "potong" ? kataArab(d) : kataTerjemah(d);
+  if (c === "urutan") {
+    const u = bagianUrutan(s, d);
+    return u ? { urutan: u.tampil.map((j) => u.segmen[j]), sumber } : { arab: d.arab, sumber };
+  }
+  if (PAKAI_POTONG.has(c)) {
+    const kata = kataCara(d, c);
     const p = potonganSah(s.dalil_potong, kata.length);
-    const isi = p ? kata.slice(p[0] - 1, p[1]).join(" ") : kata.join(" ");
-    return c === "potong" ? { arab: isi, sumber, bukan } : { terjemah: isi, sumber };
+    const rumpang = c.startsWith("rumpang");
+    const isi = !p ? kata.join(" ") : rumpang ? [...kata.slice(0, p[0] - 1), RUMPANG, ...kata.slice(p[1])].join(" ") : kata.slice(p[0] - 1, p[1]).join(" ");
+    return DARI_TERJEMAH.has(c) ? { terjemah: isi, sumber } : { arab: isi, sumber, bukan };
   }
   return { ...(c !== "terjemah" && { arab: d.arab }), ...(c !== "arab" && d.terjemah?.trim() && { terjemah: d.terjemah }), sumber, bukan };
+}
+
+/**
+ * Bentuk pembanding pilihan dalil: harakat & tatwil dibuang, awalan و/ف/ب/ل/ك + "ال" dibuang, tanda baca jadi spasi.
+ * Set 150: "وَالْفُرْقَانِ" (kunci) dan "الْفُرْقَانَ" (pengecoh dari ayat lain) = kata yang sama → dua jawaban benar.
+ */
+const kerangkaPilihan = (t: string) =>
+  t
+    .normalize("NFC")
+    .replace(/[ً-ٰٟـ]/g, "")
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w.replace(/^[وفبلك](?=ال)/, "").replace(/^ال/, ""))
+    .join(" ");
+
+/** Jawaban benar soal PG berdalil (teks pilihan yang harus menjadi kunci), atau null bila belum bisa disusun. */
+export function jawabanDalil(s: Soal, d: Dalil): string | null {
+  const c = caraDalil(s, d);
+  if (!CARA_PG.has(c)) return null;
+  if (c === "urutan") {
+    const u = bagianUrutan(s, d);
+    return u ? labelUrutan(u.tampil, u.segmen.map((_, i) => i)) : null;
+  }
+  const kata = kataCara(d, c);
+  const p = potonganSah(s.dalil_potong, kata.length);
+  return p ? kata.slice(p[0] - 1, p[1]).join(" ") : null;
+}
+
+/**
+ * Pilihan A–E soal PG berdalil (rumpang, pilihan, urutan; 0.43.0), disusun APLIKASI dari teks terverifikasi: kunci =
+ * potongan yang ditunjuk AI (`dalil_potong`); pengecoh = potongan pilihan AI (`dalil_pengecoh`, dicek sah), ditambah
+ * otomatis potongan sepanjang kunci dari dalil lain lalu dari dalil yang sama (tidak bertumpang tindih). Urutan: 4 susunan
+ * acak lain. Pilihan diacak, kunci menyesuaikan. Tidak cukup bahan → soal dikembalikan apa adanya (ditandai pemeriksa).
+ */
+export function susunPilihanDalil(s: Soal, bab: Pick<Bab, "dalil">, acak: () => number = Math.random): Soal {
+  const d = bab.dalil.find((x) => x.id === s.dalil_id);
+  if (!d || s.bentuk !== "PG") return s;
+  const c = caraDalil(s, d);
+  if (!CARA_PG.has(c)) return s;
+  const { dalil_pengecoh: _p, ...sisa } = s;
+  void _p;
+  if (c === "urutan") {
+    const asal = bagianUrutan({ dalil_potong: s.dalil_potong }, d);
+    if (!asal) return s;
+    const urut = asal.segmen.map((_, i) => i);
+    let tampil = kocok([...urut], acak);
+    for (let n = 0; n < 10 && tampil.every((x, i) => x === i); n++) tampil = kocok([...urut], acak);
+    if (tampil.every((x, i) => x === i)) tampil = asal.tampil;
+    const benar = labelUrutan(tampil, urut);
+    const lain = new Set<string>();
+    for (let n = 0; n < 60 && lain.size < 4; n++) {
+      const t = labelUrutan(tampil, kocok([...urut], acak));
+      if (t !== benar) lain.add(t);
+    }
+    if (lain.size < 4) return s;
+    const pilihan = kocok([benar, ...[...lain].slice(0, 4)], acak);
+    return { ...sisa, dalil_urutan: tampil, pilihan, kunci: HURUF[pilihan.indexOf(benar)] };
+  }
+  const kunci = jawabanDalil(s, d);
+  if (!kunci) return s;
+  const p = potonganSah(s.dalil_potong, kataCara(d, c).length)!;
+  const L = p[1] - p[0] + 1;
+  const sama = (a: string, b: string) => kerangkaPilihan(a) === kerangkaPilihan(b);
+  const calon: string[] = [];
+  const tambah = (t: string) => {
+    if (t && !sama(t, kunci) && !calon.some((x) => sama(x, t))) calon.push(t);
+  };
+  for (const pg of Array.isArray(s.dalil_pengecoh) ? s.dalil_pengecoh.slice(0, 8) : []) {
+    const x = bab.dalil.find((y) => y.id === pg?.dalil_id && !bukanDalil(y));
+    const q = x && potonganSah(pg.potong, kataCara(x, c).length);
+    if (!x || !q || (x.id === d.id && q[0] <= p[1] && q[1] >= p[0])) continue;
+    tambah(kataCara(x, c).slice(q[0] - 1, q[1]).join(" "));
+  }
+  // Bahan otomatis: per dalil, potongan sepanjang kunci (kunci = dalil utuh → dalil utuh lain), diambil bergiliran antardalil.
+  const sumber = [...bab.dalil.filter((x) => x.id !== d.id && !bukanDalil(x)), d].map((x) => {
+    const kata = kataCara(x, c);
+    if (L >= kataCara(d, c).length) return x.id === d.id ? [] : [kata.join(" ")];
+    const hasil: string[] = [];
+    for (let a = 1; a + L - 1 <= kata.length; a += L) if (x.id !== d.id || a > p[1] || a + L - 1 < p[0]) hasil.push(kata.slice(a - 1, a - 1 + L).join(" "));
+    return hasil;
+  });
+  for (let n = 0; calon.length < 4 && sumber.some((x) => x.length > n); n++) sumber.forEach((x) => x[n] && tambah(x[n]));
+  if (calon.length < 4) return s;
+  const pilihan = kocok([kunci, ...calon.slice(0, 4)], acak);
+  return { ...sisa, pilihan, kunci: HURUF[pilihan.indexOf(kunci)] };
 }
 
 /**
@@ -489,7 +636,8 @@ export function pasangDalil<T extends BarisKisi>(kisi: T[], rencana: (CaraDalil 
     if (!pilihan && ikutAi) return { ...k, dalil_id: null, dalil_tampil: null };
     const d = pilihan && !bukanDalil(pilihan) ? pilihan : jarang(c);
     if (!pilihan || bukanDalil(pilihan)) hitung(d.id);
-    return { ...k, dalil_id: d.id, dalil_tampil: cocokCara(c, d) ? c : "arab" };
+    // Nomor berdalil tidak bergambar (0.43.0): nomor BERGAMBAR rencana aplikasi memang tidak pernah dijatah dalil.
+    return { ...k, dalil_id: d.id, dalil_tampil: cocokCara(c, d) ? c : "arab", gambar_id: null };
   });
 }
 
@@ -616,6 +764,7 @@ export function rapikanSoal(s: Partial<Soal>, bentuk: Bentuk): Soal {
     dalil_id: s.dalil_id ? teks(s.dalil_id) : null,
     ...(s.dalil_tampil !== undefined && { dalil_tampil: CARA_DALIL.includes(s.dalil_tampil as CaraDalil) ? s.dalil_tampil : null }),
     ...(Array.isArray(s.dalil_potong) && { dalil_potong: s.dalil_potong.slice(0, 2).map((n) => Math.round(Number(n)) || 0) }),
+    ...(Array.isArray(s.dalil_urutan) && { dalil_urutan: s.dalil_urutan.slice(0, 4).map((n) => Math.round(Number(n)) || 0) }),
     gambar_id: Number.isInteger(Number(s.gambar_id)) && Number(s.gambar_id) > 0 ? Number(s.gambar_id) : null,
     pertanyaan: teks(s.pertanyaan),
     ...(bentuk === "PG" || bentuk === "PGK" ? { pilihan: [0, 1, 2, 3, 4].map((i) => teks(s.pilihan?.[i])) } : {}),
@@ -924,12 +1073,20 @@ function periksaDalil(s: Soal, bab: Bab): string[] {
   }
   if (bukanDalil(d)) return w;
   const c = caraDalil(s, d);
-  const tampil = c !== "rujukan" && c !== "pembahasan";
+  const tampil = !TANPA_KOTAK.has(c);
   if (tampil && !butuhTerjemah(c) && /terjemah/i.test(teks)) w.push("Soal menyebut terjemah, tetapi terjemahnya tidak ditampilkan. Pilih cara tampil yang memuat terjemah, atau ubah kalimatnya.");
   if (!s.dalil_tampil) return w;
-  if (tampil && !SEBUT_DALIL.test(teks)) w.push("Ayat/hadis ditampilkan di soal, tetapi pertanyaannya tidak membahasnya. Tanyakan isi dalil itu, atau hapus dalilnya (Edit: Dalil = tidak ada).");
-  if ((c === "potong" || c === "potong-terjemah") && !potonganSah(s.dalil_potong, (c === "potong" ? kataArab(d) : kataTerjemah(d)).length))
+  if ((tampil || CARA_PG.has(c)) && !SEBUT_DALIL.test(teks)) w.push("Ayat/hadis dipakai di soal, tetapi pertanyaannya tidak membahasnya. Tanyakan isi dalil itu, atau hapus dalilnya (Edit: Dalil = tidak ada).");
+  if (PAKAI_POTONG.has(c) && c !== "urutan" && !potonganSah(s.dalil_potong, kataCara(d, c).length))
     w.push("Potongan dalil belum sah (nomor kata awal dan akhir). Atur lewat Edit.");
+  // 0.43.0: pilihan A–E soal rumpang/pilihan/urutan harus tersusun dari dalil, dengan kunci = jawaban dari dalil.
+  if (CARA_PG.has(c)) {
+    const benar = jawabanDalil(s, d);
+    const dipilih = s.pilihan?.[HURUF.indexOf(String(s.kunci ?? "").trim().toUpperCase())];
+    if (c === "urutan" && !benar) w.push("Dalil terlalu pendek untuk disusun urutannya (minimal 3 kata). Pilih cara tampil lain lewat Edit.");
+    else if (benar && rapikan(String(dipilih ?? "")) !== rapikan(benar))
+      w.push('Pilihan jawaban belum tersusun dari dalil (jawaban benar harus potongan dalil yang dipilih). Tekan "Susun pilihan dari dalil" di Edit.');
+  }
   if (c === "rujukan" && !polos(teks).includes(` ${polos(namaSumber(d)).trim()} `)) w.push(`Dalil hanya disebut namanya, tetapi soal tidak menyebut sumbernya (${d.sumber}).`);
   if (!tampil && TUNJUK_DALIL.test(teks)) w.push("Soal menyuruh memperhatikan ayat/hadis, tetapi cara tampil dalilnya tidak menampilkan teks. Ubah cara tampilnya lewat Edit.");
   return w;
@@ -973,6 +1130,7 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat, teman: So
     // Cara tampil & potongan dalil dari AI/guru: yang tidak dikenal dibuang (kembali ke tampilan bawaan).
     if (s.dalil_tampil !== undefined && !CARA_DALIL.includes(s.dalil_tampil as CaraDalil)) s.dalil_tampil = null;
     if (s.dalil_potong !== undefined) s.dalil_potong = Array.isArray(s.dalil_potong) ? s.dalil_potong.slice(0, 2).map((n) => Math.round(Number(n)) || 0) : null;
+    if (s.dalil_urutan !== undefined && !Array.isArray(s.dalil_urutan)) s.dalil_urutan = null;
     // Gambar yang tidak ada di materi dibuang; soal yang menyebut gambar tanpa gambar ditandai.
     if (s.gambar_id != null && !gambarAda.has(Number(s.gambar_id))) s.gambar_id = null;
     const peringatan: string[] = [];
@@ -992,7 +1150,10 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat, teman: So
       peringatan.push('Pilihan PG kompleks tidak boleh berupa gabungan nomor ("(2) dan (3)"): siswa sendiri yang memilih semua jawaban yang tepat. Tulis tiap pilihan sebagai satu pernyataan.');
     if ((s.bentuk === "PG" || s.bentuk === "PGK") && URUTAN_PILIHAN.test(s.pembahasan ?? ""))
       peringatan.push('Pembahasan menunjuk pilihan dengan urutan ("pengecoh kedua"), padahal urutan pilihan diacak aplikasi. Sebut isi pilihannya.');
-    if (s.bentuk === "PG") {
+    // 0.43.0: pilihan rumpang/pilihan/urutan disusun aplikasi dari dalil: hitungan AI & panjang pilihan tidak diperiksa.
+    const dalilSoal = bab.dalil.find((x) => x.id === s.dalil_id);
+    const pilihanDalil = !!dalilSoal && s.bentuk === "PG" && CARA_PG.has(caraDalil(s, dalilSoal));
+    if (s.bentuk === "PG" && !pilihanDalil) {
       const w = cekJawabanBenar(s);
       if (w) peringatan.push(w);
     }
@@ -1001,7 +1162,7 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat, teman: So
     // yang kena. Menjodohkan dilewati: isinya ada di pasangan, perintahnya memang pendek.
     if (/^C[4-6]$/i.test(s.level ?? "") && s.bentuk !== "MJ" && !s.wacana && !tampilanDalil(s, bab) && !s.gambar_id && String(s.pertanyaan ?? "").trim().length < 80)
       peringatan.push(`Soal HOTS (${s.level}) tanpa stimulus: tambahkan kasus, data, atau teks yang harus diolah siswa untuk menjawab.`);
-    if (s.bentuk === "PG" && kunciTerpanjang(s)) peringatan.push("Jawaban benar jauh lebih panjang dari semua pengecoh, jadi mudah ditebak. Samakan panjang dan kerincian pilihan.");
+    if (s.bentuk === "PG" && !pilihanDalil && kunciTerpanjang(s)) peringatan.push("Jawaban benar jauh lebih panjang dari semua pengecoh, jadi mudah ditebak. Samakan panjang dan kerincian pilihan.");
     if (s.bentuk === "PGK" && !KUNCI_PGK.includes(new Set([s.kunci].flat()).size)) peringatan.push("Kunci PG kompleks harus 2 sampai 4 jawaban (tidak semua pilihan).");
     if (s.bentuk === "ISIAN") {
       peringatan.push(...periksaIsian(s));

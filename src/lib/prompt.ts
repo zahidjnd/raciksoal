@@ -1,5 +1,5 @@
 import { MAPEL_INDONESIA, MAPEL_INGGRIS, MAPEL_SEJARAH } from "./mapel.ts";
-import { adalahTahun, blokMj, bukanDalil, butuhTerjemah, CARA_DALIL, identitasBab, kataArab, kataTerjemah, keFormatAI, kocok, MAKS_GABUNG, mjLama, type Bab, type BarisKisi, type Bentuk, type CaraDalil, type Soal } from "./soal.ts";
+import { adalahTahun, blokMj, bukanDalil, CARA_DALIL, CARA_PG, cocokCara, identitasBab, kataArab, kataTerjemah, keFormatAI, kocok, MAKS_GABUNG, mjLama, type Bab, type BarisKisi, type Bentuk, type CaraDalil, type Soal } from "./soal.ts";
 
 export const PESAN_MJ_MIN = "Menjodohkan minimal 3 nomor (atau 0), supaya daftar jawabannya masuk akal.";
 
@@ -306,7 +306,7 @@ PENGECOH DAN PEMBAHASAN:
 ${bentukSoal(tka)}
 
 FORMAT JAWABAN (kecuali permintaan menyebut format lain): hanya JSON (tanpa teks lain), dengan bentuk:
-{"soal":[{"bentuk":"PG","dalil_id":null,${adaDalil ? '"dalil_tampil":null,"dalil_potong":null,' : ""}${adaGambar ? '"gambar_id":null,' : ""}"pertanyaan":"...","langkah":"...","jawaban_benar":"...","pilihan":["...","...","...","...","..."],"kunci":"B","pembahasan":"...","level":"C2","tp":"TP 3.2","skor":1}]}
+{"soal":[{"bentuk":"PG","dalil_id":null,${adaDalil ? '"dalil_tampil":null,"dalil_potong":null,"dalil_pengecoh":null,' : ""}${adaGambar ? '"gambar_id":null,' : ""}"pertanyaan":"...","langkah":"...","jawaban_benar":"...","pilihan":["...","...","...","...","..."],"kunci":"B","pembahasan":"...","level":"C2","tp":"TP 3.2","skor":1}]}
 ${formatBsMj(tka)}
 Untuk ISIAN: {"bentuk":"ISIAN","dalil_id":null,"pertanyaan":"Kata yang menunjukkan tempat adalah ....","kunci":"mahall","kunciAlt":[],"pembahasan":"...","level":"C1","tp":"TP 3.2","skor":1}
 Untuk URAIAN tambahkan "rubrik", setiap kriteria menyebut skor penuh DAN skor sebagian dengan skala yang SAMA dengan "skor" kriteria itu; contoh bila jumlah skor rubrik 5: [{"kriteria":"Menyebut tiga syarat sah salat Jumat (3 = tiga benar; 2 = dua benar; 1 = satu benar; 0 = tidak ada yang benar)","skor":3},{"kriteria":"Menjelaskan alasan dengan tepat (2 = alasan tepat dan lengkap; 1 = alasan kurang lengkap; 0 = salah atau kosong)","skor":2}]. "tp" diisi kode TP yang paling sesuai.
@@ -502,18 +502,40 @@ export function rencanaGrup(jumlah: Record<Bentuk, number>, boleh = (b: Bentuk) 
  * dari nomor non-menjodohkan, maks 3 nomor per dalil, tersebar merata; cara tampil digilir (CARA_DALIL), cara yang tidak
  * bisa dipakai materi ini (tanpa terjemah sama sekali, tanpa ayat) dilewati. Set lama tanpa porsi: tanpa rencana (null semua).
  */
-export function rencanaDalil(p: Pengaturan, bab?: Pick<Bab, "dalil">): (CaraDalil | null)[] {
+/** Nomor (indeks) BERGAMBAR rencana aplikasi (0.33.3): 1 per 5 soal yang bisa bergambar, maks jumlah gambar, tersebar. */
+export function nomorBergambar(p: Pengaturan, bab?: Pick<Bab, "gambar">): Set<number> {
+  const bentukNo = urutanBentuk(p.jumlah).flatMap((b) => Array<Bentuk>(p.jumlah[b]).fill(b));
+  const bisaGambar = bentukNo.flatMap((b, i) => (b === "MJ" || (b === "BS" && p.tujuan !== TKA) ? [] : [i]));
+  const jatahGambar = bab?.gambar?.length ? Math.min(bab.gambar.length, Math.ceil(bisaGambar.length / 5)) : 0;
+  return new Set(Array.from({ length: jatahGambar }, (_, k) => bisaGambar[Math.floor(((k + 0.5) * bisaGambar.length) / jatahGambar)]));
+}
+
+export function rencanaDalil(p: Pengaturan, bab?: Pick<Bab, "dalil" | "gambar">): (CaraDalil | null)[] {
   const bentukNo = urutanBentuk(p.jumlah).flatMap((b) => Array<Bentuk>(p.jumlah[b]).fill(b));
   const hasil: (CaraDalil | null)[] = bentukNo.map(() => null);
   const dalil = (bab?.dalil ?? []).filter((d) => !bukanDalil(d));
   const porsi = p.porsiDalil ? PORSI_DALIL[p.porsiDalil] : 0;
   if (!dalil.length || !porsi) return hasil;
-  const bisa = bentukNo.flatMap((b, i) => (b === "MJ" ? [] : [i]));
+  // 0.43.0: nomor BERGAMBAR tidak dijatah dalil (set 149: "Perhatikan gambar berikut! Lengkapilah potongan ayat ...").
+  const bergambar = nomorBergambar(p, bab);
+  const bisa = bentukNo.flatMap((b, i) => (b === "MJ" || bergambar.has(i) ? [] : [i]));
   const n = Math.min(bisa.length, dalil.length * 3, Math.max(1, Math.round(bisa.length * porsi)));
-  const adaTerjemah = dalil.some((d) => d.terjemah?.trim());
-  const adaAyat = dalil.some((d) => d.mushaf || /^\s*Q\.?\s*S\b/i.test(d.sumber));
-  const cara = CARA_DALIL.filter((c) => (!butuhTerjemah(c) || adaTerjemah) && (c !== "rujukan" || adaAyat));
-  for (let k = 0; k < n; k++) hasil[bisa[Math.floor(((k + 0.5) * bisa.length) / n)]] = cara[k % cara.length];
+  // Cara yang bisa dipakai paling tidak oleh satu dalil materi ini (terjemah ada, ayat ada, cukup panjang, ...).
+  const cara = CARA_DALIL.filter((c) => dalil.some((d) => cocokCara(c, d)));
+  if (!cara.length) return hasil;
+  // 0.43.0: cara PG (rumpang, pilihan, urutan) hanya untuk nomor PG; nomor lain mengambil cara berikutnya di giliran.
+  let giliran = 0;
+  for (let k = 0; k < n; k++) {
+    const i = bisa[Math.floor(((k + 0.5) * bisa.length) / n)];
+    for (let t = 0; t < cara.length; t++) {
+      const c = cara[(giliran + t) % cara.length];
+      if (bentukNo[i] === "PG" || !CARA_PG.has(c)) {
+        hasil[i] = c;
+        giliran = (giliran + t + 1) % cara.length;
+        break;
+      }
+    }
+  }
   return hasil;
 }
 
@@ -524,11 +546,17 @@ const CARA_DALIL_AI = `CARA MENAMPILKAN DALIL ("dalil_tampil"). Aplikasi yang me
 - "terjemah": terjemah saja (Arab tidak tampil). Untuk soal pemahaman makna. Pengantar misalnya "Perhatikan terjemah hadis berikut!".
 - "potong": potongan teks Arab. Isi "dalil_potong": [nomor kata awal, nomor kata akhir] dari "Kata Arab bernomor" dalil itu (satu kata = soal arti kosakata/mufradat). Untuk arti kata/frasa, lafaz kunci, atau kelanjutan ayat. Pengantar misalnya "Perhatikan potongan ayat berikut!".
 - "potong-terjemah": potongan terjemah. Isi "dalil_potong" dari "Kata terjemah bernomor". Untuk makna frasa tertentu.
+- "rumpang" (PG saja): aplikasi menampilkan teks Arab dalil dengan kata ke-a sampai ke-b ("dalil_potong") DIKOSONGKAN, dan MENYUSUN SENDIRI pilihan A–E (kunci = bagian yang dikosongkan). Pilih bagian 1–4 kata yang bermakna. Isi "dalil_pengecoh": 4 potongan lain sepanjang kunci dari "Kata Arab bernomor" (dari dalil yang sama atau dalil lain, BUKAN bagian yang dikosongkan), bentuknya [{"dalil_id":"...","potong":[a,b]}]. Isi "pilihan": [] dan "kunci": "A" (aplikasi yang mengisi). Pengantar misalnya "Lengkapilah potongan ayat berikut!".
+- "rumpang-terjemah" (PG saja): sama dengan "rumpang", tetapi yang dikosongkan dan pilihannya potongan TERJEMAH ("Kata terjemah bernomor"). Misalnya "Lengkapilah terjemah hadis berikut!".
+- "pilihan" (PG saja): TIDAK ada kotak dalil, jadi JANGAN menulis "Perhatikan firman/ayat/hadis berikut"; pilihan A–E berupa potongan teks Arab yang disusun aplikasi: kunci = "dalil_potong", pengecoh = "dalil_pengecoh" (seperti "rumpang"). Soal misalnya "Lafaz yang berisi perintah menunaikan zakat adalah ....". "pilihan": [], "kunci": "A".
+- "pilihan-terjemah" (PG saja): seperti "pilihan", tetapi pilihannya potongan terjemah. Misalnya "Terjemah lafaz ... yang tepat adalah ....".
+- "urutan" (PG saja): aplikasi memotong kata ke-a sampai ke-b ("dalil_potong"; null = seluruh dalil, minimal 4 kata) menjadi 3–4 bagian bernomor yang diacak, lalu menyusun pilihan urutannya. Soal misalnya "Susunan potongan ayat berikut yang benar adalah ....". "pilihan": [], "kunci": "A".
+- Pada rumpang/pilihan/urutan "dalil_potong" WAJIB diisi (kecuali urutan seluruh dalil), juga pada permintaan memperbaiki atau mengubah soal. Pembahasan menyebut isi jawaban yang benar (lafaz dan artinya) tanpa menyebut huruf pilihan; jangan mengetik ulang teks Arab panjang.
 - "rujukan" (ayat saja): tidak ada teks yang tampil; soal MENYEBUT sumbernya di kalimat, persis seperti di DATA BAB, misalnya "Isi kandungan QS. Al-Baqarah [2]: 43 adalah ....". Jangan menulis "ayat berikut", dan jangan menuliskan isi atau terjemah ayatnya (isinya justru yang ditanyakan).
 - "pembahasan": dalil TIDAK tampil di soal. Tulis soal biasa tanpa menyuruh memperhatikan ayat/hadis; pembahasan memakai dalil itu sebagai penguat kunci (aplikasi menampilkannya di kunci & pembahasan).
 - Dalil hanya dipakai bila soal BENAR-BENAR membahasnya: pertanyaan menyebut firman/ayat/hadis/lafaz/terjemah/sumbernya. Soal tanpa dalil: "dalil_id": null, "dalil_tampil": null, dan jangan menulis "perhatikan firman/hadis berikut".
 - Bila jawabannya nama surah/ayat atau perawi, aplikasi menyembunyikan sumber di bawah dalil; jangan menulis sumbernya di pertanyaan.
-- Pada set dengan kisi-kisi, dalil dan cara tampil setiap nomor sudah ditentukan barisnya. Pada permintaan mengubah soal, guru boleh meminta dalil atau cara tampil lain (misalnya "tampilkan artinya saja" = "terjemah", "pakai potongan ayatnya" = "potong").`;
+- Pada set dengan kisi-kisi, dalil dan cara tampil setiap nomor sudah ditentukan barisnya. Pada permintaan mengubah soal, guru boleh meminta dalil atau cara tampil lain (misalnya "tampilkan artinya saja" = "terjemah", "pakai potongan ayatnya" = "potong", "jadikan soal melengkapi ayat" = "rumpang", "ayatnya di pilihan jawaban" = "pilihan", "soal menyusun urutan ayat" = "urutan"; tiga yang terakhir hanya untuk PG).`;
 
 export function grupSet(p: Pengaturan, mapel = ""): (number | null)[] {
   if (p.tujuan === TKA) return rencanaGrup(p.jumlah);
@@ -620,9 +648,7 @@ export function buatPermintaanKisi(p: Pengaturan, bab?: Pick<Bab, "teksArab" | "
   // (set 127: 0 dari 10 gambar) dan "minimal N baris" (set 131–135: 2–6 dari jatah 5) tidak dituruti AI; nomor yang
   // ditandai dituruti seperti kategori level. Gambar mana & isi soalnya tetap dipilih AI.
   // MJ tidak bergambar; B/S gaya lama (satu pernyataan) jarang butuh gambar (set 138: gambar meridian, pernyataan soal kilogram).
-  const bisaGambar = bentukNo.flatMap((b, i) => (b === "MJ" || (b === "BS" && p.tujuan !== TKA) ? [] : [i]));
-  const jatahGambar = adaGambar ? Math.min(bab!.gambar!.length, Math.ceil(bisaGambar.length / 5)) : 0;
-  const bergambar = new Set(Array.from({ length: jatahGambar }, (_, k) => bisaGambar[Math.floor(((k + 0.5) * bisaGambar.length) / jatahGambar)]));
+  const bergambar = nomorBergambar(p, bab);
   const dalilNo = rencanaDalil(p, bab);
   const adaRencanaDalil = dalilNo.some(Boolean);
   const rentang: string[] = [];
@@ -649,7 +675,7 @@ ${adaGrup ? `${SOAL_GRUP}${p.tujuan !== TKA ? ` ${WACANA_INDONESIA}` : ""}${tanp
 }
 
 // ATURAN-SOAL 5a (0.42.0): nomor berdalil & cara tampil ditentukan aplikasi (rencanaDalil); AI memilih dalilnya.
-const RENCANA_DALIL = `- "dalil_id": nomor bertanda DALIL (cara tampil) WAJIB memakai satu dalil dari DATA BAB yang paling cocok dengan TP/materi baris itu. Sebar: setiap dalil dipakai dulu sebelum ada dalil yang dipakai lagi, dan dalil yang dipakai lagi memakai cara tampil berbeda. Nomor TANPA tanda DALIL: "dalil_id": null, dan indikator/stimulusnya tidak tentang ayat atau hadis. Indikator dan stimulus nomor berdalil sesuai cara tampilnya (lihat CARA MENAMPILKAN DALIL), misalnya "Disajikan potongan QS. ..., peserta didik dapat menentukan arti lafaz ...", "Disajikan terjemah hadis ..., peserta didik dapat ...", atau untuk "pembahasan": indikator biasa tanpa menyajikan dalil.`;
+const RENCANA_DALIL = `- "dalil_id": nomor bertanda DALIL (cara tampil) WAJIB memakai satu dalil dari DATA BAB yang paling cocok dengan TP/materi baris itu. Sebar: setiap dalil dipakai dulu sebelum ada dalil yang dipakai lagi, dan dalil yang dipakai lagi memakai cara tampil berbeda. Nomor TANPA tanda DALIL: "dalil_id": null, dan indikator/stimulusnya tidak tentang ayat atau hadis. Nomor bertanda DALIL tidak memakai gambar ("gambar_id": null). Indikator dan stimulus nomor berdalil sesuai cara tampilnya (lihat CARA MENAMPILKAN DALIL), misalnya "Disajikan potongan QS. ..., peserta didik dapat menentukan arti lafaz ...", "Disajikan terjemah hadis ..., peserta didik dapat ...", atau untuk "pembahasan": indikator biasa tanpa menyajikan dalil.`;
 
 // ATURAN-SOAL.md bagian 4 no. 5 (0.30.0): gambar dari materi guru. Hanya dikirim bila bab punya gambar.
 const ATURAN_GAMBAR = `- GAMBAR: DATA BAB memuat gambar materi (lihat "Gambar materi"; gambarnya dikirim bersama permintaan). Soal boleh memakai SATU gambar sebagai stimulus dengan mengisi "gambar_id"; aplikasi menampilkan gambar itu di bawah pokok soal, jadi tulis misalnya "Perhatikan gambar berikut!" lalu perintah/pertanyaannya. JANGAN menulis id gambar di teks. Soal bergambar harus benar-benar perlu melihat gambar untuk dijawab (menunjuk bagian berlabel, membaca grafik/diagram/peta, mengamati hasil percobaan), dan jawabannya sesuai yang TAMPAK di gambar: jangan mengarang bagian, label, angka, atau warna yang tidak ada di gambar. Pokok soal tidak menjelaskan isi gambar sampai jawabannya terbaca tanpa melihat gambar. Teks Arab di dalam gambar jangan diketik ulang. Soal tanpa gambar: "gambar_id": null, dan jangan menulis "perhatikan gambar" (gambar lain tidak bisa ditampilkan).`;

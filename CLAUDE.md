@@ -110,6 +110,11 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   (`dalil_potong`), teks disusun `tampilanDalil`; kunci memuat dalil lengkap (`dalilKunci`). Soal tanpa `dalil_tampil`
   = soal lama (Arab saja, tidak diperiksa "asal tempel"). Terjemah ayat kosong → Kemenag (`data/quran/id.indonesian.txt`,
   Tanzil, non-komersial; `lengkapiTerjemah` di `babDariSet` & `mulaiBuatSoal`). Hadis tanpa terjemah → hanya cara Arab.
+  0.43.0 (tahap 2, PG saja, `CARA_PG`): rumpang, rumpang-terjemah, pilihan, pilihan-terjemah, urutan. Pilihan A–E
+  disusun `susunPilihanDalil` (kunci = `dalil_potong`, pengecoh AI `dalil_pengecoh` dicek + diisi otomatis dari dalil
+  materi, `kerangkaPilihan` menolak kata sama beda awalan/harakat), dipanggil di tahap soal, perbaikan, Ganti/Ubah
+  (BUKAN di periksaSoal: kunci diacak). Urutan tampil disimpan `dalil_urutan`. Nomor BERGAMBAR tidak dijatah dalil.
+  Tahap 3 (belum): dalil di B/S, PGK, MJ, isian.
 - **Materi**: ayat otomatis dari mushaf (kotak hijau); hadis di luar data = sumber + centang guru; tulisan Arab ≤ 3 kata = istilah, diterima
   apa adanya (`istilahArab`); teks Arab bukan dalil = tombol "Bukan ayat/hadis" (`bukan: true`, tanpa sumber & centang).
   Teks Arab dari PDF tidak pernah dipakai apa adanya (hanya penunjuk ayat). TP: tertulis di materi = hijau; usulan AI = wajib dicentang.

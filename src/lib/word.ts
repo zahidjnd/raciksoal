@@ -258,6 +258,8 @@ export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tangga
       const dalil = tampilanDalil(s, bab);
       if (dalil) {
         if (dalil.arab) isi.push(par(teks(dalil.arab), { bidirectional: true, alignment: AlignmentType.START, indent: { right: 400 }, keepNext: true, spacing: { after: 0 } }));
+        // 0.43.0: menyusun urutan: bagian-bagian berlabel (1), (2), ... satu per baris, kanan ke kiri.
+        dalil.urutan?.forEach((b, n) => isi.push(par([r(`(${n + 1}) `, { bold: true }), ...teks(b)], { bidirectional: true, alignment: AlignmentType.START, indent: { right: 400 }, keepNext: true, spacing: { after: 0 } })));
         if (dalil.terjemah) isi.push(par(teks(`“${dalil.terjemah}”`, { italics: true }), { indent: { left: 400 }, keepNext: true, spacing: { before: dalil.arab ? 40 : 0, after: 0 } }));
         // Teks Arab materi yang ditandai "Bukan ayat/hadis": tanpa keterangan sumber di lembar siswa.
         if (dalil.sumber) isi.push(par([r(`(${dalil.sumber})`, { italics: true, size: 18 })], { alignment: AlignmentType.RIGHT, keepNext: true }));

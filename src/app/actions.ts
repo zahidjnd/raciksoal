@@ -7,7 +7,7 @@ import { BATAS_GAMBAR, rapikanNilaiGambar, ukuranJpeg } from "@/lib/gambar";
 import { daftarModel, tanyaAI, type GambarAI } from "@/lib/ai";
 import { bagiTahap, jumlahSoal, miripIndikator, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, laranganIsian, ringkasSudah, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, buatSistem, buatAnalisaMateri, buatBacaHalaman, bersihkanIdentitas, pasangKunciPgk, grupSet, rencanaDalil, rencanaLevelSet, sesuaikanLevel, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { BATAS_MATERI, modeArab, rapikanBacaanHalaman, susunDraf, terapkanAnalisa } from "@/lib/materi";
-import { bersihkanTanggapan, gabungBab, identitasBab, jawabanAman, kataTerpakai, KELAS, LEVEL, mjLama, pasangDalil, pemeriksaArab, POLA_ARAB, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
+import { bersihkanTanggapan, gabungBab, identitasBab, jawabanAman, kataTerpakai, KELAS, LEVEL, mjLama, pasangDalil, pemeriksaArab, POLA_ARAB, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, susunPilihanDalil, terapkanBobot, type Bab, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { babDariSet, babMilik, daftarBabMilik, dataGambar, gambarMilik } from "@/lib/bab";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
@@ -263,7 +263,8 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan, guruId: string) {
       const gambarTahap = baris.map((k) => k.gambar_id).filter(Boolean);
       const soal = await tanya(`Tahap ${i + 1}`, pengguna, (d) => ambilSoal(d, baris.length), gambarTahap.length ? pilihGambar(gambarTahap) : []);
       // Menjodohkan gaya lama: daftar jawaban bersama per blok disusun & diacak aplikasi (susunMjLama).
-      semua.push(...susunMjLama(soal.map((s, j) => samakanDenganKisi(s, baris[j]))).map((s) => susunMenjodohkan(s)));
+      // 0.43.0: pilihan A–E soal PG berdalil (rumpang/pilihan/urutan) disusun aplikasi dari teks terverifikasi.
+      semua.push(...susunMjLama(soal.map((s, j) => samakanDenganKisi(s, baris[j]))).map((s) => susunPilihanDalil(susunMenjodohkan(s), bab)));
       // Draf untuk tampilan bertahap (status tetap "proses"): sudah lewat penjaga ayat, tetapi kunci belum
       // diratakan dan skor belum diisi; keduanya baru di akhir untuk seluruh set.
       await simpan({ soal: periksaSoal(semua, bab, cekAyat) });
@@ -304,7 +305,9 @@ async function kerjakan(id: number, bab: Bab, p: Pengaturan, guruId: string) {
         const daftar = await tanya(`Perbaikan soal ${i + 1}`, buatPenggantiPengguna(p, s, soal, kisi[i], instruksi, 2000, calon), (d) => ambilSoal(d, 1, calon), s.gambar_id ? pilihGambar([s.gambar_id]) : []);
         // Diperiksa bersama seluruh set (bukan sendirian), supaya kunci isian yang masih bocor ke soal lain tetap ketahuan.
         const hasil = daftar.map((baru) => {
-          const { stimulus: _s, indikator, ...isi } = susunMenjodohkan(samakanDenganKisi(baru, kisi[i]));
+          // 0.43.0: dalil tetap (kisi); potongan & pengecoh lama dipakai bila AI tidak menuliskannya lagi (set 150 no. 9).
+          const potongLama = baru.dalil_potong ? {} : { dalil_potong: s.dalil_potong };
+          const { stimulus: _s, indikator, ...isi } = susunPilihanDalil(susunMenjodohkan(samakanDenganKisi({ ...baru, ...potongLama }, kisi[i])), bab);
           void _s;
           // Konsep pengganti tidak boleh mengulang baris kisi lain (0.31.2, set 117: isian 21 "PPnBM" dan 23 "Pajak Penjualan
           // atas Barang Mewah" diperbaiki ke konsep yang sama; indikatornya kembar, kuncinya beda tulisan).
@@ -555,8 +558,10 @@ async function soalBaruDariAI(id: number, no: number, mode: "ganti" | "ubah" | "
     const { grup: _g, wacana: _w, ...isiBaru } = baru;
     void _g;
     void _w;
-    const hasilUbah = { ...isiBaru, ...grupLama, gambar_id: baru.gambar_id === undefined ? lama.gambar_id : baru.gambar_id, bentuk: lama.bentuk, level: LEVEL.includes(baru.level) ? baru.level : lama.level, tp: bab.tp.some((t) => t.kode === baru.tp) ? baru.tp : lama.tp };
-    const [soal] = periksaSoal([ubah ? hasilUbah : baris ? samakanDenganKisi(baru, baris) : { ...isiBaru, ...grupLama, bentuk: lama.bentuk }], bab, cekAyat, set.soal.filter((_, j) => mode === "tambah" || j !== no));
+    const hasilUbah = { ...isiBaru, ...grupLama, gambar_id: baru.gambar_id === undefined ? lama.gambar_id : baru.gambar_id, bentuk: lama.bentuk, level: LEVEL.includes(baru.level) ? baru.level : lama.level, tp: bab.tp.some((t) => t.kode === baru.tp) ? baru.tp : lama.tp,
+      // 0.43.0: dalil sama tanpa potongan baru → potongan & urutan lama tetap (guru hanya meminta mengubah kalimat, misalnya).
+      ...(baru.dalil_id === lama.dalil_id && !baru.dalil_potong && { dalil_potong: lama.dalil_potong ?? null }) };
+    const [soal] = periksaSoal([susunPilihanDalil(ubah ? hasilUbah : baris ? samakanDenganKisi(baru, baris) : { ...isiBaru, ...grupLama, bentuk: lama.bentuk }, bab)], bab, cekAyat, set.soal.filter((_, j) => mode === "tambah" || j !== no));
     if (!ubah) ratakanKunci([soal]); // posisi kunci PG/PGK diacak (tidak saat "ubah", supaya guru tidak bingung)
     if (p.bobot) terapkanBobot([soal], p.bobot);
     // Skenario (dan pada "ubah": indikator, TP, level) baru dicatat di baris kisi-kisi.

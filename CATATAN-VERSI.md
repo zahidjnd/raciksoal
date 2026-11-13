@@ -52,6 +52,20 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.43.0 — 13 November 2026
+- **Soal ayat/hadis jenis baru (pilihan ganda)**, disusun aplikasi dari teks terverifikasi:
+  - **Melengkapi (rumpang)**: ayat/hadis atau terjemahnya tampil dengan satu bagian "……"; pilihan A–E berupa potongan.
+  - **Ayat/hadis di pilihan jawaban**: misalnya "Lafaz yang berisi perintah zakat adalah ….", pilihannya potongan
+    Arab (atau potongan terjemah).
+  - **Menyusun urutan**: 3–4 potongan ayat ditampilkan acak berlabel (1)–(4), pilihannya susunan label.
+- Pengecohnya potongan asli dari ayat/hadis materi (bukan ketikan AI). Pengecoh yang sebenarnya kata yang sama
+  (hanya beda awalan/harakat) ditolak.
+- **Edit**: tombol **Susun pilihan dari dalil** setelah mengubah potongan. **Ubah soal** bisa diminta "jadikan soal
+  melengkapi ayat", "ayatnya di pilihan jawaban", atau "soal menyusun urutan ayat".
+- Soal bergambar tidak lagi sekaligus diberi ayat/hadis.
+
+---
+
 ## 0.42.0 — 13 November 2026
 - **Ayat & hadis di soal tidak lagi asal tempel.** Aplikasi yang menentukan nomor mana memakai ayat/hadis (tersebar
   merata); soal lain tanpa dalil. Banyaknya diatur di **Lanjutan → Soal berayat/hadis**: tanpa, sedikit, sedang
