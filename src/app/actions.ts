@@ -5,9 +5,9 @@ import { db } from "@/db";
 import { gambar, hasilSoal, pemakaianAi } from "@/db/schema";
 import { BATAS_GAMBAR, rapikanNilaiGambar, ukuranJpeg } from "@/lib/gambar";
 import { daftarModel, tanyaAI, type GambarAI } from "@/lib/ai";
-import { bagiTahap, jumlahSoal, miripIndikator, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, laranganIsian, ringkasSudah, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, buatSistem, buatAnalisaMateri, buatBacaHalaman, bersihkanIdentitas, pasangKunciPgk, grupSet, rencanaDalil, rencanaLevelSet, sesuaikanLevel, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
+import { bagiTahap, jumlahSoal, miripIndikator, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatPermintaanUbah, laranganIsian, ringkasSudah, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, buatSistem, buatAnalisaMateri, buatBacaHalaman, bersihkanIdentitas, pasangKunciPgk, grupSet, rencanaDalil, rencanaLevelSet, sesuaikanLevel, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { BATAS_MATERI, modeArab, rapikanBacaanHalaman, susunDraf, terapkanAnalisa } from "@/lib/materi";
-import { bersihkanTanggapan, gabungBab, identitasBab, jawabanAman, kataTerpakai, KELAS, LEVEL, mjLama, pasangDalil, pemeriksaArab, POLA_ARAB, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, isiSisipan, samakanDenganKisi, susunMenjodohkan, susunMjLama, susunPilihanDalil, terapkanBobot, type Bab, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
+import { bersihkanTanggapan, gabungBab, identitasBab, isiSama, jawabanAman, kataTerpakai, KELAS, LEVEL, mjLama, pasangDalil, pemeriksaArab, POLA_ARAB, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, isiSisipan, samakanDenganKisi, susunMenjodohkan, susunMjLama, susunPilihanDalil, terapkanBobot, type Bab, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { babDariSet, babMilik, daftarBabMilik, dataGambar, gambarMilik } from "@/lib/bab";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
@@ -544,34 +544,55 @@ async function soalBaruDariAI(id: number, no: number, mode: "ganti" | "ubah" | "
     if (lama.bentuk === "MJ") return gagal("Soal menjodohkan tidak bisa diganti, diubah, atau ditambah AI per nomor karena daftar jawabannya dipakai bersama. Perbaiki lewat Edit.");
     const kisi = h.kisi as BarisKisi[] | null; // set lama: tanpa kisi-kisi
     const baris = kisi?.[no];
-    const sistem = buatSistem(bab, (h.pengaturan as Pengaturan).tujuan === TKA);
-    const pengguna = buatPenggantiPengguna(h.pengaturan as Pengaturan, lama, set.soal, baris, instruksi);
     const p = h.pengaturan as Pengaturan;
+    const sistem = buatSistem(bab, p.tujuan === TKA);
+    // 0.45.0: "ubah" memakai permintaan editor sendiri (buatPermintaanUbah), bukan "buat soal" + instruksi di ujung.
+    let pengguna = ubah ? buatPermintaanUbah(p, lama, set.soal, baris, instruksi) : buatPenggantiPengguna(p, lama, set.soal, baris);
     // Model utama sama dengan set; cadangan dipakai kalau gagal (kecuali set hasil "Bandingkan semua model").
     // Gambar soal lama / rencana kisi-kisi ikut dikirim supaya AI bisa menulis soal bergambar yang benar.
     const idGambar = [lama.gambar_id, baris?.gambar_id].filter(Boolean);
     const gambarAI = idGambar.length ? (await gambarUntukAI(bab, h.guruId))(idGambar) : [];
-    const r = await tanyaDenganCadangan(sistem, pengguna, p.modelSlot ?? 1, !p.bandingkan, (d) => ambilSoal(d), Date.now() + TENGGAT_SATU_SOAL, gambarAI);
-    const { stimulus, indikator, ...baru } = susunMenjodohkan(isiSisipan({ ...r.hasil[0], bentuk: lama.bentuk }, bab)); // Menjodohkan: pasangan AI → premis, jawaban acak, kunci
-    // Ubah: level/TP dari AI dipakai hanya kalau valid. Ganti/tambah: disamakan dengan kisi-kisi.
-    // Grup & wacana tidak diambil dari jawaban AI: tetap milik soal lama (soal grup tetap di grupnya).
-    const grupLama = lama.grup && lama.wacana ? { grup: lama.grup, wacana: lama.wacana } : {};
-    const { grup: _g, wacana: _w, ...isiBaru } = baru;
-    void _g;
-    void _w;
-    const hasilUbah = { ...isiBaru, ...grupLama, gambar_id: baru.gambar_id === undefined ? lama.gambar_id : baru.gambar_id, bentuk: lama.bentuk, level: LEVEL.includes(baru.level) ? baru.level : lama.level, tp: bab.tp.some((t) => t.kode === baru.tp) ? baru.tp : lama.tp,
-      // 0.43.0: dalil sama tanpa potongan baru → potongan & urutan lama tetap (guru hanya meminta mengubah kalimat, misalnya).
-      ...(baru.dalil_id === lama.dalil_id && !baru.dalil_potong && { dalil_potong: lama.dalil_potong ?? null }) };
-    const [soal] = periksaSoal([susunPilihanDalil(ubah ? hasilUbah : baris ? samakanDenganKisi(baru, baris) : { ...isiBaru, ...grupLama, bentuk: lama.bentuk }, bab)], bab, cekAyat, set.soal.filter((_, j) => mode === "tambah" || j !== no));
-    if (!ubah) ratakanKunci([soal]); // posisi kunci PG/PGK diacak (tidak saat "ubah", supaya guru tidak bingung)
-    if (p.bobot) terapkanBobot([soal], p.bobot);
-    // Skenario (dan pada "ubah": indikator, TP, level) baru dicatat di baris kisi-kisi.
+    const sampai = Date.now() + TENGGAT_SATU_SOAL;
+    const tanya = (isi: string) => tanyaDenganCadangan(sistem, isi, p.modelSlot ?? 1, !p.bandingkan, (d) => ambilSoal(d), sampai, gambarAI);
     // (aturan 5: teks berisi Arab yang tidak terverifikasi tidak dipakai)
     const aman = (x: unknown) => {
       const t = String(x ?? "").trim();
       return t && !pemeriksaArab(bab, cekAyat)(t).length ? t : null;
     };
-    const barisBaru = baris && { ...baris, stimulus: aman(stimulus) ?? baris.stimulus, ...(ubah && { indikator: aman(indikator) ?? baris.indikator, tp: soal.tp, level: soal.level, ...(baris.dalil_tampil !== undefined && { dalil_id: soal.dalil_id, dalil_tampil: soal.dalil_tampil ?? null }) }) };
+
+    /** Jawaban AI → soal jadi + baris kisi-kisi baru (+ pada "ubah": wacana baru & catatan AI untuk guru). */
+    const olah = (hasilAi: Soal[]) => {
+      const { stimulus, indikator, catatan, ...baru } = susunMenjodohkan(isiSisipan({ ...hasilAi[0], bentuk: lama.bentuk }, bab)) as Soal & { indikator?: unknown; catatan?: unknown }; // Menjodohkan: pasangan AI → premis, jawaban acak, kunci
+      // Ubah: level/TP dari AI dipakai hanya kalau valid. Ganti/tambah: disamakan dengan kisi-kisi.
+      // Nomor grup tidak diambil dari jawaban AI (soal grup tetap di grupnya). Wacana baru hanya pada "ubah" soal grup.
+      const { grup: _g, wacana: wacanaAi, ...isiBaru } = baru;
+      void _g;
+      const wacana = ubah && lama.grup && lama.wacana ? aman(wacanaAi) : null;
+      const wacanaBaru = wacana && wacana !== lama.wacana?.trim() ? wacana.slice(0, 3000) : null;
+      const grupLama = lama.grup && lama.wacana ? { grup: lama.grup, wacana: wacanaBaru ?? lama.wacana } : {};
+      const hasilUbah = { ...isiBaru, ...grupLama, gambar_id: baru.gambar_id === undefined ? lama.gambar_id : baru.gambar_id, bentuk: lama.bentuk, level: LEVEL.includes(baru.level) ? baru.level : lama.level, tp: bab.tp.some((t) => t.kode === baru.tp) ? baru.tp : lama.tp,
+        // 0.43.0: dalil sama tanpa potongan baru → potongan & urutan lama tetap (guru hanya meminta mengubah kalimat, misalnya).
+        ...(baru.dalil_id === lama.dalil_id && !baru.dalil_potong && { dalil_potong: lama.dalil_potong ?? null }) };
+      const [soal] = periksaSoal([susunPilihanDalil(ubah ? hasilUbah : baris ? samakanDenganKisi(baru, baris) : { ...isiBaru, ...grupLama, bentuk: lama.bentuk }, bab)], bab, cekAyat, set.soal.filter((_, j) => mode === "tambah" || j !== no));
+      if (!ubah) ratakanKunci([soal]); // posisi kunci PG/PGK diacak (tidak saat "ubah", supaya guru tidak bingung)
+      if (p.bobot) terapkanBobot([soal], p.bobot);
+      // Skenario (dan pada "ubah": indikator, TP, level) baru dicatat di baris kisi-kisi.
+      const barisBaru = baris && { ...baris, stimulus: aman(stimulus) ?? baris.stimulus, ...(ubah && { indikator: aman(indikator) ?? baris.indikator, tp: soal.tp, level: soal.level, ...(wacanaBaru && { wacana: wacanaBaru }), ...(baris.dalil_tampil !== undefined && { dalil_id: soal.dalil_id, dalil_tampil: soal.dalil_tampil ?? null }) }) };
+      return { soal, barisBaru, wacanaBaru, catatan: ubah ? (aman(catatan)?.slice(0, 400) ?? "") : "" };
+    };
+
+    let r = await tanya(pengguna);
+    let hasil = olah(r.hasil);
+    // 0.45.0: AI mengembalikan soal yang sama persis → coba sekali lagi dengan teguran (jatah tetap dihitung sekali).
+    if (ubah && isiSama(hasil.soal, lama) && Date.now() < sampai - 60_000) {
+      const ulang = buatPermintaanUbah(p, lama, set.soal, baris, instruksi, true);
+      const r2 = await tanya(ulang).catch(() => null);
+      if (r2) [r, hasil, pengguna] = [r2, olah(r2.hasil), ulang];
+    }
+    const { soal, barisBaru, wacanaBaru } = hasil;
+    // Wacana dipakai bersama: soal lain di grupnya ikut berubah, guru diminta memeriksanya.
+    const nomorGrupLain = wacanaBaru ? set.soal.flatMap((s, j) => (j !== no && s.grup === lama.grup && s.wacana ? [j + 1] : [])) : [];
+    const catatan = [hasil.catatan, nomorGrupLain.length ? `Wacana baru juga dipakai soal nomor ${nomorGrupLain.join(", ")}; periksa soal-soal itu.` : ""].filter(Boolean).join(" ");
 
     // Tulis ke isi TERBARU set (bisa sudah diedit guru selama AI bekerja), dengan baris dikunci.
     const tulis = await denganSetTerkunci(id, no, async (kini, tx) => {
@@ -589,6 +610,13 @@ async function soalBaruDariAI(id: number, no: number, mode: "ganti" | "ubah" | "
       } else {
         kini.soal[no] = soal;
         if (kisiKini && barisBaru) kisiKini[no] = barisBaru;
+        // Wacana baru (ubah soal grup) ikut ke semua soal & baris kisi-kisi grup itu, sama dengan Edit (simpanSoalDi).
+        if (wacanaBaru)
+          kini.soal.forEach((s, i) => {
+            if (s.grup !== lama.grup || !s.wacana) return;
+            kini.soal[i] = { ...s, wacana: wacanaBaru };
+            if (kisiKini?.[i]) kisiKini[i] = { ...kisiKini[i], wacana: wacanaBaru };
+          });
       }
       const { h: hk } = kini;
       await tx
@@ -605,7 +633,7 @@ async function soalBaruDariAI(id: number, no: number, mode: "ganti" | "ubah" | "
         .where(eq(hasilSoal.id, hk.id));
       return soal;
     });
-    return typeof tulis === "string" ? gagal(tulis) : { ok: true as const, soal: tulis };
+    return typeof tulis === "string" ? gagal(tulis) : { ok: true as const, soal: tulis, catatan };
   } catch (e) {
     const admin = (await penggunaSaatIni().catch(() => null))?.peran === "admin";
     const kata = { ganti: "mengganti", ubah: "mengubah", tambah: "menambah" }[mode];

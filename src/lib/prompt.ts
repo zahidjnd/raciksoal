@@ -150,7 +150,7 @@ export function bersihkanIdentitas(x: unknown): Identitas {
 }
 
 export const MAKS_CATATAN = 500;
-export const MAKS_INSTRUKSI = 300;
+export const MAKS_INSTRUKSI = 1000; // 0.45.0: dulu 300 (permintaan "Ubah soal" yang rinci terpotong)
 export const MAKS_NAMA_SET = 80;
 
 /** Tulisan guru untuk AI: dirapikan, dipotong, dan tanda """ dibuang supaya tidak keluar dari kutipan. */
@@ -884,4 +884,39 @@ Tambahkan field "indikator" (indikator soal gaya Kemenag yang sesuai dengan soal
   const tambahan = `\nIni permintaan MENGGANTI soal berikut (guru tidak memakainya): "${lama.pertanyaan.slice(0, 300)}"
 Buat tepat 1 soal ${sasaran}. Gunakan ${kisi?.grup && lama.wacana ? "" : "skenario, "}sudut pandang dan redaksi yang berbeda dari soal yang diganti maupun soal lain di daftar.\n${kisi?.grup ? tulisWacana([lama]) : ""}`;
   return buatPengguna(p, jumlah, semua.map(ringkasSudah), tambahan);
+}
+
+/**
+ * 0.45.0 "Ubah soal" dari guru: AI bekerja sebagai EDITOR satu soal, permintaan guru = tugas utama. Dulu permintaan
+ * ditempel di akhir permintaan "Buat soal" yang penuh larangan, sehingga AI sering mengembalikan soal yang sama persis.
+ * Bentuk tetap; selain itu semua bagian boleh diubah, termasuk wacana grup. `ulang`: percobaan kedua setelah jawaban
+ * pertama tidak mengubah apa pun. (Perbaikan otomatis soal merah tetap lewat buatPenggantiPengguna.)
+ */
+export function buatPermintaanUbah(p: Pengaturan, lama: Soal, semua: Soal[], kisi: BarisKisi | undefined, instruksi: string, ulang = false) {
+  const { peringatan, stimulus, grup, wacana, ...isiAsli } = lama;
+  void peringatan;
+  void stimulus;
+  void grup;
+  const lain = semua.filter((s) => s !== lama).map(ringkasSudah);
+  const bagianWacana = wacana
+    ? `\nWACANA bersama soal ini (dipakai juga oleh soal lain di grupnya, ditampilkan aplikasi di atas soal; jangan ditulis ulang di "pertanyaan"):\n${wacana}\n`
+    : "";
+  return `TUGAS: Anda EDITOR satu soal ${namaBentuk(lama.bentuk, p.tujuan === TKA)}. Ubah soal di bawah sesuai PERMINTAAN GURU.
+
+PERMINTAAN GURU (tugas utama, WAJIB dijalankan):
+"""${bersihkanInstruksi(instruksi)}"""
+${ulang ? `\nPERHATIAN: jawaban Anda sebelumnya mengembalikan soal yang SAMA PERSIS, padahal guru meminta perubahan. Kali ini WAJIB ada perubahan nyata sesuai permintaan. Hanya bila permintaan benar-benar tidak bisa dijalankan, kembalikan soal apa adanya dan jelaskan alasannya di "catatan".\n` : ""}
+SOAL SAAT INI (JSON):
+${JSON.stringify(keFormatAI(isiAsli as Soal))}
+${kisi ? `Kisi-kisi soal ini: indikator "${kisi.indikator}", stimulus "${kisi.stimulus}".\n` : ""}${bagianWacana}
+CARA MENGUBAH:
+- Permintaan guru boleh menyentuh bagian mana pun: pokok soal, stimulus/kasus, tokoh, pilihan, pengecoh, kunci, pembahasan, rubrik, kesulitan, level kognitif, TP, panjang dan gaya kalimat, bahasa, tabel, rumus, gambar ("gambar_id" dari DATA BAB), dan dalil ("dalil_id" dari DATA BAB)${wacana ? `, juga wacana (tulis wacana baru UTUH di field "wacana"; bila wacana tidak diubah, jangan tulis field "wacana")` : ""}.
+- Permintaan guru MENGALAHKAN aturan gaya di instruksi sistem dan catatan set di bawah (gaya dan panjang stimulus, variasi, sebaran, pilihan kata). Yang TIDAK boleh dilanggar walau diminta hanya: ayat/hadis tidak boleh diketik atau dikarang (pakai "dalil_id" dari DATA BAB), kunci harus benar, bentuk tetap ${lama.bentuk}, format JSON, dan isi yang dilarang.
+- Permintaan umum ("perbaiki", "buat lebih bagus", "lebih jelas") = perbaiki kelemahan yang Anda temukan; jangan kembalikan soal yang sama.
+- Bagian yang tidak terkait permintaan boleh tetap, tetapi soal harus tetap utuh dan konsisten: bila pokok soal, pilihan, atau kunci berubah, sesuaikan kunci dan pembahasannya.
+- Bila hanya sebagian permintaan bisa dijalankan, jalankan bagian yang bisa dan jelaskan sisanya di "catatan".
+
+KONTEKS SET:
+${kepalaPermintaan(p)}${lain.length ? `Soal lain di set ini (soal hasil ubahan jangan dibuat mirip, dan jawabannya jangan tertulis di soal hasil ubahan):\n${lain.map((s) => `- ${s}`).join("\n")}\n` : ""}
+Balas hanya JSON {"soal":[{...}]} berisi tepat 1 soal hasil ubahan dengan format soal di instruksi sistem, ditambah field "indikator" (indikator soal gaya Kemenag yang sesuai soal hasil ubahan), "stimulus" (jenis + skenario maks 15 kata, atau "tanpa stimulus"), dan "catatan" (1–2 kalimat untuk guru: apa saja yang diubah, atau alasan bagian permintaan yang tidak bisa dijalankan; bahasa guru biasa: sebut "materi", bukan "DATA BAB"; jangan membahas skor karena diatur aplikasi; tanpa huruf Arab).`;
 }

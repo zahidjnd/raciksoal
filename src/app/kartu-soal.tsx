@@ -8,7 +8,7 @@ import { Gambar, gambarTempelan, TombolGambar, unggah } from "./gambar";
 import { PotongGambar } from "./potong-gambar";
 import { editRumus, isiKotak } from "./editor-rumus";
 import { EditorTabel } from "./editor-tabel";
-import { adaRumus, bukanDalil, CARA_DALIL, CARA_PG, caraDalil, cariTabel, cocokCara, dalilKunci, kataArab, kataCara, kataTerjemah, NAMA_CARA_DALIL, PAKAI_POTONG, pisahPengantar, potonganSah, susunPilihanDalil, tampilanDalil, type CaraDalil, JOROK, kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, POLA_RUMUS, tulisTabel, type Bab, type Bentuk, type Soal } from "@/lib/soal";
+import { adaRumus, bukanDalil, isiSama,CARA_DALIL, CARA_PG, caraDalil, cariTabel, cocokCara, dalilKunci, kataArab, kataCara, kataTerjemah, NAMA_CARA_DALIL, PAKAI_POTONG, pisahPengantar, potonganSah, susunPilihanDalil, tampilanDalil, type CaraDalil, JOROK, kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, POLA_RUMUS, tulisTabel, type Bab, type Bentuk, type Soal } from "@/lib/soal";
 import { MAKS_INSTRUKSI, namaBentuk } from "@/lib/prompt";
 
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
@@ -243,6 +243,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
   const [proses, setProses] = useState<"" | "ganti" | "ubah" | "tambah" | "hapus" | "pindah">("");
   const mengganti = proses !== "";
   const [instruksi, setInstruksi] = useState("");
+  const [catatanAI, setCatatanAI] = useState("");
   const [lainnya, setLainnya] = useState(false); // Ganti & Ubah dilipat supaya kartu lebih lega
   // Jatah AI habis → tombol Ganti/Tambah/Ubah dimatikan dengan alasan tertulis (server tetap memeriksa sendiri).
   const sisaSet = jatahUbah ? jatahUbah.batasSet - jatahUbah.set : null;
@@ -261,14 +262,18 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
     if (jenis === "ganti" && !confirm(`Ganti soal nomor ${no} dengan soal baru dari AI? Soal lama akan hilang.`)) return;
     if (jenis === "ubah" && !instruksi.trim()) return setError("Tulis dulu perubahan yang diminta.");
     setError("");
+    setCatatanAI("");
     setProses(jenis);
     const r = await gantiSatuSoal(hasilId, no - 1, jenis === "ubah" ? instruksi : undefined).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
     setProses("");
     if (!r.ok) return setError(r.pesan);
-    const isi = (x: Soal) => JSON.stringify([x.pertanyaan, x.pilihan, x.pernyataan, x.kunci, x.pembahasan, x.dalil_id, x.dalil_tampil, x.dalil_potong, x.gambar_id]);
-    if (jenis === "ubah" && isi(r.soal) === isi(s))
-      setError("AI tidak mengubah soal ini. Mungkin instruksinya bertentangan dengan aturan (mis. meminta ayat/hadis di luar data bab). Coba tulis instruksi lain.");
-    else setBerhasil(jenis === "ubah" ? "Soal sudah diubah ✓" : "Soal sudah diganti ✓");
+    // 0.45.0: catatan AI (apa yang diubah / alasan yang tidak bisa) tampil sampai guru memakai tombol lagi.
+    if (jenis === "ubah" && isiSama(r.soal, s))
+      setError(r.catatan ? `AI tidak mengubah soal ini. ${r.catatan}` : "AI tidak mengubah soal ini. Coba tulis permintaannya lebih rinci (bagian mana yang diubah dan menjadi seperti apa).");
+    else {
+      setBerhasil(jenis === "ubah" ? "Soal sudah diubah ✓" : "Soal sudah diganti ✓");
+      setCatatanAI(r.catatan);
+    }
     onUbah(r.soal);
     setInstruksi("");
   }
@@ -438,15 +443,16 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
         )}
       </div>
       <form
-        className="flex gap-2"
+        className="flex items-start gap-2"
         onSubmit={(e) => {
           e.preventDefault();
           ganti("ubah");
         }}
       >
-        <input
-          className="min-w-0 flex-1 rounded-lg border bg-kartu h-8 px-3 text-sm"
-          placeholder="Minta perubahan, mis. jadikan lebih sulit"
+        <textarea
+          rows={2}
+          className="min-w-0 flex-1 resize-y rounded-lg border bg-kartu px-3 py-1.5 text-sm"
+          placeholder="Minta perubahan apa saja, mis. ganti kasusnya jadi tentang pasar, pengecoh dibuat lebih menjebak, pembahasan lebih singkat"
           aria-label={`Minta perubahan soal nomor ${no}`}
           maxLength={MAKS_INSTRUKSI}
           value={instruksi}
@@ -471,7 +477,8 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
       </>
       )}
       {error && <p className="text-sm text-bahaya">{error}</p>}
-      {berhasil && <p role="status" className="text-sm font-semibold text-hijau-teks">{berhasil}</p>}
+      {catatanAI && <p className="text-sm text-pudar">Catatan AI: {catatanAI}</p>}
+      {berhasil &&<p role="status" className="text-sm font-semibold text-hijau-teks">{berhasil}</p>}
     </article>
     </>
   );

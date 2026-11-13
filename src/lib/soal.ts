@@ -235,6 +235,12 @@ export function susunMjLama(soal: Soal[], acak: () => number = Math.random): Soa
   return hasil;
 }
 
+/** "Ubah soal": apakah isi soal hasil AI sama persis dengan soal lama (server mencoba sekali lagi, browser memberi tahu guru). */
+export const isiSama = (a: Soal, b: Soal) => {
+  const isi = (x: Soal) => JSON.stringify([x.pertanyaan, x.pilihan, x.pernyataan, x.kunci, x.kunciAlt, x.pembahasan, x.rubrik, x.level, x.tp, x.dalil_id, x.dalil_tampil, x.dalil_potong, x.gambar_id, x.wacana]);
+  return isi(a) === isi(b);
+};
+
 /** Kebalikan susunMenjodohkan, untuk "Ubah soal": soal MJ dikirim ke AI dalam format pasangan + pengecoh. */
 export function keFormatAI(s: Soal): Omit<Soal, "premis" | "jawaban" | "kunci"> & { pasangan?: { premis: string; jawaban: string }[]; pengecoh?: string[]; kunci?: string | string[] } {
   if (s.bentuk !== "MJ" || !s.premis || !s.jawaban) return s;

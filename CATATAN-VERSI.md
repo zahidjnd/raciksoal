@@ -52,6 +52,20 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.45.0 — 13 November 2026
+- **"Ubah soal" jauh lebih ampuh**: guru bisa meminta perubahan apa saja pada satu soal (ganti kasus/tokoh, jadikan
+  HOTS, pengecoh lebih menjebak, pembahasan lebih singkat, pakai tabel, ganti gambar, dan sebagainya). Dulu AI sering
+  mengembalikan soal yang sama persis karena permintaan guru tertumpuk di ujung banyak aturan; kini permintaan guru
+  menjadi tugas utama AI.
+- **Wacana soal grup bisa diubah lewat Ubah soal**; soal lain yang memakai wacana itu ikut berubah wacananya, dan guru
+  diberi tahu nomor mana yang perlu diperiksa.
+- **Catatan AI**: setelah mengubah, AI menjelaskan apa yang diubah, atau alasan bagian yang tidak bisa dijalankan
+  (misalnya hadis yang tidak ada di materi). Kalau AI mengembalikan soal yang sama, aplikasi otomatis mencoba sekali
+  lagi tanpa memotong jatah.
+- Kotak permintaan kini dua baris dan muat sampai 1000 huruf (dulu 300). Bentuk soal tetap sama (PG tetap PG).
+
+---
+
 ## 0.44.1 — 13 November 2026
 - **Soal ayat/hadis dan soal bergambar lebih rapi**: kalimat pengantar ("Perhatikan hadis berikut!") tampil dulu, lalu
   ayat/hadis atau gambarnya, baru sisa pertanyaannya. Dulu ayat/hadis selalu di bawah seluruh pertanyaan. Berlaku di
