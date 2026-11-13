@@ -178,3 +178,20 @@ test("tahap 3: tanpa tanda palsu & tanpa jawaban menjodohkan kembar", () => {
   const mj = (pertanyaan: string, kunci: string) => soal({ bentuk: "MJ", pertanyaan, jawaban: ["al-Qur'an", "Kitab", "petunjuk", "al-Qur'an,"], kunci, grup: 1, pilihan: undefined });
   assert.match(periksaSoal([mj("الْكِتَابُ", "B"), mj("الْكِتَابَ", "A")], bab)[1].peringatan!.join(), /jawaban yang sama persis[\s\S]*hanya beda harakat/);
 });
+
+test("0.44.1: pengantar → kotak → sisa pertanyaan; jawaban yang tertulis di terjemah ditandai", async () => {
+  const { pisahPengantar } = await import("./soal.ts");
+  const d = { dalil: true };
+  assert.deepEqual(pisahPengantar("Perhatikan hadis berikut!\nRifaa'ah bertanya .... Jawabannya adalah ....", d), { pengantar: "Perhatikan hadis berikut!", sisa: "Rifaa'ah bertanya .... Jawabannya adalah ...." });
+  assert.deepEqual(pisahPengantar("Perhatikan firman Allah Swt. berikut ini! Isi kandungannya adalah ....", d), { pengantar: "Perhatikan firman Allah Swt. berikut ini!", sisa: "Isi kandungannya adalah ...." });
+  assert.equal(pisahPengantar("Isi kandungan ayat berikut adalah ....", d), null); // tanpa pengantar
+  assert.equal(pisahPengantar("Perhatikan tabel berikut!\n| a | b |", { gambar: true }), null); // menunjuk tabel, bukan gambar
+  assert.equal(pisahPengantar("Perhatikan gambar berikut!\nBagian X adalah ....", { gambar: true })!.sisa, "Bagian X adalah ....");
+  assert.equal(pisahPengantar("Perhatikan hadis berikut!\nIsinya ....", {}), null); // tidak ada kotak
+  // Kunci tertulis di terjemah yang tampil
+  const isra = bab.dalil.find((x) => x.id === "isra-32")!;
+  const kunciSalin = isra.terjemah.split(/\s+/).slice(0, 5).join(" ").replace(/[,.]$/, "");
+  const w = (pilihanA: string) => periksaSoal([soal({ dalil_id: "isra-32", dalil_tampil: "utuh", pertanyaan: "Perhatikan firman Allah Swt. berikut!\nPerintah dalam ayat itu adalah ....", pilihan: [pilihanA, "menjaga lisan dari ucapan dusta", "menyantuni anak yatim dan fakir", "berbakti kepada kedua orang tua", "menepati janji kepada sesama"], kunci: "A" })], bab)[0].peringatan!.join();
+  assert.match(w(kunciSalin), /tertulis hampir sama persis di terjemah/);
+  assert.equal(w("menjauhi hal yang mendorong perbuatan keji"), "");
+});

@@ -52,6 +52,15 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.44.1 — 13 November 2026
+- **Soal ayat/hadis dan soal bergambar lebih rapi**: kalimat pengantar ("Perhatikan hadis berikut!") tampil dulu, lalu
+  ayat/hadis atau gambarnya, baru sisa pertanyaannya. Dulu ayat/hadis selalu di bawah seluruh pertanyaan. Berlaku di
+  web dan Word, termasuk set lama.
+- **Soal yang jawabannya tertulis di terjemah** (siswa cukup mencocokkan kalimat) kini ditandai merah dan diperbaiki
+  otomatis saat set dibuat.
+
+---
+
 ## 0.44.0 — 13 November 2026
 - **Ayat/hadis kini bisa ada di semua bentuk soal**, disisipkan langsung di dalam teksnya (teks asli dari data,
   bukan ketikan AI):

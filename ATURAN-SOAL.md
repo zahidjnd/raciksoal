@@ -263,6 +263,9 @@ soal mana saja ("sebar ke semua dalil"), termasuk soal yang tidak membahasnya. U
    **Satu blok menjodohkan** (porsi sedang/banyak, gaya Al-Fatah) menjadi **lafaz dalil ↔ artinya**: lajur kiri potongan
    Arab, lajur kanan potongan terjemah (keduanya dari data). Di **Edit**, potongan dipilih dengan **mengklik kata**
    (kata awal lalu kata akhir), dan tombol **Sisipkan** memasukkan lafaz/terjemah asli ke kotak teks yang sedang diisi.
+9. ✅ (0.44.1) **Susunan**: kalimat pengantar yang menunjuk dalil/gambar ("Perhatikan hadis berikut!") tampil dulu, lalu
+   kotak dalil/gambar, baru sisa pertanyaan (`pisahPengantar`, web & Word). **Pemeriksa**: kunci PG/PGK/isian yang
+   tertulis (hampir) persis di terjemah yang ditampilkan ditandai merah (siswa cukup mencocokkan kalimat).
 
 ---
 

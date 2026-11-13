@@ -8,7 +8,7 @@ import { Gambar, gambarTempelan, TombolGambar, unggah } from "./gambar";
 import { PotongGambar } from "./potong-gambar";
 import { editRumus, isiKotak } from "./editor-rumus";
 import { EditorTabel } from "./editor-tabel";
-import { adaRumus, bukanDalil, CARA_DALIL, CARA_PG, caraDalil, cariTabel, cocokCara, dalilKunci, kataArab, kataCara, kataTerjemah, NAMA_CARA_DALIL, PAKAI_POTONG, potonganSah, susunPilihanDalil, tampilanDalil, type CaraDalil, JOROK, kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, POLA_RUMUS, tulisTabel, type Bab, type Bentuk, type Soal } from "@/lib/soal";
+import { adaRumus, bukanDalil, CARA_DALIL, CARA_PG, caraDalil, cariTabel, cocokCara, dalilKunci, kataArab, kataCara, kataTerjemah, NAMA_CARA_DALIL, PAKAI_POTONG, pisahPengantar, potonganSah, susunPilihanDalil, tampilanDalil, type CaraDalil, JOROK, kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, POLA_RUMUS, tulisTabel, type Bab, type Bentuk, type Soal } from "@/lib/soal";
 import { MAKS_INSTRUKSI, namaBentuk } from "@/lib/prompt";
 
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
@@ -316,6 +316,8 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
   // 0.42.0: yang tampil di soal mengikuti cara tampil dalil (Arab/terjemah/potongan); dalil lengkap di kotak kunci.
   const tampil = tampilanDalil(s, bab);
   const dalilLengkap = dalilKunci(s, bab);
+  // 0.44.1: "Perhatikan hadis berikut!" → kotak dalil/gambar → sisa pertanyaan.
+  const awalan = pisahPengantar(s.pertanyaan, { dalil: !!tampil, gambar: !!s.gambar_id });
   return (
     <>
     {nomorGrup && mjLama(s) && (
@@ -342,7 +344,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
         <p key={i} className="text-sm font-semibold text-bahaya"><TeksPeringatan w={w} /></p>
       ))}
       <div>
-        <span className="font-semibold">{no}.</span> <TeksBaris teks={s.pertanyaan} />
+        <span className="font-semibold">{no}.</span> <TeksBaris teks={awalan ? awalan.pengantar : s.pertanyaan} />
       </div>
       {!!s.gambar_id && (
         <Gambar id={s.gambar_id} alt={bab.gambar?.find((g) => g.id === s.gambar_id)?.keterangan || `Gambar soal nomor ${no}`} className="max-h-80 max-w-full rounded-lg border bg-kartu" />
@@ -361,6 +363,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
           <figcaption className="mt-1 text-xs text-pudar">{tampil.bukan ? "Teks Arab materi" : [tampil.sumber, "teks terverifikasi"].filter(Boolean).join(" · ")}</figcaption>
         </figure>
       )}
+      {awalan?.sisa && <div><TeksBaris teks={awalan.sisa} /></div>}
       {s.pilihan && (
         <ol className="list-[upper-alpha] space-y-1 pl-6">
           {s.pilihan.map((o, i) => <li key={i}><TeksBaris teks={o} /></li>)}

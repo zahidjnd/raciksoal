@@ -531,6 +531,20 @@ const kerangkaPilihan = (t: string) =>
     .map((w) => w.replace(/^[وفبلك](?=ال)/, "").replace(/^ال/, ""))
     .join(" ");
 
+/**
+ * Kalimat pengantar di awal pertanyaan ("Perhatikan hadis berikut!", "Perhatikan firman Allah Swt. berikut ini!"):
+ * kalimat pertama yang memuat "berikut" dan diakhiri "!". Soal yang menampilkan kotak dalil/gambar disusun
+ * pengantar → kotak → sisa pertanyaan (0.44.1; dulu kotak selalu di bawah seluruh pertanyaan). null = tanpa pengantar.
+ */
+export function pisahPengantar(pertanyaan: string, kotak: { dalil?: boolean; gambar?: boolean }): { pengantar: string; sisa: string } | null {
+  const m = /^([^\n]{0,160}?\bberikut\b[^!?\n]{0,30}!)[ \t]*\n?([\s\S]*)$/i.exec(String(pertanyaan ?? "").trim());
+  // Pengantar harus menunjuk kotak yang memang tampil ("Perhatikan tabel berikut!" menunjuk tabel di pertanyaan sendiri).
+  const tunjuk = (kotak.dalil && PENGANTAR_DALIL.test(m?.[1] ?? "")) || (kotak.gambar && PENGANTAR_GAMBAR.test(m?.[1] ?? ""));
+  return m && tunjuk ? { pengantar: m[1].trim(), sisa: m[2].trim() } : null;
+}
+const PENGANTAR_DALIL = /firman|\bayat|hadis|sabda|terjemah|potongan|lafa[zl]|dalil|kutipan|teks arab/i;
+const PENGANTAR_GAMBAR = /gambar|foto|ilustrasi|diagram|grafik|peta|denah|bagan|skema/i;
+
 /** Jawaban benar soal PG berdalil (teks pilihan yang harus menjadi kunci), atau null bila belum bisa disusun. */
 export function jawabanDalil(s: Soal, d: Dalil): string | null {
   const c = caraDalil(s, d);
@@ -1123,6 +1137,24 @@ const SEBUT_DALIL = /firman|\bayat\b|surah|surat\b|hadis|sabda|lafa[zl]|potongan
 // "Perhatikan firman Allah berikut!", "hadis di atas", "potongan ayat berikut": menunjuk dalil yang ditampilkan.
 const TUNJUK_DALIL = /(firman|\bayat|hadis|sabda)\b[^!?\n]{0,40}?\b(berikut|di\s?atas)\b/i; // titik boleh: "firman Allah Swt. berikut"
 
+/**
+ * Kunci PG/PGK (minimal 3 kata) atau isian (minimal 2 kata) yang tertulis berurutan di terjemah, atau 85% katanya ada
+ * di terjemah (kunci minimal 4 kata). Pembanding tanpa tanda baca & huruf kecil (polos).
+ */
+function jawabanDiTerjemah(s: Soal, terjemah: string): boolean {
+  const t = polos(terjemah);
+  const kataT = new Set(t.trim().split(/\s+/));
+  const kunci = s.bentuk === "PG" || s.bentuk === "PGK"
+    ? [s.kunci].flat().map((h) => s.pilihan?.[HURUF.indexOf(String(h).trim().toUpperCase())] ?? "")
+    : s.bentuk === "ISIAN" ? [String([s.kunci].flat()[0] ?? "")] : [];
+  const min = s.bentuk === "ISIAN" ? 2 : 3;
+  return kunci.some((k) => {
+    const kata = polos(k).trim().split(/\s+/).filter(Boolean);
+    if (kata.length < min) return false;
+    return t.includes(` ${kata.join(" ")} `) || (kata.length >= 4 && kata.filter((x) => kataT.has(x)).length / kata.length >= 0.85);
+  });
+}
+
 /** Pemeriksa dalil (ATURAN-SOAL 5a no. 5). Soal lama (tanpa cara tampil) hanya diperiksa soal "terjemah" dan dalil yang hilang. */
 function periksaDalil(s: Soal, bab: Bab): string[] {
   const w: string[] = [];
@@ -1146,6 +1178,11 @@ function periksaDalil(s: Soal, bab: Bab): string[] {
   if ((tampil || CARA_PG.has(c) || c === "sisip") && !mjLama(s) && !SEBUT_DALIL.test(teks)) w.push("Ayat/hadis dipakai di soal, tetapi pertanyaannya tidak membahasnya. Tanyakan isi dalil itu, atau hapus dalilnya (Edit: Dalil = tidak ada).");
   if (PAKAI_POTONG.has(c) && c !== "urutan" && !potonganSah(s.dalil_potong, kataCara(d, c).length))
     w.push("Potongan dalil belum sah (nomor kata awal dan akhir). Atur lewat Edit.");
+  // 0.44.1: jawaban yang tertulis (hampir) persis di terjemah yang ditampilkan = siswa cukup mencocokkan kalimat
+  // (set 79 hosting: terjemah "Yaitu usaha tangan sendiri dan semua jual beli yang halal", kunci sama persis).
+  const terjemahTampil = tampilanDalil(s, bab)?.terjemah;
+  if (terjemahTampil && !CARA_PG.has(c) && jawabanDiTerjemah(s, terjemahTampil))
+    w.push("Jawaban benar tertulis hampir sama persis di terjemah yang ditampilkan, jadi siswa cukup mencocokkan kalimat. Tanyakan maksud/penerapannya dan tulis pilihan dengan kata-kata sendiri, atau tampilkan Arabnya saja (Edit).");
   // 0.43.0: pilihan A–E soal rumpang/pilihan/urutan harus tersusun dari dalil, dengan kunci = jawaban dari dalil.
   if (CARA_PG.has(c)) {
     const benar = jawabanDalil(s, d);

@@ -26,7 +26,7 @@ import { MAPEL_INGGRIS } from "./mapel";
 import { hariTanggal, mapelTka, NAMA_BENTUK, semesterDari, TKA, WAKTU_BAWAAN, type Pengaturan } from "./prompt";
 import { kunciSatu } from "./kunci";
 import { rumusWord } from "./rumus";
-import { dalilKunci, identitasBab, JOROK, JUMLAH_PREMIS, kategoriBaru, mjLama, paragrafArab, pecahBaris, POLA_ARAB, POLA_RUMUS, tampilanDalil, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
+import { dalilKunci, identitasBab, JOROK, JUMLAH_PREMIS, kategoriBaru, mjLama, paragrafArab, pecahBaris, POLA_ARAB, pisahPengantar, POLA_RUMUS, tampilanDalil, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
 
 const PERINGATAN = "Soal dibuat AI, wajib diperiksa guru sebelum dipakai.";
 
@@ -135,6 +135,12 @@ function butirBaris(label: string, isi: string, kiri = 400, opsi: Partial<Constr
       b.tabel ? tabelData(b.tabel, kiri) : i === 0 ? bernomor(label, teks(b.teks), kiri, dalam) : parBaris(b, kiri, i === akhir ? opsi : dalam),
     ),
   ];
+}
+
+/** Teks lanjutan tanpa nomor (sisa pertanyaan setelah kotak dalil/gambar): baris & tabel seperti butirBaris. */
+function barisLanjut(isi: string, kiri: number, opsi: Partial<ConstructorParameters<typeof Paragraph>[0] & object> = {}): (Paragraph | Table)[] {
+  const baris = pecahBaris(isi);
+  return baris.map((b, i) => (b.tabel ? tabelData(b.tabel, kiri) : parBaris(b, kiri, i === baris.length - 1 ? opsi : { ...opsi, spacing: { after: 0 }, keepNext: true })));
 }
 
 /** Lebar satu kolom lembar soal (2 kolom) dihitung dari tepi kiri kolom, sama dengan tabel Kategori (400 + 4.600). */
@@ -250,12 +256,14 @@ export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tangga
         );
         isi.push(par([], { keepNext: true, spacing: { after: 40 } }));
       }
-      isi.push(...butirBaris(`${no}.`, s.pertanyaan, 400, { keepNext: true }));
+      const dalil = tampilanDalil(s, bab);
+      // 0.44.1: "Perhatikan hadis berikut!" → kotak dalil/gambar → sisa pertanyaan (sama dengan tampilan web).
+      const awalan = pisahPengantar(s.pertanyaan, { dalil: !!dalil, gambar: !!s.gambar_id });
+      isi.push(...butirBaris(`${no}.`, awalan ? awalan.pengantar : s.pertanyaan, 400, { keepNext: true }));
       // Gambar soal (0.30.0): di bawah pokok soal, muat satu kolom lembar soal.
       const g = s.gambar_id ? gambar.get(s.gambar_id) : undefined;
       if (g) isi.push(par([new ImageRun({ type: "jpg", data: g.data, transformation: ukuranWord(g.lebar, g.tinggi) })], { indent: { left: 400 }, keepNext: true, spacing: { before: 40, after: 60 } }));
       // 0.42.0: bagian dalil yang tampil mengikuti cara tampilnya (Arab / terjemah / potongan; sumber disembunyikan bila ditanyakan).
-      const dalil = tampilanDalil(s, bab);
       if (dalil) {
         if (dalil.arab) isi.push(par(teks(dalil.arab), { bidirectional: true, alignment: AlignmentType.START, indent: { right: 400 }, keepNext: true, spacing: { after: 0 } }));
         // 0.43.0: menyusun urutan: bagian-bagian berlabel (1), (2), ... satu per baris, kanan ke kiri.
@@ -264,6 +272,7 @@ export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tangga
         // Teks Arab materi yang ditandai "Bukan ayat/hadis": tanpa keterangan sumber di lembar siswa.
         if (dalil.sumber) isi.push(par([r(`(${dalil.sumber})`, { italics: true, size: 18 })], { alignment: AlignmentType.RIGHT, keepNext: true }));
       }
+      if (awalan?.sisa) isi.push(...barisLanjut(awalan.sisa, 400, { keepNext: true }));
       if (s.pilihan) s.pilihan.forEach((o, i) => isi.push(...butirBaris(`${HURUF[i]}.`, o, 800, { spacing: { after: 0 }, keepNext: i === 0 || i === 3 })));
       if (bentuk === "MJ") isi.push(tabelMenjodohkan(s, undefined, L));
       else if (kategoriBaru(s)) isi.push(tabelKategori(s, L));
