@@ -335,10 +335,12 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
             <div className="flex flex-wrap items-center gap-2">
               {/* 0.40.1: dua ikon. Klip = Word/PPT/PDF/foto galeri (banyak sekaligus). Kamera = capture, tanpa multiple:
                   Android 13+ langsung membuka galeri untuk input multiple, jadi kamera perlu tombol sendiri (HP saja). */}
-              <label title="Lampirkan Word, PowerPoint, PDF, atau foto" className={`${ikon} ${!siap || proses ? "pointer-events-none opacity-50" : ""}`}>
+              {/* 0.47.1: laptop ikon + tulisan "Lampirkan file"; HP tetap ikon saja (pilihan pemilik: baris tombol tidak penuh). */}
+              <label title="Lampirkan Word, PowerPoint, PDF, atau foto" className={`${ikon} md:w-auto md:gap-1.5 md:px-3 md:text-sm md:text-tinta ${!siap || proses ? "pointer-events-none opacity-50" : ""}`}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                   <path d="m21.4 11.1-8.5 8.5a5.5 5.5 0 0 1-7.8-7.8l8.5-8.5a3.7 3.7 0 0 1 5.2 5.2l-8.5 8.5a1.8 1.8 0 0 1-2.6-2.6l7.8-7.8" />
                 </svg>
+                <span className="max-md:hidden" aria-hidden>Lampirkan file</span>
                 <input type="file" multiple accept=".docx,.pptx,.pdf,image/*" className="sr-only" aria-label="Lampirkan Word, PowerPoint, PDF, atau foto" disabled={!siap || !!proses} onChange={(e) => {
                   const f = [...(e.target.files ?? [])];
                   e.target.value = "";

@@ -43,7 +43,7 @@ const LANGKAH: { judul: string; isi: React.ReactNode; gambar: React.ReactNode[] 
     isi: (
       <>
         <p>Klik <b>Set baru</b>. Pilih <b>mata pelajaran</b> dan <b>kelas</b>&nbsp;<N n={1} />.</p>
-        <p>Tempel teks materi, tekan tombol <b>klip</b>&nbsp;<N n={2} /> untuk melampirkan Word, PowerPoint, PDF, atau foto, atau tombol <b>kamera</b>&nbsp;<N n={3} /> untuk memotret halaman buku (kamera hanya ada di HP; di laptop, file juga bisa diseret ke kotak materi). Lalu tekan <b>Analisa materi</b>&nbsp;<N n={4} />.</p>
+        <p>Tempel teks materi, tekan tombol <b>klip</b>&nbsp;<N n={2} /> (di laptop bertuliskan <b>Lampirkan file</b>) untuk melampirkan Word, PowerPoint, PDF, atau foto, atau tombol <b>kamera</b>&nbsp;<N n={3} /> untuk memotret halaman buku (kamera hanya ada di HP; di laptop, file juga bisa diseret ke kotak materi). Lalu tekan <b>Analisa materi</b>&nbsp;<N n={4} />.</p>
       </>
     ),
     gambar: [<Gambar key="1" nama="1-mapel-materi" alt="Pilihan mata pelajaran dan kelas, kotak materi, tombol klip, tombol kamera, dan Analisa materi" lebar={469} tinggi={475} />],

@@ -52,6 +52,12 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.47.1 — 14 November 2026
+- **Tombol lampirkan lebih jelas di laptop.** Tombol klip di bawah kotak materi kini bertuliskan **Lampirkan file**
+  di laptop. Di HP tetap ikon saja, supaya baris tombolnya tidak penuh. Panduan ikut disesuaikan.
+
+---
+
 ## 0.47.0 — 14 November 2026
 - **Satu bacaan untuk beberapa soal di mapel bahasa.** Bahasa Inggris dan Bahasa Arab kini seperti Bahasa Indonesia:
   sebagian soal PG memakai satu teks bacaan bersama, di semua jenis ujian (UH, AFTS, ASAS, Latihan). Ukurannya kini
