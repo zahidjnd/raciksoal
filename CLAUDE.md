@@ -132,8 +132,10 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   Al-Fatah untuk semua jenis kecuali TKA: B/S satu pernyataan (kunci direncanakan aplikasi), MJ satu nomor = satu pasangan
   dalam blok (`blokMj`), Ganti/Ubah/Tambah AI ditolak untuk MJ. TKA: Kategori 3 pernyataan, PGK 2–4 kunci, soal grup.
   Kunci PG diratakan aplikasi; pilihan angka diurutkan; skor diisi aplikasi (`terapkanBobot`).
-- **Soal grup** (wacana bersama, `grupSet`): Latihan TKA semua bentuk; Bahasa Indonesia jenis lain (0.39.0) PG saja
-  (B/S gaya lama & blok MJ juga memakai kolom `grup`). Bacaan BI = jenis teks di materi (`WACANA_INDONESIA`).
+- **Soal grup** (wacana bersama, `grupSet`): Latihan TKA semua bentuk (2–3 soal); mapel bacaan `MAPEL_BACAAN` (Bahasa
+  Indonesia 0.39.0, Inggris & Arab 0.47.0; Nahwu tidak) jenis lain PG saja, 3–5 soal (B/S gaya lama & blok MJ juga
+  memakai kolom `grup`). Ukuran dari catatan guru dibaca aplikasi `ukuranDiminta` ("1 cerita untuk 5-7 soal", maks
+  `MAKS_GRUP` 10, juga TKA). Bacaan per mapel `wacanaMapel`; panjang ikut ukuran (`panjangWacana`); `MAKS_WACANA` 5000 huruf.
 - **Jenis**: UH, AFTS (`PTS`), ASAS (`PAS`: format surat Kepala MA, eksak 35 / non-eksak 45, skor 100), Latihan, Latihan TKA
   (mapel di luar TKA tampil "Latihan Gaya TKA").
 - **Sifat mapel** (`mapel.ts`): Bahasa Inggris = semua isi untuk siswa berbahasa Inggris + petunjuk Word Inggris, pembahasan

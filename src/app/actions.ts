@@ -7,7 +7,7 @@ import { BATAS_GAMBAR, rapikanNilaiGambar, ukuranJpeg } from "@/lib/gambar";
 import { daftarModel, tanyaAI, type GambarAI } from "@/lib/ai";
 import { bagiTahap, jumlahSoal, miripIndikator, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatPermintaanUbah, bentukUbahan, MINTA_BENTUK, namaBentuk, laranganIsian, ringkasSudah, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, buatSistem, buatAnalisaMateri, buatBacaHalaman, bersihkanIdentitas, pasangKunciPgk, grupSet, rencanaDalil, rencanaLevelSet, sesuaikanLevel, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { BATAS_MATERI, modeArab, rapikanBacaanHalaman, susunDraf, terapkanAnalisa } from "@/lib/materi";
-import { bersihkanTanggapan, gabungBab, identitasBab, isiSama, jawabanAman, kategoriBaru, posisiBentuk, sesuaikanBentuk, kataTerpakai, KELAS, LEVEL, mjLama, pasangDalil, pemeriksaArab, POLA_ARAB, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, isiSisipan, samakanDenganKisi, susunMenjodohkan, susunMjLama, susunPilihanDalil, terapkanBobot, type Bab, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
+import { bersihkanTanggapan, MAKS_WACANA, gabungBab, identitasBab, isiSama, jawabanAman, kategoriBaru, posisiBentuk, sesuaikanBentuk, kataTerpakai, KELAS, LEVEL, mjLama, pasangDalil, pemeriksaArab, POLA_ARAB, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, isiSisipan, samakanDenganKisi, susunMenjodohkan, susunMjLama, susunPilihanDalil, terapkanBobot, type Bab, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { babDariSet, babMilik, daftarBabMilik, dataGambar, gambarMilik } from "@/lib/bab";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
@@ -587,7 +587,7 @@ async function soalBaruDariAI(id: number, no: number, mode: "ganti" | "ubah" | "
       const { grup: _g, wacana: wacanaAi, ...isiBaru } = baru;
       void _g;
       const wacana = ubah && lama.grup && lama.wacana ? aman(wacanaAi) : null;
-      const wacanaBaru = wacana && wacana !== lama.wacana?.trim() ? wacana.slice(0, 3000) : null;
+      const wacanaBaru = wacana && wacana !== lama.wacana?.trim() ? wacana.slice(0, MAKS_WACANA) : null;
       const grupLama = lama.grup && lama.wacana ? { grup: lama.grup, wacana: wacanaBaru ?? lama.wacana } : {};
       const hasilUbah = { ...sesuaikanBentuk(isiBaru as Soal, bentuk), ...grupLama, gambar_id: baru.gambar_id === undefined ? lama.gambar_id : baru.gambar_id, level: LEVEL.includes(baru.level) ? baru.level : lama.level, tp: bab.tp.some((t) => t.kode === baru.tp) ? baru.tp : lama.tp,
         // 0.43.0: dalil sama tanpa potongan baru → potongan & urutan lama tetap (guru hanya meminta mengubah kalimat, misalnya).

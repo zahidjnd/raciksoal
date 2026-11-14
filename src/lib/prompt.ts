@@ -1,4 +1,4 @@
-import { MAPEL_INDONESIA, MAPEL_INGGRIS, MAPEL_SEJARAH } from "./mapel.ts";
+import { MAPEL_BACAAN, MAPEL_INGGRIS, MAPEL_SEJARAH } from "./mapel.ts";
 import { adalahTahun, blokMj, bukanDalil, CARA_DALIL, CARA_PG, cocokCara, identitasBab, kataArab, kataTerjemah, keFormatAI, kocok, MAKS_GABUNG, mjLama, type Bab, type BarisKisi, type Bentuk, type CaraDalil, type Soal } from "./soal.ts";
 
 export const PESAN_MJ_MIN = "Menjodohkan minimal 3 nomor (atau 0), supaya daftar jawabannya masuk akal.";
@@ -472,19 +472,18 @@ export function sesuaikanLevel(level: string, k: Kategori): string {
  * separuh nomor (dibulatkan ke bawah) di AKHIR bagian bentuk itu (level lebih tinggi, cocok untuk wacana)
  * dijadikan grup berisi 3 atau 2 soal. Hasil: nomor grup per nomor soal (urut kisi-kisi), atau null.
  */
-export function rencanaGrup(jumlah: Record<Bentuk, number>, boleh = (b: Bentuk) => b !== "URAIAN"): (number | null)[] {
+export function rencanaGrup(jumlah: Record<Bentuk, number>, boleh = (b: Bentuk) => b !== "URAIAN", [kecil, besar]: [number, number] = [2, 3], diminta = false): (number | null)[] {
   const hasil: (number | null)[] = [];
   let nomor = 0;
   for (const b of urutanBentuk(jumlah)) {
     const n = jumlah[b];
-    let sisa = boleh(b) ? Math.floor(n / 2) : 0;
-    if (sisa < 2) sisa = 0;
-    const ukuran: number[] = [];
-    while (sisa > 0) {
-      const u = sisa === 4 || sisa === 2 ? 2 : 3;
-      ukuran.push(u);
-      sisa -= u;
-    }
+    // Separuh nomor; permintaan guru (0.47.0) menjamin minimal satu grup sebesar permintaannya bila soalnya cukup.
+    let sisa = boleh(b) ? Math.max(Math.floor(n / 2), diminta ? Math.min(n, kecil) : 0) : 0;
+    if (sisa < Math.min(kecil, diminta ? n : kecil) || sisa < 2) sisa = 0;
+    // Dibagi rata ke sesedikit mungkin grup (tiap grup ≤ besar); grup yang lebih besar di depan.
+    let k = Math.ceil(sisa / besar);
+    if (k && Math.floor(sisa / k) < kecil) k = Math.max(1, Math.floor(sisa / kecil));
+    const ukuran = Array.from({ length: k }, (_, i) => Math.min(besar, Math.floor(sisa / k) + (i < sisa % k ? 1 : 0)));
     const tunggal = n - ukuran.reduce((a, c) => a + c, 0);
     hasil.push(...Array<null>(tunggal).fill(null));
     for (const u of ukuran) hasil.push(...Array<number>(u).fill(++nomor));
@@ -565,8 +564,34 @@ const caraDalilAi = (tka: boolean) => `CARA MENAMPILKAN DALIL ("dalil_tampil"). 
 - Pada set dengan kisi-kisi, dalil dan cara tampil setiap nomor sudah ditentukan barisnya. Pada permintaan mengubah soal, guru boleh meminta dalil atau cara tampil lain (misalnya "tampilkan artinya saja" = "terjemah", "pakai potongan ayatnya" = "potong", "jadikan soal melengkapi ayat" = "rumpang", "ayatnya di pilihan jawaban" = "pilihan", "soal menyusun urutan ayat" = "urutan"; tiga yang terakhir hanya untuk PG).`;
 
 export function grupSet(p: Pengaturan, mapel = ""): (number | null)[] {
-  if (p.tujuan === TKA) return rencanaGrup(p.jumlah);
-  return MAPEL_INDONESIA.test(mapel) ? rencanaGrup(p.jumlah, (b) => b === "PG") : [];
+  const minta = ukuranDiminta(p.catatan);
+  if (p.tujuan === TKA) return rencanaGrup(p.jumlah, undefined, minta ?? undefined, !!minta);
+  return MAPEL_BACAAN.test(mapel) ? rencanaGrup(p.jumlah, (b) => b === "PG", minta ?? [3, 5], !!minta) : [];
+}
+
+/** Batas soal per wacana: lebih dari ini teks terlalu panjang & tidak muat satu tahap (MAKS_PER_TAHAP). */
+export const MAKS_GRUP = 10;
+const KATA_TEKS = "cerita|teks|text|bacaan|wacana|passage|story|reading|nash|nas|qira'?ah|qiro'?ah";
+const ANGKA_GRUP = String.raw`(\d{1,2})(?:\s*(?:-|–|—|sampai|s\.?\s?d\.?|hingga|to)\s*(\d{1,2}))?\s*(?:soal|pertanyaan|nomor|butir|questions?)`;
+const POLA_GRUP = [
+  // "1 cerita untuk 5-7 soal", "satu teks untuk 6 soal", "tiap bacaan 5 soal"
+  // Diawali "satu/1/tiap": "buat teks narrative, 20 soal" = jumlah soal seluruhnya, bukan ukuran grup.
+  new RegExp(String.raw`(?<![\p{L}\d])(?:satu|1|one|a|tiap|setiap|each|per)\s+(?:${KATA_TEKS})(?![\p{L}])[^\d\n]{0,20}?${ANGKA_GRUP}`, "iu"),
+  // "5-7 soal per cerita", "5 soal dari satu teks" (kata sambung wajib: "5 soal cerita" = soal cerita biasa)
+  new RegExp(String.raw`(?<![\d])${ANGKA_GRUP}\s+(?:per|untuk|tiap|setiap|dari|for|from|each)\s+(?:satu\s+|1\s+|one\s+|a\s+|each\s+)?(?:${KATA_TEKS})(?![\p{L}])`, "iu"),
+];
+/**
+ * Ukuran soal grup yang diminta guru di catatan (0.47.0): "1 cerita untuk 5-7 soal" → [5, 7]. Dibaca APLIKASI, bukan
+ * dititipkan ke AI (permintaan jumlah seperti "minimal N" tidak dituruti AI, lihat nomor BERGAMBAR 0.33.3).
+ */
+export function ukuranDiminta(catatan = ""): [number, number] | null {
+  for (const pola of POLA_GRUP) {
+    const m = catatan.match(pola);
+    if (!m) continue;
+    const [a, b] = [Number(m[1]), Number(m[2] ?? m[1])].sort((x, y) => x - y).map((x) => Math.min(MAKS_GRUP, x));
+    if (a >= 2) return [a, b];
+  }
+  return null;
 }
 
 /**
@@ -677,7 +702,7 @@ ${adaGambar ? `${RENCANA_GAMBAR}\n` : ""}- "stimulus": jenis stimulus + skenario
 Indikator antarbaris juga tidak boleh sama persis; ambil sisi materi yang berbeda${p.jumlah.MJ && p.tujuan !== TKA ? " (KECUALI baris MJ dalam BLOK MJ yang sama: lihat aturan MJ)" : ""}.
 SATU KETERAMPILAN = SATU NOMOR: kata kerja + objek yang sama (misalnya "menghitung tingkat inflasi dari data IHK", "menyebutkan syarat mukjizat") hanya boleh dipakai SATU baris dalam seluruh kisi-kisi, lintas bentuk. Mengganti sinonim kata kerja ("menghitung" → "menyimpulkan ... dalam persen"), angka data, nama tokoh, atau kasusnya TIDAK membuatnya berbeda. Ambil keterampilan lain dari TP yang sama (misalnya menafsirkan hasil hitungan, menentukan penyebab, membandingkan, menggolongkan).${p.jumlah.URAIAN ? " Pengecualian: baris URAIAN boleh memperdalam keterampilan satu baris lain (langkah lengkap atau alasan), asalkan bukan pertanyaan yang sama." : ""}
 ${p.jumlah.ISIAN ? `${RENCANA_ISIAN}\n` : ""}${p.jumlah.MJ ? `${RENCANA_MJ}\n` : ""}${tanpaArab ? 'Di kisi-kisi JANGAN menulis huruf Arab sama sekali; sebut lafaz dengan transliterasi Latin (misalnya "lā taqrabū az-zinā").' : "Di kisi-kisi boleh menulis kosakata/kalimat Arab buatan sendiri, tetapi JANGAN menulis ayat atau hadis."}
-${adaGrup ? `${SOAL_GRUP}${p.tujuan !== TKA ? ` ${WACANA_INDONESIA}` : ""}${tanpaArab ? " Wacana tanpa huruf Arab." : " Wacana boleh berbahasa Arab, tetapi bukan ayat atau hadis."}\n` : ""}${p.catatan ? `${TANGGAPAN}\n` : ""}FORMAT JAWABAN untuk permintaan ini: hanya JSON {${p.catatan ? '"tanggapan":"...",' : ""}"kisi":[{"bentuk":"PG","tp":"TP 3.1","materi":"...","indikator":"...","level":"C2","dalil_id":null,${adaGambar ? '"gambar_id":null,' : ""}"stimulus":"tanpa stimulus"${adaGrup ? ',"grup":null' : ""}}${p.jumlah.ISIAN ? ',{"bentuk":"ISIAN",...,"jawaban":"..."}' : ""}]${adaGrup ? ',"wacana":[{"grup":1,"teks":"..."}]' : ""}}`;
+${adaGrup ? `${soalGrup(grup)}${p.tujuan !== TKA ? ` ${wacanaMapel(bab?.mapel)}` : ""}${tanpaArab ? " Wacana tanpa huruf Arab." : " Wacana boleh berbahasa Arab, tetapi bukan ayat atau hadis."}\n` : ""}${p.catatan ? `${TANGGAPAN}\n` : ""}FORMAT JAWABAN untuk permintaan ini: hanya JSON {${p.catatan ? '"tanggapan":"...",' : ""}"kisi":[{"bentuk":"PG","tp":"TP 3.1","materi":"...","indikator":"...","level":"C2","dalil_id":null,${adaGambar ? '"gambar_id":null,' : ""}"stimulus":"tanpa stimulus"${adaGrup ? ',"grup":null' : ""}}${p.jumlah.ISIAN ? ',{"bentuk":"ISIAN",...,"jawaban":"..."}' : ""}]${adaGrup ? ',"wacana":[{"grup":1,"teks":"..."}]' : ""}}`;
 }
 
 // ATURAN-SOAL 5a (0.42.0): nomor berdalil & cara tampil ditentukan aplikasi (rencanaDalil); AI memilih dalilnya.
@@ -688,12 +713,22 @@ const ATURAN_GAMBAR = `- GAMBAR: DATA BAB memuat gambar materi (lihat "Gambar ma
 const RENCANA_GAMBAR = `- "gambar_id": id gambar dari "Gambar materi" bila soal itu memakai gambar sebagai stimulus, atau null. Nomor bertanda BERGAMBAR WAJIB memakai gambar (gambar_id terisi): untuk setiap nomor itu pilih gambar yang paling cocok dengan TP-nya sebagai stimulus (diagram, skema, grafik, tabel, peta, foto objek atau percobaan), gambar berbeda-beda antarnomor; gambar yang hanya hiasan atau ilustrasi suasana dilewati (bila gambar yang cocok kurang, satu gambar boleh dipakai lagi untuk pertanyaan yang berbeda). Nomor lain boleh bergambar juga bila cocok. Indikator baris bergambar WAJIB tentang isi yang TAMPAK di gambar itu sendiri (bagian berlabel, data, arah, susunan, langkah yang digambar), bukan soal lain yang kebetulan setopik: soal bergambar tidak bisa dijawab tanpa melihat gambarnya, dan angka/label di soal sama dengan yang ada di gambar. Gambar paling cocok untuk soal yang menunjuk bagian, membaca data, atau mengamati; tidak untuk soal MJ. Menunjuk bagian lewat nomor/huruf HANYA untuk gambar yang keterangannya menyebut label itu; gambar "tanpa label" (atau tanpa keterangan label): indikator tentang keseluruhan gambar atau bagian yang dikenali dari bentuk/warna/letaknya. "stimulus" baris bergambar: "gambar: <apa yang diamati>".`;
 
 // ATURAN-SOAL.md bagian 9 no. 4: soal grup TKA. Dibatasi bentuk sama supaya lembar soal tetap per bagian bentuk.
-const SOAL_GRUP = `SOAL GRUP: nomor yang ditandai GRUP N di atas SUDAH DITENTUKAN sebagai soal grup: semua nomor dengan GRUP yang sama memakai SATU wacana bersama.
-- Isi "grup" setiap baris dengan nomor grupnya, atau null untuk soal tunggal. Soal dalam satu grup mengukur indikator yang berbeda.
-- WAJIB tulis wacana setiap grup di "wacana": teks lengkap 80–200 kata yang belum pernah dibaca siswa (bacaan, data dalam tabel sesuai aturan TABEL, kasus, atau hasil percobaan).
+// 0.47.0: panjang wacana ikut ukuran grup terbesar (grup 5–10 soal butuh bahan lebih banyak dari grup 2–3).
+const panjangWacana = (maks: number) => (maks <= 3 ? "80–200" : maks <= 5 ? "150–250" : maks <= 7 ? "200–300" : "250–350");
+const soalGrup = (grup: (number | null)[]) => {
+  const ukuran = new Map<number, number>();
+  for (const g of grup) if (g) ukuran.set(g, (ukuran.get(g) ?? 0) + 1);
+  return `SOAL GRUP: nomor yang ditandai GRUP N di atas SUDAH DITENTUKAN sebagai soal grup: semua nomor dengan GRUP yang sama memakai SATU wacana bersama.
+- Isi "grup" setiap baris dengan nomor grupnya, atau null untuk soal tunggal. Soal dalam satu grup mengukur indikator yang berbeda, dan semuanya bisa dijawab dari wacananya.
+- WAJIB tulis wacana setiap grup di "wacana": teks lengkap ${panjangWacana(Math.max(0, ...ukuran.values()))} kata yang belum pernah dibaca siswa (bacaan, data dalam tabel sesuai aturan TABEL, kasus, atau hasil percobaan).
 - "stimulus" baris grup diisi "wacana grup N".`;
-// 0.39.0: soal grup Bahasa Indonesia di UH/AFTS/ASAS/Latihan (grupSet). Bacaan = jenis teks yang sedang dipelajari.
+};
+// 0.39.0 Bahasa Indonesia, 0.47.0 Bahasa Inggris & Bahasa Arab: soal grup di UH/AFTS/ASAS/Latihan (grupSet). Bacaan = jenis
+// teks yang sedang dipelajari.
 const WACANA_INDONESIA = `Wacana berupa teks utuh dari jenis teks yang dipelajari di DATA BAB (misalnya cerpen, teks eksposisi, berita, hikayat, teks negosiasi), ditulis baru sesuai ciri dan struktur jenis teks itu, supaya soal grupnya menguji isi, struktur, kebahasaan, atau amanat teks tersebut.`;
+const WACANA_INGGRIS = `Wacana berupa reading text berbahasa Inggris yang utuh dari jenis teks yang dipelajari di DATA BAB (misalnya descriptive, recount, narrative, procedure, report, news item, analytical exposition, announcement, letter, dialogue), ditulis baru sesuai ciri dan struktur jenis teks itu dengan kosakata sesuai kelas, supaya soal grupnya menguji main idea, detail, reference, vocabulary in context, inference, struktur, atau kebahasaan teks tersebut.`;
+const WACANA_ARAB = `Wacana berupa teks bacaan (qira'ah) atau hiwar berbahasa Arab fusha yang utuh, berharakat lengkap, ditulis baru sesuai tema dan kosakata DATA BAB serta tingkat kelasnya, supaya soal grupnya menguji isi (fahm al-maqru'), makna kosakata dalam konteks, dan kaidah yang dipelajari di teks tersebut. Wacana bukan ayat Al-Qur'an atau hadis.`;
+const wacanaMapel = (mapel = "") => (MAPEL_INGGRIS.test(mapel) ? WACANA_INGGRIS : /bahasa\s+arab/i.test(mapel) ? WACANA_ARAB : WACANA_INDONESIA);
 
 // ATURAN-SOAL.md bagian 6 no. 2: AI menjawab catatan guru; tampil di paling atas hasil soal.
 const TANGGAPAN = `Isi juga "tanggapan": balasan singkat untuk guru (maks 3 kalimat, sapa dengan "Anda") tentang catatannya: apa yang Anda ikuti dan bagaimana, serta bagian yang TIDAK bisa diikuti beserta alasannya. Bila meminta jumlah/bentuk soal lain, arahkan ke tombol jumlah soal di form; bila meminta komposisi level lain, arahkan ke menu Lanjutan.`;

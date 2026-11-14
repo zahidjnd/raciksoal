@@ -173,6 +173,12 @@ mengatur skor). Persen level dipilih supaya jumlahnya persis surat (34/43/23 dan
    Latihan): soal **PG saja** yang dibuat soal grup, cara bagi sama dengan TKA (separuh nomor PG di akhir bagian PG,
    2–3 soal per bacaan). Bacaan = jenis teks yang dipelajari di materi (cerpen, eksposisi, berita, hikayat, dsb.),
    80–200 kata. Bentuk lain tetap soal tunggal (B/S gaya lama dan menjodohkan memakai nomor grup untuk hal lain).
+   ✅ (0.47.0, permintaan pemilik 2026-11-14) **Bahasa Inggris dan Bahasa Arab** ikut (Nahwu/Sharaf/Balaghah tidak:
+   kaidah, bukan bacaan), dan ukuran grup ketiga mapel bahasa menjadi **3–5 soal per bacaan** (separuh PG, dibagi rata).
+   Bacaan Inggris = reading text jenis teks di materi; Arab = qira'ah/hiwar fusha berharakat, bukan ayat/hadis.
+   🔍 **Guru boleh meminta ukuran lain di Catatan** ("1 cerita untuk 5–7 soal", "6 soal per teks"): angka dibaca
+   APLIKASI (`ukuranDiminta`), maks 10 soal per bacaan; berlaku juga untuk Latihan TKA. Panjang bacaan ikut ukuran
+   grup: ≤ 3 soal 80–200 kata, 4–5 soal 150–250, 6–7 soal 200–300, 8–10 soal 250–350.
 4. ✅ Satu skenario hanya dipakai sekali per set; pola "dua orang berbeda pendapat" maks 2 kali.
 5. ✅ 🔍 (0.30.0) **Gambar dari guru.** AI tidak bisa membuat gambar. Gambar hanya berasal dari **materi guru**
    (diambil dari file Word/PowerPoint, diunggah, atau ditempel), dan AI melihat gambarnya. Soal boleh memakai satu gambar

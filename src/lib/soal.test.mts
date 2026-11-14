@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { adalahTahun, arabTakTerverifikasi, cariTabel, istilahArab, JOROK, tulisTabel, jawabanAman, bersihkanTanggapan, gabungBab, identitasBab, isiSama, posisiBentuk, sesuaikanBentuk, blokMj, kataTerpakai, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Soal } from "./soal.ts";
-import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPermintaanUbah, bentukUbahan, MINTA_BENTUK, buatPengguna, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, laranganIsian, miripIndikator, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, grupSet,semesterDari, buatAnalisaMateri, MAKS_CATATAN, MAKS_INSTRUKSI, namaLevelTka, namaTujuan, pasangKunciPgk, rencanaLevel, type Pengaturan } from "./prompt.ts";
+import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPermintaanUbah, bentukUbahan, MINTA_BENTUK, buatPengguna, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, laranganIsian, miripIndikator, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, grupSet, ukuranDiminta,semesterDari, buatAnalisaMateri, MAKS_CATATAN, MAKS_INSTRUKSI, namaLevelTka, namaTujuan, pasangKunciPgk, rencanaLevel, type Pengaturan } from "./prompt.ts";
 import { bolehAkses, rapikanUsername } from "./akses.ts";
 import { headerUnduh } from "./nama-file.ts";
 import { geserTandaGambar, keIsian, rapikanMateri, susunDraf, terapkanAnalisa } from "./materi.ts";
@@ -469,6 +469,40 @@ test("Latihan TKA: tanpa uraian, kisi-kisi meminta soal grup + wacana; grup sah 
   const uh = { ...p, tujuan: "Ulangan Harian", jumlah: { PG: 6, PGK: 0, BS: 4, MJ: 0, ISIAN: 4, URAIAN: 2 } } as Pengaturan;
   assert.deepEqual(grupSet(uh, "Bahasa Indonesia"), [null, null, null, 1, 1, 1, ...Array(10).fill(null)]);
   assert.deepEqual(grupSet(uh, "Fiqih"), []);
+  // 0.47.0: Bahasa Inggris & Bahasa Arab ikut; grup bahasa 3–5 soal (bukan 2–3); Nahwu tidak (kaidah, bukan bacaan).
+  assert.deepEqual(grupSet(uh, "Bahasa Inggris"), grupSet(uh, "Bahasa Indonesia"));
+  assert.deepEqual(grupSet(uh, "Bahasa Arab"), grupSet(uh, "Bahasa Indonesia"));
+  assert.deepEqual(grupSet(uh, "Nahwu"), []);
+  const pg = (n: number, catatan = "", mapel = "Bahasa Inggris") => {
+    const g = grupSet({ ...uh, catatan, jumlah: { PG: n, PGK: 0, BS: 0, MJ: 0, ISIAN: 0, URAIAN: 0 } }, mapel);
+    return [...new Set(g.filter(Boolean))].map((x) => g.filter((y) => y === x).length);
+  };
+  assert.deepEqual(pg(20), [5, 5]);
+  assert.deepEqual(pg(30), [5, 5, 5]);
+  assert.deepEqual(pg(11), [5]);
+  assert.deepEqual(pg(9), [4]);
+  assert.deepEqual(pg(5), []); // separuhnya 2: kurang dari 3
+  // ukuran dari catatan guru, dibaca aplikasi
+  assert.deepEqual(pg(20, "kasih soal cerita, 1 cerita untuk 5-7 soal"), [5, 5]);
+  assert.deepEqual(pg(20, "satu teks untuk 7 soal"), [7]);
+  assert.deepEqual(pg(20, "1 bacaan untuk 10 soal"), [10]);
+  assert.deepEqual(pg(20, "1 cerita untuk 15 soal"), [10]); // maks 10 per teks
+  assert.deepEqual(pg(10, "6 soal per teks"), [6]); // separuhnya 5 < 6: tetap dibuat satu grup 6
+  assert.deepEqual(pg(4, "1 cerita untuk 5 soal"), [4]); // soalnya kurang: semua PG satu teks
+  assert.deepEqual(pg(20, "one passage for 4 questions", "Bahasa Inggris"), [4, 4]); // ukuran pas 4: sisa separuh jadi soal tunggal
+  assert.deepEqual(pg(20, "1 cerita untuk 5 soal", "Fiqih"), []); // mapel bukan bacaan
+  // TKA: grup 2–3 bawaan, catatan guru ikut
+  assert.deepEqual(grupSet({ ...p, jumlah: { PG: 20, PGK: 0, BS: 0, URAIAN: 0 } } as Pengaturan, "Biologi").filter(Boolean).length, 10);
+  assert.ok(grupSet({ ...p, catatan: "satu wacana untuk 5 soal", jumlah: { PG: 20, PGK: 0, BS: 0, URAIAN: 0 } } as Pengaturan, "Biologi").filter((g) => g === 1).length === 5);
+  // bukan ukuran grup
+  for (const c of ["buat 5 soal cerita", "buat teks narrative, 20 soal", "soal nomor 3 tentang teks", "1 teks 1 soal", ""]) assert.equal(ukuranDiminta(c), null, c);
+  assert.deepEqual(ukuranDiminta("Tiap bacaan 4 sampai 6 soal ya"), [4, 6]);
+  assert.deepEqual(ukuranDiminta("8–5 soal dari satu teks"), [5, 8]);
+  // wacana sesuai mapel & panjangnya ikut ukuran grup
+  const mintaEn = buatPermintaanKisi({ ...uh, jumlah: { PG: 20, PGK: 0, BS: 0, MJ: 0, ISIAN: 0, URAIAN: 0 } }, { ...bab, mapel: "Bahasa Inggris" });
+  assert.ok(mintaEn.includes("reading text berbahasa Inggris") && mintaEn.includes("150–250 kata") && /GRUP 2/.test(mintaEn));
+  const mintaAr = buatPermintaanKisi({ ...uh, catatan: "1 nash untuk 8 soal", jumlah: { PG: 20, PGK: 0, BS: 0, MJ: 0, ISIAN: 0, URAIAN: 0 } }, { ...bab, mapel: "Bahasa Arab", teksArab: "bahasa" });
+  assert.ok(mintaAr.includes("berbahasa Arab fusha") && mintaAr.includes("250–350 kata"));
   const mintaBi = buatPermintaanKisi(uh, { ...bab, mapel: "Bahasa Indonesia" });
   assert.ok(mintaBi.includes("SOAL GRUP") && mintaBi.includes("jenis teks yang dipelajari") && mintaBi.includes('"wacana"'));
   assert.ok(!buatPermintaanKisi(uh, { ...bab, mapel: "Fiqih" }).includes("SOAL GRUP"));

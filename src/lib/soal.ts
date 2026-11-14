@@ -321,6 +321,9 @@ export function periksaKisi(data: unknown, jumlah: Record<Bentuk, number>, bab: 
   return hasil.map((k, i) => ({ ...k, no: i + 1 }));
 }
 
+/** Panjang wacana soal grup (0.47.0: 3000 → 5000 huruf; teks Arab berharakat untuk grup 5–10 soal melewati 3000). */
+export const MAKS_WACANA = 5000;
+
 /**
  * Soal grup (Latihan TKA): pasang wacana dari AI ke baris kisi-kisi. Grup sah = minimal 2 nomor BERURUTAN dengan
  * bentuk sama dan nomor grup sama, dan wacananya ada. Selebihnya jadi soal tunggal. Grup dinomori ulang 1, 2, ...
@@ -329,7 +332,7 @@ export function periksaKisi(data: unknown, jumlah: Record<Bentuk, number>, bab: 
 export function pasangWacana(kisi: BarisKisi[], wacana: unknown, bab: Bab, cekAyat?: CekAyat): BarisKisi[] {
   const teksWacana = new Map<number, string>();
   for (const w of Array.isArray(wacana) ? wacana : []) {
-    const t = String((w as { teks?: unknown })?.teks ?? "").trim().slice(0, 3000);
+    const t = String((w as { teks?: unknown })?.teks ?? "").trim().slice(0, MAKS_WACANA);
     const g = Number((w as { grup?: unknown })?.grup);
     if (t && Number.isInteger(g)) teksWacana.set(g, t);
   }
@@ -876,7 +879,7 @@ export function rapikanSoal(s: Partial<Soal>, bentuk: Bentuk): Soal {
     ...(bentuk === "URAIAN" ? { rubrik } : {}),
     ...(bentuk === "ISIAN" ? { kunciAlt: alt } : {}),
     ...(lamaMj ? { jawaban } : bentuk === "MJ" ? { premis, jawaban } : {}),
-    ...(Number.isInteger(s.grup) && s.grup! > 0 && (teks(s.wacana) || lamaMj) ? { grup: s.grup, ...(teks(s.wacana) && { wacana: teks(s.wacana).slice(0, 3000) }) } : {}),
+    ...(Number.isInteger(s.grup) && s.grup! > 0 && (teks(s.wacana) || lamaMj) ? { grup: s.grup, ...(teks(s.wacana) && { wacana: teks(s.wacana).slice(0, MAKS_WACANA) }) } : {}),
     pembahasan: teks(s.pembahasan),
     level: teks(s.level),
     tp: teks(s.tp),

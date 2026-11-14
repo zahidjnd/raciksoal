@@ -24,8 +24,11 @@ export const MAPEL_EKSAK = /^(matematika?|fisika|kimia|biologi)\b/i;
  */
 export const MAPEL_INGGRIS = /bahasa\s+inggris|english/i;
 
-/** Bahasa Indonesia (0.39.0, pilihan pemilik): soal grup (satu bacaan untuk 2–3 PG) juga di UH/AFTS/ASAS/Latihan (grupSet). */
-export const MAPEL_INDONESIA = /bahasa\s+indonesia/i;
+/**
+ * Mapel bacaan (pilihan pemilik; Bahasa Indonesia 0.39.0, Bahasa Inggris & Arab 0.47.0): soal grup "satu teks untuk
+ * 3–5 PG" di semua jenis ujian (grupSet). Bahasa Arab saja: Nahwu/Sharaf/Balaghah = kaidah, bukan bacaan.
+ */
+export const MAPEL_BACAAN = /bahasa\s+(indonesia|inggris|arab)|english/i;
 
 /**
  * Sejarah (SKI, Al-Quds wal Maqdisiyyah, Sejarah): tahun/tokoh/tempat wajib dari materi (ATURAN_SEJARAH, prompt.ts);

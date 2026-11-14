@@ -52,6 +52,17 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.47.0 — 14 November 2026
+- **Satu bacaan untuk beberapa soal di mapel bahasa.** Bahasa Inggris dan Bahasa Arab kini seperti Bahasa Indonesia:
+  sebagian soal PG memakai satu teks bacaan bersama, di semua jenis ujian (UH, AFTS, ASAS, Latihan). Ukurannya kini
+  **3–5 soal per bacaan** (dulu 2–3), sekitar separuh soal PG, sisanya soal biasa. Bahasa Inggris memakai reading text
+  (narrative, descriptive, dll. sesuai materi); Bahasa Arab memakai qira'ah/hiwar berharakat. Nahwu tidak ikut.
+- **Ukuran bisa diminta guru.** Tulis di Catatan untuk AI, misalnya "1 cerita untuk 5-7 soal" atau "6 soal per
+  teks". Aplikasi membaca angkanya sendiri (paling banyak 10 soal per bacaan), jadi permintaan ini pasti diikuti.
+  Berlaku juga di Latihan TKA. Teks bacaan otomatis lebih panjang bila soalnya lebih banyak.
+
+---
+
 ## 0.46.2 — 14 November 2026
 - **Soal bergambar tidak lagi mengarang nomor.** Dulu soal bisa berbunyi "bagian yang ditandai nomor 1, 2, dan 3"
   padahal gambarnya tanpa nomor (Biologi, model membran sel). Sekarang keterangan gambar dari Analisa materi mencatat

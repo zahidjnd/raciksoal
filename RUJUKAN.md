@@ -155,7 +155,7 @@ Semua butir di ATURAN-SOAL.md bagian 2 dan 10.
 | Bentuk yang tersedia: PG, PGK, Kategori, Menjodohkan, Isian, Uraian | `NAMA_BENTUK` | R1 + R3 | ✔ D08b hlm 47 ("esai, pilihan ganda, uraian, atau bentuk lainnya"); D05 hlm 67 (tes tertulis) | rincian tiap bentuk = R2/R3 |
 | PG 5 pilihan | `soal.ts` | R1/R2 | ✔ semua contoh D12 memakai A–E | |
 | Menjodohkan 5 premis + 6 jawaban; Isian ≤ 5 kata; Uraian berbatasan + rubrik | `soal.ts`, `buatSistem` | R2/R3 | D13 | |
-| Bahasa Indonesia: separuh soal PG berupa soal grup (satu bacaan untuk 2–3 soal) | `grupSet` | R1 + R3 | ✔ D12 hlm 8 (soal grup); penerapan di UH/AFTS/ASAS = keputusan pemilik 2026-11-12 | PG saja |
+| Bahasa Indonesia, Inggris, Arab: separuh soal PG berupa soal grup (satu bacaan untuk 3–5 soal; ukuran lain dari catatan guru, maks 10) | `grupSet`, `ukuranDiminta` | R1 + R3 | ✔ D12 hlm 8 (soal grup); penerapan di UH/AFTS/ASAS = keputusan pemilik 2026-11-12 (Indonesia), 2026-11-14 (Inggris, Arab, ukuran 3–5) | PG saja |
 
 #### I2. Latihan TKA (dicocokkan dengan D12, D12b, D12c)
 | Aturan | Di aplikasi | Dokumen resmi | Status |
