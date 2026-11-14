@@ -190,6 +190,9 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   Potong (0.34.0, `potong-gambar.tsx`): tombol ✂ di kartu gambar materi & "Gambar soal" form Edit (potongan = pilihan
   baru, disahkan `sahkanGambarBaru` saat simpan), kanvas di browser → `unggah` = gambar BARU
   (isi gambar tetap tak pernah diubah; set lama memakai gambar lama). Hanya potong, sengaja tanpa putar/coret.
+  Label (0.46.2): keterangan analisa diakhiri "berlabel A–E" / "tanpa label"; `periksaSoal` menandai soal yang menunjuk
+  nomor/huruf (`SEBUT_LABEL`) pada gambar yang keterangannya tanpa kata label (`gambarBerlabel`; kosong/lama = tanpa label).
+- **Pilihan ulang** (0.46.2): baris pertanyaan PG/PGK yang sama dengan pilihan dibuang `buangPilihanUlang` (≥ 2 baris).
 - **PDF dibaca AI** (0.31.0): browser memfoto halaman (pdf.js, 1600 px, `intent: "print"` WAJIB: tanpa itu render
   memakai requestAnimationFrame yang berhenti di tab tersembunyi) → aksi `bacaHalamanPdf` (1 halaman/panggilan, JSON
   `blok` teks/tabel/arab/gambar, `buatBacaHalaman`) → `rapikanBacaanHalaman` (materi.ts) → paragraf seperti file Word.

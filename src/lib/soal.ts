@@ -1225,6 +1225,25 @@ function periksaDalil(s: Soal, bab: Bab): string[] {
 // "Perhatikan gambar berikut", "gambar di atas", "pada gambar tersebut" (bukan "menggambarkan" / "gambaran").
 const SEBUT_GAMBAR = /\bgambar\s+(berikut|di\s?(atas|bawah)|tersebut|ini)\b|\b(pada|dari|dalam)\s+gambar\b/i;
 
+// 0.46.2: soal yang menunjuk label gambar ("ditandai nomor 1, 2, dan 3", "bagian berlabel P", "ditunjuk huruf D").
+// Label = satu huruf atau angka 1–2 digit tepat sesudah kata penunjuk ("nomor atom 6" tidak kena). Bahasa Inggris ikut.
+export const SEBUT_LABEL = /(?<![\p{L}\d])(?:ditandai|ditunjuk(?:kan)?|bertanda|berlabel|berhuruf|bernomor|label|bagian|nomor|huruf|labell?ed|number|part)\s+(?:(?:dengan|oleh|by|with)\s+)?(?:(?:nomor|huruf|angka|label|number|letter)\s+)?\(?(?:[a-z]|\d{1,2})\)?(?![\p{L}\d])/iu;
+// Keterangan gambar mencatat label ("bagian berlabel A–E", "bernomor 1–5"); "tanpa label" / kosong = gambar tanpa label.
+// Set 33 Biologi (14 Nov 2026): model membran sel tanpa nomor, soal "Bagian yang ditandai nomor 1, 2, dan 3 ...".
+export const gambarBerlabel = (keterangan = "") =>
+  /\b(label|berlabel|bernomor|berhuruf|nomor|huruf|bertanda|ditandai|labell?ed)\b/i.test(keterangan) && !/\btanpa\s+(label|nomor|huruf|tanda)/i.test(keterangan);
+
+// 0.46.2: PG/PGK yang menulis ulang pilihannya di pertanyaan (set Biologi no. 21: lima pernyataan tertulis dua kali).
+// Baris pertanyaan yang isinya sama dengan pilihan dibuang, hanya bila ≥ 2 baris (satu baris kebetulan sama dibiarkan).
+const intiBaris = (t: string) =>
+  t.toLowerCase().replace(/^\s*(?:[-•*]|\(?[a-e1-9]\)?[.)])\s*/, "").replace(/[\s.;,]+$/, "").replace(/\s+/g, " ").trim();
+export function buangPilihanUlang(pertanyaan: string, pilihan?: unknown[]): string {
+  const isi = new Set((pilihan ?? []).map((p) => intiBaris(String(p ?? ""))).filter(Boolean));
+  const baris = String(pertanyaan ?? "").split("\n");
+  const sisa = baris.filter((b) => !isi.has(intiBaris(b)));
+  return isi.size && baris.length - sisa.length >= 2 ? sisa.join("\n").trimEnd() : pertanyaan;
+}
+
 /**
  * Beri peringatan pada soal yang bermasalah. Aturan 5: teks Arab hanya boleh dari data terverifikasi.
  * `teman` = soal lain di set (untuk soal grup: gambar boleh ada di soal lain satu grup). Bawaan: `soal` itu sendiri;
@@ -1257,6 +1276,7 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat, teman: So
       ...(Array.isArray(asli.jawaban) ? { jawaban: asli.jawaban.map(bersih) } : {}),
     });
     if (!s.dalil_id && ditemukan) s.dalil_id = ditemukan;
+    if ((s.bentuk === "PG" || s.bentuk === "PGK") && s.pilihan) s.pertanyaan = buangPilihanUlang(s.pertanyaan, s.pilihan);
     // Cara tampil & potongan dalil dari AI/guru: yang tidak dikenal dibuang (kembali ke tampilan bawaan).
     if (s.dalil_tampil !== undefined && !CARA_DALIL.includes(s.dalil_tampil as CaraDalil)) s.dalil_tampil = null;
     if (s.dalil_potong !== undefined) s.dalil_potong = Array.isArray(s.dalil_potong) ? s.dalil_potong.slice(0, 2).map((n) => Math.round(Number(n)) || 0) : null;
@@ -1265,6 +1285,9 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat, teman: So
     if (s.gambar_id != null && !gambarAda.has(Number(s.gambar_id))) s.gambar_id = null;
     const peringatan: string[] = [];
     if (!s.gambar_id && !(s.grup && s.wacana && grupBergambar.has(s.grup)) && SEBUT_GAMBAR.test(`${s.wacana ?? ""} ${s.pertanyaan}`)) peringatan.push("Soal menyebut gambar, tetapi tidak ada gambar yang ditampilkan. Pilih gambarnya lewat Edit, atau ubah kalimatnya.");
+    const ket = (bab.gambar ?? []).find((g) => g.id === Number(s.gambar_id))?.keterangan;
+    if (s.gambar_id && !gambarBerlabel(ket) && SEBUT_LABEL.test([s.wacana, s.pertanyaan, ...(s.pilihan ?? []), ...(s.pernyataan ?? []), ...(s.premis ?? [])].join("\n")))
+      peringatan.push('Soal menunjuk nomor/huruf/label pada gambar, padahal gambarnya tanpa label. Tanyakan keseluruhan gambar, atau tunjuk bagiannya lewat bentuk, warna, atau letak yang tampak (jangan mengarang nomor/huruf). Bila gambarnya memang berlabel, tulis labelnya di keterangan gambar materi (mis. "berlabel 1–5").');
     const semuaTeks = [s.wacana ?? "", s.pertanyaan, ...(s.pilihan ?? []), ...(s.pernyataan ?? []), ...(s.premis ?? []), ...(s.jawaban ?? []), ...[s.kunci].flat(), ...(s.kunciAlt ?? []), s.pembahasan, ...(s.rubrik ?? []).map((r) => r.kriteria)];
     const arabAsing = semuaTeks.flatMap((t) => arabAsingDi(String(t ?? "")));
     if (arabAsing.length)

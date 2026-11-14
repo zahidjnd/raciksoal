@@ -52,6 +52,18 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.46.2 — 14 November 2026
+- **Soal bergambar tidak lagi mengarang nomor.** Dulu soal bisa berbunyi "bagian yang ditandai nomor 1, 2, dan 3"
+  padahal gambarnya tanpa nomor (Biologi, model membran sel). Sekarang keterangan gambar dari Analisa materi mencatat
+  label yang tampak ("berlabel A–E") atau "tanpa label". Soal yang menunjuk nomor/huruf pada gambar tanpa label ditandai
+  merah dan diperbaiki otomatis menjadi soal tentang keseluruhan gambar, atau menunjuk bagian lewat bentuk/warna.
+  Gambar materi lama yang keterangannya tidak menyebut label dianggap tanpa label. Bila gambarnya memang bernomor,
+  tulis labelnya di keterangan gambar (mis. "berlabel 1–5").
+- **Pilihan tidak lagi tertulis dua kali.** Soal PG / PG kompleks yang menulis ulang pilihan A–E di kalimat soal kini
+  dirapikan otomatis oleh aplikasi (baris yang sama dengan pilihan dibuang), tanpa perlu Edit. Berlaku untuk set baru.
+
+---
+
 ## 0.46.1 — 13 November 2026
 - **Panduan**: gambar menu "Lainnya" diperbarui (kotak permintaan Ubah soal kini dua baris), contoh permintaan
   ditambah ("ganti kasusnya jadi tentang pasar", "jadikan uraian").

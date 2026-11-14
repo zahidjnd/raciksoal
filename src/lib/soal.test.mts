@@ -1152,8 +1152,40 @@ test("mapel sejarah: tahun di bagian soal yang benar harus ada di materi, pengec
   assert.doesNotMatch(buatSistem(bab), /FAKTA SEJARAH/);
 });
 
+test("gambar tanpa label (0.46.2): soal yang menunjuk nomor/huruf ditandai, menunjuk lewat bentuk/warna tidak", () => {
+  const bab = {
+    id: "x", judul: "x", mapel: "Biologi", kelas: "X", tp: [{ kode: "TP 1", teks: "x" }], dalil: [], materi: ["Membran sel."],
+    gambar: [{ id: 1, keterangan: "Model membran sel berwarna, tanpa label" }, { id: 2, keterangan: "Model mosaik fluida membran sel" }, { id: 3, keterangan: "" }, { id: 4, keterangan: "Struktur sel hewan, bagian berlabel A–E" }],
+  } as Bab;
+  const dasar = { bentuk: "URAIAN", dalil_id: null, kunci: "x", pembahasan: "", level: "C2", tp: "TP 1", skor: 1 } as const;
+  const label = (gambar_id: number, pertanyaan: string) =>
+    !!periksaSoal([{ ...dasar, gambar_id, pertanyaan } as Soal], bab)[0].peringatan?.some((w) => w.startsWith("Soal menunjuk nomor/huruf"));
+  const nomor = "Perhatikan gambar model membran sel berikut! Bagian yang ditandai nomor 1, 2, dan 3 secara berurutan adalah ....";
+  assert.equal(label(1, nomor), true); // set Biologi no. 33
+  assert.equal(label(2, nomor), true); // keterangan lama tanpa kata label
+  assert.equal(label(3, nomor), true); // tanpa keterangan
+  assert.equal(label(4, nomor), false); // gambar memang berlabel
+  assert.equal(label(1, "Perhatikan gambar berikut! Organel yang ditunjuk huruf D berfungsi ...."), true);
+  assert.equal(label(1, "Perhatikan gambar berikut! Struktur berbentuk tabung biru yang menembus kedua lapisan berfungsi ...."), false);
+  assert.equal(label(1, "Perhatikan gambar berikut! Unsur dengan nomor atom 6 pada gambar adalah ...."), false);
+  assert.equal(label(1, "Look at the picture! The part labeled B is ...."), true);
+});
+
+test("PG/PGK: pilihan yang ditulis ulang di pertanyaan dibuang (0.46.2)", () => {
+  const bab = { id: "x", judul: "x", mapel: "Biologi", kelas: "X", tp: [{ kode: "TP 1", teks: "x" }], dalil: [], materi: ["Sel."] } as Bab;
+  const pilihan = ["Air paling banyak di dalam sel.", "Protein termasuk senyawa organik.", "Karbohidrat senyawa anorganik.", "Lemak tanpa karbon.", "Garam mineral organik."];
+  const awal = "Bu Nisa membahas sel. Pernyataan yang tepat adalah .... (Pilih semua jawaban yang tepat)";
+  const dasar = { bentuk: "PGK", dalil_id: null, pilihan, kunci: ["A", "B"], pembahasan: "", level: "C2", tp: "TP 1", skor: 1 } as const;
+  const cek = (pertanyaan: string, bentuk: "PG" | "PGK" = "PGK") => periksaSoal([{ ...dasar, bentuk, pertanyaan } as Soal], bab)[0].pertanyaan;
+  assert.equal(cek(`${awal}\n${pilihan.join("\n")}`), awal); // set Biologi no. 21
+  assert.equal(cek(`${awal}\nA. ${pilihan[0]}\nB. ${pilihan[1].toUpperCase()}\n(3) ${pilihan[2].replace(".", "")}`), awal); // berhuruf/bernomor
+  assert.equal(cek(`${awal}\n${pilihan[0]}\n${pilihan[1]}`, "PG"), awal);
+  const satu = `Seorang siswa menulis:\n${pilihan[0]}\nApakah pernyataan itu tepat?`;
+  assert.equal(cek(satu), satu); // satu baris kebetulan sama: dibiarkan
+});
+
 test("gambar (0.30.0): hanya gambar materi yang dipakai, soal yang menyebut gambar tanpa gambar ditandai", () => {
-  const bab = { id: "x", judul: "x", mapel: "Biologi", kelas: "XI", tp: [{ kode: "TP 1", teks: "x" }], dalil: [], materi: ["Sel hewan."], gambar: [{ id: 7, keterangan: "Sel hewan" }] } as Bab;
+  const bab = { id: "x", judul: "x", mapel: "Biologi", kelas: "XI", tp: [{ kode: "TP 1", teks: "x" }], dalil: [], materi: ["Sel hewan."], gambar: [{ id: 7, keterangan: "Sel hewan, berlabel W–Z" }] } as Bab;
   const dasar = { bentuk: "PG", dalil_id: null, pilihan: ["a", "b", "c", "d", "e"], kunci: "A", pembahasan: "", level: "C2", tp: "TP 1", skor: 1 } as const;
   const [ada, asing, tanpa, biasa] = periksaSoal(
     [

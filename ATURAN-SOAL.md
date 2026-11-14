@@ -179,6 +179,10 @@ mengatur skor). Persen level dipilih supaya jumlahnya persis surat (34/43/23 dan
    sebagai stimulus; aplikasi menampilkannya di bawah pokok soal ("Perhatikan gambar berikut!"). Soal bergambar harus
    benar-benar perlu melihat gambar untuk dijawab, jawabannya sesuai yang tampak di gambar (tidak mengarang bagian/label
    yang tidak ada), dan pokok soal tidak menjelaskan isi gambar sampai jawabannya terbaca tanpa melihat gambar.
+   (0.46.2) Keterangan gambar mencatat label penunjuk yang tertulis di gambar ("berlabel A–E") atau "tanpa label".
+   Soal hanya boleh menunjuk nomor/huruf pada gambar yang keterangannya menyebut label; gambar tanpa label ditanya
+   secara keseluruhan atau bagiannya ditunjuk lewat bentuk/warna/letak. 🔍 Aplikasi menandai soal yang menunjuk
+   nomor/huruf pada gambar tanpa label (keterangan kosong/lama tanpa kata label = tanpa label).
    Rencana gambar per nomor ditulis di kisi-kisi; usahakan setiap gambar terpakai. Tanpa gambar di materi: tetap seperti
    dulu, AI **dilarang** menulis "perhatikan gambar berikut" (aplikasi menandai soal yang menyebut gambar tanpa gambar).
    Guru bisa menambah, mengganti, atau melepas gambar soal lewat Edit. Teks Arab di dalam gambar tidak pernah
