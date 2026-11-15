@@ -6,7 +6,7 @@ export const BATAS_GAMBAR = {
   bita: 450 * 1024, // satu gambar (base64-nya ±600 KB, di bawah batas kiriman aksi server 1 MB)
   perMateri: 10,
   perSet: 20, // materi digabung (PTS/PAS): yang dikirim ke AI paling banyak sekian
-  perGuru: 300,
+  perGuru: 600, // 0.48.1 (dulu 300)
   keterangan: 200,
   dinilai: 20, // gambar yang dinilai AI saat analisa materi (pratinjau kecil); sisanya hanya ditawarkan ke guru
   pratinjau: 384, // px, sisi terpanjang pratinjau untuk dinilai AI

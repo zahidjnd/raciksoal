@@ -52,6 +52,24 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.48.1 — 15 November 2026
+Jatah guru dilonggarkan selama ASAS, supaya guru leluasa mencoba-coba sambil memakai sungguhan.
+| | Dulu | Sekarang |
+|---|---|---|
+| Set soal per guru per hari | 10 | **50** |
+| Ganti/Ubah/Tambah soal per hari | 60 | **500** |
+| Ganti/Ubah/Tambah soal dalam satu set | 30 | **100** |
+| Analisa materi per hari | 30 | **300** |
+| Halaman PDF/foto dibaca AI per hari | 200 | **1000** |
+| Materi tersimpan per guru | 300 | **1000** |
+| Gambar tersimpan per guru | 300 | **600** |
+| Set per hari seluruh web | 100 | **500** |
+
+Yang tidak berubah: 2 set dibuat bersamaan per guru, maks. 50 soal per set, materi 150 ribu huruf, 75 halaman PDF
+sekali lampir, batas waktu pembuatan, dan kunci salah kata sandi.
+
+---
+
 ## 0.48.0 — 15 November 2026
 - **Kirim masukan.** Tautan baru **Kirim masukan** di sidebar (di bawah Panduan) membuka kotak untuk menulis keluhan
   atau saran, dengan pilihan 5 wajah (boleh dilewati). Bila sedang membuka set, centang **Tentang set: …** ikut

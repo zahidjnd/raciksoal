@@ -148,8 +148,11 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   0.46.0: ganti bentuk bila `bentukUbahan` (bukan grup/MJ; TKA hanya PG/PGK/BS) DAN permintaan cocok `MINTA_BENTUK`;
   `sesuaikanBentuk` membuang field bentuk lama, soal+kisi pindah ke `posisiBentuk`, rencana kisi (kunciPgk dll.) diganti.
   AI menulis bentuk terlarang → `PesanGuru`, tidak disimpan/tak memakai jatah (dulu tersimpan PG tanpa pilihan, set 129).
-- **Batas**: 10 set/guru/hari (admin bebas) + 100/web; 2 set proses serentak/guru; Ganti/Ubah/Tambah 30x per set & 60/guru/hari;
-  analisa materi 30/guru/hari; halaman PDF dibaca AI 200/guru/hari (0.34.1); login dikunci 5x salah/15 menit per perangkat+nama. Batas ada di `pembatas.ts`.
+- **Batas** (0.48.1, dilonggarkan untuk ASAS; angka tetap ada sebagai pagar): 50 set/guru/hari (admin bebas) + 500/web;
+  2 set proses serentak/guru; Ganti/Ubah/Tambah 100x per set & 500/guru/hari; analisa materi 300/guru/hari; halaman PDF
+  dibaca AI 1000/guru/hari; materi tersimpan 1000/guru, gambar 600/guru; login dikunci 5x salah/15 menit per perangkat+nama.
+  Batas ada di `pembatas.ts`. Pengaman teknis (serentak, tenggat, 50 soal, 150 ribu huruf, 75 halaman) sengaja TIDAK
+  dilonggarkan. Formulir batas di Pengaturan admin / pengecualian per guru: ditunda sampai ada data pemakaian ASAS.
 - **Pesan masuk** (0.32.5, pilihan pemilik): "nama tidak terdaftar" / "kata sandi salah" terpisah (kolom yang salah saja
   dikosongkan). Lebih dari 10 nama tak terdaftar per IP/15 menit → pesan umum saja (`samar`), TIDAK mengunci (satu IP madrasah).
 - **Peran**: guru hanya model utama, tanpa info teknis; admin = semua set, pilihan model, Bandingkan, pita peringatan.

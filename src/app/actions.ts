@@ -23,7 +23,7 @@ const SESI_HABIS = "Sesi masuk sudah berakhir. Muat ulang halaman lalu masuk lag
 const cekAyat = (arab: string) => !!mushaf().cari(arab);
 // Aturan 4: batas pembuatan per guru per hari (admin tidak dibatasi per guru),
 // plus batas total seluruh web sebagai pengaman saldo AI. Set yang GAGAL tidak dihitung.
-const BATAS_GANTI_PER_SET = 30;
+const BATAS_GANTI_PER_SET = 100;
 // Set yang sedang dibuat bersamaan: per guru (admin bebas, untuk "Bandingkan") dan seluruh web (RAM hosting 1 GB).
 const BATAS_PROSES_GURU = 2;
 const BATAS_PROSES_WEB = 10;

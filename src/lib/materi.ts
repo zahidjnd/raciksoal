@@ -3,8 +3,8 @@ import { rapikanGambar, type GambarBab } from "./gambar.ts";
 import { MAPEL_BAHASA_ARAB } from "./mapel.ts";
 import { arabTakTerverifikasi, bukanDalil, identitasBab, istilahArab, KELAS, korpusArab, paragrafArab, POLA_ARAB, SUMBER_BUKAN, type Bab } from "./soal.ts";
 
-// perGuru 300: materi kini tersimpan otomatis setiap kali guru memasukkan materi baru di halaman utama.
-export const BATAS_MATERI = { judul: 150, mapel: 60, tp: 15, teksTp: 500, isiMin: 100, isi: 150000, dalil: 20, teksDalil: 3000, perGuru: 300 };
+// perGuru (0.48.1: 1000, dulu 300): materi kini tersimpan otomatis setiap kali guru memasukkan materi baru di halaman utama.
+export const BATAS_MATERI = { judul: 150, mapel: 60, tp: 15, teksTp: 500, isiMin: 100, isi: 150000, dalil: 20, teksDalil: 3000, perGuru: 1000 };
 
 
 /** Isian form "Materi Saya" (apa adanya dari browser, belum dipercaya). */
