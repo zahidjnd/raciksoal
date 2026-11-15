@@ -13,6 +13,8 @@ import { LaciSidebar } from "./laci-sidebar";
 import { BarisRiwayat, TautanMenu } from "./baris-riwayat";
 import { TombolTema } from "./tombol-tema";
 import { JendelaMasukan, TombolMasukan } from "./masukan";
+import { JendelaTanya } from "./tanya";
+import { Pengumuman } from "./pengumuman";
 import { Fragment } from "react";
 import paket from "../../package.json";
 
@@ -209,6 +211,8 @@ export async function Kerangka({ p, lebar = false, setAktif = null, children }: 
         {children}
       </main>
       <JendelaMasukan set={setMasukan} />
+      <JendelaTanya />
+      <Pengumuman />
     </div>
   );
 }

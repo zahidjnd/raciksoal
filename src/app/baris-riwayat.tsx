@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { beriTahu, tanya } from "./tanya";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { hapusSet, ubahNamaSet } from "./actions";
@@ -58,7 +59,7 @@ export function BarisRiwayat({ id, awalan = "", label: judul, nama, keterangan, 
     setSibuk(true);
     const r = await ubahNamaSet(id, baru).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
     setSibuk(false);
-    if (!r.ok) return alert(r.pesan);
+    if (!r.ok) return beriTahu(r.pesan);
     // Set ini sedang dibuka → muat ulang supaya judul halaman ikut berubah; selain itu cukup perbarui sidebar.
     if (sedangDibuka()) location.reload();
     else router.refresh();
@@ -66,11 +67,11 @@ export function BarisRiwayat({ id, awalan = "", label: judul, nama, keterangan, 
 
   async function hapus() {
     setMenu(false);
-    if (!confirm(`Hapus "${nama ?? label}"? Set akan hilang dari riwayat dan tidak bisa dibuka lagi. (Jatah hari ini tidak kembali.)`)) return;
+    if (!(await tanya(`"${nama ?? label}" akan hilang dari riwayat dan tidak bisa dibuka lagi. Jatah hari ini tidak kembali.`, { judul: "Hapus set?", ya: "Hapus", bahaya: true }))) return;
     setSibuk(true);
     const r = await hapusSet(id).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
     setSibuk(false);
-    if (!r.ok) return alert(r.pesan);
+    if (!r.ok) return beriTahu(r.pesan);
     if (sedangDibuka()) location.assign("/");
     else router.refresh();
   }

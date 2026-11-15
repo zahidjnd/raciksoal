@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
+import { tanya } from "../../tanya";
 import { resetKataSandi, tambahGuru, ubahStatus } from "./actions";
 
 const kotak = "mt-1 w-full rounded-lg border p-2";
@@ -37,6 +38,7 @@ export function FormTambahGuru() {
 /** Tombol per akun: reset kata sandi dan aktif/nonaktifkan. */
 export function AksiGuru({ userId, nonaktif, dirinya }: { userId: string; nonaktif: boolean; dirinya: boolean }) {
   const [buka, setBuka] = useState(false);
+  const yakin = useRef(false); // sudah menjawab "Nonaktifkan" di jendela konfirmasi
   const [hasilReset, kirimReset, prosesReset] = useActionState(resetKataSandi, null);
   const [hasilStatus, kirimStatus, prosesStatus] = useActionState(ubahStatus, null);
   return (
@@ -49,7 +51,15 @@ export function AksiGuru({ userId, nonaktif, dirinya }: { userId: string; nonakt
           <form
             action={kirimStatus}
             onSubmit={(e) => {
-              if (!nonaktif && !confirm("Nonaktifkan akun ini? Guru tidak bisa masuk sampai diaktifkan lagi. Set soalnya tetap tersimpan.")) e.preventDefault();
+              // Jendela aplikasi tidak bisa menahan kiriman form sambil menunggu: tahan dulu, kirim ulang setelah "Nonaktifkan".
+              if (nonaktif || yakin.current) return void (yakin.current = false);
+              e.preventDefault();
+              const form = e.currentTarget;
+              tanya("Guru tidak bisa masuk sampai diaktifkan lagi. Set soalnya tetap tersimpan.", { judul: "Nonaktifkan akun ini?", ya: "Nonaktifkan", bahaya: true }).then((ok) => {
+                if (!ok) return;
+                yakin.current = true;
+                form.requestSubmit();
+              });
             }}
           >
             <input type="hidden" name="userId" value={userId} />

@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useRef, useState } from "react";
+import { tanya } from "./tanya";
 import "katex/dist/katex.min.css";
 import { gantiSatuSoal, hapusSoal, pindahSoal, simpanSoal, tambahSoalManual, tambahSoalSerupa } from "./actions";
 import { StepAngka } from "./step-angka";
@@ -261,7 +262,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
   }, [berhasil]);
 
   async function ganti(jenis: "ganti" | "ubah") {
-    if (jenis === "ganti" && !confirm(`Ganti soal nomor ${no} dengan soal baru dari AI? Soal lama akan hilang.`)) return;
+    if (jenis === "ganti" && !(await tanya(`Soal nomor ${no} akan diganti dengan soal baru dari AI. Soal lama akan hilang.`, { judul: "Ganti soal?", ya: "Ganti soal" }))) return;
     if (jenis === "ubah" && !instruksi.trim()) return setError("Tulis dulu perubahan yang diminta.");
     setError("");
     setCatatanAI("");
@@ -300,7 +301,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
 
   /** Tambah soal serupa (AI, di bawah soal ini) atau hapus soal ini; nomor sesudahnya bergeser. */
   async function ubahJumlah(jenis: "tambah" | "hapus") {
-    if (jenis === "hapus" && !confirm(`Hapus soal nomor ${no}? Nomor soal sesudahnya ikut bergeser. Soal yang dihapus tidak bisa dikembalikan.`)) return;
+    if (jenis === "hapus" && !(await tanya(`Nomor soal sesudahnya ikut bergeser. Soal yang dihapus tidak bisa dikembalikan.`, { judul: `Hapus soal nomor ${no}?`, ya: "Hapus", bahaya: true }))) return;
     setError("");
     setProses(jenis);
     const putus = { ok: false as const, pesan: "Koneksi terputus. Coba lagi." };

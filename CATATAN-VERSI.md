@@ -68,6 +68,11 @@ Jatah guru dilonggarkan selama ASAS, supaya guru leluasa mencoba-coba sambil mem
 Yang tidak berubah: 2 set dibuat bersamaan per guru, maks. 50 soal per set, materi 150 ribu huruf, 75 halaman PDF
 sekali lampir, batas waktu pembuatan, dan kunci salah kata sandi.
 
+- **Pengumuman pembaruan**: saat aplikasi dibuka atau dimuat ulang, muncul sekali jendela "Pembaruan Versi 0.48.1"
+  (batas yang dilonggarkan + fitur Kirim masukan). Setelah "Baik, saya mengerti" tidak muncul lagi di perangkat itu.
+- **Jendela konfirmasi bergaya aplikasi**, menggantikan kotak bawaan browser: Ganti soal, Hapus soal, Hapus set,
+  Hapus materi, Nonaktifkan akun (admin), dan pesan gagal. Untuk hapus, tombolnya merah dan pilihan awalnya Batal.
+
 ---
 
 ## 0.48.0 — 15 November 2026

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { beriTahu, tanya } from "../tanya";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { KartuMateri, KotakMateri, lihatDalil, PilihMapel } from "../kotak-materi";
@@ -103,11 +104,11 @@ export function TombolHapusMateri({ id, judul }: { id: number; judul: string }) 
   const router = useRouter();
   const [proses, setProses] = useState(false);
   async function hapus() {
-    if (!confirm(`Hapus materi "${judul}"? Set soal yang sudah dibuat dari materi ini tetap aman.`)) return;
+    if (!(await tanya(`Materi "${judul}" akan dihapus. Set soal yang sudah dibuat dari materi ini tetap aman.`, { judul: "Hapus materi?", ya: "Hapus", bahaya: true }))) return;
     setProses(true);
     const r = await hapusMateri(id).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
     setProses(false);
-    if (!r.ok) return alert(r.pesan);
+    if (!r.ok) return beriTahu(r.pesan);
     router.refresh();
   }
   return (
