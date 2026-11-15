@@ -52,6 +52,18 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.48.0 — 15 November 2026
+- **Kirim masukan.** Tautan baru **Kirim masukan** di sidebar (di bawah Panduan) membuka kotak untuk menulis keluhan
+  atau saran, dengan pilihan 5 wajah (boleh dilewati). Bila sedang membuka set, centang **Tentang set: …** ikut
+  mengirim set itu, jadi admin bisa langsung membukanya.
+- **Kotak pendapat otomatis.** Setelah set selesai dibuat (set ke-3, 10, 25, 50, 100, lalu tiap 50; paling sering
+  seminggu sekali) muncul kotak kecil di pojok kanan bawah (di HP: panel bawah) yang tidak menutupi soal.
+  "Nanti saja" = ditanyakan lagi setelah 3 set berikutnya; ✕ = ditanyakan lagi di patokan berikutnya.
+- **Admin → Masukan guru**: daftar semua masukan (nama guru, wajah, tulisan, tautan set, versi aplikasi) dan rata-rata nilai.
+- Tanpa AI, tidak memakai jatah. Maks. 1000 huruf, 10 masukan per guru per hari.
+
+---
+
 ## 0.47.2 — 15 November 2026
 - **Materi boleh lebih panjang**: isi satu materi dan total materi yang digabung dalam satu set kini maks
   **150 ribu huruf** (dulu 100 ribu), cukup untuk ±4–5 bab buku (mis. ASAS satu semester).

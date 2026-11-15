@@ -1,8 +1,9 @@
 "use server";
 
 import { and, eq, sql } from "drizzle-orm";
-import { db } from "@/db";
-import { gambar, hasilSoal, pemakaianAi } from "@/db/schema";
+import { awalHariIni, db } from "@/db";
+import { gambar, hasilSoal, masukan, pemakaianAi } from "@/db/schema";
+import paket from "../../package.json";
 import { BATAS_GAMBAR, rapikanNilaiGambar, ukuranJpeg } from "@/lib/gambar";
 import { daftarModel, tanyaAI, type GambarAI } from "@/lib/ai";
 import { bagiTahap, jumlahSoal, miripIndikator, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatPermintaanUbah, bentukUbahan, MINTA_BENTUK, namaBentuk, laranganIsian, ringkasSudah, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, buatSistem, buatAnalisaMateri, buatBacaHalaman, bersihkanIdentitas, pasangKunciPgk, grupSet, rencanaDalil, rencanaLevelSet, sesuaikanLevel, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
@@ -821,6 +822,45 @@ export async function hapusSet(id: number) {
   if (h.status === "proses") return { ok: false as const, pesan: "Set masih dibuat. Tunggu sampai selesai, lalu hapus." };
   await db.update(hasilSoal).set({ dihapus: sql`now()` }).where(eq(hasilSoal.id, Number(id)));
   return { ok: true as const };
+}
+
+const MAKS_MASUKAN = 1000; // huruf
+const BATAS_MASUKAN = 10; // per guru per hari
+
+/**
+ * Masukan & saran (0.48.0). Guru hanya mengirim (dibaca admin di /admin/masukan). setId opsional = set yang dikeluhkan,
+ * wajib milik pengirim (aturan 3). Tanpa AI. Wajib ada nilai (1–5) atau tulisan.
+ */
+export async function kirimMasukan(input: { nilai?: number | null; isi?: string; setId?: number | null; otomatis?: boolean }) {
+  const saya = await penggunaSaatIni();
+  if (!saya) return { ok: false as const, pesan: SESI_HABIS };
+  const nilai = Number.isInteger(input?.nilai) && input.nilai! >= 1 && input.nilai! <= 5 ? input.nilai! : null;
+  const isi = String(input?.isi ?? "").trim().slice(0, MAKS_MASUKAN) || null;
+  if (!nilai && !isi) return { ok: false as const, pesan: "Pilih wajah atau tulis masukan dulu." };
+  let setId: number | null = null;
+  if (input?.setId) {
+    const [h] = await db.select({ guruId: hasilSoal.guruId, dihapus: hasilSoal.dihapus }).from(hasilSoal).where(eq(hasilSoal.id, Number(input.setId)));
+    if (!h || h.dihapus || !bolehAkses(h.guruId, saya)) return { ok: false as const, pesan: "Set soal tidak ditemukan." };
+    setId = Number(input.setId);
+  }
+  const [{ n }] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(masukan)
+    .where(and(eq(masukan.guruId, saya.id), sql`${masukan.dibuat} >= ${awalHariIni}`));
+  if (n >= BATAS_MASUKAN) return { ok: false as const, pesan: `Batas ${BATAS_MASUKAN} masukan hari ini sudah tercapai. Terima kasih, coba lagi besok.` };
+  await db.insert(masukan).values({ guruId: saya.id, nilai, isi, setId, otomatis: !!input?.otomatis, versi: paket.version });
+  return { ok: true as const };
+}
+
+/** Jumlah set selesai milik guru ini (untuk menentukan kapan jendela masukan muncul sendiri). */
+export async function jumlahSetSelesai() {
+  const saya = await penggunaSaatIni();
+  if (!saya) return 0;
+  const [{ n }] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(hasilSoal)
+    .where(and(eq(hasilSoal.guruId, saya.id), eq(hasilSoal.status, "selesai")));
+  return n;
 }
 
 /**

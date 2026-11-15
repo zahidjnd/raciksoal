@@ -156,6 +156,27 @@ export const gambar = pgTable(
   (t) => [index("gambar_guru_idx").on(t.guruId)],
 );
 
+/**
+ * Masukan & saran guru (0.48.0): dari jendela otomatis setelah beberapa set selesai, atau tautan "Kirim masukan" di
+ * sidebar. Guru hanya mengirim; yang membaca hanya admin (/admin/masukan). set_id = set yang dikeluhkan (milik guru itu).
+ */
+export const masukan = pgTable(
+  "masukan",
+  {
+    id: serial("id").primaryKey(),
+    guruId: text("guru_id")
+      .notNull()
+      .references(() => pengguna.id),
+    dibuat: timestamp("dibuat", { withTimezone: true }).defaultNow().notNull(),
+    nilai: integer("nilai"), // 1–5 (wajah), boleh kosong
+    isi: text("isi"), // boleh kosong bila nilai diisi
+    setId: integer("set_id").references(() => hasilSoal.id),
+    otomatis: boolean("otomatis").default(false).notNull(), // true = dari jendela yang muncul sendiri
+    versi: text("versi"), // versi aplikasi saat dikirim
+  },
+  (t) => [index("masukan_dibuat_idx").on(t.dibuat)],
+);
+
 // Pemakaian AI di luar pembuatan set (aturan 4): satu baris per Ganti/Ubah/Tambah soal yang berhasil dan per analisa
 // materi, untuk batas harian per guru. Hanya dihitung, isinya tidak dipakai untuk hal lain.
 export const pemakaianAi = pgTable(

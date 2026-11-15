@@ -299,8 +299,9 @@ export default async function Panduan() {
         <ol className="list-decimal space-y-1.5 pl-5 text-sm leading-relaxed">
           <li>Muat ulang halaman (tarik ke bawah di HP, atau tekan F5 di laptop), lalu coba lagi.</li>
           <li>Set gagal dibuat? Coba lagi beberapa saat; set yang gagal tidak memakai jatah.</li>
-          <li>Masih bermasalah: hubungi admin dan sebutkan nomor versi yang tertulis di bawah nama Anda di sidebar.</li>
+          <li>Masih bermasalah: klik <b>Kirim masukan</b> di sidebar (di bawah Panduan), ceritakan masalahnya, lalu Kirim. Bila sedang membuka set, biarkan centang <b>Tentang set</b> supaya admin bisa langsung membuka set itu.</li>
         </ol>
+        <p className="mt-2 text-sm leading-relaxed text-pudar">Keluhan, saran, atau usul fitur juga bisa dikirim lewat Kirim masukan kapan saja. Sesekali, setelah set selesai dibuat, muncul kotak kecil di pojok bawah yang menanyakan pendapat Anda; boleh diisi atau ditutup.</p>
       </section>
     </Kerangka>
   );

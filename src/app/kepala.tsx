@@ -12,6 +12,8 @@ import { keluar } from "./masuk/actions";
 import { LaciSidebar } from "./laci-sidebar";
 import { BarisRiwayat, TautanMenu } from "./baris-riwayat";
 import { TombolTema } from "./tombol-tema";
+import { JendelaMasukan, TombolMasukan } from "./masukan";
+import { Fragment } from "react";
 import paket from "../../package.json";
 
 /** Ringkas alasan kegagalan: buang "Tahap n:" dan isi JSON panjang dari penyedia AI. */
@@ -120,6 +122,7 @@ export async function Kerangka({ p, lebar = false, setAktif = null, children }: 
       ? [
           { href: "/admin/set", label: "Semua set" },
           { href: "/admin/guru", label: "Kelola guru" },
+          { href: "/admin/masukan", label: "Masukan guru" },
           { href: "/admin/pengaturan", label: "Pengaturan" },
         ]
       : []),
@@ -127,6 +130,11 @@ export async function Kerangka({ p, lebar = false, setAktif = null, children }: 
     { href: "/materi", label: "Materi saya" },
     { href: "/tentang", label: "Tentang aplikasi" },
   ];
+  // Set yang sedang dibuka, untuk centang "Tentang set: ..." di jendela masukan. Di luar 15 riwayat terbaru → tanpa judul.
+  const aktif = setAktif ? riwayat.find((s) => s.id === setAktif) : undefined;
+  const setMasukan = setAktif
+    ? { id: setAktif, label: aktif ? (aktif.nama ?? `${namaTujuan((aktif.pengaturan as Pengaturan).tujuan, aktif.mapel)} · ${judulPendek(aktif.judulBab, aktif.babId)}`) : `set nomor ${setAktif}` }
+    : null;
 
   // Tautan ke halaman utama sengaja <a> biasa (bukan Link): halaman Buat Soal membaca ?id= hanya saat dimuat.
   return (
@@ -151,7 +159,11 @@ export async function Kerangka({ p, lebar = false, setAktif = null, children }: 
         <nav aria-label="Menu dan riwayat" className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-3 text-sm">
           {/* TautanMenu: menu halaman yang sedang dibuka ditandai (komponen browser, membaca alamat halaman). */}
           {menu.map((m) => (
-            <TautanMenu key={m.href} href={m.href} kelas={tautan}>{m.label}</TautanMenu>
+            <Fragment key={m.href}>
+              <TautanMenu href={m.href} kelas={tautan}>{m.label}</TautanMenu>
+              {/* Kirim masukan (0.48.0) tepat di bawah Panduan. */}
+              {m.href === "/panduan" && <TombolMasukan kelas={tautan} />}
+            </Fragment>
           ))}
 
           <p className="shrink-0 px-3 pt-5 pb-1 text-xs text-pudar">Riwayat</p>
@@ -196,6 +208,7 @@ export async function Kerangka({ p, lebar = false, setAktif = null, children }: 
         {admin && <PeringatanBackup />}
         {children}
       </main>
+      <JendelaMasukan set={setMasukan} />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ambilDaftarBab, ambilDaftarModel, ambilJatah, cekHasil, mulaiBuatSoal, ubahIdentitas } from "./actions";
+import { tanyaBilaWaktunya } from "./masukan";
 import { simpanMateri } from "./materi/actions";
 import { KartuSoal, Teks, TeksPeringatan, TulisSoalSendiri } from "./kartu-soal";
 import { DRAF_TEKS, KotakMateri, lihatDalil, PilihMapel, type MateriLama } from "./kotak-materi";
@@ -246,6 +247,7 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: strin
       } else {
         muatJatah(); // selesai/gagal: perbarui sisa jatah (set gagal tidak dihitung)
         if (sempatProses) router.refresh(); // riwayat di sidebar ikut diperbarui
+        if (sempatProses && h.status === "selesai") tanyaBilaWaktunya(); // jendela masukan (0.48.0), hanya set yang baru jadi
       }
     };
     cek();

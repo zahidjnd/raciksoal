@@ -120,6 +120,8 @@ await ditolak("hapusSoal", setA, 0);
 await ditolak("ubahIdentitas", setA, { waktu: 1 });
 await ditolak("ubahNamaSet", setA, "DIRETAS");
 await ditolak("hapusSet", setA);
+await ditolak("kirimMasukan", { isi: "uji pemisahan", setId: setA }); // 0.48.0: set orang lain tidak bisa diikutkan
+cek(!(await (await halaman(B, "/admin/masukan")).text()).includes("Masukan guru"), "B ditolak: halaman Admin → Masukan");
 for (const jenis of ["soal", "kunci", "ringkas", "kisi"])
   for (const paket of ["", "&paket=B"]) {
     const s = (await halaman(B, `/api/word?id=${setA}&jenis=${jenis}${paket}`)).status;
