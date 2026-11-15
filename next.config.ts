@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
   // karena `next build` tidak boleh dijalankan di hosting (RAM 1 GB).
   output: "standalone",
   poweredByHeader: false,
-  // 0.33.0: analisa materi mengirim teks (kini maks 100 ribu huruf) + 20 pratinjau gambar (±670 KB): bawaan 1 MB terlalu mepet.
+  // 0.33.0: analisa materi mengirim teks (kini maks 150 ribu huruf, Arab ±2 byte per huruf) + 20 pratinjau gambar (±670 KB): bawaan 1 MB terlalu mepet.
   experimental: { serverActions: { bodySizeLimit: "2mb" } },
   async headers() {
     return [{ source: "/:path*", headers: headerKeamanan }];

@@ -5,8 +5,8 @@ export const BATAS_UBAH_PER_GURU = 60; // Ganti/Ubah/Tambah soal (yang berhasil)
 export const BATAS_ANALISA = 30; // analisa materi per guru per hari; admin bebas
 export const BATAS_HALAMAN_PDF = 200; // halaman PDF yang dibaca AI per guru per hari (0.31.0: 100; 0.34.1: 200); admin bebas
 // Halaman per PDF yang dibaca AI sekali lampir (dipilih guru bila PDF lebih panjang). 0.33.0: 30 (satu bab Fisika X = 28
-// halaman); 0.34.1: 50. Jangan jauh lebih tinggi: 50 halaman buku padat ±100 ribu huruf = batas materi (BATAS_MATERI.isi).
-export const MAKS_HALAMAN_PDF = 50;
+// halaman); 0.34.1: 50; 0.47.2: 75. Jangan jauh lebih tinggi: 75 halaman buku padat ±150 ribu huruf = batas materi (BATAS_MATERI.isi).
+export const MAKS_HALAMAN_PDF = 75;
 
 // Pembatas percobaan masuk (tanpa import Next/DB, supaya bisa dites: npm test).
 // ponytail: disimpan di memori (hilang saat server restart), cukup untuk satu madrasah & satu proses server.

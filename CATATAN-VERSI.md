@@ -52,6 +52,14 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.47.2 — 15 November 2026
+- **Materi boleh lebih panjang**: isi satu materi dan total materi yang digabung dalam satu set kini maks
+  **150 ribu huruf** (dulu 100 ribu), cukup untuk ±4–5 bab buku (mis. ASAS satu semester).
+- **PDF**: AI kini bisa membaca sampai **75 halaman** sekali lampir (dulu 50).
+- Catatan: materi yang sangat panjang membuat pembuatan soal sedikit lebih lama dan biaya AI per set lebih besar.
+
+---
+
 ## 0.47.1 — 14 November 2026
 - **Tombol lampirkan lebih jelas di laptop.** Tombol klip di bawah kotak materi kini bertuliskan **Lampirkan file**
   di laptop. Di HP tetap ikon saja, supaya baris tombolnya tidak penuh. Panduan ikut disesuaikan.

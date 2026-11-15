@@ -203,9 +203,9 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   kepala halaman & nomor halaman dibuang `buangKepalaHalaman` (patokan teks asli, ≥ 40% halaman, min. 4). Arab: blok → TANDA_PDF (penunjuk mushaf); lafal di
   teks/tabel → `potongAyat` dari ayat halaman itu, selain itu dibuang; mode bahasa: Arab dipertahankan. Gambar dipotong
   di browser dari kotak 0–1000 (+1,5% tepi) → ikut alur gambar 0.30.0. Batas `BATAS_HALAMAN_PDF` 200/guru/hari
-  (`pemakaian_ai.jenis = "halaman"`), `MAKS_HALAMAN_PDF` 50 sekali lampir (0.34.1; bawaan 10; ±batas 100 ribu huruf). 0.33.0: file PDF maks 100 MB
+  (`pemakaian_ai.jenis = "halaman"`), `MAKS_HALAMAN_PDF` 75 sekali lampir (0.47.2; bawaan 10; ±batas 150 ribu huruf). 0.33.0: file PDF maks 100 MB
   (dibaca di browser, tidak diunggah), tebal buku bebas (batas 300 hanya untuk "teks saja"), isi materi DAN total
-  gabungan satu set maks 100 ribu huruf (`BATAS_MATERI.isi`; biaya token sebanding panjang), kiriman aksi 2 MB.
+  gabungan satu set maks 150 ribu huruf (0.47.2, dulu 100 ribu; `BATAS_MATERI.isi`; biaya token sebanding panjang), kiriman aksi 2 MB.
   Foto halaman (0.40.0): ikon klip (accept juga image/*, galeri) & ikon kamera (0.40.1: `capture`, tanpa multiple, `pointer-fine:hidden`; input multiple di Android 13+ langsung galeri) → `bacaFotoDenganAI` (baca-pdf.ts) →
   `bacaHalamanPdf` tanpa contekan; tanpa cek cakupan/cadangan teks & tanpa `buangKepalaHalaman`; 1 foto = 1 jatah "halaman".
 - **Word**: kop dari cetakan asli (`scripts/buat-template-word.py`, jalankan ulang bila kop berubah); penanda {{judul}} {{tp}}
