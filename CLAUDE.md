@@ -152,6 +152,11 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   0.46.0: ganti bentuk bila `bentukUbahan` (bukan grup/MJ; TKA hanya PG/PGK/BS) DAN permintaan cocok `MINTA_BENTUK`;
   `sesuaikanBentuk` membuang field bentuk lama, soal+kisi pindah ke `posisiBentuk`, rencana kisi (kunciPgk dll.) diganti.
   AI menulis bentuk terlarang → `PesanGuru`, tidak disimpan/tak memakai jatah (dulu tersimpan PG tanpa pilihan, set 129).
+  0.50.0 (dari 55 riwayat Ubah hosting): `caraDiminta` (prompt.ts, pola `POLA_CARA`) membaca cara tampil dalil dari
+  kalimat guru → ditegaskan ke AI + coba ulang 1x bila tidak dipakai; dalil & konsep lama dipertahankan. Hasil merah →
+  1x perbaikan (`buatPermintaanUbah` opsi `masalah`, dipakai bila peringatan berkurang). Soal tempelan guru dipakai apa
+  adanya; AI tidak bisa mengubah gambar (jelaskan di catatan). Tombol "Sudah saya periksa" = `simpanSoal` dengan
+  `diperiksa` (teks peringatan); `periksaSoal` menyembunyikannya kecuali peringatan "Teks Arab" (`bisaDiperiksa`, aturan 5).
 - **Batas** (0.48.1, dilonggarkan untuk ASAS; angka tetap ada sebagai pagar): 50 set/guru/hari (admin bebas) + 500/web;
   2 set proses serentak/guru; Ganti/Ubah/Tambah 100x per set & 500/guru/hari; analisa materi 300/guru/hari; halaman PDF
   dibaca AI 1000/guru/hari; materi tersimpan 1000/guru, gambar 600/guru; login dikunci 5x salah/15 menit per perangkat+nama.

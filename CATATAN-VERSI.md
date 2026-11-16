@@ -52,6 +52,20 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.50.0 — 16 November 2026
+**Ubah soal lebih pintar** (dari 55 riwayat Ubah soal guru di hosting):
+- **Permintaan cara tampil dalil dikenali aplikasi**: "hadisnya jadi jawaban" (pilihan A–E berupa lafaz), "melengkapi
+  hadis/ayat" (rumpang), "lafaz bergaris bawah", "menyusun urutan", "Arab saja", "artinya saja", "potongan ayat".
+  Dalil dan konsep soal tetap sama, kecuali guru meminta ganti hadis/konsep.
+- **Hasil Ubah yang masih bertanda merah diperbaiki AI sekali** sebelum ditampilkan (catatan AI menyebutnya).
+- **Soal tempelan guru dipakai apa adanya** (hanya salah ketik & spasi dibetulkan), tidak diganti cerita karangan AI.
+- **Gambar**: AI tidak lagi mengarang nomor/label pada gambar tanpa label; bila diminta menambah angka di gambar,
+  catatan AI menjelaskan cara mengunggah gambar berlabel lewat Edit.
+- **Tombol "Sudah saya periksa"** pada soal bertanda merah: tanda merah hilang tanpa AI dan tanpa jatah. Peringatan teks
+  Arab yang tidak cocok dengan data tidak bisa dihilangkan (ayat/hadis tidak boleh dikarang).
+
+---
+
 ## 0.49.1 — 16 November 2026
 - **Materi digabung dalam satu set kini maksimal 10** (dulu 5), misalnya untuk ASAS yang dipecah per sub-bab.
   Total panjang gabungannya tetap maks. 150 ribu huruf.

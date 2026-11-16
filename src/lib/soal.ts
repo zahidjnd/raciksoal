@@ -45,6 +45,8 @@ export type Soal = {
   tp: string;
   skor: number;
   peringatan?: string[]; // diisi aplikasi, bukan AI
+  // 0.50.0: peringatan yang dinyatakan guru "Sudah saya periksa" (teks persis); peringatan teks Arab tidak bisa (aturan 5).
+  diperiksa?: string[];
   // Hanya di jawaban AI untuk PG (0.18.2): langkah hitung/penalaran + isi jawaban benar, ditulis SEBELUM pilihan supaya
   // kunci tidak terlanjur ditulis sebelum dihitung. Dicocokkan dengan pilihan kunci di periksaSoal, lalu dibuang (tidak disimpan).
   langkah?: string;
@@ -908,6 +910,7 @@ export function rapikanSoal(s: Partial<Soal>, bentuk: Bentuk): Soal {
     level: teks(s.level),
     tp: teks(s.tp),
     skor: bentuk === "URAIAN" ? rubrik.reduce((n, r) => n + r.skor, 0) : Math.max(0, Number(s.skor) || 0),
+    ...(Array.isArray(s.diperiksa) && s.diperiksa.length > 0 && { diperiksa: s.diperiksa.slice(0, 20).map(teks).filter(Boolean) }),
   };
 }
 
@@ -1376,13 +1379,20 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat, teman: So
     }
     // langkah & jawaban_benar hanya untuk pemeriksaan di atas: tidak disimpan (kalau disimpan, Edit guru membuatnya basi).
     // jodoh = format jawaban AI menjodohkan gaya lama yang tidak tersusun (mis. tanpa blok): juga tidak disimpan.
-    const { langkah: _l, jawaban_benar: _j, jodoh: _o, ...simpan } = s;
+    const { langkah: _l, jawaban_benar: _j, jodoh: _o, diperiksa: _d, ...simpan } = s;
     void _l;
     void _j;
     void _o;
-    return { ...simpan, peringatan };
+    void _d;
+    // 0.50.0: peringatan yang sudah diperiksa guru disembunyikan (yang tidak muncul lagi ikut terhapus dari daftar).
+    const sudah = new Set(s.diperiksa ?? []);
+    const diperiksa = peringatan.filter((w) => sudah.has(w) && bisaDiperiksa(w));
+    return { ...simpan, peringatan: peringatan.filter((w) => !diperiksa.includes(w)), ...(diperiksa.length > 0 && { diperiksa }) };
   });
 }
+
+/** Peringatan yang boleh dihilangkan guru ("Sudah saya periksa"). Teks Arab tak terverifikasi tidak boleh (aturan 5). */
+export const bisaDiperiksa = (w: string) => !w.startsWith("Teks Arab");
 
 const HURUF = "ABCDE";
 /**

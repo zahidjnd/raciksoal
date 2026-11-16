@@ -1,5 +1,5 @@
 import { MAPEL_BACAAN, MAPEL_INGGRIS, MAPEL_SEJARAH } from "./mapel.ts";
-import { adalahTahun, blokMj, bukanDalil, CARA_DALIL, caraBolehBentuk, cocokCara, identitasBab, kataArab, kataTerjemah, keFormatAI, kocok, MAKS_GABUNG, mjLama, type Bab, type BarisKisi, type Bentuk, type CaraDalil, type Soal } from "./soal.ts";
+import { adalahTahun, blokMj, bukanDalil, CARA_DALIL, CARA_PG, caraBolehBentuk, cocokCara, identitasBab, kataArab, kataTerjemah, keFormatAI, kocok, MAKS_GABUNG, mjLama, type Bab, type BarisKisi, type Bentuk, type CaraDalil, type Soal } from "./soal.ts";
 
 export const PESAN_MJ_MIN = "Menjodohkan minimal 3 nomor (atau 0), supaya daftar jawabannya masuk akal.";
 
@@ -950,13 +950,44 @@ export function bentukUbahan(p: Pick<Pengaturan, "tujuan">, lama: Pick<Soal, "be
  */
 export const MINTA_BENTUK = /\b(pg|pgk|pilihan ganda|ganda kompleks|benar[\s/-]*salah|b\/s|kategori|isian|uraian|esai|essay|bentuk)(nya)?\b/i;
 
+// 0.50.0: kalimat guru Hadis di riwayat Ubah (16 Nov 2026), mis. "hadisnya jadi jawaban", "ubah jadi melengkapi potongan
+// hadis", "mengartikan lafaz bergaris bawah". Urutan penting: yang pertama cocok dipakai.
+// ponytail: daftar kata sederhana; tambah sinonim bila guru memakai istilah lain.
+const DALIL_KATA = String.raw`(?:ayat|hadi[st]|lafa[zdḍ]h?|dalil)`;
+const POLA_CARA: [RegExp, CaraDalil, CaraDalil?][] = [
+  [/garis\s*bawah|bergaris/i, "garis"],
+  [new RegExp(String.raw`\b(?:urut|susun|menyusun|mengurutkan)\w*\s+(?:\w+\s+)?${DALIL_KATA}`, "i"), "urutan"],
+  [new RegExp(String.raw`\b(?:lengkapi|melengkapi|sambung|menyambung|lanjutan|melanjutkan|rumpang)\w*\s+(?:\w+\s+){0,2}${DALIL_KATA}|\brumpang\b`, "i"), "rumpang", "rumpang-terjemah"],
+  [new RegExp(String.raw`${DALIL_KATA}\w*\s+(?:di)?jadi(?:kan)?\s+(?:di\s+)?(?:pilihan|jawaban|opsi)|${DALIL_KATA}\w*\s+(?:di|ke)\s+(?:pilihan|jawaban|opsi)|\b(?:pilihan|jawaban|opsi)\w*\s+(?:\w+\s+)?${DALIL_KATA}`, "i"), "pilihan", "pilihan-terjemah"],
+  [/\b(?:full|hanya|cuma)\s+(?:bahasa\s+)?arab|\barab\w*\s+saja|tanpa\s+(?:terjemah|arti)/i, "arab"],
+  [/\b(?:terjemah|arti)\w*\s+saja|tanpa\s+(?:teks\s+|tulisan\s+)?arab/i, "terjemah"],
+  [new RegExp(String.raw`\bpotongan\s+(?:\w+\s+)?${DALIL_KATA}`, "i"), "potong", "potong-terjemah"],
+];
+
+/**
+ * Cara tampil dalil yang diminta guru di "Ubah soal" (0.50.0), dibaca APLIKASI seperti MINTA_BENTUK, lalu ditegaskan ke
+ * AI dan diperiksa hasilnya. Null bila tidak ada, tidak cocok bentuknya, atau tidak bisa dipakai dalil soal/materi ini.
+ * Cara PG pada soal bukan PG: "melengkapi" → sisip (kode [[A a-b]], mis. kunci isian); lainnya tidak dipaksakan.
+ */
+export function caraDiminta(instruksi: string, bentuk: Bentuk, bab: Pick<Bab, "dalil">, dalilId?: string | null): CaraDalil | null {
+  const kena = POLA_CARA.find(([pola]) => pola.test(instruksi));
+  if (!kena) return null;
+  let cara = kena[2] && /terjemah|\barti(?:nya)?\b/i.test(instruksi) ? kena[2] : kena[1];
+  if (!caraBolehBentuk(cara, bentuk)) cara = cara.startsWith("rumpang") ? "sisip" : cara;
+  if (!caraBolehBentuk(cara, bentuk)) return null;
+  const dalil = bab.dalil.filter((d) => !bukanDalil(d) && (!dalilId || d.id === dalilId));
+  return dalil.some((d) => cocokCara(cara, d)) ? cara : null;
+}
+
 /**
  * 0.45.0 "Ubah soal" dari guru: AI bekerja sebagai EDITOR satu soal, permintaan guru = tugas utama. Dulu permintaan
  * ditempel di akhir permintaan "Buat soal" yang penuh larangan, sehingga AI sering mengembalikan soal yang sama persis.
- * Bentuk tetap; selain itu semua bagian boleh diubah, termasuk wacana grup. `ulang`: percobaan kedua setelah jawaban
- * pertama tidak mengubah apa pun. (Perbaikan otomatis soal merah tetap lewat buatPenggantiPengguna.)
+ * Bentuk tetap; selain itu semua bagian boleh diubah, termasuk wacana grup. Opsi: `ulang` = percobaan kedua setelah
+ * jawaban pertama tidak mengubah apa pun / tidak memakai cara yang diminta; `masalah` (0.50.0) = peringatan pemeriksa atas
+ * hasil ubahan sebelumnya (`lama` = hasil itu), diperbaiki 1x; `cara` = caraDiminta; `adaGambar` = materi bergambar.
  */
-export function buatPermintaanUbah(p: Pengaturan, lama: Soal, semua: Soal[], kisi: BarisKisi | undefined, instruksi: string, ulang = false) {
+export function buatPermintaanUbah(p: Pengaturan, lama: Soal, semua: Soal[], kisi: BarisKisi | undefined, instruksi: string,
+  { ulang = false, masalah = [], cara = null, adaGambar = false }: { ulang?: boolean; masalah?: string[]; cara?: CaraDalil | null; adaGambar?: boolean } = {}) {
   const { peringatan, stimulus, grup, wacana, ...isiAsli } = lama;
   void peringatan;
   void stimulus;
@@ -974,7 +1005,7 @@ export function buatPermintaanUbah(p: Pengaturan, lama: Soal, semua: Soal[], kis
 
 PERMINTAAN GURU (tugas utama, WAJIB dijalankan):
 """${bersihkanInstruksi(instruksi)}"""
-${ulang ? `\nPERHATIAN: jawaban Anda sebelumnya mengembalikan soal yang SAMA PERSIS, padahal guru meminta perubahan. Kali ini WAJIB ada perubahan nyata sesuai permintaan. Hanya bila permintaan benar-benar tidak bisa dijalankan, kembalikan soal apa adanya dan jelaskan alasannya di "catatan".\n` : ""}
+${ulang ? `\nPERHATIAN: jawaban Anda sebelumnya ${cara ? `tidak memakai cara tampil dalil "${cara}" yang diminta, atau ` : ""}mengembalikan soal yang SAMA PERSIS, padahal guru meminta perubahan. Kali ini WAJIB ada perubahan nyata sesuai permintaan. Hanya bila permintaan benar-benar tidak bisa dijalankan, kembalikan soal apa adanya dan jelaskan alasannya di "catatan".\n` : ""}${masalah.length ? `\nPERHATIAN: SOAL SAAT INI di bawah adalah hasil ubahan Anda sebelumnya. Permintaan guru sudah dijalankan, tetapi pemeriksa aplikasi menemukan masalah:\n${masalah.map((m) => `- ${m}`).join("\n")}\nPerbaiki masalah itu TANPA membatalkan perubahan yang diminta guru. "catatan" tetap menjelaskan perubahan untuk guru.\n` : ""}
 SOAL SAAT INI (JSON):
 ${JSON.stringify(keFormatAI(isiAsli as Soal))}
 ${kisi ? `Kisi-kisi soal ini: indikator "${kisi.indikator}", stimulus "${kisi.stimulus}".\n` : ""}${bagianWacana}
@@ -985,6 +1016,8 @@ ${aturanBentuk}
 - Permintaan umum ("perbaiki", "buat lebih bagus", "lebih jelas") = perbaiki kelemahan yang Anda temukan; jangan kembalikan soal yang sama.
 - Bagian yang tidak terkait permintaan boleh tetap, tetapi soal harus tetap utuh dan konsisten: bila pokok soal, pilihan, atau kunci berubah, sesuaikan kunci dan pembahasannya.
 - Bila hanya sebagian permintaan bisa dijalankan, jalankan bagian yang bisa dan jelaskan sisanya di "catatan".
+- Bila PERMINTAAN GURU berisi soal atau teks yang sudah ditulis lengkap oleh guru (pokok soal, pilihan A–E, kalimat utuh), PAKAI teks guru itu apa adanya sebagai isi soal: hanya betulkan salah ketik dan spasi (kata yang menempel dipisah), lengkapi bagian yang belum ada (kunci, pembahasan), dan jangan mengarang stimulus atau kasus baru. Teks dalil (ayat/hadis/terjemahnya) yang ditempel guru jangan disalin ke "pertanyaan" bila teks itu sudah ditampilkan aplikasi lewat "dalil_tampil"; tunjuk dalilnya dengan "dalil_id".
+${lama.dalil_id ? `- Soal ini memakai dalil "${lama.dalil_id}". Tetap pakai dalil itu dan uji konsep/isi yang sama, kecuali guru meminta dalil atau konsep lain (mis. "ganti hadisnya").\n` : ""}${cara ? `- Aplikasi membaca permintaan ini sebagai cara tampil dalil "${cara}": WAJIB isi "dalil_tampil": "${cara}" dan ikuti penjelasan cara "${cara}" di instruksi sistem${cara === "sisip" ? "" : ' (termasuk "dalil_potong"' + (CARA_PG.has(cara) && cara !== "urutan" ? ' dan "dalil_pengecoh"' : "") + ")"}.${lama.dalil_id ? "" : " Pilih dalil dari DATA BAB yang sesuai isi soal."}\n` : ""}- AI tidak bisa mengubah gambar (menambah angka, huruf, label, atau panah). Soal hanya boleh menunjuk label yang tertulis di keterangan gambar ("berlabel ..."); gambar tanpa label: tanyakan keseluruhan gambar atau tunjuk bagian lewat bentuk, warna, atau letaknya. ${adaGambar ? 'Bila guru meminta label/angka pada gambar, jelaskan di "catatan": gambar tidak bisa diubah AI; unggah gambar yang sudah berlabel lewat Edit, lalu tulis labelnya di keterangan gambar materi.' : 'Materi ini tidak punya gambar: bila guru meminta gambar, jelaskan di "catatan" bahwa gambar bisa ditambahkan lewat Edit (Gambar soal) atau di materi.'}
 
 KONTEKS SET:
 ${kepalaPermintaan(p)}${lain.length ? `Soal lain di set ini (soal hasil ubahan jangan dibuat mirip, dan jawabannya jangan tertulis di soal hasil ubahan):\n${lain.map((s) => `- ${s}`).join("\n")}\n` : ""}

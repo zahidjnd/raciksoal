@@ -6,7 +6,7 @@ import { gambar, hasilSoal, masukan, pemakaianAi } from "@/db/schema";
 import paket from "../../package.json";
 import { BATAS_GAMBAR, rapikanNilaiGambar, ukuranJpeg } from "@/lib/gambar";
 import { daftarModel, tanyaAI, type GambarAI } from "@/lib/ai";
-import { bagiTahap, jumlahSoal, miripIndikator, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatPermintaanUbah, bentukUbahan, MINTA_BENTUK, namaBentuk, laranganIsian, ringkasSudah, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, buatSistem, buatAnalisaMateri, buatBacaHalaman, bersihkanIdentitas, pasangKunciPgk, grupSet, rencanaDalil, rencanaLevelSet, sesuaikanLevel, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
+import { bagiTahap, jumlahSoal, miripIndikator, bersihkanInstruksi, bersihkanPengaturan, buatPengguna, buatPenggantiPengguna, buatPermintaanUbah, caraDiminta, bentukUbahan, MINTA_BENTUK, namaBentuk, laranganIsian, ringkasSudah, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, buatSistem, buatAnalisaMateri, buatBacaHalaman, bersihkanIdentitas, pasangKunciPgk, grupSet, rencanaDalil, rencanaLevelSet, sesuaikanLevel, MAKS_NAMA_SET, MAKS_SOAL, NAMA_BENTUK, TKA, type Identitas, type Pengaturan } from "@/lib/prompt";
 import { BATAS_MATERI, modeArab, rapikanBacaanHalaman, susunDraf, terapkanAnalisa } from "@/lib/materi";
 import { bersihkanTanggapan, MAKS_WACANA, gabungBab, identitasBab, isiSama, jawabanAman, kategoriBaru, posisiBentuk, sesuaikanBentuk, kataTerpakai, KELAS, LEVEL, mjLama, pasangDalil, pemeriksaArab, POLA_ARAB, pasangWacana, periksaKisi, periksaSoal, rapikanSoal, ratakanKunci, isiSisipan, samakanDenganKisi, susunMenjodohkan, susunMjLama, susunPilihanDalil, terapkanBobot, type Bab, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { babDariSet, babMilik, daftarBabMilik, dataGambar, gambarMilik } from "@/lib/bab";
@@ -550,7 +550,10 @@ async function soalBaruDariAI(id: number, no: number, mode: "ganti" | "ubah" | "
     const p = h.pengaturan as Pengaturan;
     const sistem = buatSistem(bab, p.tujuan === TKA);
     // 0.45.0: "ubah" memakai permintaan editor sendiri (buatPermintaanUbah), bukan "buat soal" + instruksi di ujung.
-    let pengguna = ubah ? buatPermintaanUbah(p, lama, set.soal, baris, instruksi) : buatPenggantiPengguna(p, lama, set.soal, baris);
+    // 0.50.0: cara tampil dalil yang diminta guru ("hadisnya jadi jawaban" = pilihan) dibaca aplikasi, bukan ditebak AI.
+    const cara = ubah ? caraDiminta(instruksi, lama.bentuk, bab, lama.dalil_id) : null;
+    const opsiUbah = { cara, adaGambar: !!bab.gambar?.length };
+    let pengguna = ubah ? buatPermintaanUbah(p, lama, set.soal, baris, instruksi, opsiUbah) : buatPenggantiPengguna(p, lama, set.soal, baris);
     // Model utama sama dengan set; cadangan dipakai kalau gagal (kecuali set hasil "Bandingkan semua model").
     // Gambar soal lama / rencana kisi-kisi ikut dikirim supaya AI bisa menulis soal bergambar yang benar.
     const idGambar = [lama.gambar_id, baris?.gambar_id].filter(Boolean);
@@ -613,11 +616,25 @@ async function soalBaruDariAI(id: number, no: number, mode: "ganti" | "ubah" | "
 
     let r = await tanya(pengguna);
     let hasil = olah(r.hasil);
-    // 0.45.0: AI mengembalikan soal yang sama persis → coba sekali lagi dengan teguran (jatah tetap dihitung sekali).
-    if (ubah && isiSama(hasil.soal, lama) && Date.now() < sampai - 60_000) {
-      const ulang = buatPermintaanUbah(p, lama, set.soal, baris, instruksi, true);
+    const masihSempat = () => Date.now() < sampai - 60_000;
+    // 0.45.0: AI mengembalikan soal yang sama persis (0.50.0: atau tidak memakai cara tampil dalil yang diminta) → coba
+    // sekali lagi dengan teguran (jatah tetap dihitung sekali).
+    const meleset = (s: Soal) => isiSama(s, lama) || (!!cara && s.dalil_tampil !== cara);
+    if (ubah && meleset(hasil.soal) && masihSempat()) {
+      const ulang = buatPermintaanUbah(p, lama, set.soal, baris, instruksi, { ...opsiUbah, ulang: true });
       const kedua = await tanya(ulang).then((r2) => ({ r2, h2: olah(r2.hasil) })).catch(() => null);
-      if (kedua) [r, hasil, pengguna] = [kedua.r2, kedua.h2, ulang];
+      if (kedua && (!meleset(kedua.h2.soal) || isiSama(hasil.soal, lama))) [r, hasil, pengguna] = [kedua.r2, kedua.h2, ulang];
+    }
+    // 0.50.0: hasil Ubah yang masih bertanda merah diperbaiki AI sekali sebelum disimpan (seperti pembuatan set). Hasil
+    // perbaikan dipakai hanya bila peringatannya berkurang dan tetap menjalankan permintaan guru.
+    const masalah = hasil.soal.peringatan ?? [];
+    if (ubah && masalah.length && !isiSama(hasil.soal, lama) && masihSempat()) {
+      const minta = buatPermintaanUbah(p, hasil.soal, set.soal.filter((_, j) => j !== no), baris, instruksi, { ...opsiUbah, masalah });
+      const baik = await tanya(minta).then((r3) => ({ r3, h3: olah(r3.hasil) })).catch(() => null);
+      if (baik && (baik.h3.soal.peringatan ?? []).length < masalah.length && !meleset(baik.h3.soal)) {
+        [r, hasil, pengguna] = [baik.r3, baik.h3, minta];
+        hasil.catatan = `Hasil pertama bertanda peringatan (${masalah[0].split(/\.\s/)[0].replace(/\.$/, "")}), jadi sudah diperbaiki otomatis. ${hasil.catatan}`;
+      }
     }
     const { soal, barisBaru, wacanaBaru } = hasil;
     // Wacana dipakai bersama: soal lain di grupnya ikut berubah, guru diminta memeriksanya.

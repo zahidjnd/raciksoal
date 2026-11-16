@@ -9,7 +9,7 @@ import { Gambar, gambarTempelan, TombolGambar, unggah } from "./gambar";
 import { PotongGambar } from "./potong-gambar";
 import { editRumus, isiKotak } from "./editor-rumus";
 import { EditorTabel } from "./editor-tabel";
-import { adaRumus, bukanDalil, isiSama, CARA_DALIL, CARA_PG, caraBolehBentuk, caraDalil, cariTabel, cocokCara, dalilKunci, kataArab, kataCara, kataTerjemah, NAMA_CARA_DALIL, PAKAI_POTONG, pecahGaris, pisahPengantar, potonganSah, susunPilihanDalil, tampilanDalil, type CaraDalil, type TampilDalil, JOROK, kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, POLA_RUMUS, tulisTabel, type Bab, type Bentuk, type Soal } from "@/lib/soal";
+import { adaRumus, bisaDiperiksa, bukanDalil, isiSama, CARA_DALIL, CARA_PG, caraBolehBentuk, caraDalil, cariTabel, cocokCara, dalilKunci, kataArab, kataCara, kataTerjemah, NAMA_CARA_DALIL, PAKAI_POTONG, pecahGaris, pisahPengantar, potonganSah, susunPilihanDalil, tampilanDalil, type CaraDalil, type TampilDalil, JOROK, kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, POLA_RUMUS, tulisTabel, type Bab, type Bentuk, type Soal } from "@/lib/soal";
 import { MAKS_INSTRUKSI, namaBentuk } from "@/lib/prompt";
 
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
@@ -243,7 +243,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
   const [edit, setEdit] = useState(false);
   const [lihatKunci, setLihatKunci] = useState(false); // kunci & pembahasan dilipat, dibuka per soal atau semua sekaligus
   const tampilKunci = !draf && (semuaKunci || lihatKunci);
-  const [proses, setProses] = useState<"" | "ganti" | "ubah" | "tambah" | "hapus" | "pindah">("");
+  const [proses, setProses] = useState<"" | "ganti" | "ubah" | "tambah" | "hapus" | "pindah" | "periksa">("");
   const mengganti = proses !== "";
   const [instruksi, setInstruksi] = useState("");
   const [catatanAI, setCatatanAI] = useState("");
@@ -287,6 +287,22 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
       return onSetBerubah(r.no, r.catatan);
     }
     onUbah(r.soal);
+  }
+
+  /**
+   * 0.50.0: guru menyatakan peringatan sudah diperiksa → tanda merah hilang (disimpan lewat simpanSoal; periksaSoal tetap
+   * menampilkan peringatan teks Arab, aturan 5). Bila isi soal diedit dan masalah lain muncul, tanda merah kembali.
+   */
+  async function sudahDiperiksa() {
+    const w = (s.peringatan ?? []).filter(bisaDiperiksa);
+    if (!(await tanya(`Tanda peringatan pada soal nomor ${no} akan dihilangkan. Pastikan soalnya memang sudah benar.`, { judul: "Sudah diperiksa?", ya: "Ya, sudah saya periksa" }))) return;
+    setError("");
+    setProses("periksa");
+    const r = await simpanSoal(hasilId, no - 1, { ...s, diperiksa: [...(s.diperiksa ?? []), ...w] }).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
+    setProses("");
+    if (!r.ok) return setError(r.pesan);
+    onUbah(r.soal);
+    setBerhasil("Tanda peringatan dihilangkan ✓");
   }
 
   /** Tukar dengan soal di atas/bawahnya; halaman memuat ulang set lalu menggulir ke posisi barunya. */
@@ -359,6 +375,11 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
       {s.peringatan?.map((w, i) => (
         <p key={i} className="text-sm font-semibold text-bahaya"><TeksPeringatan w={w} /></p>
       ))}
+      {!draf && s.peringatan?.some(bisaDiperiksa) && (
+        <button className={tombol} disabled={mengganti} onClick={sudahDiperiksa}>
+          {proses === "periksa" ? "Menyimpan..." : "Sudah saya periksa"}
+        </button>
+      )}
       <div>
         <span className="font-semibold">{no}.</span> <TeksBaris teks={awalan ? awalan.pengantar : s.pertanyaan} />
       </div>

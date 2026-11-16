@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { adalahTahun, arabTakTerverifikasi, cariTabel, istilahArab, JOROK, tulisTabel, jawabanAman, bersihkanTanggapan, gabungBab, identitasBab, isiSama, posisiBentuk, sesuaikanBentuk, blokMj, kataTerpakai, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Soal } from "./soal.ts";
-import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPermintaanUbah, bentukUbahan, MINTA_BENTUK, buatPengguna, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, laranganIsian, miripIndikator, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, grupSet, ukuranDiminta,semesterDari, buatAnalisaMateri, MAKS_CATATAN, MAKS_INSTRUKSI, namaLevelTka, namaTujuan, pasangKunciPgk, rencanaLevel, type Pengaturan } from "./prompt.ts";
+import { adalahTahun, bisaDiperiksa, arabTakTerverifikasi, cariTabel, istilahArab, JOROK, tulisTabel, jawabanAman, bersihkanTanggapan, gabungBab, identitasBab, isiSama, posisiBentuk, sesuaikanBentuk, blokMj, kataTerpakai, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Soal } from "./soal.ts";
+import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPermintaanUbah, caraDiminta, bentukUbahan, MINTA_BENTUK, buatPengguna, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, laranganIsian, miripIndikator, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, grupSet, ukuranDiminta,semesterDari, buatAnalisaMateri, MAKS_CATATAN, MAKS_INSTRUKSI, namaLevelTka, namaTujuan, pasangKunciPgk, rencanaLevel, type Pengaturan } from "./prompt.ts";
 import { bolehAkses, rapikanUsername } from "./akses.ts";
 import { headerUnduh } from "./nama-file.ts";
 import { geserTandaGambar, keIsian, rapikanMateri, susunDraf, terapkanAnalisa } from "./materi.ts";
@@ -176,9 +176,54 @@ test("ubah soal (0.45.0): permintaan guru jadi tugas utama, wacana boleh diubah,
   assert.ok(r.includes("ayat/hadis tidak boleh diketik")); // aturan 5 tetap
   assert.ok(r.includes("- Soal lain di set") && !r.includes("- Soal yang diubah"));
   assert.ok(!r.includes('"lama"') && r.includes('"catatan"'));
-  assert.ok(!r.includes("SAMA PERSIS") && buatPermintaanUbah(p, lama, [lama], undefined, "x", true).includes("SAMA PERSIS"));
+  assert.ok(!r.includes("SAMA PERSIS") && buatPermintaanUbah(p, lama, [lama], undefined, "x", { ulang: true }).includes("SAMA PERSIS"));
   assert.ok(!buatPermintaanUbah(p, lain, [lain], undefined, "x").includes('field "wacana"')); // soal biasa: tanpa wacana
   assert.ok(isiSama(lama, { ...lama, peringatan: [] }) && !isiSama(lama, { ...lama, wacana: "lain" }));
+});
+
+test("ubah soal (0.50.0): cara tampil dalil dari kalimat guru, perbaikan otomatis, sudah diperiksa", () => {
+  const dalil = [{ id: "h1", sumber: "HR. Muslim", arab: "نهى رسول الله عن بيع الغرر", terjemah: "Rasulullah melarang jual beli gharar" }] as unknown as Bab["dalil"];
+  const b = { dalil };
+  const kasus: [string, string | null][] = [
+    ["Ubah, hadisnya dijadikan jawaban, jgn di soal", "pilihan"],
+    ["hadisnya jadi jawaban", "pilihan"],
+    ["Rubah hadisnya jadi di jawaban", "pilihan"],
+    ["ubah menjadi jawaban kombinasi hadisnya", "pilihan"],
+    ["rubah jadu melengkapi hadis", "rumpang"],
+    ["ubah jadi melengkapi potongan hadis", "rumpang"],
+    ["lengkapi terjemah hadis berikut", "rumpang-terjemah"],
+    ["ubah soal menjadi mengartikan lafaz hadis bergaris bawah", "garis"],
+    ["Betulkan soal ini, tampilnan potongan ayatnya", "potong"],
+    ["Ubah soal manjadi full bahasa arab", "arab"],
+    ["tampilkan artinya saja", "terjemah"],
+    ["jadikan soal menyusun urutan hadis", "urutan"],
+    ["ganti hadisnya", null],
+    ["susun ulang kalimatnya", null],
+    ["ubah jadi C4", null],
+  ];
+  for (const [t, c] of kasus) assert.equal(caraDiminta(t, "PG", b, "h1"), c, t);
+  assert.equal(caraDiminta("melengkapi hadis", "ISIAN", b), "sisip"); // bukan PG: lewat kode sisip
+  assert.equal(caraDiminta("hadisnya jadi jawaban", "URAIAN", b), null);
+  assert.equal(caraDiminta("bergaris bawah", "PGK", b), null);
+  assert.equal(caraDiminta("hadisnya jadi jawaban", "PG", { dalil: [] }), null); // materi tanpa dalil
+  const p = { tujuan: "Latihan", jumlah: { PG: 1 }, level: { LOTS: 40, MOTS: 40, HOTS: 20 } } as unknown as Pengaturan;
+  const s: Soal = { bentuk: "PG", dalil_id: "h1", pertanyaan: "x", pilihan: ["a", "b", "c", "d", "e"], kunci: "A", pembahasan: "", level: "C2", tp: "TP 1", skor: 1 };
+  const r = buatPermintaanUbah(p, s, [s], undefined, "hadisnya jadi jawaban", { cara: "pilihan", masalah: ["Jumlah pilihan bukan 5."] });
+  assert.ok(r.includes('"dalil_tampil": "pilihan"') && r.includes('"dalil_pengecoh"') && r.includes("- Jumlah pilihan bukan 5.") && r.includes('dalil "h1"'));
+  assert.ok(r.includes("tidak bisa mengubah gambar") && r.includes("tidak punya gambar"));
+  assert.ok(buatPermintaanUbah(p, s, [s], undefined, "x", { adaGambar: true }).includes("unggah gambar yang sudah berlabel"));
+  // Sudah saya periksa: peringatan itu hilang; peringatan teks Arab tetap (aturan 5).
+  assert.ok(bisaDiperiksa("Jumlah pilihan bukan 5.") && !bisaDiperiksa("Teks Arab tidak cocok dengan data terverifikasi: x"));
+  const babKosong = { ...bab, dalil: [] };
+  const merah = periksaSoal([{ ...s, dalil_id: null, pilihan: ["a", "b"] }], babKosong)[0];
+  assert.ok(merah.peringatan!.includes("Jumlah pilihan bukan 5."));
+  const sudah = periksaSoal([{ ...merah, diperiksa: merah.peringatan }], babKosong)[0];
+  assert.deepEqual([sudah.peringatan, sudah.diperiksa], [[], merah.peringatan]);
+  assert.deepEqual(rapikanSoal(sudah, "PG").diperiksa, merah.peringatan); // ikut tersimpan lewat Edit/simpanSoal
+  const arab = periksaSoal([{ ...s, dalil_id: null, pertanyaan: "ما هذا الكلام المكتوب هنا" }], babKosong)[0];
+  assert.ok(arab.peringatan!.some((w) => w.startsWith("Teks Arab")));
+  const tetap = periksaSoal([{ ...arab, diperiksa: arab.peringatan }], babKosong)[0];
+  assert.ok(tetap.peringatan!.some((w) => w.startsWith("Teks Arab")));
 });
 
 test("ubah soal ganti bentuk (0.46.0): bentuk yang boleh, kata bentuk di permintaan, field lama dibuang, letak di bagian bentuknya", () => {
