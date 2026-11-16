@@ -610,7 +610,8 @@ test("beberapa materi digabung untuk satu set: TP & dalil dinomori ulang; pengat
   const dasar = { tujuan: "PAS", kesulitan: "Sedang", jumlah: { PG: 1, PGK: 0, BS: 0, URAIAN: 0 }, level: { LOTS: 30, MOTS: 40, HOTS: 30 } } as Pengaturan;
   assert.deepEqual((bersihkanPengaturan({ ...dasar, babIds: ["materi-2", "materi-2", "qurdis11-bab3", "materi-5"] }) as Pengaturan).babIds, ["materi-2", "materi-5"]);
   assert.match(String(bersihkanPengaturan({ ...dasar, babId: "qurdis11-bab3" })), /Masukkan materi/); // bab bawaan tidak bisa dipilih lagi
-  assert.match(String(bersihkanPengaturan({ ...dasar, babIds: Array.from({ length: 6 }, (_, i) => `materi-${i}`) })), /Maksimal 5/);
+  assert.match(String(bersihkanPengaturan({ ...dasar, babIds: Array.from({ length: 11 }, (_, i) => `materi-${i}`) })), /Maksimal 10/); // 0.49.1: dulu 5
+  assert.ok(Array.isArray((bersihkanPengaturan({ ...dasar, babIds: Array.from({ length: 10 }, (_, i) => `materi-${i}`) }) as Pengaturan).babIds));
 });
 
 test("identitas ujian: semester otomatis dari tanggal, isian tidak sah dibuang", () => {

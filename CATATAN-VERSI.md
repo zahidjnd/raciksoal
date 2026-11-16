@@ -52,6 +52,12 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.49.1 — 16 November 2026
+- **Materi digabung dalam satu set kini maksimal 10** (dulu 5), misalnya untuk ASAS yang dipecah per sub-bab.
+  Total panjang gabungannya tetap maks. 150 ribu huruf.
+
+---
+
 ## 0.49.0 — 16 November 2026
 Khusus mapel **Hadis** (Al-Qur'an Hadis dan mapel lain tidak berubah):
 - **Soal hafalan diperbanyak.** Bawaan ±7 dari 10 soal memakai hadis dari materi (pilihan di Lanjutan: sedikit ±3,

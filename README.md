@@ -68,7 +68,7 @@ pembahasan, dan rubrik**, lalu mengekspornya ke **Word** dengan kop madrasah.
   Bacaan dicek terhadap teks pdf.js (cakupan kata < 85% → teks asli). Arab: blok ayat → penunjuk mushaf; lafal Arab di
   teks/tabel → ejaan resmi ayat halaman itu (`rapikanBacaanHalaman`, `potongAyat`), selain itu dibuang (mode Bahasa Arab:
   dipertahankan). PDF > 75 halaman: guru memilih rentang (file maks 100 MB, tebal buku bebas; file tidak diunggah).
-- Satu set boleh menggabung **hingga 5 materi** (untuk AFTS/ASAS), asal satu mapel dan satu kelas.
+- Satu set boleh menggabung **hingga 10 materi** (total maks. 150 ribu huruf) (untuk AFTS/ASAS), asal satu mapel dan satu kelas.
 - Halaman **Kelola materi** (`/materi`): daftar, ubah, hapus materi (maks. 300 per guru).
 
 **Membuat set soal**

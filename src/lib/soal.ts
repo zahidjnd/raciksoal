@@ -74,8 +74,8 @@ export type Bab = {
   gambar?: GambarBab[]; // 0.30.0: gambar materi yang dipilih guru (AI melihatnya, soal boleh memakainya lewat gambar_id)
 };
 
-/** Maksimal materi yang digabung dalam satu set (PTS/PAS). */
-export const MAKS_GABUNG = 5;
+/** Maksimal materi yang digabung dalam satu set (PTS/PAS). 0.49.1: 10 (dulu 5); total panjang tetap BATAS_MATERI.isi. */
+export const MAKS_GABUNG = 10;
 
 /**
  * Beberapa materi → satu bab untuk satu set (PTS/PAS). Kode TP dan id dalil dinomori ulang supaya tidak bentrok
