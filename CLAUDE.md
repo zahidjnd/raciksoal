@@ -117,6 +117,10 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   0.44.0 (tahap 3): cara "sisip" (semua bentuk, tanpa kotak): AI menulis kode `[[A 3-4]]`/`[[T 2-5]]`/`[[id A a-b]]`,
   `isiSisipan` menggantinya (SEBELUM susunMjLama; tahap soal, perbaikan, Ganti/Ubah). Blok MJ pertama = lafaz ↔ arti
   bila porsi ≥ sedang. Edit: `PilihKata` (klik kata awal-akhir) + tombol Sisipkan (`sisipTeks`, kotak teks terakhir).
+  0.49.0 (ATURAN-SOAL 5b): mapel "Hadis" (`MAPEL_HAFALAN`) = `PORSI_HADIS` (sedang 70%), 6 per hadis, giliran
+  `CARA_HADIS` (hafalan dulu). Cara "garis" = dalil utuh, kata `dalil_potong` bergaris bawah (`pecahGaris`, web `<u>`,
+  Word `underline`), tanpa terjemah; jawaban dari kode `[[T a-b]]`; pemeriksa: sebagian saja, menyebut "bergaris bawah",
+  kunci ada di terjemah. Bukan PGK/MJ (`caraBolehBentuk`; set 154 PGK berkunci ganda). Mapel lain tak merencanakan garis.
 - **Materi**: ayat otomatis dari mushaf (kotak hijau); hadis di luar data = sumber + centang guru; tulisan Arab ≤ 3 kata = istilah, diterima
   apa adanya (`istilahArab`); teks Arab bukan dalil = tombol "Bukan ayat/hadis" (`bukan: true`, tanpa sumber & centang).
   Teks Arab dari PDF tidak pernah dipakai apa adanya (hanya penunjuk ayat). TP: tertulis di materi = hijau; usulan AI = wajib dicentang.

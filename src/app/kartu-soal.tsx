@@ -9,7 +9,7 @@ import { Gambar, gambarTempelan, TombolGambar, unggah } from "./gambar";
 import { PotongGambar } from "./potong-gambar";
 import { editRumus, isiKotak } from "./editor-rumus";
 import { EditorTabel } from "./editor-tabel";
-import { adaRumus, bukanDalil, isiSama,CARA_DALIL, CARA_PG, caraDalil, cariTabel, cocokCara, dalilKunci, kataArab, kataCara, kataTerjemah, NAMA_CARA_DALIL, PAKAI_POTONG, pisahPengantar, potonganSah, susunPilihanDalil, tampilanDalil, type CaraDalil, JOROK, kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, POLA_RUMUS, tulisTabel, type Bab, type Bentuk, type Soal } from "@/lib/soal";
+import { adaRumus, bukanDalil, isiSama, CARA_DALIL, CARA_PG, caraBolehBentuk, caraDalil, cariTabel, cocokCara, dalilKunci, kataArab, kataCara, kataTerjemah, NAMA_CARA_DALIL, PAKAI_POTONG, pecahGaris, pisahPengantar, potonganSah, susunPilihanDalil, tampilanDalil, type CaraDalil, type TampilDalil, JOROK, kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, POLA_RUMUS, tulisTabel, type Bab, type Bentuk, type Soal } from "@/lib/soal";
 import { MAKS_INSTRUKSI, namaBentuk } from "@/lib/prompt";
 
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
@@ -367,7 +367,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
       )}
       {tampil && (
         <figure className="rounded bg-krem p-3">
-          {tampil.arab && <p dir="rtl" lang="ar" className="font-arab text-2xl">{tampil.arab}</p>}
+          {tampil.arab && <ArabGaris t={tampil} />}
           {tampil.urutan && (
             <ol dir="rtl" className="space-y-1">
               {tampil.urutan.map((b, i) => (
@@ -535,6 +535,24 @@ function PilihKata({ kata, arab, rentang, ubah }: { kata: string[]; arab: boolea
   );
 }
 
+/** Teks Arab kotak dalil; cara "garis bawah" (0.49.0): lafaz terpilih digaris bawah. */
+function ArabGaris({ t }: { t: TampilDalil }) {
+  const g = pecahGaris(t);
+  return (
+    <p dir="rtl" lang="ar" className="font-arab text-2xl leading-loose">
+      {g ? (
+        <>
+          {g[0] && `${g[0]} `}
+          <u className="underline-offset-8">{g[1]}</u>
+          {g[2] && ` ${g[2]}`}
+        </>
+      ) : (
+        t.arab
+      )}
+    </p>
+  );
+}
+
 function PilihDalil({ s, bab, ubah, sisipkan }: { s: Soal; bab: Bab; ubah: (x: Partial<Soal>) => void; sisipkan?: (teks: string) => boolean }) {
   const d = bab.dalil.find((x) => x.id === s.dalil_id);
   const cara = d ? caraDalil(s, d) : null;
@@ -562,19 +580,19 @@ function PilihDalil({ s, bab, ubah, sisipkan }: { s: Soal; bab: Bab; ubah: (x: P
         </select>
         {d && (
           <select aria-label="Cara tampil dalil" className="rounded-lg border p-2 text-sm" value={cara ?? "arab"} onChange={(e) => ubah({ dalil_tampil: e.target.value as CaraDalil, dalil_potong: null })}>
-            {CARA_DALIL.filter((c) => cocokCara(c, d) && (s.bentuk === "PG" || !CARA_PG.has(c))).map((c) => <option key={c} value={c}>{NAMA_CARA_DALIL[c]}</option>)}
+            {CARA_DALIL.filter((c) => cocokCara(c, d) && caraBolehBentuk(c, s.bentuk)).map((c) => <option key={c} value={c}>{NAMA_CARA_DALIL[c]}</option>)}
           </select>
         )}
       </div>
       {kata.length > 0 && (
         <div className="space-y-1">
-          <p className="text-pudar">Potongan ({cara && NAMA_CARA_DALIL[cara]}): klik kata awal, lalu kata akhir.</p>
+          <p className="text-pudar">{cara === "garis" ? "Lafaz bergaris bawah" : `Potongan (${cara && NAMA_CARA_DALIL[cara]})`}: klik kata awal, lalu kata akhir.</p>
           <PilihKata kata={kata} arab={arab} rentang={[awal, akhir]} ubah={(r) => ubah({ dalil_potong: r })} />
         </div>
       )}
       {d && sisipkan && (
         // 0.44.0: lafaz/terjemah dari data disisipkan ke kotak teks terakhir yang disentuh (kalimat, pernyataan, pilihan, kunci).
-        <details className="rounded-lg border p-2" open={cara === "sisip"}>
+        <details className="rounded-lg border p-2" open={cara === "sisip" || cara === "garis"}>
           <summary className="cursor-pointer">Sisipkan potongan dalil ke kotak teks</summary>
           <div className="mt-2 space-y-2">
             <p className="text-pudar">Letakkan kursor di kotak teks, klik kata awal lalu kata akhir, lalu tekan Sisipkan.</p>

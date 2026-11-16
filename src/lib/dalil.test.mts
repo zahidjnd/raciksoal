@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { isiKodeSisip, isiSisipan, SISIP_GAGAL, bagianUrutan, caraDalil, cocokCara, dalilKunci, korpusArab, pasangDalil, periksaSoal, RUMPANG, samakanDenganKisi, susunPilihanDalil, tampilanDalil, type Bab, type BarisKisi, type Soal } from "./soal.ts";
+import { isiKodeSisip, isiSisipan, SISIP_GAGAL, bagianUrutan, caraDalil, cocokCara, pecahGaris, dalilKunci, korpusArab, pasangDalil, periksaSoal, RUMPANG, samakanDenganKisi, susunPilihanDalil, tampilanDalil, type Bab, type BarisKisi, type Soal } from "./soal.ts";
 import { bersihkanPengaturan, buatPermintaanKisi, buatSistem, rencanaDalil, type Pengaturan } from "./prompt.ts";
 import { bacaTerjemah, lengkapiTerjemah, terjemahAyat } from "./mushaf.ts";
 
@@ -194,4 +194,32 @@ test("0.44.1: pengantar → kotak → sisa pertanyaan; jawaban yang tertulis di 
   const w = (pilihanA: string) => periksaSoal([soal({ dalil_id: "isra-32", dalil_tampil: "utuh", pertanyaan: "Perhatikan firman Allah Swt. berikut!\nPerintah dalam ayat itu adalah ....", pilihan: [pilihanA, "menjaga lisan dari ucapan dusta", "menyantuni anak yatim dan fakir", "berbakti kepada kedua orang tua", "menepati janji kepada sesama"], kunci: "A" })], bab)[0].peringatan!.join();
   assert.match(w(kunciSalin), /tertulis hampir sama persis di terjemah/);
   assert.equal(w("menjauhi hal yang mendorong perbuatan keji"), "");
+});
+
+test("mapel Hadis (0.49.0, ATURAN-SOAL 5b): porsi besar, cara hafalan, 6 per hadis; garis bawah", () => {
+  const hadis = { ...bab, mapel: "Hadis" };
+  const r = rencanaDalil(p({ PG: 20 }, "sedang"), hadis);
+  assert.equal(r.filter(Boolean).length, 14); // 70% dari 20
+  assert.deepEqual(r.filter(Boolean).slice(0, 4), ["rumpang", "garis", "pilihan", "urutan"]);
+  assert.equal(rencanaDalil(p({ PG: 40 }, "banyak"), { ...hadis, dalil: bab.dalil.slice(0, 1) }).filter(Boolean).length, 6);
+  // Garis bawah tidak jatuh ke PG kompleks (set 154).
+  assert.ok(!rencanaDalil(p({ PG: 5, PGK: 10 }, "banyak"), hadis).slice(5).includes("garis"));
+  // Mapel lain tidak berubah dan tidak pernah merencanakan "garis".
+  assert.ok(!rencanaDalil(p({ PG: 40, ISIAN: 10 }, "banyak"), bab).includes("garis"));
+  assert.equal(rencanaDalil(p({ PG: 20 }, "sedang"), { ...bab, mapel: "Al-Qur'an Hadis" }).filter(Boolean).length, 6);
+
+  const isra = bab.dalil.find((d) => d.id === "isra-32")!;
+  const kata = isra.arab.split(/\s+/);
+  const t = tampilanDalil(soal({ dalil_id: "isra-32", dalil_tampil: "garis", dalil_potong: [2, 3] }), bab)!;
+  assert.deepEqual([t.arab, t.garis, t.terjemah], [isra.arab, [2, 3], undefined]); // utuh, tanpa terjemah
+  assert.deepEqual(pecahGaris(t), [kata[0], kata.slice(1, 3).join(" "), kata.slice(3).join(" ")]);
+  assert.equal(caraDalil({ dalil_tampil: "garis", bentuk: "PG" }, { ...isra, terjemah: "" }), "arab"); // tanpa terjemah
+
+  const terjemah = isra.terjemah.split(/\s+/);
+  const benar = terjemah.slice(0, 3).join(" ");
+  const garis = (x: Partial<Soal>) => periksaSoal([soal({ dalil_id: "isra-32", dalil_tampil: "garis", dalil_potong: [2, 3], pertanyaan: "Terjemah lafaz yang bergaris bawah pada ayat berikut adalah ....", pilihan: [benar, "x y", "y z", "z w", "w v"], kunci: "A", ...x })], bab)[0].peringatan ?? [];
+  assert.deepEqual(garis({}).filter((w) => /garis|terjemah dalil/i.test(w)), []);
+  assert.ok(garis({ pertanyaan: "Terjemah lafaz pada ayat berikut adalah ...." }).some((w) => /tidak menyebut lafaz yang bergaris bawah/.test(w)));
+  assert.ok(garis({ dalil_potong: [1, kata.length] }).some((w) => /meliputi seluruh dalil/.test(w)));
+  assert.ok(garis({ kunci: "B" }).some((w) => /tidak terdapat di terjemah/.test(w)));
 });

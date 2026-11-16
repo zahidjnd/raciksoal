@@ -417,7 +417,8 @@ export const SUMBER_BUKAN = "Bukan ayat/hadis";
  * Cara dalil tampil di soal. Urutan = urutan giliran rencanaDalil (keluarga cara diselang-seling supaya set kecil pun
  * beragam). 0.43.0 (tahap 2): rumpang, pilihan, urutan = PG saja, pilihan jawabannya disusun aplikasi (susunPilihanDalil).
  */
-export const CARA_DALIL = ["utuh", "rumpang", "sisip", "terjemah", "pilihan", "potong", "urutan", "arab", "pilihan-terjemah", "pembahasan", "rumpang-terjemah", "potong-terjemah", "rujukan"] as const;
+// "garis" (0.49.0, ATURAN-SOAL 5b) sengaja di akhir: giliran mapel lain (rencanaDalil) tidak memakainya.
+export const CARA_DALIL = ["utuh", "rumpang", "sisip", "terjemah", "pilihan", "potong", "urutan", "arab", "pilihan-terjemah", "pembahasan", "rumpang-terjemah", "potong-terjemah", "rujukan", "garis"] as const;
 export type CaraDalil = (typeof CARA_DALIL)[number];
 export const NAMA_CARA_DALIL: Record<CaraDalil, string> = {
   utuh: "Arab + terjemah",
@@ -433,15 +434,17 @@ export const NAMA_CARA_DALIL: Record<CaraDalil, string> = {
   sisip: "Disisipkan di kalimat, pernyataan, pilihan, lajur, atau kunci",
   rujukan: "Nama sumber saja (tanpa kotak)",
   pembahasan: "Hanya di pembahasan",
+  garis: "Arab utuh, sebagian bergaris bawah (terjemahkan)",
 };
 /** Cara yang pilihan A–E-nya disusun aplikasi dari dalil (hanya PG). */
 export const CARA_PG: ReadonlySet<CaraDalil> = new Set(["rumpang", "rumpang-terjemah", "pilihan", "pilihan-terjemah", "urutan"]);
 /** Cara yang memakai potongan (nomor kata awal–akhir di `dalil_potong`). */
-export const PAKAI_POTONG: ReadonlySet<CaraDalil> = new Set(["potong", "potong-terjemah", "rumpang", "rumpang-terjemah", "pilihan", "pilihan-terjemah", "urutan"]);
+export const PAKAI_POTONG: ReadonlySet<CaraDalil> = new Set(["potong", "potong-terjemah", "rumpang", "rumpang-terjemah", "pilihan", "pilihan-terjemah", "urutan", "garis"]);
 /** Cara yang potongannya diambil dari kata-kata terjemah (bukan Arab). */
 const DARI_TERJEMAH: ReadonlySet<CaraDalil> = new Set(["potong-terjemah", "rumpang-terjemah", "pilihan-terjemah"]);
 type Dalil = Bab["dalil"][number];
-export const butuhTerjemah = (c: CaraDalil) => c === "utuh" || c === "terjemah" || DARI_TERJEMAH.has(c);
+// "garis": terjemahnya tidak tampil, tetapi jawabannya (terjemah lafaz bergaris bawah) diambil dari terjemah materi.
+export const butuhTerjemah = (c: CaraDalil) => c === "utuh" || c === "terjemah" || c === "garis" || DARI_TERJEMAH.has(c);
 /** Kata-kata dalil bernomor (mulai 1): AI menunjuk potongan lewat nomor, aplikasi yang menyusun teksnya. */
 export const kataArab = (d: Pick<Dalil, "arab">) => d.arab.normalize("NFC").trim().split(/\s+/).filter(Boolean);
 export const kataTerjemah = (d: Pick<Dalil, "terjemah">) => String(d.terjemah ?? "").trim().split(/\s+/).filter(Boolean);
@@ -458,16 +461,24 @@ export function cocokCara(c: CaraDalil, d: Dalil) {
   if (butuhTerjemah(c) && !d.terjemah?.trim()) return false;
   if (c.startsWith("rumpang") && kataCara(d, c).length < 3) return false;
   if (c === "urutan" && kataArab(d).length < 4) return false;
+  if (c === "garis" && kataArab(d).length < 3) return false;
   return c !== "rujukan" || dalilAyat(d);
 }
 
 /** Pengganti cara PG untuk soal bukan PG (mis. Ubah soal mengirim cara PG ke soal uraian). */
 const CARA_BUKAN_PG: Partial<Record<CaraDalil, CaraDalil>> = { rumpang: "potong", "rumpang-terjemah": "potong-terjemah", pilihan: "potong", "pilihan-terjemah": "potong-terjemah", urutan: "arab" };
 
+/**
+ * Cara ini boleh untuk bentuk soal ini? Cara PG (pilihan disusun aplikasi) hanya PG; garis bawah bukan PG kompleks
+ * (terjemah satu lafaz = satu jawaban; set 154: PGK garis bawah berkunci ganda/tanpa pilihan) dan bukan menjodohkan.
+ */
+export const caraBolehBentuk = (c: CaraDalil, b: Bentuk) => (CARA_PG.has(c) ? b === "PG" : c !== "garis" || (b !== "PGK" && b !== "MJ"));
+
 /** Cara tampil yang benar-benar dipakai. Soal lama (tanpa cara) = Arab saja; cara yang tidak cocok dengan dalil/bentuknya diganti. */
 export function caraDalil(s: Pick<Soal, "dalil_tampil" | "bentuk">, d: Dalil): CaraDalil {
   let c = CARA_DALIL.includes(s.dalil_tampil as CaraDalil) ? (s.dalil_tampil as CaraDalil) : "arab";
   if (CARA_PG.has(c) && s.bentuk !== "PG") c = CARA_BUKAN_PG[c]!;
+  if (c === "garis" && !caraBolehBentuk(c, s.bentuk)) c = "potong";
   if (cocokCara(c, d)) return c;
   return DARI_TERJEMAH.has(c) && cocokCara("potong", d) ? "potong" : "arab";
 }
@@ -498,7 +509,16 @@ export function sumberDitanya(s: Soal, d: Dalil): boolean {
 /** Bagian rumpang: teks kosong pengganti potongan yang harus dilengkapi siswa. */
 export const RUMPANG = "……";
 
-export type TampilDalil = { arab?: string; terjemah?: string; sumber?: string; bukan?: boolean; urutan?: string[] };
+// garis: nomor kata Arab [awal, akhir] yang digaris bawah (cara "garis"; `arab` tetap utuh).
+export type TampilDalil = { arab?: string; terjemah?: string; sumber?: string; bukan?: boolean; urutan?: string[]; garis?: [number, number] };
+
+/** Teks Arab dipecah [sebelum, bergaris bawah, sesudah] untuk tampilan (web & Word). Tanpa garis: null. */
+export function pecahGaris(t: Pick<TampilDalil, "arab" | "garis">): [string, string, string] | null {
+  if (!t.arab || !t.garis) return null;
+  const kata = kataArab({ arab: t.arab });
+  const [a, b] = t.garis;
+  return [kata.slice(0, a - 1).join(" "), kata.slice(a - 1, b).join(" "), kata.slice(b).join(" ")];
+}
 
 /** Cara yang tidak menampilkan kotak dalil di soal (dalil ada di kalimat, di pilihan jawaban, atau di pembahasan). */
 const TANPA_KOTAK: ReadonlySet<CaraDalil> = new Set(["rujukan", "pembahasan", "pilihan", "pilihan-terjemah", "sisip"]);
@@ -534,6 +554,10 @@ export function tampilanDalil(s: Soal, bab: Pick<Bab, "dalil">): TampilDalil | n
   if (c === "urutan") {
     const u = bagianUrutan(s, d);
     return u ? { urutan: u.tampil.map((j) => u.segmen[j]), sumber } : { arab: d.arab, sumber };
+  }
+  if (c === "garis") {
+    const p = potonganSah(s.dalil_potong, kataArab(d).length);
+    return { arab: d.arab, sumber, ...(p && { garis: p }) };
   }
   if (PAKAI_POTONG.has(c)) {
     const kata = kataCara(d, c);
@@ -1219,6 +1243,15 @@ function periksaDalil(s: Soal, bab: Bab): string[] {
     if (c === "urutan" && !benar) w.push("Dalil terlalu pendek untuk disusun urutannya (minimal 3 kata). Pilih cara tampil lain lewat Edit.");
     else if (benar && rapikan(String(dipilih ?? "")) !== rapikan(benar))
       w.push('Pilihan jawaban belum tersusun dari dalil (jawaban benar harus potongan dalil yang dipilih). Tekan "Susun pilihan dari dalil" di Edit.');
+  }
+  // 0.49.0 (ATURAN-SOAL 5b): garis bawah = sebagian hadis, disebut di soal, jawabannya terjemah dari materi.
+  if (c === "garis") {
+    const p = potonganSah(s.dalil_potong, kataArab(d).length);
+    if (p && p[1] - p[0] + 1 >= kataArab(d).length) w.push("Garis bawah meliputi seluruh dalil. Garis bawahi sebagian lafaz saja lewat Edit.");
+    if (!/garis\s*bawah|bergaris/i.test(teks)) w.push('Cara tampil "garis bawah", tetapi soal tidak menyebut lafaz yang bergaris bawah. Ubah kalimatnya, mis. "Terjemah lafaz yang bergaris bawah pada hadis berikut adalah ....".');
+    const benar = s.bentuk === "PG" ? s.pilihan?.[HURUF.indexOf(String(s.kunci ?? "").trim().toUpperCase())] : s.bentuk === "ISIAN" ? [s.kunci].flat()[0] : null;
+    if (benar && polos(benar).trim() && !polos(d.terjemah).includes(polos(benar)))
+      w.push("Jawaban benar tidak terdapat di terjemah dalil pada materi. Tulis jawabannya dari terjemah materi (Edit: Sisipkan terjemah).");
   }
   if (c === "rujukan" && !polos(teks).includes(` ${polos(namaSumber(d)).trim()} `)) w.push(`Dalil hanya disebut namanya, tetapi soal tidak menyebut sumbernya (${d.sumber}).`);
   if (!tampil && TUNJUK_DALIL.test(teks)) w.push("Soal menyuruh memperhatikan ayat/hadis, tetapi cara tampil dalilnya tidak menampilkan teks. Ubah cara tampilnya lewat Edit.");

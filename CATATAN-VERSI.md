@@ -52,6 +52,19 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.49.0 — 16 November 2026
+Khusus mapel **Hadis** (Al-Qur'an Hadis dan mapel lain tidak berubah):
+- **Soal hafalan diperbanyak.** Bawaan ±7 dari 10 soal memakai hadis dari materi (pilihan di Lanjutan: sedikit ±3,
+  sedang ±7, banyak ±9 dari 10), satu hadis boleh dipakai sampai 6 soal dengan potongan berbeda.
+- Yang didahulukan: **melengkapi lafaz**, **menerjemahkan lafaz bergaris bawah**, **menebak potongan** (pilihan A–E
+  berupa lafaz), **menyusun urutan**, **lanjutan lafaz**, dan menjodohkan lafaz ↔ arti. Sesekali soal isi kandungan.
+- Perintah soal tetap bahasa Indonesia; hadis di soal dan jawaban berupa lafaz Arab diambil dari data, bukan diketik AI.
+- **Cara baru "garis bawah"**: hadis tampil utuh, sebagian lafaz bergaris bawah (di web dan di file Word), siswa
+  menerjemahkan bagian itu. Jawabannya diambil dari terjemah hadis di materi, jadi **terjemah hadis perlu ada di materi**.
+  Cara ini juga bisa dipilih di Edit untuk mapel lain.
+
+---
+
 ## 0.48.1 — 15 November 2026
 Jatah guru dilonggarkan selama ASAS, supaya guru leluasa mencoba-coba sambil memakai sungguhan.
 | | Dulu | Sekarang |

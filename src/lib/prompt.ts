@@ -1,5 +1,5 @@
 import { MAPEL_BACAAN, MAPEL_INGGRIS, MAPEL_SEJARAH } from "./mapel.ts";
-import { adalahTahun, blokMj, bukanDalil, CARA_DALIL, CARA_PG, cocokCara, identitasBab, kataArab, kataTerjemah, keFormatAI, kocok, MAKS_GABUNG, mjLama, type Bab, type BarisKisi, type Bentuk, type CaraDalil, type Soal } from "./soal.ts";
+import { adalahTahun, blokMj, bukanDalil, CARA_DALIL, caraBolehBentuk, cocokCara, identitasBab, kataArab, kataTerjemah, keFormatAI, kocok, MAKS_GABUNG, mjLama, type Bab, type BarisKisi, type Bentuk, type CaraDalil, type Soal } from "./soal.ts";
 
 export const PESAN_MJ_MIN = "Menjodohkan minimal 3 nomor (atau 0), supaya daftar jawabannya masuk akal.";
 
@@ -120,6 +120,16 @@ export type Pengaturan = {
 /** Porsi soal berdalil dari soal non-menjodohkan (ATURAN-SOAL 5a no. 1). */
 export const PORSI_DALIL = { tanpa: 0, sedikit: 0.15, sedang: 0.3, banyak: 0.5 } as const;
 export type PorsiDalil = keyof typeof PORSI_DALIL;
+
+/**
+ * Mapel Hadis (0.49.0, ATURAN-SOAL 5b): sebagian besar hafalan → porsi lebih besar, 6 soal per hadis, cara hafalan
+ * didahulukan (giliran berulang; "utuh" sesekali untuk isi kandungan). Mapel lain tetap PORSI_DALIL & CARA_DALIL.
+ */
+export const MAPEL_HAFALAN = "Hadis";
+export const PORSI_HADIS: Record<PorsiDalil, number> = { tanpa: 0, sedikit: 0.3, sedang: 0.7, banyak: 0.9 };
+export const CARA_HADIS: CaraDalil[] = ["rumpang", "garis", "pilihan", "urutan", "sisip", "potong", "rumpang", "garis", "pilihan", "utuh"];
+const MAKS_PER_DALIL = 3;
+const MAKS_PER_HADIS = 6;
 
 /** Identitas ujian di kop Word. Kosong → dihitung dari tanggal pembuatan (semester, tahun pelajaran) / bawaan. */
 export type Identitas = { semester?: string; tahun?: string; tanggal?: string; waktu?: number };
@@ -509,18 +519,19 @@ export function nomorBergambar(p: Pengaturan, bab?: Pick<Bab, "gambar">): Set<nu
   return new Set(Array.from({ length: jatahGambar }, (_, k) => bisaGambar[Math.floor(((k + 0.5) * bisaGambar.length) / jatahGambar)]));
 }
 
-export function rencanaDalil(p: Pengaturan, bab?: Pick<Bab, "dalil" | "gambar">): (CaraDalil | null)[] {
+export function rencanaDalil(p: Pengaturan, bab?: Pick<Bab, "dalil" | "gambar" | "mapel">): (CaraDalil | null)[] {
   const bentukNo = urutanBentuk(p.jumlah).flatMap((b) => Array<Bentuk>(p.jumlah[b]).fill(b));
   const hasil: (CaraDalil | null)[] = bentukNo.map(() => null);
   const dalil = (bab?.dalil ?? []).filter((d) => !bukanDalil(d));
-  const porsi = p.porsiDalil ? PORSI_DALIL[p.porsiDalil] : 0;
+  const hafalan = bab?.mapel?.trim() === MAPEL_HAFALAN;
+  const porsi = p.porsiDalil ? (hafalan ? PORSI_HADIS : PORSI_DALIL)[p.porsiDalil] : 0;
   if (!dalil.length || !porsi) return hasil;
   // 0.43.0: nomor BERGAMBAR tidak dijatah dalil (set 149: "Perhatikan gambar berikut! Lengkapilah potongan ayat ...").
   const bergambar = nomorBergambar(p, bab);
   const bisa = bentukNo.flatMap((b, i) => (b === "MJ" || bergambar.has(i) ? [] : [i]));
-  const n = Math.min(bisa.length, dalil.length * 3, Math.max(1, Math.round(bisa.length * porsi)));
+  const n = Math.min(bisa.length, dalil.length * (hafalan ? MAKS_PER_HADIS : MAKS_PER_DALIL), Math.max(1, Math.round(bisa.length * porsi)));
   // Cara yang bisa dipakai paling tidak oleh satu dalil materi ini (terjemah ada, ayat ada, cukup panjang, ...).
-  const cara = CARA_DALIL.filter((c) => dalil.some((d) => cocokCara(c, d)));
+  const cara = (hafalan ? CARA_HADIS : CARA_DALIL.filter((c) => c !== "garis")).filter((c) => dalil.some((d) => cocokCara(c, d)));
   if (!cara.length) return hasil;
   // 0.43.0: cara PG (rumpang, pilihan, urutan) hanya untuk nomor PG; nomor lain mengambil cara berikutnya di giliran.
   let giliran = 0;
@@ -528,7 +539,7 @@ export function rencanaDalil(p: Pengaturan, bab?: Pick<Bab, "dalil" | "gambar">)
     const i = bisa[Math.floor(((k + 0.5) * bisa.length) / n)];
     for (let t = 0; t < cara.length; t++) {
       const c = cara[(giliran + t) % cara.length];
-      if (bentukNo[i] === "PG" || !CARA_PG.has(c)) {
+      if (caraBolehBentuk(c, bentukNo[i])) {
         hasil[i] = c;
         giliran = (giliran + t + 1) % cara.length;
         break;
@@ -555,8 +566,9 @@ const caraDalilAi = (tka: boolean) => `CARA MENAMPILKAN DALIL ("dalil_tampil"). 
 - "pilihan" (PG saja): TIDAK ada kotak dalil, jadi JANGAN menulis "Perhatikan firman/ayat/hadis berikut"; pilihan A–E berupa potongan teks Arab yang disusun aplikasi: kunci = "dalil_potong", pengecoh = "dalil_pengecoh" (seperti "rumpang"). Soal misalnya "Lafaz yang berisi perintah menunaikan zakat adalah ....". "pilihan": [], "kunci": "A".
 - "pilihan-terjemah" (PG saja): seperti "pilihan", tetapi pilihannya potongan terjemah. Misalnya "Terjemah lafaz ... yang tepat adalah ....".
 - "urutan" (PG saja): aplikasi memotong kata ke-a sampai ke-b ("dalil_potong"; null = seluruh dalil, minimal 4 kata) menjadi 3–4 bagian bernomor yang diacak, lalu menyusun pilihan urutannya. Soal misalnya "Susunan potongan ayat berikut yang benar adalah ....". "pilihan": [], "kunci": "A".
-- Pada rumpang/pilihan/urutan "dalil_potong" WAJIB diisi (kecuali urutan seluruh dalil), juga pada permintaan memperbaiki atau mengubah soal. Pembahasan menyebut isi jawaban yang benar (lafaz dan artinya) tanpa menyebut huruf pilihan; jangan mengetik ulang teks Arab panjang.
+- Pada rumpang/pilihan/urutan/garis "dalil_potong" WAJIB diisi (kecuali urutan seluruh dalil), juga pada permintaan memperbaiki atau mengubah soal. Pembahasan menyebut isi jawaban yang benar (lafaz dan artinya) tanpa menyebut huruf pilihan; jangan mengetik ulang teks Arab panjang.
 - "sisip" (semua bentuk): TIDAK ada kotak dalil; potongan dalil DISISIPKAN di dalam teks soal dengan KODE yang diganti aplikasi dengan teks asli: [[A a-b]] = kata Arab ke-a sampai ke-b dalil soal itu, [[T a-b]] = kata terjemah ke-a sampai ke-b ("Kata Arab bernomor" / "Kata terjemah bernomor"); dalil lain: [[dalil_id A a-b]]. Kode boleh di "pertanyaan", "pernyataan", "pilihan"${tka ? "" : ', "jodoh", dan "kunci" isian'}. Contoh benar/salah: "Lafaz [[A 3-4]] berisi perintah menunaikan zakat."; PG kompleks: pilihan berupa kode lafaz yang berbeda-beda${tka ? "" : '; menjodohkan: "pertanyaan": "[[A 3-4]]", "jodoh": "[[T 4-5]]" (arti lafaz itu dari terjemahnya); isian: "Lanjutan lafaz [[A 1-2]] adalah ....", "kunci": "[[A 3-4]]"'}. Jangan mengetik huruf Arab ayat/hadis sendiri.
+- "garis" (garis bawah; bukan PG kompleks): aplikasi menampilkan teks Arab dalil UTUH dengan kata ke-a sampai ke-b ("dalil_potong", dari "Kata Arab bernomor") BERGARIS BAWAH; terjemahnya TIDAK tampil. Untuk soal menerjemahkan/arti lafaz yang bergaris bawah. Pilih 1–6 kata yang bermakna, BUKAN seluruh dalil. Pertanyaan WAJIB menyebut "bergaris bawah", misalnya "Terjemah lafaz yang bergaris bawah pada hadis berikut adalah ....". Jawaban benar diambil dari terjemah dalil itu dengan kode [[T a-b]] ("Kata terjemah bernomor" yang berarti lafaz bergaris bawah): PG = pilihan A–E berupa kode [[T a-b]] (kunci = terjemah lafaz bergaris bawah; pengecoh = potongan terjemah lain sepanjang kunci dari dalil yang sama, atau [[dalil_id T a-b]] dari dalil lain); isian = "kunci": "[[T a-b]]"; uraian = jawaban ideal memuat [[T a-b]].
 - "rujukan" (ayat saja): tidak ada teks yang tampil; soal MENYEBUT sumbernya di kalimat, persis seperti di DATA BAB, misalnya "Isi kandungan QS. Al-Baqarah [2]: 43 adalah ....". Jangan menulis "ayat berikut", dan jangan menuliskan isi atau terjemah ayatnya (isinya justru yang ditanyakan).
 - "pembahasan": dalil TIDAK tampil di soal. Tulis soal biasa tanpa menyuruh memperhatikan ayat/hadis; pembahasan memakai dalil itu sebagai penguat kunci (aplikasi menampilkannya di kunci & pembahasan).
 - Dalil hanya dipakai bila soal BENAR-BENAR membahasnya: pertanyaan menyebut firman/ayat/hadis/lafaz/terjemah/sumbernya. Soal tanpa dalil: "dalil_id": null, "dalil_tampil": null, dan jangan menulis "perhatikan firman/hadis berikut".

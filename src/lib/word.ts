@@ -26,7 +26,7 @@ import { MAPEL_INGGRIS } from "./mapel";
 import { hariTanggal, mapelTka, NAMA_BENTUK, semesterDari, TKA, WAKTU_BAWAAN, type Pengaturan } from "./prompt";
 import { kunciSatu } from "./kunci";
 import { rumusWord } from "./rumus";
-import { dalilKunci, identitasBab, JOROK, JUMLAH_PREMIS, kategoriBaru, mjLama, paragrafArab, pecahBaris, POLA_ARAB, pisahPengantar, POLA_RUMUS, tampilanDalil, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
+import { dalilKunci, identitasBab, JOROK, JUMLAH_PREMIS, kategoriBaru, mjLama, paragrafArab, pecahBaris, pecahGaris, POLA_ARAB, pisahPengantar, POLA_RUMUS, tampilanDalil, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
 
 const PERINGATAN = "Soal dibuat AI, wajib diperiksa guru sebelum dipakai.";
 
@@ -70,7 +70,7 @@ const aset = (nama: string) => readFileSync(path.join(process.cwd(), "public", "
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
 const PECAH_RUMUS = new RegExp(`(${POLA_RUMUS})`);
 
-type Gaya = { bold?: boolean; italics?: boolean; color?: string; size?: number };
+type Gaya = { bold?: boolean; italics?: boolean; color?: string; size?: number; underline?: object };
 
 /** Teks Latin dengan huruf tetap Times New Roman (cetakan bawaan memakai Calibri). */
 const r = (text: string, gaya: Gaya = {}) => new TextRun({ font: FONT, size: UKURAN, ...gaya, text });
@@ -265,7 +265,10 @@ export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tangga
       if (g) isi.push(par([new ImageRun({ type: "jpg", data: g.data, transformation: ukuranWord(g.lebar, g.tinggi) })], { indent: { left: 400 }, keepNext: true, spacing: { before: 40, after: 60 } }));
       // 0.42.0: bagian dalil yang tampil mengikuti cara tampilnya (Arab / terjemah / potongan; sumber disembunyikan bila ditanyakan).
       if (dalil) {
-        if (dalil.arab) isi.push(par(teks(dalil.arab), { bidirectional: true, alignment: AlignmentType.START, indent: { right: 400 }, keepNext: true, spacing: { after: 0 } }));
+        // 0.49.0: cara "garis bawah": lafaz terpilih bergaris bawah di dalam dalil utuh.
+        const g = pecahGaris(dalil);
+        const arab = g ? [...teks(g[0] ? `${g[0]} ` : ""), ...teks(g[1], { underline: {} }), ...teks(g[2] ? ` ${g[2]}` : "")] : dalil.arab ? teks(dalil.arab) : [];
+        if (dalil.arab) isi.push(par(arab, { bidirectional: true, alignment: AlignmentType.START, indent: { right: 400 }, keepNext: true, spacing: { after: 0 } }));
         // 0.43.0: menyusun urutan: bagian-bagian berlabel (1), (2), ... satu per baris, kanan ke kiri.
         dalil.urutan?.forEach((b, n) => isi.push(par([r(`(${n + 1}) `, { bold: true }), ...teks(b)], { bidirectional: true, alignment: AlignmentType.START, indent: { right: 400 }, keepNext: true, spacing: { after: 0 } })));
         if (dalil.terjemah) isi.push(par(teks(`“${dalil.terjemah}”`, { italics: true }), { indent: { left: 400 }, keepNext: true, spacing: { before: dalil.arab ? 40 : 0, after: 0 } }));

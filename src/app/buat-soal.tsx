@@ -12,7 +12,7 @@ import { Panah } from "./panah";
 import { skorOtomatis } from "@/lib/skor";
 import { kunciRingkas } from "@/lib/kunci";
 import { PAKET, susunPaket, type Paket } from "@/lib/paket";
-import { ASAS_ALFATAH, ATURAN_TUJUAN, BOBOT_BAWAAN, hitungLevel, jumlahSoal, KESULITAN, MAKS_CATATAN, MAKS_SOAL, MAPEL_EKSAK, mapelTka, NAMA_BENTUK, namaBentuk, namaLevelTka, namaTujuan, PESAN_MJ_MIN, semesterDari, TKA, TUJUAN, type Identitas, type Pengaturan, type PorsiDalil } from "@/lib/prompt";
+import { ASAS_ALFATAH, ATURAN_TUJUAN, BOBOT_BAWAAN, hitungLevel, jumlahSoal, KESULITAN, MAKS_CATATAN, MAKS_SOAL, MAPEL_EKSAK, MAPEL_HAFALAN, mapelTka, NAMA_BENTUK, namaBentuk, namaLevelTka, namaTujuan, PESAN_MJ_MIN, semesterDari, TKA, TUJUAN, type Identitas, type Pengaturan, type PorsiDalil } from "@/lib/prompt";
 import { mjLama, pilihanAngka, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { alasanDalil, type IsianMateri } from "@/lib/materi";
 import type { Preferensi } from "@/lib/preferensi";
@@ -122,6 +122,7 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: strin
   });
   const [daftarModel, setDaftarModel] = useState<{ slot: number; nama: string }[]>([]);
   const [mapel, setMapel] = useState("");
+  const hafalan = mapel === MAPEL_HAFALAN; // 0.49.0: mapel Hadis, porsi soal berhadis lebih besar
   const [kelas, setKelas] = useState("");
   const [daftarBab, setDaftarBab] = useState<MateriLama[]>([]); // materi milik guru (tersimpan otomatis)
   const [pilihan, setPilihan] = useState<string[]>(awalMateri); // materi lama yang dipakai (?materi= dari "Pakai materi ini lagi")
@@ -515,11 +516,16 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: strin
                   <span className="font-semibold">Soal berayat/hadis</span>
                   <select className="mt-1 w-full rounded-lg border p-2" value={p.porsiDalil ?? "sedang"} onChange={(e) => setP({ ...p, porsiDalil: e.target.value as PorsiDalil })}>
                     <option value="tanpa">Tanpa ayat/hadis</option>
-                    <option value="sedikit">Sedikit (±1 dari 7 soal)</option>
-                    <option value="sedang">Sedang (±1 dari 3 soal)</option>
-                    <option value="banyak">Banyak (±1 dari 2 soal)</option>
+                    {/* 0.49.0 (ATURAN-SOAL 5b): mapel Hadis memakai porsi PORSI_HADIS (prompt.ts). */}
+                    <option value="sedikit">{hafalan ? "Sedikit (±3 dari 10 soal)" : "Sedikit (±1 dari 7 soal)"}</option>
+                    <option value="sedang">{hafalan ? "Sedang (±7 dari 10 soal)" : "Sedang (±1 dari 3 soal)"}</option>
+                    <option value="banyak">{hafalan ? "Banyak (±9 dari 10 soal)" : "Banyak (±1 dari 2 soal)"}</option>
                   </select>
-                  <span className="mt-1 block text-pudar">Hanya bila materi memuat ayat/hadis. Cara tampilnya beragam: Arab + terjemah, Arab saja, terjemah saja, potongan, atau di pembahasan.</span>
+                  <span className="mt-1 block text-pudar">
+                    {hafalan
+                      ? "Mapel Hadis: kebanyakan soal hafalan (melengkapi lafaz, menerjemahkan lafaz bergaris bawah, menebak potongan, menyusun urutan). Hadis harus ada di materi; soal terjemah butuh terjemah hadis di materi."
+                      : "Hanya bila materi memuat ayat/hadis. Cara tampilnya beragam: Arab + terjemah, Arab saja, terjemah saja, potongan, atau di pembahasan."}
+                  </span>
                 </label>
                 {/* Daftar model hanya dikirim server untuk admin; guru tidak melihat pilihan ini. */}
                 {daftarModel.length > 0 && (
