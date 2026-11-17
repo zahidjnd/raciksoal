@@ -11,7 +11,7 @@ import { DaftarMateri, type BarisMateri } from "./form";
 /** Peringatan sejak awal, supaya batas tidak baru ketahuan saat menekan Buat soal. */
 const HAMPIR_PENUH = 20;
 
-export default async function MateriSaya() {
+export default async function MateriSaya({ searchParams }: { searchParams: Promise<{ tersimpan?: string }> }) {
   const p = await wajibMasuk();
   // Aturan 3: hanya materi milik pengguna yang sedang masuk.
   const daftar = await db.select().from(materi).where(eq(materi.guruId, p.id)).orderBy(desc(materi.diubah));
@@ -24,6 +24,9 @@ export default async function MateriSaya() {
     const info = `${bab.tp.length} TP · ${bab.dalil.length} ayat/hadis · ${bab.materi.join("").length.toLocaleString("id-ID")} huruf · diubah ${diubah}`;
     return { id: m.id, judul: bab.judul, ...identitasBab(bab), info };
   });
+  // Baru disimpan dari form (?tersimpan=id): dicari di daftar milik guru ini saja, jadi id guru lain tidak berarti apa-apa.
+  const idTersimpan = (await searchParams).tersimpan;
+  const tersimpan = baris.find((m) => String(m.id) === idTersimpan);
 
   return (
     <Kerangka p={p}>
@@ -43,7 +46,12 @@ export default async function MateriSaya() {
         )}
         {!daftar.length && <p className="rounded-xl border bg-kartu p-4 text-sm text-pudar">Belum ada materi. Tekan + Tambah materi untuk mulai.</p>}
 
-        <DaftarMateri daftar={baris} />
+        {tersimpan && (
+          <p className="rounded-lg border border-hijau bg-hijau-muda p-2 text-sm text-hijau-teks" role="status">
+            Materi &ldquo;<span dir="auto">{tersimpan.judul}</span>&rdquo; tersimpan. Bisa dipilih lewat &ldquo;Pakai materi sebelumnya&rdquo; saat membuat soal.
+          </p>
+        )}
+        <DaftarMateri daftar={baris} sorot={tersimpan} />
       </section>
     </Kerangka>
   );

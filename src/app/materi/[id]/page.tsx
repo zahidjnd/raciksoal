@@ -10,7 +10,7 @@ import { Kerangka } from "../../kepala";
 import { FormMateri } from "../form";
 
 /** /materi/baru atau /materi/12 (hanya materi milik sendiri, aturan 3). */
-export default async function UbahMateri({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tersimpan?: string }> }) {
+export default async function UbahMateri({ params }: { params: Promise<{ id: string }> }) {
   const p = await wajibMasuk();
   const { id } = await params;
   let awal: IsianMateri | null = null;
@@ -21,7 +21,7 @@ export default async function UbahMateri({ params, searchParams }: { params: Pro
   }
   return (
     <Kerangka p={p}>
-      <FormMateri id={id === "baru" ? null : Number(id)} awal={awal} tersimpan={id !== "baru" && (await searchParams).tersimpan === "1"} bawaan={await ambilPreferensi(p.id)} />
+      <FormMateri id={id === "baru" ? null : Number(id)} awal={awal} bawaan={await ambilPreferensi(p.id)} />
     </Kerangka>
   );
 }
