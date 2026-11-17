@@ -12,7 +12,7 @@ import { Panah } from "./panah";
 import { skorOtomatis } from "@/lib/skor";
 import { kunciRingkas } from "@/lib/kunci";
 import { PAKET, susunPaket, type Paket } from "@/lib/paket";
-import { ASAS_ALFATAH, ATURAN_TUJUAN, BOBOT_BAWAAN, hitungLevel, jumlahSoal, KESULITAN, MAKS_CATATAN, MAKS_SOAL, MAPEL_EKSAK, MAPEL_HAFALAN, mapelTka, NAMA_BENTUK, namaBentuk, namaLevelTka, namaTujuan, PESAN_MJ_MIN, semesterDari, TKA, TUJUAN, type Identitas, type Pengaturan, type PorsiDalil } from "@/lib/prompt";
+import { ASAS_ALFATAH, ATURAN_TUJUAN, BOBOT_BAWAAN, hitungLevel, jumlahSoal, KESULITAN, MAKS_CATATAN, MAKS_SOAL, MAPEL_EKSAK, mapelHafalan, mapelTka, NAMA_BENTUK, namaBentuk, namaLevelTka, namaTujuan, PESAN_MJ_MIN, semesterDari, TKA, TUJUAN, type Identitas, type Pengaturan, type PorsiDalil } from "@/lib/prompt";
 import { mjLama, pilihanAngka, type BarisKisi, type Bentuk, type Soal } from "@/lib/soal";
 import { alasanDalil, type IsianMateri } from "@/lib/materi";
 import type { Preferensi } from "@/lib/preferensi";
@@ -122,7 +122,7 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: strin
   });
   const [daftarModel, setDaftarModel] = useState<{ slot: number; nama: string }[]>([]);
   const [mapel, setMapel] = useState("");
-  const hafalan = mapel === MAPEL_HAFALAN; // 0.49.0: mapel Hadis, porsi soal berhadis lebih besar
+  const hafalan = mapelHafalan(mapel); // 0.49.0: mapel Hadis (+ Al-Quds wal Maqdisiyyah), porsi soal berhadis lebih besar
   const [kelas, setKelas] = useState("");
   const [daftarBab, setDaftarBab] = useState<MateriLama[]>([]); // materi milik guru (tersimpan otomatis)
   const [pilihan, setPilihan] = useState<string[]>(awalMateri); // materi lama yang dipakai (?materi= dari "Pakai materi ini lagi")
@@ -523,7 +523,7 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: strin
                   </select>
                   <span className="mt-1 block text-pudar">
                     {hafalan
-                      ? "Mapel Hadis: kebanyakan soal hafalan (melengkapi lafaz, menerjemahkan lafaz bergaris bawah, menebak potongan, menyusun urutan). Hadis harus ada di materi; soal terjemah butuh terjemah hadis di materi."
+                      ? `Mapel ${mapel}: kebanyakan soal hafalan (melengkapi lafaz, menerjemahkan lafaz bergaris bawah, menebak potongan, menyusun urutan). Ayat/hadis harus ada di materi; soal terjemah hadis butuh terjemah hadis di materi.`
                       : "Hanya bila materi memuat ayat/hadis. Cara tampilnya beragam: Arab + terjemah, Arab saja, terjemah saja, potongan, atau di pembahasan."}
                   </span>
                 </label>

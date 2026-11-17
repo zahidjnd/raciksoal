@@ -277,9 +277,12 @@ soal mana saja ("sebar ke semua dalil"), termasuk soal yang tidak membahasnya. U
    kotak dalil/gambar, baru sisa pertanyaan (`pisahPengantar`, web & Word). **Pemeriksa**: kunci PG/PGK/isian yang
    tertulis (hampir) persis di terjemah yang ditampilkan ditandai merah (siswa cukup mencocokkan kalimat).
 
-### 5b. Mapel Hadis: soal hafalan diperbanyak (disetujui pemilik 16 Nov 2026)
+### 5b. Mapel hafalan (Hadis, Al-Quds wal Maqdisiyyah): soal hafalan diperbanyak (disetujui pemilik 16 Nov 2026)
 
-Mapel **Hadis** sebagian besar hafalan. Berlaku HANYA untuk mapel "Hadis" (Al-Qur'an Hadis dan mapel lain tetap 5a).
+Mapel **Hadis** sebagian besar hafalan. Berlaku HANYA untuk mapel "Hadis" dan (17 Nov 2026, keputusan pemilik)
+**"Al-Quds wal Maqdisiyyah"**, yang disamakan persis dengan Hadis; aturan sejarahnya (tahun/tokoh/tempat dari materi)
+tetap berlaku untuk soal non-hafalan. Al-Qur'an Hadis dan mapel lain tetap 5a. Soal hafalan hanya dari ayat/hadis
+yang ada di materi, jadi banyaknya tetap dibatasi 6 soal per dalil.
 
 1. ✅ (0.49.0) **Porsi lebih besar**: pilihan di Lanjutan untuk mapel Hadis = sedikit ±30% / **sedang ±70% (bawaan)** /
    banyak ±90% soal non-menjodohkan; satu hadis boleh dipakai sampai **6 soal** (potongan berbeda). Sisanya soal biasa.
@@ -289,7 +292,7 @@ Mapel **Hadis** sebagian besar hafalan. Berlaku HANYA untuk mapel "Hadis" (Al-Qu
 3. ✅ (0.49.0) **Perintah soal tetap bahasa Indonesia**; yang Arab adalah isi soal (hadis) dan jawabannya (potongan lafaz),
    semuanya dari data terverifikasi (aturan keras no. 5 tetap berlaku, AI tidak mengetik huruf Arab hadis).
 4. ✅ (0.49.0) Cara baru **garis bawah** (boleh dipakai semua mapel lewat Edit/Ubah, direncanakan otomatis hanya di
-   mapel Hadis): hadis tampil **utuh** (Arab saja, tanpa terjemah), kata ke-a s.d. ke-b **bergaris bawah** (web & Word).
+   mapel hafalan: Hadis & Al-Quds wal Maqdisiyyah): dalil tampil **utuh** (Arab saja, tanpa terjemah), kata ke-a s.d. ke-b **bergaris bawah** (web & Word).
    Soal menyebut "lafaz yang bergaris bawah", misalnya "Terjemah lafaz yang bergaris bawah pada hadis berikut adalah ….".
    Bila yang tampil hanya sepotong hadis, itu cara **potongan Arab** ("Perhatikan potongan hadis berikut!").
    - PG: pilihan A–E potongan **terjemah dari materi** (kode `[[T a-b]]`), kunci = terjemah lafaz bergaris bawah.

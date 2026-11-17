@@ -200,6 +200,8 @@ test("mapel Hadis (0.49.0, ATURAN-SOAL 5b): porsi besar, cara hafalan, 6 per had
   const hadis = { ...bab, mapel: "Hadis" };
   const r = rencanaDalil(p({ PG: 20 }, "sedang"), hadis);
   assert.equal(r.filter(Boolean).length, 14); // 70% dari 20
+  // 17 Nov 2026: Al-Quds wal Maqdisiyyah disamakan persis dengan Hadis.
+  assert.deepEqual(rencanaDalil(p({ PG: 20 }, "sedang"), { ...bab, mapel: " Al-Quds wal Maqdisiyyah " }), r);
   assert.deepEqual(r.filter(Boolean).slice(0, 4), ["rumpang", "garis", "pilihan", "urutan"]);
   assert.equal(rencanaDalil(p({ PG: 40 }, "banyak"), { ...hadis, dalil: bab.dalil.slice(0, 1) }).filter(Boolean).length, 6);
   // Garis bawah tidak jatuh ke PG kompleks (set 154).

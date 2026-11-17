@@ -125,7 +125,9 @@ export type PorsiDalil = keyof typeof PORSI_DALIL;
  * Mapel Hadis (0.49.0, ATURAN-SOAL 5b): sebagian besar hafalan → porsi lebih besar, 6 soal per hadis, cara hafalan
  * didahulukan (giliran berulang; "utuh" sesekali untuk isi kandungan). Mapel lain tetap PORSI_DALIL & CARA_DALIL.
  */
-export const MAPEL_HAFALAN = "Hadis";
+// 17 Nov 2026 (pilihan pemilik): Al-Quds wal Maqdisiyyah disamakan persis dengan Hadis (aturan sejarahnya tetap).
+export const MAPEL_HAFALAN = ["Hadis", "Al-Quds wal Maqdisiyyah"];
+export const mapelHafalan = (mapel?: string) => MAPEL_HAFALAN.includes(mapel?.trim() ?? "");
 export const PORSI_HADIS: Record<PorsiDalil, number> = { tanpa: 0, sedikit: 0.3, sedang: 0.7, banyak: 0.9 };
 export const CARA_HADIS: CaraDalil[] = ["rumpang", "garis", "pilihan", "urutan", "sisip", "potong", "rumpang", "garis", "pilihan", "utuh"];
 const MAKS_PER_DALIL = 3;
@@ -523,7 +525,7 @@ export function rencanaDalil(p: Pengaturan, bab?: Pick<Bab, "dalil" | "gambar" |
   const bentukNo = urutanBentuk(p.jumlah).flatMap((b) => Array<Bentuk>(p.jumlah[b]).fill(b));
   const hasil: (CaraDalil | null)[] = bentukNo.map(() => null);
   const dalil = (bab?.dalil ?? []).filter((d) => !bukanDalil(d));
-  const hafalan = bab?.mapel?.trim() === MAPEL_HAFALAN;
+  const hafalan = mapelHafalan(bab?.mapel);
   const porsi = p.porsiDalil ? (hafalan ? PORSI_HADIS : PORSI_DALIL)[p.porsiDalil] : 0;
   if (!dalil.length || !porsi) return hasil;
   // 0.43.0: nomor BERGAMBAR tidak dijatah dalil (set 149: "Perhatikan gambar berikut! Lengkapilah potongan ayat ...").
