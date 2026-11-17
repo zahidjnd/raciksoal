@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { beriTahu, tanya } from "../tanya";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { KELAS } from "@/lib/soal";
 import { KartuMateri, KotakMateri, lihatDalil, PilihMapel } from "../kotak-materi";
 import { alasanDalil, modeArab, type IsianMateri } from "@/lib/materi";
 import { hapusMateri, simpanMateri } from "./actions";
@@ -100,7 +101,7 @@ export function FormMateri({ id: idAwal, awal, tersimpan = false, bawaan }: { id
 }
 
 /** Tombol hapus di daftar materi (dengan konfirmasi). */
-export function TombolHapusMateri({ id, judul }: { id: number; judul: string }) {
+function TombolHapusMateri({ id, judul, kelas }: { id: number; judul: string; kelas: string }) {
   const router = useRouter();
   const [proses, setProses] = useState(false);
   async function hapus() {
@@ -112,8 +113,125 @@ export function TombolHapusMateri({ id, judul }: { id: number; judul: string }) 
     router.refresh();
   }
   return (
-    <button className="rounded-lg border h-8 px-3 text-sm text-bahaya disabled:opacity-50" disabled={proses} onClick={hapus}>
+    <button role="menuitem" className={kelas} disabled={proses} onClick={hapus}>
       {proses ? "Menghapus..." : "Hapus"}
     </button>
+  );
+}
+
+/** Satu baris daftar Materi saya (disusun server: hanya materi milik guru yang masuk). */
+export type BarisMateri = { id: number; judul: string; mapel: string; kelas: string; info: string };
+
+const chip = (aktif: boolean) =>
+  `h-8 rounded-full border px-3 text-sm max-md:min-h-11 ${aktif ? "border-hijau bg-hijau font-semibold text-white" : "bg-kartu hover:bg-krem-sorot"}`;
+
+/**
+ * Daftar Materi saya (permintaan pemilik 2026-11-17: guru 3 mapel × 3 kelas = daftar sangat panjang).
+ * Saring per mapel (bawaan: mapel materi yang terakhir diubah) & kelas; kotak cari mencari di SEMUA mapel.
+ * Bab diurutkan menurut nomornya (Bab 2 sebelum Bab 10). Ubah & Hapus di menu ⋯ (gaya riwayat sidebar).
+ */
+export function DaftarMateri({ daftar }: { daftar: BarisMateri[] }) {
+  const semuaMapel = [...new Set(daftar.map((m) => m.mapel))].sort((a, b) => a.localeCompare(b, "id"));
+  const [pilihan, setMapel] = useState(daftar[0]?.mapel ?? "");
+  const [kelas, setKelas] = useState("");
+  const [cari, setCari] = useState("");
+  // Mapel terpilih bisa hilang setelah materinya dihapus semua → pakai mapel pertama.
+  const mapel = semuaMapel.includes(pilihan) ? pilihan : semuaMapel[0];
+  const kelasMapel = KELAS.filter((k) => daftar.some((m) => m.mapel === mapel && m.kelas === k));
+  const q = cari.trim().toLowerCase();
+
+  const tampil = daftar.filter((m) => (q ? m.judul.toLowerCase().includes(q) : m.mapel === mapel && (!kelas || m.kelas === kelas)));
+  const kelompok = new Map<string, BarisMateri[]>();
+  for (const m of [...tampil].sort((a, b) => a.mapel.localeCompare(b.mapel, "id") || KELAS.indexOf(a.kelas) - KELAS.indexOf(b.kelas) || a.judul.localeCompare(b.judul, "id", { numeric: true }))) {
+    const kunci = `${m.mapel} · Kelas ${m.kelas}`;
+    kelompok.set(kunci, [...(kelompok.get(kunci) ?? []), m]);
+  }
+
+  if (!daftar.length) return null;
+  return (
+    <div className="space-y-4">
+      <input
+        type="search"
+        aria-label="Cari judul materi"
+        placeholder="Cari judul materi (semua mapel)..."
+        className="h-10 w-full rounded-lg border bg-kartu px-3 text-sm max-md:min-h-11"
+        value={cari}
+        onChange={(e) => setCari(e.target.value)}
+      />
+      {!q && semuaMapel.length > 1 && (
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Mata pelajaran">
+          {semuaMapel.map((m) => (
+            <button key={m} className={chip(m === mapel)} aria-pressed={m === mapel} onClick={() => (setMapel(m), setKelas(""))}>{m}</button>
+          ))}
+        </div>
+      )}
+      {!q && kelasMapel.length > 1 && (
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Kelas">
+          {["", ...kelasMapel].map((k) => (
+            <button key={k} className={chip(k === kelas)} aria-pressed={k === kelas} onClick={() => setKelas(k)}>{k ? `Kelas ${k}` : "Semua kelas"}</button>
+          ))}
+        </div>
+      )}
+      {q && !tampil.length && <p className="rounded-xl border bg-kartu p-4 text-sm text-pudar">Tidak ada materi berjudul &ldquo;{cari.trim()}&rdquo;.</p>}
+
+      {[...kelompok].map(([judul, isi]) => (
+        <div key={judul} className="space-y-2">
+          <h2 className="text-lg">{judul} <span className="text-sm text-pudar">({isi.length} materi)</span></h2>
+          <div className="divide-y divide-batas rounded-xl border bg-kartu">
+            {isi.map((m) => <BarisMateriSaya key={m.id} m={m} />)}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function BarisMateriSaya({ m }: { m: BarisMateri }) {
+  const [menu, setMenu] = useState(false);
+  const kotak = useRef<HTMLDivElement>(null);
+  // Menu tertutup saat klik di luar atau Esc (sama dengan menu riwayat sidebar).
+  useEffect(() => {
+    if (!menu) return;
+    const luar = (e: MouseEvent) => !kotak.current?.contains(e.target as Node) && setMenu(false);
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setMenu(false);
+    document.addEventListener("mousedown", luar);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("mousedown", luar);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [menu]);
+  const itemMenu = "flex w-full items-center rounded-md px-3 text-left text-sm hover:bg-krem-sorot h-9 max-md:min-h-11 disabled:opacity-50";
+
+  return (
+    <article className="flex items-center gap-2 p-3">
+      <div className="min-w-0 flex-1">
+        <p dir="auto" className="font-semibold">{m.judul}</p>
+        <p className="text-xs text-pudar">{m.info}</p>
+      </div>
+      {/* <a> biasa (muat penuh): Buat Soal membaca ?materi= hanya saat dimuat */}
+      <a href={`/?materi=materi-${m.id}`} className="inline-flex h-8 shrink-0 items-center rounded-lg border px-3 text-sm hover:bg-krem max-md:min-h-11">Buat soal</a>
+      <div ref={kotak} className="relative shrink-0">
+        <button
+          aria-label={`Pilihan untuk ${m.judul}`}
+          aria-haspopup="menu"
+          aria-expanded={menu}
+          onClick={() => setMenu(!menu)}
+          className={`flex h-8 w-8 items-center justify-center rounded-lg border text-pudar hover:bg-krem-sorot hover:text-tinta max-md:h-11 max-md:w-11 ${menu ? "bg-krem-sorot text-tinta" : "bg-kartu"}`}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+            <circle cx="5" cy="12" r="1.8" />
+            <circle cx="12" cy="12" r="1.8" />
+            <circle cx="19" cy="12" r="1.8" />
+          </svg>
+        </button>
+        {menu && (
+          <div role="menu" className="absolute top-full right-0 z-20 mt-1 w-40 rounded-lg border bg-kartu p-1 shadow-lg">
+            <Link role="menuitem" href={`/materi/${m.id}`} className={itemMenu}>Ubah</Link>
+            <TombolHapusMateri id={m.id} judul={m.judul} kelas={`${itemMenu} text-bahaya`} />
+          </div>
+        )}
+      </div>
+    </article>
   );
 }

@@ -194,7 +194,7 @@ const TOPIK: { id: string; judul: string; isi: React.ReactNode }[] = [
       <ul>
         <li>Set yang pernah dibuat ada di sidebar bagian <b>Riwayat</b>. <b>Lihat &amp; cari semua riwayat</b> untuk mencari dan menyaring.</li>
         <li>Tombol <b>⋯</b> (atau klik kanan) pada riwayat: <b>Ganti nama</b> atau <b>Hapus</b>.</li>
-        <li><b>Materi saya</b>: materi dikelompokkan per mapel dan kelas. <b>Ubah</b> untuk membetulkan, <b>Buat soal</b> untuk langsung membuat soal, <b>Hapus</b> untuk yang dobel. Set yang sudah jadi tidak ikut berubah.</li>
+        <li><b>Materi saya</b>: pilih mapel dan kelas di atas daftar, atau ketik judulnya di kotak cari. <b>Buat soal</b> untuk langsung membuat soal; tombol <b>⋯</b> berisi <b>Ubah</b> untuk membetulkan dan <b>Hapus</b> untuk yang dobel. Set yang sudah jadi tidak ikut berubah.</li>
       </ul>
     ),
   },

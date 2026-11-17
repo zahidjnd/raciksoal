@@ -6,7 +6,7 @@ import { BATAS_MATERI } from "@/lib/materi";
 import { wajibMasuk } from "@/lib/sesi";
 import { identitasBab, type Bab } from "@/lib/soal";
 import { Kerangka } from "../kepala";
-import { TombolHapusMateri } from "./form";
+import { DaftarMateri, type BarisMateri } from "./form";
 
 /** Peringatan sejak awal, supaya batas tidak baru ketahuan saat menekan Buat soal. */
 const HAMPIR_PENUH = 20;
@@ -17,14 +17,13 @@ export default async function MateriSaya() {
   const daftar = await db.select().from(materi).where(eq(materi.guruId, p.id)).orderBy(desc(materi.diubah));
   const sisa = BATAS_MATERI.perGuru - daftar.length;
 
-  // Kelompok per mapel & kelas (materi lama tanpa mapel = Qurdis XI, sama seperti di tempat lain).
-  const kelompok = new Map<string, typeof daftar>();
-  for (const m of daftar) {
-    const { mapel, kelas } = identitasBab(m.bab as Bab);
-    const kunci = `${mapel} · Kelas ${kelas}`;
-    kelompok.set(kunci, [...(kelompok.get(kunci) ?? []), m]);
-  }
-  const urut = [...kelompok].sort(([a], [b]) => a.localeCompare(b, "id"));
+  // Kelompok per mapel & kelas disusun di DaftarMateri (materi lama tanpa mapel = Qurdis XI, sama seperti di tempat lain).
+  const baris: BarisMateri[] = daftar.map((m) => {
+    const bab = m.bab as Bab;
+    const diubah = m.diubah.toLocaleString("id-ID", { timeZone: "Asia/Jakarta", dateStyle: "medium", timeStyle: "short" });
+    const info = `${bab.tp.length} TP · ${bab.dalil.length} ayat/hadis · ${bab.materi.join("").length.toLocaleString("id-ID")} huruf · diubah ${diubah}`;
+    return { id: m.id, judul: bab.judul, ...identitasBab(bab), info };
+  });
 
   return (
     <Kerangka p={p}>
@@ -44,33 +43,7 @@ export default async function MateriSaya() {
         )}
         {!daftar.length && <p className="rounded-xl border bg-kartu p-4 text-sm text-pudar">Belum ada materi. Tekan + Tambah materi untuk mulai.</p>}
 
-        {urut.map(([judul, isi]) => (
-          <div key={judul} className="space-y-2">
-            <h2 className="text-lg">{judul}</h2>
-            <div className="divide-y divide-batas rounded-xl border bg-kartu">
-              {isi.map((m) => {
-                const bab = m.bab as Bab;
-                return (
-                  <article key={m.id} className="flex flex-wrap items-center justify-between gap-2 p-3">
-                    <div className="min-w-0">
-                      <p className="font-semibold">{bab.judul}</p>
-                      <p className="text-xs text-pudar">
-                        {bab.tp.length} TP · {bab.dalil.length} ayat/hadis · {bab.materi.join("").length.toLocaleString("id-ID")} huruf · diubah{" "}
-                        {m.diubah.toLocaleString("id-ID", { timeZone: "Asia/Jakarta", dateStyle: "medium", timeStyle: "short" })}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {/* <a> biasa (muat penuh): Buat Soal membaca ?materi= hanya saat dimuat */}
-                      <a href={`/?materi=materi-${m.id}`} className="inline-flex h-8 items-center rounded-lg border px-3 text-sm hover:bg-krem max-md:min-h-11">Buat soal</a>
-                      <Link href={`/materi/${m.id}`} className="inline-flex h-8 items-center rounded-lg border px-3 text-sm hover:bg-krem max-md:min-h-11">Ubah</Link>
-                      <TombolHapusMateri id={m.id} judul={bab.judul} />
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+        <DaftarMateri daftar={baris} />
       </section>
     </Kerangka>
   );
