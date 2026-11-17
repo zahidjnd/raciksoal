@@ -52,6 +52,21 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.51.0 — 17 November 2026
+- **Edit bacaan**: kotak bacaan soal grup (satu teks untuk beberapa nomor, mis. mapel bahasa) punya tombol
+  **Edit bacaan**. Perubahan ikut ke semua nomor di grup itu, kisi-kisi, dan file Word.
+- **Materi saya lebih rapi**: pilihan mapel dan kelas di atas daftar, kotak cari judul (semua mapel), bab diurutkan
+  menurut nomornya (Bab 2 sebelum Bab 10), tombol Ubah & Hapus pindah ke menu ⋯, judul yang terlalu panjang dipotong
+  "…" (judul lengkap muncul saat kursor diarahkan).
+- **Simpan materi kembali ke daftar** Materi saya, dengan pesan hijau dan materi tadi disorot. Bila ada teks Arab yang
+  dibuang saat menyimpan, halaman tetap di form supaya peringatannya terbaca.
+- **Al-Quds wal Maqdisiyyah = mapel hafalan** seperti mapel Hadis: soal berayat/hadis diperbanyak (bawaan ±7 dari 10),
+  cara melengkapi, garis bawah, menebak potongan, menyusun urutan. Ayat/hadis tetap harus ada di materi.
+- **PG kompleks tepat 2 jawaban benar** untuk Ulangan Harian, AFTS, ASAS, dan Latihan (dulu 2 atau 3). Latihan TKA tetap
+  2–4. Set lama tidak berubah; Edit guru tetap boleh 2–4 kunci.
+
+---
+
 ## 0.50.0 — 16 November 2026
 **Ubah soal lebih pintar** (dari 55 riwayat Ubah soal guru di hosting):
 - **Permintaan cara tampil dalil dikenali aplikasi**: "hadisnya jadi jawaban" (pilihan A–E berupa lafaz), "melengkapi

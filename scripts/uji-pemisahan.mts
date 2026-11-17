@@ -95,7 +95,8 @@ for (const id of new Set([...riwayatA.matchAll(/href="\/\?id=(\d+)"/g)].map((x) 
   }
 }
 if (!setA) throw new Error("Guru A belum punya set soal yang selesai. Buat satu dulu.");
-const idMateriA = [...materiA.matchAll(/href="\/materi\/(\d+)"/g)].map((x) => Number(x[1]))[0];
+// 0.51.0: tautan Ubah ada di menu ⋯ (baru dirender saat dibuka); id diambil dari tautan Buat soal (/?materi=materi-N).
+const idMateriA = [...materiA.matchAll(/href="\/\?materi=materi-(\d+)"/g)].map((x) => Number(x[1]))[0];
 if (!idMateriA) throw new Error("Guru A belum punya materi. Buat satu dulu.");
 console.log(`Set A = ${setA}, materi A = ${idMateriA}\n`);
 
