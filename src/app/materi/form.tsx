@@ -211,7 +211,8 @@ function BarisMateriSaya({ m, sorot }: { m: BarisMateri; sorot: boolean }) {
   return (
     <article ref={baris} className={`flex items-center gap-2 p-3 first:rounded-t-xl last:rounded-b-xl ${sorot ? "bg-hijau-muda" : ""}`}>
       <div className="min-w-0 flex-1">
-        <p dir="auto" className="font-semibold">{m.judul}</p>
+        {/* Judul panjang dipotong "…" satu baris (permintaan pemilik); judul utuh di title & halaman Ubah. */}
+        <p dir="auto" className="truncate font-semibold" title={m.judul}>{m.judul}</p>
         <p className="text-xs text-pudar">{m.info}</p>
       </div>
       {/* <a> biasa (muat penuh): Buat Soal membaca ?materi= hanya saat dimuat */}
