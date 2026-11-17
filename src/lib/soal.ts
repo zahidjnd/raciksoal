@@ -359,6 +359,15 @@ export function pasangWacana(kisi: BarisKisi[], wacana: unknown, bab: Bab, cekAy
   return hasil;
 }
 
+/**
+ * Jumlah kunci PG kompleks harus sama dengan rencana kisi (`kunciPgk`, 17 Nov 2026: jenis madrasah tepat 2). Hanya
+ * untuk soal buatan AI (membuat set, perbaikan otomatis, Ganti), bukan periksaSoal: set lama & Edit guru tetap 2–4.
+ */
+export function cekKunciPgk(s: Soal, k?: BarisKisi): Soal {
+  if (s.bentuk !== "PGK" || !k?.kunciPgk || new Set([s.kunci].flat()).size === k.kunciPgk) return s;
+  return { ...s, peringatan: [...(s.peringatan ?? []), `Kunci PG kompleks harus tepat ${k.kunciPgk} jawaban benar.`] };
+}
+
 /** Samakan bentuk, TP, dan level soal dengan baris kisi-kisinya (kisi-kisi = rencana yang dipegang). */
 export function samakanDenganKisi(soal: Soal, k: BarisKisi): Soal {
   const { grup, wacana, ...isi } = soal; // grup & wacana hanya dari kisi-kisi, bukan dari jawaban AI

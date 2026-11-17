@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { adalahTahun, bisaDiperiksa, arabTakTerverifikasi, cariTabel, istilahArab, JOROK, tulisTabel, jawabanAman, bersihkanTanggapan, gabungBab, identitasBab, isiSama, posisiBentuk, sesuaikanBentuk, blokMj, kataTerpakai, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Soal } from "./soal.ts";
+import { adalahTahun, bisaDiperiksa, cekKunciPgk, arabTakTerverifikasi, cariTabel, istilahArab, JOROK, tulisTabel, jawabanAman, bersihkanTanggapan, gabungBab, identitasBab, isiSama, posisiBentuk, sesuaikanBentuk, blokMj, kataTerpakai, keFormatAI, korpusArab, pasangWacana, pecahBaris, periksaKisi, periksaSoal, pilihanAngka, rapikanSoal, ratakanKunci, samakanDenganKisi, susunMenjodohkan, susunMjLama, terapkanBobot, type Bab, type BarisKisi, type Soal } from "./soal.ts";
 import { bagiTahap, jumlahSoal, bersihkanInstruksi, bersihkanPengaturan, buatPenggantiPengguna, buatPermintaanUbah, caraDiminta, bentukUbahan, MINTA_BENTUK, buatPengguna, buatPermintaanKisi, buatPeriksaKembar, terapkanKembar, laranganIsian, miripIndikator, ringkasSudah, buatSistem, bersihkanIdentitas, hitungLevel, rencanaGrup, grupSet, ukuranDiminta,semesterDari, buatAnalisaMateri, MAKS_CATATAN, MAKS_INSTRUKSI, namaLevelTka, namaTujuan, pasangKunciPgk, rencanaLevel, type Pengaturan } from "./prompt.ts";
 import { bolehAkses, rapikanUsername } from "./akses.ts";
 import { headerUnduh } from "./nama-file.ts";
@@ -487,7 +487,12 @@ test("Latihan TKA: tanpa uraian, kisi-kisi meminta soal grup + wacana; grup sah 
   assert.ok(/Nomor 3[^\n]*BLOK MJ 1/.test(mintaMj) === false && /Nomor (4|4–\d+): MJ[^\n]*BLOK MJ 1/.test(mintaMj));
   assert.ok(buatPengguna({ ...p, tujuan: "PAS" }, p.jumlah, [], "", [{ ...kisiBs[0], no: 1, tp: "TP 3.1", materi: "m", indikator: "i", level: "C2", dalil_id: null, stimulus: "s" }]).includes(`Kunci: ${kisiBs[0].kunciBs}`));
   assert.ok(!buatSistem(bab).includes("2 ATAU 3") && !buatSistem(bab).includes('tepat 4 "pernyataan"')); // tidak bertabrakan dengan kisi
-  assert.deepEqual(pasangKunciPgk([{ bentuk: "PGK" }, { bentuk: "PGK" }, { bentuk: "PGK" }] as BarisKisi[], false).map((k) => k.kunciPgk), [2, 3, 2]);
+  // 17 Nov 2026: jenis madrasah tepat 2 kunci; soal AI yang berbeda dari rencana ditandai (set lama & Edit tidak lewat sini).
+  assert.deepEqual(pasangKunciPgk([{ bentuk: "PGK" }, { bentuk: "PGK" }, { bentuk: "PGK" }] as BarisKisi[], false).map((k) => k.kunciPgk), [2, 2, 2]);
+  const rencana2 = { bentuk: "PGK", kunciPgk: 2 } as BarisKisi;
+  assert.deepEqual(cekKunciPgk({ bentuk: "PGK", kunci: ["A", "C"] } as Soal, rencana2).peringatan, undefined);
+  assert.match(cekKunciPgk({ bentuk: "PGK", kunci: ["A", "B", "C"] } as Soal, rencana2).peringatan![0], /tepat 2 jawaban/);
+  assert.equal(cekKunciPgk({ bentuk: "PGK", kunci: ["A", "B", "C"] } as Soal, { bentuk: "PGK" } as BarisKisi).peringatan, undefined); // kisi lama tanpa rencana
   const barisPgk = { no: 2, bentuk: "PGK", tp: "TP 3.1", materi: "m", indikator: "i", level: "C3", dalil_id: null, stimulus: "s", kunciPgk: 4 } as BarisKisi;
   assert.ok(buatPengguna(p, p.jumlah, [], "", [barisPgk]).includes("Jumlah jawaban benar: 4"));
   // pemeriksa: PGK 4 kunci & Kategori 3 pernyataan sah; PGK 5 kunci & Kategori 2 pernyataan ditandai

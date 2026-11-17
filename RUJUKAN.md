@@ -153,6 +153,7 @@ Semua butir di ATURAN-SOAL.md bagian 2 dan 10.
 #### I1. Bentuk umum (UH, AFTS, ASAS, Latihan)
 | Aturan | Di aplikasi | Tingkat | Dasar | Catatan |
 |---|---|---|---|---|
+| PGK jenis madrasah (UH, AFTS, ASAS, Latihan): **tepat 2** jawaban benar (dulu 2–3); AI yang berbeda dari rencana = merah → perbaikan otomatis | `pasangKunciPgk`, `cekKunciPgk` | R3 | keputusan pemilik 17 Nov 2026 (set lama tidak diubah; Edit guru tetap 2–4) | Latihan TKA tetap 2–4 (D12) |
 | Bentuk yang tersedia: PG, PGK, Kategori, Menjodohkan, Isian, Uraian | `NAMA_BENTUK` | R1 + R3 | ✔ D08b hlm 47 ("esai, pilihan ganda, uraian, atau bentuk lainnya"); D05 hlm 67 (tes tertulis) | rincian tiap bentuk = R2/R3 |
 | PG 5 pilihan | `soal.ts` | R1/R2 | ✔ semua contoh D12 memakai A–E | |
 | Menjodohkan 5 premis + 6 jawaban; Isian ≤ 5 kata; Uraian berbatasan + rubrik | `soal.ts`, `buatSistem` | R2/R3 | D13 | |

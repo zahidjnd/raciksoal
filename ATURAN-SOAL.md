@@ -133,7 +133,7 @@ Bloom revisi juga membagi jenis pengetahuan: faktual, konseptual, prosedural, me
 | Bentuk | Aturan | Di aplikasi sekarang |
 |---|---|---|
 | **Pilihan Ganda (PG)** | 5 pilihan (A–E), tepat 1 benar; pengecoh homogen & masuk akal | ✅ sesuai |
-| **PG Kompleks — jawaban ganda (MCMA)** | 5 pilihan, lebih dari satu benar tapi tidak semua | ✅ **2 atau 3 benar**, sesuai soal. Petunjuk: **"(Pilih semua jawaban yang tepat)"**, tanpa menyebut jumlah (sama dengan TKA) |
+| **PG Kompleks — jawaban ganda (MCMA)** | 5 pilihan, lebih dari satu benar tapi tidak semua | ✅ **Tepat 2 benar** (17 Nov 2026, keputusan pemilik; dulu 2 atau 3; set lama tidak diubah, Edit guru tetap boleh 2–4; Latihan TKA tetap 2–4, bagian 8 no. 7). Petunjuk: **"(Pilih semua jawaban yang tepat)"**, tanpa menyebut jumlah (sama dengan TKA) |
 | **Benar/Salah gaya Al-Fatah** (0.22.0, semua jenis kecuali Latihan TKA) | satu nomor = **satu pernyataan**, siswa memilih A (Benar) / B (Salah) | ✅ AI menulis satu kalimat pernyataan (bukan kalimat tanya); **kunci tiap nomor ditentukan aplikasi** (separuh Benar, separuh Salah, urutan acak) lewat kisi-kisi. Pernyataan salah = ubah satu konsep. Tidak diberi level HOTS (kalimat pendek tanpa stimulus; HOTS dipindah ke bentuk lain, jumlah total tetap). 🔍 kunci harus Benar/Salah, kalimat tanya ditandai |
 | **Menjodohkan gaya Al-Fatah** (0.22.0, semua jenis kecuali Latihan TKA) | satu nomor = **satu pernyataan** lajur kiri; beberapa nomor berurutan dijodohkan dengan **satu daftar jawaban** (satu pengecoh) | ✅ minimal 3 nomor; blok maks 5 nomor (6–10 nomor dibagi dua blok). AI menulis pernyataan + jodohnya per nomor (+1 pengecoh); **aplikasi menyusun & mengacak daftar jawaban dan huruf kuncinya**. Tidak diberi level HOTS. Tidak bisa diganti/diubah/ditambah AI per nomor (daftar dipakai bersama): perbaiki lewat Edit (daftar jawaban yang diedit ikut ke nomor lain di blok). Skor per nomor. 🔍 kunci satu huruf, dua nomor tidak boleh berkunci sama, daftar harus punya pengecoh |
 | **PG Kompleks — Kategori (dulu "Benar/Salah")** — kini hanya **Latihan TKA** | satu stimulus + **4 pernyataan**, tiap pernyataan dinilai dengan sepasang label | ✅ label: Benar/Salah, Fakta/Opini, Sesuai/Tidak Sesuai, Tepat/Tidak Tepat, atau Didukung/Tidak Didukung, diragamkan dalam satu set. (0.19.0) **Urutan 4 pernyataan diacak aplikasi** (kunci ikut), supaya letak pernyataan salah tidak berpola; pembahasan menyebut isi pernyataan, bukan urutannya. Soal yang pembahasannya menunjuk urutan ("pernyataan pertama") tidak diacak, supaya pembahasannya tetap benar |
@@ -374,7 +374,7 @@ dokumen resmi Pusmendik tidak bisa dibuka dari sini).
    - Nama level mapel bahasa: Bahasa Arab = Pemahaman Literal / Reorganisasi / Pemahaman Inferensial;
      Bahasa Indonesia & Inggris = Pemahaman Tekstual / Pemahaman Inferensial / Evaluasi dan Apresiasi.
    - Pemeriksa aplikasi kini menerima PGK 2–4 kunci dan Kategori 3 atau 4 pernyataan untuk semua jenis (jenis lain
-     tetap diminta 2–3 kunci dan 4 pernyataan). Grup campur bentuk BELUM (perlu ubah tata letak Word per bagian bentuk).
+     tetap diminta 2 kunci (sejak 17 Nov 2026; dulu 2–3) dan 4 pernyataan). Grup campur bentuk BELUM (perlu ubah tata letak Word per bagian bentuk).
 
 ## 10. Aturan tambahan dari contoh try out TKA Biologi (disetujui 2026-10-20)
 

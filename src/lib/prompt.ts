@@ -411,7 +411,7 @@ const MJ_LAMA = `- MJ (menjodohkan): SATU nomor = SATU pasangan. Nomor-nomor MJ 
 
 const BENTUK_SOAL = `BENTUK SOAL:
 - PG: 5 pilihan, tepat 1 benar. Tulis berurutan: "pertanyaan", lalu "langkah" (langkah hitung atau alasan singkat untuk menemukan jawaban benar; wajib lengkap untuk soal hitungan), lalu "jawaban_benar" (isi jawaban benar hasil langkah itu), BARU "pilihan" (salah satunya salinan PERSIS "jawaban_benar") dan "kunci" ("A".."E", huruf pilihan yang sama dengan "jawaban_benar"). Periksa ulang hitungan sebelum menulis pilihan.
-- PGK (pilihan ganda kompleks, model jawaban ganda/MCMA): 5 pilihan, lebih dari satu benar tetapi tidak semua. Jumlah jawaban benar WAJIB sama dengan "Jumlah jawaban benar" di baris kisi-kisinya (bila tidak tertulis: 2 atau 3). Setiap pilihan satu pernyataan utuh; JANGAN pilihan gabungan seperti "(2) dan (3)" atau "1, 2, dan 4". "kunci": array huruf jawaban benar, sebanyak jumlah itu. Akhiri pertanyaan dengan "(Pilih semua jawaban yang tepat)" tanpa menyebut jumlah jawaban benar.
+- PGK (pilihan ganda kompleks, model jawaban ganda/MCMA): 5 pilihan, lebih dari satu benar tetapi tidak semua. Jumlah jawaban benar WAJIB sama dengan "Jumlah jawaban benar" di baris kisi-kisinya (bila tidak tertulis: 2). Setiap pilihan satu pernyataan utuh; JANGAN pilihan gabungan seperti "(2) dan (3)" atau "1, 2, dan 4". "kunci": array huruf jawaban benar, sebanyak jumlah itu. Akhiri pertanyaan dengan "(Pilih semua jawaban yang tepat)" tanpa menyebut jumlah jawaban benar.
 {{BS}}
 {{MJ}}
 - ISIAN (isian singkat): "pertanyaan" berisi kalimat atau pertanyaan dengan SATU bagian kosong yang ditulis "...." (empat titik). "kunci": jawaban singkat yang pas mengisi bagian kosong (satu kata, istilah, angka, atau frasa maksimal 5 kata). "kunciAlt": array 0–3 penulisan lain yang juga benar (sinonim atau ejaan lain), atau []. Hanya SATU jawaban yang mungkin benar, jadi kalimat harus cukup spesifik; jawaban TIDAK BOLEH muncul di kalimat soal. Tanpa "pilihan". Berlaku juga untuk bahasa asing (kosakata, dhamir, kata tanya, terjemah).
@@ -610,10 +610,11 @@ export function ukuranDiminta(catatan = ""): [number, number] | null {
 
 /**
  * Jumlah jawaban benar tiap soal PGK, ditentukan APLIKASI dan dicatat di kisi-kisi (`kunciPgk`), karena AI tidak
- * meragamkannya sendiri (uji set 81: keempat PGK berkunci 2 walau diminta 2–4). TKA 2–4 (contoh resmi), jenis lain 2–3.
+ * meragamkannya sendiri (uji set 81: keempat PGK berkunci 2 walau diminta 2–4). TKA 2–4 (contoh resmi), jenis lain
+ * tepat 2 (17 Nov 2026, pilihan pemilik; dulu 2–3).
  */
 export function pasangKunciPgk<T extends { bentuk: Bentuk; grup?: number | null; tp?: string; materi?: string; indikator?: string }>(kisi: T[], tka: boolean, acak: () => number = Math.random): (T & { kunciPgk?: number; jumlahPernyataan?: number; kunciBs?: string })[] {
-  const pola = tka ? [2, 3, 4] : [2, 3];
+  const pola = tka ? [2, 3, 4] : [2];
   let n = 0;
   // Benar/Salah gaya lama (0.22.0): kunci tiap nomor ditentukan aplikasi, separuh Benar separuh Salah, urutan acak
   // (AI cenderung membuat semua "Benar").
@@ -1001,7 +1002,7 @@ export function buatPermintaanUbah(p: Pengaturan, lama: Soal, semua: Soal[], kis
   const boleh = bentukUbahan(p, lama);
   // 0.46.0 (tahap 2): bentuk boleh diganti bila guru memintanya; aplikasi memindah soal ke bagian bentuk barunya.
   const aturanBentuk = boleh.length
-    ? `- Bentuk soal sekarang ${lama.bentuk} (${namaBentuk(lama.bentuk, tka)}). Ganti bentuk HANYA bila guru jelas memintanya, ke salah satu: ${boleh.map((b) => `${b} (${b === "BS" && !tka ? "Benar/Salah satu pernyataan" : namaBentuk(b, tka)})`).join(", ")}. Bila diganti: tulis kode bentuk baru di "bentuk", tulis soal LENGKAP sesuai format bentuk itu di instruksi sistem (field bentuk lama yang tidak dipakai dibuang), dan tetap menguji konsep yang sama kecuali guru meminta lain.${boleh.includes("URAIAN") && p.bobot?.URAIAN ? ` Untuk URAIAN, jumlah skor rubrik harus tepat ${p.bobot.URAIAN}.` : ""}${boleh.includes("PGK") ? " Untuk PGK, jumlah jawaban benar 2 atau 3." : ""}`
+    ? `- Bentuk soal sekarang ${lama.bentuk} (${namaBentuk(lama.bentuk, tka)}). Ganti bentuk HANYA bila guru jelas memintanya, ke salah satu: ${boleh.map((b) => `${b} (${b === "BS" && !tka ? "Benar/Salah satu pernyataan" : namaBentuk(b, tka)})`).join(", ")}. Bila diganti: tulis kode bentuk baru di "bentuk", tulis soal LENGKAP sesuai format bentuk itu di instruksi sistem (field bentuk lama yang tidak dipakai dibuang), dan tetap menguji konsep yang sama kecuali guru meminta lain.${boleh.includes("URAIAN") && p.bobot?.URAIAN ? ` Untuk URAIAN, jumlah skor rubrik harus tepat ${p.bobot.URAIAN}.` : ""}${boleh.includes("PGK") ? ` Untuk PGK, jumlah jawaban benar ${tka ? "2, 3, atau 4" : "tepat 2"}.` : ""}`
     : `- Bentuk tetap ${lama.bentuk}${grup ? " (soal grup tidak bisa diganti bentuknya; bila diminta, jelaskan di \"catatan\" bahwa bentuk bisa diganti lewat Edit atau Tulis soal sendiri)" : ""}.`;
   return `TUGAS: Anda EDITOR satu soal ${namaBentuk(lama.bentuk, tka)}. Ubah soal di bawah sesuai PERMINTAAN GURU.
 

@@ -135,6 +135,7 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
 - **Bentuk**: PG, PGK, BS, MJ, ISIAN, URAIAN (urutan baku `URUTAN_BENTUK`; jumlah selalu lewat `jumlahSoal()`). Gaya lama
   Al-Fatah untuk semua jenis kecuali TKA: B/S satu pernyataan (kunci direncanakan aplikasi), MJ satu nomor = satu pasangan
   dalam blok (`blokMj`), Ganti/Ubah/Tambah AI ditolak untuk MJ. TKA: Kategori 3 pernyataan, PGK 2–4 kunci, soal grup.
+  PGK jenis lain (17 Nov): tepat 2 kunci (`pasangKunciPgk`); beda dari kisi = merah (`cekKunciPgk`, hanya soal AI baru).
   Kunci PG diratakan aplikasi; pilihan angka diurutkan; skor diisi aplikasi (`terapkanBobot`).
 - **Soal grup** (wacana bersama, `grupSet`): Latihan TKA semua bentuk (2–3 soal); mapel bacaan `MAPEL_BACAAN` (Bahasa
   Indonesia 0.39.0, Inggris & Arab 0.47.0; Nahwu tidak) jenis lain PG saja, 3–5 soal (B/S gaya lama & blok MJ juga
