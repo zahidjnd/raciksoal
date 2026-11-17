@@ -367,7 +367,13 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
     )}
     {nomorGrup && s.wacana && (
       <section className="space-y-1 rounded-xl border border-hijau/40 bg-hijau-muda/40 p-4 text-sm" aria-label={`Wacana soal nomor ${nomorGrup}`}>
-        <p className="font-semibold">Bacalah teks berikut untuk menjawab soal nomor {nomorGrup}!</p>
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <p className="font-semibold">Bacalah teks berikut untuk menjawab soal nomor {nomorGrup}!</p>
+          {/* Bacaan bersama diedit lewat form Edit soal pertama grup (kotak bacaan di paling atas); simpanSoal menyebarkannya ke seluruh grup. */}
+          {!draf && (
+            <button className={`${tombol} print:hidden`} disabled={mengganti} onClick={() => setEdit(true)}>Edit bacaan</button>
+          )}
+        </div>
         <div><TeksBaris teks={s.wacana} jarak /></div>
       </section>
     )}
@@ -842,7 +848,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
 
       {s.grup && s.wacana !== undefined && (
         <label className="block">
-          Wacana grup (dipakai bersama semua soal di grup ini; perubahan ikut ke soal lain di grup)
+          Bacaan bersama (dipakai semua nomor di grup ini; perubahan ikut ke semua nomor itu dan file Word)
           <textarea dir="auto" rows={6} className={kotak} value={s.wacana} onChange={(e) => ubah({ wacana: e.target.value })} />
           <Pratinjau teks={s.wacana} />
         </label>
