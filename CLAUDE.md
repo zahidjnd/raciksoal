@@ -201,6 +201,13 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   `skalaPiramida`. Piramida di Word = batang mendatar, laki-laki minus + format "#,##0;#,##0"; docx menulis label
   kategori "nextTo" (tengah) → `labelPiramida` mengganti jadi "low" di XML chart (jszip). Kisi menulis stimulus
   "grafik <jenis>: ..." (tahap soal mengikuti kisi persis; tanpa itu AI menjelaskan piramida dengan kata).
+- **Bagan** (0.53.0, ATURAN-SOAL 4.10, `bagan.ts`): `[[BAGAN waktu|alur|siklus|pohon: judul]]` + tabel teks, lewat
+  jalur grafik yang sama (`JenisGrafik` memuat `JenisBagan`, `adalahBagan`, `ATURAN_GRAFIK`, `alasanGrafik` →
+  `alasanBagan`, `svgGrafik` → `svgBagan`). Lebar dasar 360 (huruf ±8 pt di satu kolom Word). Pohon tegak bila ujung
+  ≤ 4, selain itu mendatar; siklus lonjong (tinggi ditambah sampai kotak tak bertumpuk). Tanpa huruf Arab (aturan 5).
+  Word: `baganWord` = ImageRun SVG + cadangan `public/word/bagan-cadangan.png` (keputusan pemilik: tanpa library PNG;
+  bila guru WPS/Word lama mengeluh, baru pertimbangkan `@resvg/resvg-wasm`). Jendela: `isiTampil` (pohon: induk
+  baris kosong = kotak baris pertama), `bolehKosong` kolom induk, placeholder = isi yang sedang digambar.
 - **Rumus** (0.29.0): LaTeX `$...$` di teks mana pun (`POLA_RUMUS` gaya Pandoc di soal.ts: "US$ 5" bukan rumus). Web: KaTeX
   dimuat dinamis (`Rumus` di kartu-soal, salah tulis → teks asli). Word: `rumus.ts` LaTeX → OMML (subset; perintah tak
   dikenal → LaTeX dicetak apa adanya). Jawaban AI: `betulkanGarisMiring` (ai.ts) menggandakan `\` di dalam `$...$` sebelum

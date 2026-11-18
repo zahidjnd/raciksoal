@@ -52,6 +52,22 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.53.0 — 19 November 2026
+- **Bagan di soal.** Selain grafik, aplikasi kini bisa menggambar 4 jenis bagan:
+  - **garis waktu**: urutan peristiwa (SKI, Sejarah, Al-Quds);
+  - **diagram alir**: langkah atau tata cara berpanah (wudu, sholat jenazah, prosedur IPA), juga rantai sanad;
+  - **siklus**: daur yang melingkar (daur air, metamorfosis);
+  - **bagan pohon**: klasifikasi, struktur organisasi, peta konsep, pembagian (mis. Kalimat → Isim, Fi'il, Huruf).
+- AI memakai bagan bila materinya tentang urutan, tahapan, daur, atau pembagian. Sering dipakai dengan satu kotak
+  dikosongkan ("....") untuk ditanyakan isinya. Bagan selalu ditulis dengan huruf Latin (tanpa huruf Arab).
+- **Membuat sendiri**: tombol di form Edit kini bernama **📊 Grafik/Bagan**. Pilih jenis bagan, isi abu-abu
+  langsung tergambar seperti grafik. Bagan pohon: kolom kedua diisi nama induknya; induk kotak puncak dikosongkan.
+- **Di Word** bagan tampil sebagai gambar yang tajam (Word 2016 ke atas). Aplikasi yang tidak bisa menampilkannya
+  (Word lama, sebagian WPS) menunjukkan kotak pesan "Buka file dengan Microsoft Word 2016 ke atas". Untuk mengubah
+  isi bagan, ubah di web lalu unduh ulang.
+
+---
+
 ## 0.52.0 — 18 November 2026
 - **Grafik sungguhan di soal.** Untuk data angka, AI kini bisa membuat 6 jenis grafik: **garis** (perubahan dari
   waktu ke waktu), **batang** (perbandingan), **lingkaran** (persentase), **histogram** (data berkelompok),

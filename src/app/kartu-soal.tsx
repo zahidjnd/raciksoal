@@ -85,7 +85,7 @@ function Pratinjau({ teks }: { teks: string }) {
       className="mt-1 rounded-lg bg-krem px-2 py-1 [&_[data-tex]]:cursor-pointer [&_[data-tex]]:rounded [&_[data-tex]:hover]:bg-hijau-muda [&_[data-tabel]]:cursor-pointer [&_[data-tabel]:hover]:outline-2 [&_[data-tabel]:hover]:outline-hijau"
       onClick={ubahRumusDiPratinjau}
     >
-      <span className="text-sm text-pudar">Pratinjau (klik {tabel ? (adaRumus(teks) ? "rumus atau tabel/grafik" : "tabel/grafik") : "rumus"} untuk mengubahnya): </span>
+      <span className="text-sm text-pudar">Pratinjau (klik {tabel ? (adaRumus(teks) ? "rumus atau tabel/grafik/bagan" : "tabel/grafik/bagan") : "rumus"} untuk mengubahnya): </span>
       <TeksBaris teks={teks} />
     </div>
   );

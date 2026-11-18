@@ -109,13 +109,16 @@ export function bungkus(t: string, maks: number): string[] {
   let kini = "";
   for (let kata of bersih(t).split(/\s+/)) {
     while (kata.length > maks) {
-      if (kini) hasil.push(kini), (kini = "");
+      if (kini) hasil.push(kini);
+      kini = "";
       hasil.push(kata.slice(0, maks));
       kata = kata.slice(maks);
     }
-    if (!kini) kini = kata;
-    else if (kini.length + 1 + kata.length <= maks) kini += ` ${kata}`;
-    else hasil.push(kini), (kini = kata);
+    if (kini && kini.length + 1 + kata.length <= maks) kini += ` ${kata}`;
+    else {
+      if (kini) hasil.push(kini);
+      kini = kata;
+    }
   }
   if (kini) hasil.push(kini);
   return hasil.length ? hasil : [""];

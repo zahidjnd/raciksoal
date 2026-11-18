@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { adalahBagan, alasanGrafik, ATURAN_GRAFIK, contohSel, isiTampil, svgGrafik, type JenisGrafik, type Penanda } from "@/lib/grafik";
+import { adalahBagan, alasanGrafik, ATURAN_GRAFIK, isiTampil, svgGrafik, type JenisGrafik, type Penanda } from "@/lib/grafik";
 import { JOROK } from "@/lib/soal";
 
 /** Lebih dari 6 kolom tidak muat di satu kolom lembar soal Word (huruf 10 pt), sama dengan batas untuk AI. */
@@ -139,7 +139,7 @@ export function EditorTabel({ awal, grafik, selesai }: { awal: string[][] | null
                           dir="auto"
                           className={`${jenis ? "w-32" : "w-40"} rounded-lg border px-2 max-md:w-28 placeholder:italic placeholder:text-pudar/70 ${i === 0 ? "bg-krem font-semibold" : ""} ${jorok(t) ? "pl-7" : ""}`}
                           aria-label={i === 0 ? `Judul kolom ${j + 1}` : `Baris ${i} kolom ${j + 1}`}
-                          placeholder={jenis ? contohSel(jenis, i, j) || (j === ATURAN_GRAFIK[jenis].bolehKosong ? "kosong = puncak" : "") : undefined}
+                          placeholder={jenis ? tampil[i][j] || (j === ATURAN_GRAFIK[jenis].bolehKosong ? "kosong = puncak" : "") : undefined}
                           value={t.replace(JOROK, "")}
                           onChange={(e) => {
                             setPesan("");
