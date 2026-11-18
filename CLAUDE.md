@@ -187,6 +187,11 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   `pecahBaris` → `TabelData` (web) / `tabelData` (Word). Tabel Word/PPT materi → baris `|` di `office.ts`. Tidak di pilihan.
   Edit (0.41.0): klik tabel di Pratinjau / tombol "▦ Tabel" → `EditorTabel` (`editor-tabel.tsx`, `<dialog>`), letak
   lewat `cariTabel`, ditulis ulang `tulisTabel`. Sel menjorok = ≥ 3 spasi setelah "|" di teks → awalan `JOROK` di sel.
+- **Grafik** (0.52.0, ATURAN-SOAL 4.9): baris `[[GRAFIK batang|garis|lingkaran: judul]]` tepat di atas tabel → `pecahBaris`
+  mengisi `Baris.grafik`. Web: SVG hitam-putih `svgGrafik` (grafik.ts). Word: grafik ASLI `ChartRun` dari `docx/charts`
+  (sudah di library docx, jalan juga di patchDocument; tampil di WPS/LibreOffice, guru bisa "Edit Data"), lewat
+  `tabelAtauGrafik` (word.ts), sumbu sama `skala`. Bukan SVG: docx mewajibkan PNG cadangan (butuh library gambar).
+  Pemisah ribuan/desimal di Word ikut bahasa Windows pembaca. Data tak bisa digambar / ditolak docx → tabel biasa.
 - **Rumus** (0.29.0): LaTeX `$...$` di teks mana pun (`POLA_RUMUS` gaya Pandoc di soal.ts: "US$ 5" bukan rumus). Web: KaTeX
   dimuat dinamis (`Rumus` di kartu-soal, salah tulis → teks asli). Word: `rumus.ts` LaTeX → OMML (subset; perintah tak
   dikenal → LaTeX dicetak apa adanya). Jawaban AI: `betulkanGarisMiring` (ai.ts) menggandakan `\` di dalam `$...$` sebelum

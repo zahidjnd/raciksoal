@@ -21,12 +21,14 @@ import {
   WidthType,
   type ParagraphChild,
 } from "docx";
+import { ChartRun, type ChartRunOptions } from "docx/charts";
 import { ukuranWord } from "./gambar";
+import { dataGrafik, skala } from "./grafik";
 import { MAPEL_INGGRIS } from "./mapel";
 import { hariTanggal, mapelTka, NAMA_BENTUK, semesterDari, TKA, WAKTU_BAWAAN, type Pengaturan } from "./prompt";
 import { kunciSatu } from "./kunci";
 import { rumusWord } from "./rumus";
-import { dalilKunci, identitasBab, JOROK, JUMLAH_PREMIS, kategoriBaru, mjLama, paragrafArab, pecahBaris, pecahGaris, POLA_ARAB, pisahPengantar, POLA_RUMUS, tampilanDalil, type Bab, type BarisKisi, type Bentuk, type Soal } from "./soal";
+import { dalilKunci, identitasBab, JOROK, JUMLAH_PREMIS, kategoriBaru, mjLama, paragrafArab, pecahBaris, pecahGaris, POLA_ARAB, pisahPengantar, POLA_RUMUS, tampilanDalil, type Bab, type Baris, type BarisKisi, type Bentuk, type Soal } from "./soal";
 
 const PERINGATAN = "Soal dibuat AI, wajib diperiksa guru sebelum dipakai.";
 
@@ -132,7 +134,7 @@ function butirBaris(label: string, isi: string, kiri = 400, opsi: Partial<Constr
   return [
     ...(baris[0].tabel ? [bernomor(label, [], kiri, dalam)] : []), // soal yang diawali tabel: nomor di baris sendiri
     ...baris.map((b, i) =>
-      b.tabel ? tabelData(b.tabel, kiri) : i === 0 ? bernomor(label, teks(b.teks), kiri, dalam) : parBaris(b, kiri, i === akhir ? opsi : dalam),
+      b.tabel ? tabelAtauGrafik(b, kiri) : i === 0 ? bernomor(label, teks(b.teks), kiri, dalam) : parBaris(b, kiri, i === akhir ? opsi : dalam),
     ),
   ];
 }
@@ -140,7 +142,7 @@ function butirBaris(label: string, isi: string, kiri = 400, opsi: Partial<Constr
 /** Teks lanjutan tanpa nomor (sisa pertanyaan setelah kotak dalil/gambar): baris & tabel seperti butirBaris. */
 function barisLanjut(isi: string, kiri: number, opsi: Partial<ConstructorParameters<typeof Paragraph>[0] & object> = {}): (Paragraph | Table)[] {
   const baris = pecahBaris(isi);
-  return baris.map((b, i) => (b.tabel ? tabelData(b.tabel, kiri) : parBaris(b, kiri, i === baris.length - 1 ? opsi : { ...opsi, spacing: { after: 0 }, keepNext: true })));
+  return baris.map((b, i) => (b.tabel ? tabelAtauGrafik(b, kiri) : parBaris(b, kiri, i === baris.length - 1 ? opsi : { ...opsi, spacing: { after: 0 }, keepNext: true })));
 }
 
 /** Lebar satu kolom lembar soal (2 kolom) dihitung dari tepi kiri kolom, sama dengan tabel Kategori (400 + 4.600). */
@@ -176,6 +178,76 @@ function tabelData(isi: string[][], kiri: number, lebar = LEBAR_KOLOM) {
   });
 }
 
+// Grafik hitam-putih (lembar soal difotokopi), sama dengan web: tanpa isi putih karena batang/iris Word tanpa garis tepi.
+const ISI_BATANG = ["404040", "A6A6A6", "E0E0E0"];
+const PUTUS = ["solid", "dash", "shortDot"] as const;
+const TITIK = ["circle", "square", "triangle"] as const;
+const ISI_IRIS = ["404040", "BFBFBF", "808080", "E6E6E6", "1A1A1A", "A6A6A6", "595959", "D9D9D9"];
+/** Format angka Excel ber-ribuan dengan desimal secukupnya (maks 2); pemisah titik/koma ikut bahasa Windows pembaca. */
+const formatAngka = (ns: number[]) => {
+  const k = Math.min(2, Math.max(0, ...ns.map((n) => (String(Math.round(n * 100) / 100).split(".")[1] ?? "").length)));
+  return "#,##0" + (k ? "." + "0".repeat(k) : "");
+};
+
+/**
+ * Tabel bertanda grafik (0.52.0, ATURAN-SOAL 4.9) → grafik asli Word (guru bisa "Edit Data"; tampil juga di WPS/LibreOffice),
+ * sumbu & angka sama dengan web (`skala`). Tanpa penanda / data tak bisa digambar → tabel biasa.
+ */
+function tabelAtauGrafik(b: Baris, kiri: number, lebar = LEBAR_KOLOM): Paragraph | Table {
+  const isi = b.tabel!;
+  const d = b.grafik && dataGrafik(isi, b.grafik.jenis);
+  if (!b.grafik || !d) return tabelData(isi, kiri, lebar);
+  const w = Math.round((lebar - kiri) / 15); // twip → piksel (96 dpi)
+  const kecil = { size: 8 };
+  const dasar = {
+    title: b.grafik.judul ? { text: b.grafik.judul, font: { size: 10, bold: true } } : undefined,
+    font: { name: "Arial", color: "000000" },
+    chartArea: { fill: "FFFFFF", border: "none" as const },
+  };
+  let opsi: ChartRunOptions;
+  if (b.grafik.jenis === "lingkaran") {
+    const total = d.seri[0].nilai.reduce((x, y) => x + y, 0);
+    const bulat = d.seri[0].nilai.every((v) => Number.isInteger(Math.round((v / total) * 1000) / 10));
+    opsi = {
+      ...dasar,
+      type: "pie",
+      transformation: { width: w, height: Math.round(w * 0.8) },
+      categories: d.label,
+      series: [{ name: d.seri[0].nama, values: d.seri[0].nilai, colors: ISI_IRIS.slice(0, d.label.length) }],
+      legend: false,
+      dataLabels: { category: true, percentage: true, numberFormat: bulat ? "0%" : "0.0%", position: "outsideEnd", font: kecil },
+    };
+  } else {
+    const satu = d.seri.length === 1;
+    const semua = d.seri.flatMap((s) => s.nilai);
+    const { a, b: atas, langkah } = skala(Math.min(...semua), Math.max(...semua), b.grafik.jenis === "batang");
+    const nilaiTampil = d.label.length * d.seri.length <= 24; // sama dengan web
+    const label = { value: true, numberFormat: formatAngka(semua), font: { size: 7 } };
+    const umum = {
+      ...dasar,
+      transformation: { width: w, height: Math.round(w * 0.68) },
+      categories: d.label,
+      legend: satu ? (false as const) : { position: "top" as const, font: kecil },
+      categoryAxis: { title: d.sumbuX ? { text: d.sumbuX, font: kecil } : undefined, font: kecil },
+      valueAxis: { minimum: a, maximum: atas, interval: langkah, numberFormat: formatAngka([a, langkah]), title: satu ? { text: d.seri[0].nama, font: kecil } : undefined, font: kecil },
+    };
+    opsi =
+      b.grafik.jenis === "batang"
+        ? { ...umum, type: "column", gapWidth: 60, series: d.seri.map((s, k) => ({ name: s.nama, values: s.nilai, color: ISI_BATANG[k] })), dataLabels: nilaiTampil ? label : undefined }
+        : {
+            ...umum,
+            type: "line",
+            series: d.seri.map((s, k) => ({ name: s.nama, values: s.nilai, color: "000000", line: { color: "000000", width: 1.5, dash: PUTUS[k] }, markers: { shape: TITIK[k], size: 5 } })),
+            dataLabels: nilaiTampil && satu ? { ...label, position: "above" } : undefined,
+          };
+  }
+  try {
+    return par([new ChartRun(opsi)], { indent: { left: kiri }, spacing: { before: 40, after: 60 } });
+  } catch {
+    return tabelData(isi, kiri, lebar); // pemeriksa docx menolak data → unduhan tetap jalan, tampil tabel
+  }
+}
+
 /** Teks yang boleh berisi tabel (pembahasan di file kunci): `awal` (mis. "Pembahasan: ") di depan paragraf pertama. */
 function teksCampur(awal: ParagraphChild[], isi: string, kiri: number, lebar: number): (Paragraph | Table)[] {
   const hasil: (Paragraph | Table)[] = [];
@@ -188,7 +260,7 @@ function teksCampur(awal: ParagraphChild[], isi: string, kiri: number, lebar: nu
     if (!b.tabel) kumpul.push(b.teks);
     else {
       if (kumpul.length || !hasil.length) tutup();
-      hasil.push(tabelData(b.tabel, kiri, lebar));
+      hasil.push(tabelAtauGrafik(b, kiri, lebar));
     }
   }
   if (kumpul.length || !hasil.length) tutup();
@@ -252,7 +324,7 @@ export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tangga
         // Wacana boleh terpotong di tengah; hanya TIGA baris terakhirnya (+ jarak) ditahan bersama soal pertama grup.
         const barisWacana = pecahBaris(s.wacana);
         barisWacana.forEach((baris, n) =>
-          isi.push(baris.tabel ? tabelData(baris.tabel, 200) : parBaris(baris, 200, { keepNext: n >= barisWacana.length - TAHAN_WACANA, spacing: { after: 40 } })),
+          isi.push(baris.tabel ? tabelAtauGrafik(baris, 200) : parBaris(baris, 200, { keepNext: n >= barisWacana.length - TAHAN_WACANA, spacing: { after: 40 } })),
         );
         isi.push(par([], { keepNext: true, spacing: { after: 40 } }));
       }

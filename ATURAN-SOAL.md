@@ -209,7 +209,7 @@ mengatur skor). Persen level dipilih supaya jumlahnya persis surat (34/43/23 dan
    guru (Equation) ikut terbaca; rumus di PDF belum.
 9. ✅ 🔍 (0.52.0, keputusan pemilik 2026-11-18) **Grafik sungguhan.** AI tidak menggambar: AI menulis **tabel data**
    (aturan no. 7) dan satu baris penanda tepat di atasnya, `[[GRAFIK batang: judul]]` / `garis` / `lingkaran`;
-   aplikasi menggambar tabel itu sebagai grafik di web dan Word (Word 2016 ke atas). Pilihan jenis: **garis** =
+   aplikasi menggambar tabel itu sebagai grafik di web dan Word (di Word = grafik asli, angkanya bisa diubah lewat "Edit Data"). Pilihan jenis: **garis** =
    perubahan dari waktu ke waktu, **batang** = perbandingan antarkelompok, **lingkaran** = bagian dari keseluruhan.
    Kolom pertama = label (bulan, kelas, wilayah), kolom berikutnya = angka, **maks 3 kelompok data** (lingkaran: 1),
    2–12 baris data (lingkaran 2–8); angka boleh bergaya Indonesia ("30.000", "2,5", "45%"). Grafik hitam-putih

@@ -1,6 +1,7 @@
 /**
  * Grafik data (0.52.0, ATURAN-SOAL 4.9): baris penanda "[[GRAFIK batang|garis|lingkaran: judul]]" tepat di atas tabel
- * "| a | b |" → tabel itu digambar sebagai grafik SVG. AI hanya menulis data; SVG yang sama dipakai web & Word.
+ * "| a | b |" → tabel itu digambar sebagai grafik SVG di web; Word memakai grafik asli (`tabelAtauGrafik`, word.ts)
+ * dengan data (`dataGrafik`) & sumbu (`skala`) yang sama. AI hanya menulis data.
  * Hitam-putih (lembar soal difotokopi): kelompok data dibedakan isi hitam/abu/putih atau garis utuh/putus/titik.
  */
 export type JenisGrafik = "batang" | "garis" | "lingkaran";
