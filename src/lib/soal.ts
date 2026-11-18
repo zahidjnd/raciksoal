@@ -1,7 +1,7 @@
 // Pemeriksaan hasil AI. Tanpa import "@/..." supaya bisa dites langsung: npm test
 import { BATAS_GAMBAR, type GambarBab } from "./gambar.ts";
 import { MAPEL_SEJARAH } from "./mapel.ts";
-import { bacaPenanda, dataGrafik, type Penanda } from "./grafik.ts";
+import { alasanGrafik, bacaPenanda, type Penanda } from "./grafik.ts";
 
 export type Bentuk = "PG" | "PGK" | "BS" | "MJ" | "ISIAN" | "URAIAN";
 
@@ -1415,8 +1415,8 @@ export function periksaGrafik(s: Pick<Soal, "wacana" | "pertanyaan" | "pembahasa
   const baris = [s.wacana, s.pertanyaan, s.pembahasan].flatMap((t) => pecahBaris(String(t ?? "")));
   if (baris.some((b) => !b.tabel && bacaPenanda(b.teks)))
     w.push('Ada baris "[[GRAFIK ...]]" tanpa tabel data tepat di bawahnya, jadi tertulis apa adanya. Hapus baris itu, atau tulis tabelnya tepat di bawahnya.');
-  if (baris.some((b) => b.grafik && !dataGrafik(b.tabel!, b.grafik.jenis)))
-    w.push("Data grafik tidak bisa digambar, jadi tampil sebagai tabel. Kolom pertama = label, kolom lain hanya angka (maks 3 kolom angka, 2–12 baris; grafik lingkaran 1 kolom angka, 2–8 baris). Perbaiki lewat Ubah tabel, atau pilih tampil sebagai Tabel.");
+  const alasan = baris.map((b) => b.grafik && alasanGrafik(b.tabel!, b.grafik.jenis)).find(Boolean);
+  if (alasan) w.push(`Data grafik tidak bisa digambar, jadi tampil sebagai tabel: ${alasan} Perbaiki lewat Ubah tabel (klik tabelnya di Edit), atau pilih tampil sebagai Tabel.`);
   if ([...(s.pilihan ?? []), ...(s.pernyataan ?? [])].some((t) => /\[\[\s*GRAFIK/i.test(String(t ?? ""))))
     w.push("Grafik tidak bisa ditampilkan di pilihan/pernyataan. Pindahkan grafiknya ke pertanyaan.");
   return w;

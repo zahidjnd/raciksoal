@@ -30,16 +30,45 @@ export function bacaAngka(s: string): number {
 
 const bersih = (s: string) => String(s ?? "").replace(/[\t$]/g, "").trim();
 
-/** Tabel (baris pertama = judul kolom) → data grafik; null bila tidak bisa digambar (tetap tampil sebagai tabel). */
-export function dataGrafik(isi: string[][], jenis: JenisGrafik): DataGrafik | null {
+/**
+ * Aturan tiap jenis: banyak kolom angka & baris data, angka minus, dan CONTOH (isi abu-abu jendela grafik, 0.52.0:
+ * grafik langsung tergambar sebelum guru mengisi; contoh tidak pernah tersimpan).
+ */
+export const ATURAN_GRAFIK: Record<JenisGrafik, { nama: string; kolom: [number, number]; baris: [number, number]; tanpaMinus?: boolean; contoh: string[][] }> = {
+  batang: { nama: "Grafik batang", kolom: [1, 3], baris: [2, 12], contoh: [["Kelas", "Jumlah siswa"], ["X", "30"], ["XI", "45"], ["XII", "25"]] },
+  garis: { nama: "Grafik garis", kolom: [1, 3], baris: [2, 12], contoh: [["Bulan", "Suhu (°C)"], ["Jan", "28"], ["Feb", "30"], ["Mar", "27"], ["Apr", "32"]] },
+  lingkaran: { nama: "Grafik lingkaran", kolom: [1, 1], baris: [2, 8], tanpaMinus: true, contoh: [["Pekerjaan", "Jumlah"], ["Petani", "45"], ["Pedagang", "30"], ["Lainnya", "25"]] },
+};
+
+/** Isi contoh satu sel (baris 0 = judul kolom). Di luar ukuran contoh: "Data n" / angka contoh. */
+export function contohSel(jenis: JenisGrafik, i: number, j: number): string {
+  const c = ATURAN_GRAFIK[jenis].contoh;
+  return c[i]?.[j] ?? (i === 0 ? `Kelompok ${j}` : j === 0 ? `Data ${i}` : String(10 + ((i * 7 + j * 5) % 25)));
+}
+
+/** Kenapa tabel ini tidak bisa digambar (kalimat untuk guru, menyebut letak sel), atau null bila bisa. */
+export function alasanGrafik(isi: string[][], jenis: JenisGrafik): string | null {
+  const a = ATURAN_GRAFIK[jenis];
   const [judul, ...badan] = isi;
   const kolom = (judul?.length ?? 0) - 1;
-  const maksBaris = jenis === "lingkaran" ? 8 : 12;
-  if (badan.length < 2 || badan.length > maksBaris || kolom < 1 || kolom > (jenis === "lingkaran" ? 1 : 3)) return null;
+  if (kolom < a.kolom[0] || kolom > a.kolom[1])
+    return a.kolom[0] === a.kolom[1] ? `${a.nama} memakai tepat ${a.kolom[0]} kolom angka (sekarang ${Math.max(kolom, 0)}).` : `Isi ${a.kolom[0]}–${a.kolom[1]} kolom angka (sekarang ${Math.max(kolom, 0)}).`;
+  if (badan.length < a.baris[0] || badan.length > a.baris[1]) return `Isi ${a.baris[0]}–${a.baris[1]} baris data (sekarang ${badan.length}).`;
+  for (const [i, b] of badan.entries())
+    for (let j = 1; j <= kolom; j++) {
+      const n = bacaAngka(b[j]);
+      if (!Number.isFinite(n)) return `Baris ${i + 1} kolom ${j + 1} harus angka.`;
+      if (a.tanpaMinus && n < 0) return `Baris ${i + 1} kolom ${j + 1}: ${a.nama.toLowerCase()} tidak memakai angka minus.`;
+    }
+  if (jenis === "lingkaran" && !badan.some((b) => bacaAngka(b[1]) > 0)) return "Minimal satu angka lebih dari 0.";
+  return null;
+}
+
+/** Tabel (baris pertama = judul kolom) → data grafik; null bila tidak bisa digambar (tetap tampil sebagai tabel). */
+export function dataGrafik(isi: string[][], jenis: JenisGrafik): DataGrafik | null {
+  if (alasanGrafik(isi, jenis)) return null;
+  const [judul, ...badan] = isi;
   const seri = judul.slice(1).map((nama, k) => ({ nama: bersih(nama), nilai: badan.map((b) => bacaAngka(b[k + 1])) }));
-  const semua = seri.flatMap((s) => s.nilai);
-  if (!semua.every(Number.isFinite)) return null;
-  if (jenis === "lingkaran" && (semua.some((n) => n < 0) || !semua.some((n) => n > 0))) return null;
   return { sumbuX: bersih(judul[0]), label: badan.map((b) => bersih(b[0])), seri };
 }
 
