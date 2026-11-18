@@ -187,7 +187,7 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   `pecahBaris` → `TabelData` (web) / `tabelData` (Word). Tabel Word/PPT materi → baris `|` di `office.ts`. Tidak di pilihan.
   Edit (0.41.0): klik tabel di Pratinjau / tombol "▦ Tabel" → `EditorTabel` (`editor-tabel.tsx`, `<dialog>`), letak
   lewat `cariTabel`, ditulis ulang `tulisTabel`. Sel menjorok = ≥ 3 spasi setelah "|" di teks → awalan `JOROK` di sel.
-- **Grafik** (0.52.0, ATURAN-SOAL 4.9): baris `[[GRAFIK batang|garis|lingkaran: judul]]` tepat di atas tabel → `pecahBaris`
+- **Grafik** (0.52.0, ATURAN-SOAL 4.9): baris `[[GRAFIK batang|garis|lingkaran|histogram|pencar|piramida: judul]]` di atas tabel → `pecahBaris`
   mengisi `Baris.grafik`. Web: SVG hitam-putih `svgGrafik` (grafik.ts). Word: grafik ASLI `ChartRun` dari `docx/charts`
   (sudah di library docx, jalan juga di patchDocument; tampil di WPS/LibreOffice, guru bisa "Edit Data"), lewat
   `tabelAtauGrafik` (word.ts), sumbu sama `skala`. Bukan SVG: docx mewajibkan PNG cadangan (butuh library gambar).
@@ -196,6 +196,11 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   ±1 grafik per 9 soal, dari data materi (Ekonomi) atau data karangan wajar (Biologi). `POLA_SISIP` tidak menyentuh penanda.
   Edit: `cariTabel` mengembalikan `grafik` & `awal` mulai dari baris penanda; `EditorTabel` punya "Tampil sebagai" +
   judul + pratinjau `svgGrafik`; tombol "📊 Grafik" = `sisipTabel(e, true)`. Pemeriksa `periksaGrafik` (soal.ts).
+  Aturan & contoh per jenis = `ATURAN_GRAFIK` (grafik.ts); sel kosong di jendela = `contohSel` (placeholder, ikut
+  tergambar, Masukkan ditolak); `alasanGrafik` = pesan letak sel. Sumbu bersama web/Word: `skala`, `skalaPencar`,
+  `skalaPiramida`. Piramida di Word = batang mendatar, laki-laki minus + format "#,##0;#,##0"; docx menulis label
+  kategori "nextTo" (tengah) → `labelPiramida` mengganti jadi "low" di XML chart (jszip). Kisi menulis stimulus
+  "grafik <jenis>: ..." (tahap soal mengikuti kisi persis; tanpa itu AI menjelaskan piramida dengan kata).
 - **Rumus** (0.29.0): LaTeX `$...$` di teks mana pun (`POLA_RUMUS` gaya Pandoc di soal.ts: "US$ 5" bukan rumus). Web: KaTeX
   dimuat dinamis (`Rumus` di kartu-soal, salah tulis → teks asli). Word: `rumus.ts` LaTeX → OMML (subset; perintah tak
   dikenal → LaTeX dicetak apa adanya). Jawaban AI: `betulkanGarisMiring` (ai.ts) menggandakan `\` di dalam `$...$` sebelum

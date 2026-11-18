@@ -849,7 +849,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
       <button
         type="button"
         className="rounded-lg border h-10 px-3"
-        title="Sisipkan grafik batang/garis/lingkaran dari data angka (kursor di dalam tabel = jadikan tabel itu grafik)"
+        title="Sisipkan grafik (batang, garis, lingkaran, histogram, pencar, piramida penduduk) dari data angka (kursor di dalam tabel = jadikan tabel itu grafik)"
         onMouseDown={(e) => e.preventDefault()}
         onClick={(e) => sisipTabel(e, true)}
       >

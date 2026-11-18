@@ -210,15 +210,20 @@ mengatur skor). Persen level dipilih supaya jumlahnya persis surat (34/43/23 dan
 9. ✅ 🔍 (0.52.0, keputusan pemilik 2026-11-18) **Grafik sungguhan.** AI tidak menggambar: AI menulis **tabel data**
    (aturan no. 7) dan satu baris penanda tepat di atasnya, `[[GRAFIK batang: judul]]` / `garis` / `lingkaran`;
    aplikasi menggambar tabel itu sebagai grafik di web dan Word (di Word = grafik asli, angkanya bisa diubah lewat "Edit Data"). Pilihan jenis: **garis** =
-   perubahan dari waktu ke waktu, **batang** = perbandingan antarkelompok, **lingkaran** = bagian dari keseluruhan.
+   perubahan dari waktu ke waktu, **batang** = perbandingan antarkelompok, **lingkaran** = bagian dari keseluruhan,
+   **histogram** = frekuensi data berkelompok (kolom pertama kelas interval, batang rapat), **pencar** = hubungan
+   dua besaran (kolom pertama juga angka = sumbu x, 3–20 baris), **piramida** = piramida penduduk (kolom pertama
+   kelompok umur, tepat 2 kolom angka: laki-laki ke kiri, perempuan ke kanan, umur termuda di bawah, 2–18 baris).
    Kolom pertama = label (bulan, kelas, wilayah), kolom berikutnya = angka, **maks 3 kelompok data** (lingkaran: 1),
-   2–12 baris data (lingkaran 2–8); angka boleh bergaya Indonesia ("30.000", "2,5", "45%"). Grafik hitam-putih
+   2–12 baris data (lingkaran 2–8; lingkaran, histogram, piramida tanpa angka minus); angka boleh bergaya Indonesia ("30.000", "2,5", "45%"). Grafik hitam-putih
    (lembar soal difotokopi): kelompok dibedakan isi hitam/abu/putih atau garis utuh/putus/titik, bukan warna.
    Boleh di pertanyaan, wacana, dan pembahasan (seperti tabel); tidak di pilihan. Kunci soal C3 ke atas tidak boleh
    terbaca langsung dari grafik tanpa diolah. 🔍 Data grafik yang tidak bisa digambar (bukan angka, kebanyakan
    kolom/baris) tetap tampil sebagai tabel biasa dan soalnya diberi peringatan (juga penanda tanpa tabel dan grafik
    di pilihan). Guru mengubah data, jenis, dan judul grafik lewat jendela "Ubah tabel/grafik" (klik grafik di
-   Pratinjau atau tombol "📊 Grafik"), termasuk mengubahnya kembali menjadi tabel. Belum: grafik fungsi, piramida penduduk, grafik di pilihan jawaban.
+   Pratinjau atau tombol "📊 Grafik"), termasuk mengubahnya kembali menjadi tabel. Jendelanya menampilkan contoh
+   abu-abu per jenis sehingga grafik langsung tergambar sebelum diisi (contoh tidak pernah tersimpan). Belum: grafik
+   fungsi, kurva permintaan–penawaran, grafik v–t, ogive, grafik di pilihan jawaban.
 
 ### 4a. Nilai Kurikulum Berbasis Cinta (Kemenag 2025)
 Panduan KBC (Kepdirjen Pendis 6077/2025) memuat **Panca Cinta**: Cinta Allah dan Rasul-Nya, Cinta Ilmu,

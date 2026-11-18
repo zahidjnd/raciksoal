@@ -2,6 +2,7 @@
 // (public/word/template-soal.docx, dibuat oleh scripts/buat-template-word.py), jadi kopnya persis aslinya.
 // Kunci jawaban dan kisi-kisi untuk guru dibuat sebagai dokumen terpisah.
 import { readFileSync } from "node:fs";
+import JSZip from "jszip";
 import path from "node:path";
 import {
   AlignmentType,
@@ -23,7 +24,7 @@ import {
 } from "docx";
 import { ChartRun, type ChartRunOptions } from "docx/charts";
 import { ukuranWord } from "./gambar";
-import { dataGrafik, skala } from "./grafik";
+import { bacaAngka, dataGrafik, skala, skalaPencar, skalaPiramida } from "./grafik";
 import { MAPEL_INGGRIS } from "./mapel";
 import { hariTanggal, mapelTka, NAMA_BENTUK, semesterDari, TKA, WAKTU_BAWAAN, type Pengaturan } from "./prompt";
 import { kunciSatu } from "./kunci";
@@ -218,34 +219,94 @@ function tabelAtauGrafik(b: Baris, kiri: number, lebar = LEBAR_KOLOM): Paragraph
       dataLabels: { category: true, percentage: true, numberFormat: bulat ? "0%" : "0.0%", position: "outsideEnd", font: kecil },
     };
   } else {
+    const jenis = b.grafik.jenis;
     const satu = d.seri.length === 1;
     const semua = d.seri.flatMap((s) => s.nilai);
-    const { a, b: atas, langkah } = skala(Math.min(...semua), Math.max(...semua), b.grafik.jenis === "batang");
+    const { a, b: atas, langkah } = skala(jenis === "piramida" ? 0 : Math.min(...semua), Math.max(...semua), jenis !== "garis" && jenis !== "pencar");
     const nilaiTampil = d.label.length * d.seri.length <= 24; // sama dengan web
     const label = { value: true, numberFormat: formatAngka(semua), font: { size: 7 } };
+    const judulSumbu = (t: string) => (t ? { text: t, font: kecil } : undefined);
     const umum = {
       ...dasar,
-      transformation: { width: w, height: Math.round(w * 0.68) },
+      transformation: { width: w, height: Math.round(w * (jenis === "piramida" ? 0.8 : 0.68)) },
       categories: d.label,
       legend: satu ? (false as const) : { position: "top" as const, font: kecil },
-      categoryAxis: { title: d.sumbuX ? { text: d.sumbuX, font: kecil } : undefined, font: kecil },
-      valueAxis: { minimum: a, maximum: atas, interval: langkah, numberFormat: formatAngka([a, langkah]), title: satu ? { text: d.seri[0].nama, font: kecil } : undefined, font: kecil },
+      categoryAxis: { title: judulSumbu(d.sumbuX), font: kecil },
+      valueAxis: { minimum: a, maximum: atas, interval: langkah, numberFormat: formatAngka([a, langkah]), title: judulSumbu(satu ? d.seri[0].nama : ""), font: kecil },
     };
-    opsi =
-      b.grafik.jenis === "batang"
-        ? { ...umum, type: "column", gapWidth: 60, series: d.seri.map((s, k) => ({ name: s.nama, values: s.nilai, color: ISI_BATANG[k] })), dataLabels: nilaiTampil ? label : undefined }
-        : {
-            ...umum,
-            type: "line",
-            series: d.seri.map((s, k) => ({ name: s.nama, values: s.nilai, color: "000000", line: { color: "000000", width: 1.5, dash: PUTUS[k] }, markers: { shape: TITIK[k], size: 5 } })),
-            dataLabels: nilaiTampil && satu ? { ...label, position: "above" } : undefined,
-          };
+    if (jenis === "pencar") {
+      const xs = d.label.map(bacaAngka);
+      const sx = skalaPencar(xs);
+      const sy = skalaPencar(semua);
+      opsi = {
+        ...dasar,
+        type: "scatter",
+        transformation: umum.transformation,
+        legend: umum.legend,
+        series: d.seri.map((s, k) => ({ name: s.nama, color: "000000", markers: { shape: TITIK[k], size: 5 }, points: s.nilai.map((y, i) => ({ x: xs[i], y })) })),
+        xAxis: { minimum: sx.a, maximum: sx.b, interval: sx.langkah, numberFormat: formatAngka([sx.a, sx.langkah]), title: judulSumbu(d.sumbuX), font: kecil },
+        yAxis: { minimum: sy.a, maximum: sy.b, interval: sy.langkah, numberFormat: formatAngka([sy.a, sy.langkah]), title: judulSumbu(satu ? d.seri[0].nama : ""), font: kecil },
+      };
+    } else if (jenis === "piramida") {
+      // Batang mendatar: kelompok pertama dibuat minus supaya ke kiri; format "#,##0;#,##0" menampilkannya tanpa tanda minus.
+      // Umur termuda di bawah (kategori pertama Word = paling bawah). Label umur dipindah ke tepi kiri oleh `labelPiramida`.
+      const mutlak = (f: string) => `${f};${f}`;
+      const sp = skalaPiramida(Math.max(...semua));
+      const umur = (t: string) => Number(/\d+/.exec(t)?.[0] ?? NaN);
+      const balik = umur(d.label[0]) > umur(d.label[d.label.length - 1]);
+      const urut = <T,>(x: T[]) => (balik ? [...x].reverse() : x);
+      opsi = {
+        ...umum,
+        type: "bar",
+        gapWidth: 20,
+        overlap: 100,
+        categories: urut(d.label),
+        legend: { position: "top", font: kecil },
+        categoryAxis: { font: kecil },
+        valueAxis: { minimum: -sp.b, maximum: sp.b, interval: sp.tiap, numberFormat: mutlak(formatAngka([sp.tiap])), font: kecil },
+        series: d.seri.map((s, k) => ({ name: s.nama, values: urut(s.nilai.map((v) => (k === 0 ? -v : v))), color: ISI_BATANG[k] })),
+        dataLabels: d.label.length <= 10 ? { ...label, numberFormat: mutlak(label.numberFormat) } : undefined,
+      };
+    } else
+      opsi =
+        jenis === "garis"
+          ? {
+              ...umum,
+              type: "line",
+              series: d.seri.map((s, k) => ({ name: s.nama, values: s.nilai, color: "000000", line: { color: "000000", width: 1.5, dash: PUTUS[k] }, markers: { shape: TITIK[k], size: 5 } })),
+              dataLabels: nilaiTampil && satu ? { ...label, position: "above" } : undefined,
+            }
+          : {
+              // batang & histogram (histogram: celah tipis supaya batang abu tetap terpisah, Word tanpa garis tepi batang)
+              ...umum,
+              type: "column",
+              gapWidth: jenis === "histogram" ? 4 : 60,
+              series: d.seri.map((s, k) => ({ name: s.nama, values: s.nilai, color: jenis === "histogram" ? "A6A6A6" : ISI_BATANG[k] })),
+              dataLabels: nilaiTampil ? label : undefined,
+            };
   }
   try {
     return par([new ChartRun(opsi)], { indent: { left: kiri }, spacing: { before: 40, after: 60 } });
   } catch {
     return tabelData(isi, kiri, lebar); // pemeriksa docx menolak data → unduhan tetap jalan, tampil tabel
   }
+}
+
+/**
+ * Piramida penduduk (0.52.0): library docx selalu menulis label kategori "nextTo" (menempel garis nol = di tengah,
+ * menumpuk di atas batang). Di grafik batang mendatar (hanya dipakai piramida) label sumbu kategori dipindah ke "low"
+ * (tepi kiri). File tanpa grafik seperti itu dikembalikan apa adanya.
+ */
+async function labelPiramida(buf: Buffer): Promise<Buffer> {
+  const zip = await JSZip.loadAsync(buf);
+  let ubah = false;
+  for (const f of zip.file(/^word\/charts\/chart\d+\.xml$/)) {
+    const xml = await f.async("string");
+    if (!xml.includes('<c:barDir val="bar"/>')) continue;
+    zip.file(f.name, xml.replace(/<c:catAx>[\s\S]*?<\/c:catAx>/, (ax) => ax.replace('<c:tickLblPos val="nextTo"/>', '<c:tickLblPos val="low"/>')));
+    ubah = true;
+  }
+  return ubah ? zip.generateAsync({ type: "nodebuffer", compression: "DEFLATE" }) : buf;
 }
 
 /** Teks yang boleh berisi tabel (pembahasan di file kunci): `awal` (mis. "Pembahasan: ") di depan paragraf pertama. */
@@ -358,7 +419,7 @@ export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tangga
 
   const { judul, tp } = judulAsesmen(p, tanggal, bab);
   const { mapel, kelas } = identitasBab(bab);
-  return patchDocument({
+  const hasil = await patchDocument({
     outputType: "nodebuffer",
     data: aset("template-soal.docx"),
     keepOriginalStyles: true, // judul & tahun mengikuti huruf asli di kop
@@ -373,6 +434,7 @@ export async function buatWordSoal(soal: Soal[], bab: Bab, p: Pengaturan, tangga
       isi: { type: PatchType.DOCUMENT, children: isi },
     },
   });
+  return labelPiramida(hasil);
 }
 
 const sel = (anak: Paragraph[], lebar: number) =>
@@ -578,7 +640,7 @@ export function buatWordKunci(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Da
       styles: { default: { document: { run: { font: FONT, size: UKURAN } } } },
       sections: [{ properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 720, right: 850, bottom: 900, left: 850 } } }, children: isi }],
     }),
-  );
+  ).then(labelPiramida);
 }
 
 /**

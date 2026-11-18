@@ -83,6 +83,9 @@ export function EditorTabel({ awal, grafik, selesai }: { awal: string[][] | null
               <option value="batang">Grafik batang (perbandingan)</option>
               <option value="garis">Grafik garis (perubahan waktu)</option>
               <option value="lingkaran">Grafik lingkaran (persentase)</option>
+              <option value="histogram">Histogram (data berkelompok)</option>
+              <option value="pencar">Diagram pencar (hubungan dua besaran)</option>
+              <option value="piramida">Piramida penduduk</option>
             </select>
           </label>
           {jenis && (

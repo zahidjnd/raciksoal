@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { bacaAngka, bacaPenanda, dataGrafik, skala, svgGrafik } from "./grafik.ts";
+import { alasanGrafik, ATURAN_GRAFIK, bacaAngka, bacaPenanda, contohSel, dataGrafik, skala, skalaPencar, skalaPiramida, svgGrafik } from "./grafik.ts";
 import { cariTabel, pecahBaris, periksaGrafik } from "./soal.ts";
 
 const SOAL = "Perhatikan grafik berikut!\n[[GRAFIK batang: Penjualan buku]]\n| Bulan | Kelas X | Kelas XI |\n|---|---|---|\n| Jan | 40 | 35 |\n| Feb | 65 | 50 |\n| Mar | 30 | 45 |\nSelisih terbesar ....";
@@ -77,4 +77,33 @@ test("periksaGrafik: penanda tanpa tabel, data tak bisa digambar, grafik di pili
   assert.match(periksaGrafik({ pertanyaan: "[[GRAFIK garis: Suhu]]\nSuhu tertinggi ....", pembahasan: "" })[0], /tanpa tabel/);
   assert.match(periksaGrafik({ pertanyaan: "[[GRAFIK batang]]\n| A | B |\n| x | baik |\n| y | cukup |", pembahasan: "" })[0], /tidak bisa digambar/);
   assert.match(periksaGrafik({ pertanyaan: "Grafik yang tepat?", pembahasan: "", pilihan: ["[[GRAFIK batang]]", "b"] })[0], /pilihan/);
+});
+
+test("jenis baru: histogram, pencar, piramida", () => {
+  assert.deepEqual(bacaPenanda("[[GRAFIK piramida: Penduduk]]"), { jenis: "piramida", judul: "Penduduk" });
+  const histo = [["Nilai", "Frekuensi"], ["51–60", "4"], ["61–70", "9"], ["71–80", "12"]];
+  const h = svgGrafik(histo, { jenis: "histogram", judul: "" })!;
+  assert.equal(h.match(/<rect /g)!.length, 1 + 3, "latar + 3 batang rapat");
+  assert.match(alasanGrafik([...histo.map((b) => [...b, "1"])], "histogram")!, /tepat 1 kolom/);
+  // pencar: kolom pertama juga harus angka
+  assert.match(alasanGrafik([["Jam", "Nilai"], ["satu", "55"], ["2", "62"], ["3", "70"]], "pencar")!, /Baris 1 kolom 1 harus angka/);
+  const p = svgGrafik([["Jam", "Nilai"], ["1", "55"], ["2", "62"], ["3", "70"]], { jenis: "pencar", judul: "" })!;
+  assert.equal(p.match(/<circle /g)!.length, 3);
+  assert.equal(p.match(/<polyline /g), null, "titik tanpa garis");
+  // piramida: tepat 2 kolom, tanpa minus; 10 batang (5 umur × 2)
+  const pir = [["Umur", "L", "P"], ["0–14", "12", "11"], ["15–29", "10", "10"], ["30–44", "8", "8"], ["45–59", "5", "6"], ["60+", "3", "4"]];
+  assert.equal(svgGrafik(pir, { jenis: "piramida", judul: "" })!.match(/<rect /g)!.length, 1 + 2 + 10, "latar + 2 keterangan + 10 batang");
+  assert.match(alasanGrafik([["Umur", "L"], ["0–14", "1"], ["15+", "2"]], "piramida")!, /tepat 2 kolom/);
+  assert.match(alasanGrafik([["Umur", "L", "P"], ["0–14", "-1", "2"], ["15+", "2", "2"]], "piramida")!, /minus/);
+});
+
+test("contohSel & skala bantu: contoh selalu tergambar; ruang di ujung sumbu", () => {
+  for (const jenis of ["batang", "garis", "lingkaran", "histogram", "pencar", "piramida"] as const) {
+    const c = ATURAN_GRAFIK[jenis].contoh;
+    assert.equal(alasanGrafik(c, jenis), null, `contoh ${jenis} bisa digambar`);
+    assert.equal(contohSel(jenis, 1, 1), c[1][1]);
+  }
+  assert.ok(/^\d+$/.test(contohSel("pencar", 9, 0)), "contoh di luar ukuran: pencar tetap angka");
+  assert.deepEqual(skalaPencar([1, 5]), { a: 0, b: 6, langkah: 1 });
+  assert.deepEqual(skalaPiramida(12), { b: 16, tiap: 4 });
 });

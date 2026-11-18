@@ -53,15 +53,18 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 ---
 
 ## 0.52.0 — 18 November 2026
-- **Grafik sungguhan di soal.** Untuk data angka, AI kini bisa membuat **grafik garis** (perubahan dari waktu ke
-  waktu), **grafik batang** (perbandingan), atau **grafik lingkaran** (persentase). AI hanya menulis datanya;
-  aplikasi yang menggambar, jadi angka di grafik selalu sama dengan datanya.
+- **Grafik sungguhan di soal.** Untuk data angka, AI kini bisa membuat 6 jenis grafik: **garis** (perubahan dari
+  waktu ke waktu), **batang** (perbandingan), **lingkaran** (persentase), **histogram** (data berkelompok),
+  **diagram pencar** (hubungan dua besaran, mis. jam belajar dan nilai), dan **piramida penduduk**. AI hanya menulis
+  datanya; aplikasi yang menggambar, jadi angka di grafik selalu sama dengan datanya. Bila materi membahas cara membaca
+  grafik (mis. tipe piramida penduduk), soalnya menampilkan grafik itu, bukan menjelaskannya dengan kata.
 - Grafik **hitam-putih** supaya tetap jelas saat lembar soal difotokopi.
 - **Di Word** grafiknya grafik asli: guru bisa mengubah angkanya lewat klik kanan → **Edit Data**. Tampil juga di WPS
   dan LibreOffice. Pemisah angka (30.000 / 30,000) mengikuti bahasa Windows yang membuka file.
 - **Membuat dan mengubah grafik sendiri**: di form Edit ada tombol baru **📊 Grafik**. Klik grafik di Pratinjau juga
-  membuka jendelanya. Di sana guru mengisi data, memilih **Tampil sebagai** (tabel, grafik batang, garis, atau
-  lingkaran), menulis judul, dan langsung melihat contoh grafiknya.
+  membuka jendelanya. Pilih **Tampil sebagai** (tabel atau salah satu dari 6 jenis grafik): kolom langsung berisi
+  **contoh abu-abu** dan grafiknya langsung tergambar. Setiap angka yang diketik langsung mengubah grafiknya. Contoh
+  abu-abu tidak ikut tersimpan; kalau ada yang salah ketik, pesannya menyebut letaknya ("Baris 2 kolom 2 harus angka").
 - Data yang tidak bisa digambar otomatis tampil sebagai tabel, dan soalnya diberi **tanda peringatan** supaya guru tahu
   (juga bila penanda grafik tertinggal tanpa tabel, atau grafik tertulis di pilihan jawaban).
 
