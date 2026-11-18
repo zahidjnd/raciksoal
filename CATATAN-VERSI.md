@@ -59,8 +59,11 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 - Grafik **hitam-putih** supaya tetap jelas saat lembar soal difotokopi.
 - **Di Word** grafiknya grafik asli: guru bisa mengubah angkanya lewat klik kanan → **Edit Data**. Tampil juga di WPS
   dan LibreOffice. Pemisah angka (30.000 / 30,000) mengikuti bahasa Windows yang membuka file.
-- Mengubah data grafik di web: klik grafik di Pratinjau (jendela **Ubah tabel**). Supaya tampil sebagai tabel biasa,
-  hapus baris `[[GRAFIK ...]]` di atas tabelnya. Data yang tidak bisa digambar otomatis tampil sebagai tabel.
+- **Membuat dan mengubah grafik sendiri**: di form Edit ada tombol baru **📊 Grafik**. Klik grafik di Pratinjau juga
+  membuka jendelanya. Di sana guru mengisi data, memilih **Tampil sebagai** (tabel, grafik batang, garis, atau
+  lingkaran), menulis judul, dan langsung melihat contoh grafiknya.
+- Data yang tidak bisa digambar otomatis tampil sebagai tabel, dan soalnya diberi **tanda peringatan** supaya guru tahu
+  (juga bila penanda grafik tertinggal tanpa tabel, atau grafik tertulis di pilihan jawaban).
 
 ---
 

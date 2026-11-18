@@ -1,7 +1,7 @@
 // Pemeriksaan hasil AI. Tanpa import "@/..." supaya bisa dites langsung: npm test
 import { BATAS_GAMBAR, type GambarBab } from "./gambar.ts";
 import { MAPEL_SEJARAH } from "./mapel.ts";
-import { bacaPenanda, type Penanda } from "./grafik.ts";
+import { bacaPenanda, dataGrafik, type Penanda } from "./grafik.ts";
 
 export type Bentuk = "PG" | "PGK" | "BS" | "MJ" | "ISIAN" | "URAIAN";
 
@@ -818,9 +818,12 @@ export function tulisTabel(isi: string[][]): string {
   return [baris[0], `|${"---|".repeat(kolom)}`, ...baris.slice(1)].join("\n");
 }
 
-/** Letak setiap tabel di teks mentah (urutannya sama dengan tabel di `pecahBaris`): untuk jendela Ubah tabel. */
-export function cariTabel(t: string): { awal: number; akhir: number; isi: string[][] }[] {
-  const hasil: { awal: number; akhir: number; isi: string[][] }[] = [];
+/**
+ * Letak setiap tabel di teks mentah (urutannya sama dengan tabel di `pecahBaris`): untuk jendela Ubah tabel.
+ * Tabel bergrafik (0.52.0): `awal` mulai dari baris penanda di atasnya, `grafik` terisi (ditulis ulang bersama tabelnya).
+ */
+export function cariTabel(t: string): { awal: number; akhir: number; isi: string[][]; grafik: Penanda | null }[] {
+  const hasil: { awal: number; akhir: number; isi: string[][]; grafik: Penanda | null }[] = [];
   const baris = [...String(t ?? "").matchAll(/[^\r\n]*/g)].filter((m) => m[0].trim()).map((m) => ({ awal: m.index, akhir: m.index + m[0].length, teks: m[0].trim() }));
   for (let i = 0; i < baris.length; ) {
     let j = i;
@@ -828,7 +831,8 @@ export function cariTabel(t: string): { awal: number; akhir: number; isi: string
     const isi = baris.slice(i, j).filter((b) => !PEMISAH_TABEL.test(b.teks)).map((b) => isiBaris(b.teks));
     if (isi.length >= 2) {
       const kolom = Math.max(...isi.map((x) => x.length));
-      hasil.push({ awal: baris[i].awal, akhir: baris[j - 1].akhir, isi: isi.map((x) => [...x, ...Array(kolom - x.length).fill("")]) });
+      const grafik = i > 0 ? bacaPenanda(baris[i - 1].teks) : null;
+      hasil.push({ awal: baris[grafik ? i - 1 : i].awal, akhir: baris[j - 1].akhir, isi: isi.map((x) => [...x, ...Array(kolom - x.length).fill("")]), grafik });
     }
     i = Math.max(j, i + 1);
   }
@@ -1346,7 +1350,8 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat, teman: So
       peringatan.push(`${bab.teksArab === "bahasa" ? "Teks Arab mirip ayat Al-Qur'an tetapi" : "Teks Arab"} tidak cocok dengan data terverifikasi: ${arabAsing.join(" | ")}`);
     if (s.dalil_id && !dalilAda.has(s.dalil_id)) peringatan.push(`Dalil "${s.dalil_id}" tidak ada di data bab.`);
     peringatan.push(...periksaDalil(s, bab));
-    const tahun = angkaMateri ? tahunAsing(s, angkaMateri) : [];
+    peringatan.push(...periksaGrafik(s));
+    const tahun =angkaMateri ? tahunAsing(s, angkaMateri) : [];
     if (tahun.length) peringatan.push(`Tahun tidak tertulis di materi (mapel sejarah, bisa jadi dikarang AI): ${tahun.join(", ")}. Pakai tahun dari materi.`);
     if ((s.bentuk === "PG" || s.bentuk === "PGK") && s.pilihan?.length !== 5) peringatan.push("Jumlah pilihan bukan 5.");
     if ((s.bentuk === "PG" || s.bentuk === "PGK") && adaPilihanTerlarang(s))
@@ -1402,6 +1407,19 @@ export function periksaSoal(soal: Soal[], bab: Bab, cekAyat?: CekAyat, teman: So
     const diperiksa = peringatan.filter((w) => sudah.has(w) && bisaDiperiksa(w));
     return { ...simpan, peringatan: peringatan.filter((w) => !diperiksa.includes(w)), ...(diperiksa.length > 0 && { diperiksa }) };
   });
+}
+
+/** Grafik (0.52.0, ATURAN-SOAL 4.9): penanda tanpa tabel, data yang tidak bisa digambar, grafik di pilihan. */
+export function periksaGrafik(s: Pick<Soal, "wacana" | "pertanyaan" | "pembahasan" | "pilihan" | "pernyataan">): string[] {
+  const w: string[] = [];
+  const baris = [s.wacana, s.pertanyaan, s.pembahasan].flatMap((t) => pecahBaris(String(t ?? "")));
+  if (baris.some((b) => !b.tabel && bacaPenanda(b.teks)))
+    w.push('Ada baris "[[GRAFIK ...]]" tanpa tabel data tepat di bawahnya, jadi tertulis apa adanya. Hapus baris itu, atau tulis tabelnya tepat di bawahnya.');
+  if (baris.some((b) => b.grafik && !dataGrafik(b.tabel!, b.grafik.jenis)))
+    w.push("Data grafik tidak bisa digambar, jadi tampil sebagai tabel. Kolom pertama = label, kolom lain hanya angka (maks 3 kolom angka, 2–12 baris; grafik lingkaran 1 kolom angka, 2–8 baris). Perbaiki lewat Ubah tabel, atau pilih tampil sebagai Tabel.");
+  if ([...(s.pilihan ?? []), ...(s.pernyataan ?? [])].some((t) => /\[\[\s*GRAFIK/i.test(String(t ?? ""))))
+    w.push("Grafik tidak bisa ditampilkan di pilihan/pernyataan. Pindahkan grafiknya ke pertanyaan.");
+  return w;
 }
 
 /** Peringatan yang boleh dihilangkan guru ("Sudah saya periksa"). Teks Arab tak terverifikasi tidak boleh (aturan 5). */

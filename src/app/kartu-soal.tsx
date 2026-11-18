@@ -11,7 +11,7 @@ import { editRumus, isiKotak } from "./editor-rumus";
 import { EditorTabel } from "./editor-tabel";
 import { adaRumus, bisaDiperiksa, bukanDalil, isiSama, CARA_DALIL, CARA_PG, caraBolehBentuk, caraDalil, cariTabel, cocokCara, dalilKunci, kataArab, kataCara, kataTerjemah, NAMA_CARA_DALIL, PAKAI_POTONG, pecahGaris, pisahPengantar, potonganSah, susunPilihanDalil, tampilanDalil, type CaraDalil, type TampilDalil, JOROK, kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, POLA_RUMUS, tulisTabel, type Bab, type Bentuk, type Soal } from "@/lib/soal";
 import { MAKS_INSTRUKSI, namaBentuk } from "@/lib/prompt";
-import { svgGrafik, type Penanda } from "@/lib/grafik";
+import { svgGrafik, tulisPenanda, type Penanda } from "@/lib/grafik";
 
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
 const PECAH_RUMUS = new RegExp(`(${POLA_RUMUS})`);
@@ -85,7 +85,7 @@ function Pratinjau({ teks }: { teks: string }) {
       className="mt-1 rounded-lg bg-krem px-2 py-1 [&_[data-tex]]:cursor-pointer [&_[data-tex]]:rounded [&_[data-tex]:hover]:bg-hijau-muda [&_[data-tabel]]:cursor-pointer [&_[data-tabel]:hover]:outline-2 [&_[data-tabel]:hover]:outline-hijau"
       onClick={ubahRumusDiPratinjau}
     >
-      <span className="text-sm text-pudar">Pratinjau (klik {tabel ? (adaRumus(teks) ? "rumus atau tabel" : "tabel") : "rumus"} untuk mengubahnya): </span>
+      <span className="text-sm text-pudar">Pratinjau (klik {tabel ? (adaRumus(teks) ? "rumus atau tabel/grafik" : "tabel/grafik") : "rumus"} untuk mengubahnya): </span>
       <TeksBaris teks={teks} />
     </div>
   );
@@ -743,7 +743,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
   };
 
   // Jendela Ubah tabel (0.41.0): kotak teks pemilik tabel + letak teks tabelnya (isi null = tabel baru di posisi kursor).
-  const [tabel, setTabel] = useState<{ el: HTMLTextAreaElement; awal: number; akhir: number; isi: string[][] | null } | null>(null);
+  const [tabel, setTabel] = useState<{ el: HTMLTextAreaElement; awal: number; akhir: number; isi: string[][] | null; grafik: Penanda | null } | null>(null);
 
   /** Klik tabel di Pratinjau → buka tabel ke-n dari kotak teks pemiliknya (label yang sama). Klik rumus di sel = jendela rumus. */
   function bukaTabelDiPratinjau(e: React.MouseEvent<HTMLElement>) {
@@ -756,25 +756,29 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
     if (k) setTabel({ el, ...k });
   }
 
-  /** Tombol "▦ Tabel": kursor di dalam teks tabel = ubah tabel itu; selain itu sisipkan tabel baru di posisi kursor. */
-  function sisipTabel(e: React.MouseEvent<HTMLElement>) {
+  /**
+   * Tombol "▦ Tabel" / "📊 Grafik": kursor di dalam teks tabel = ubah tabel itu; selain itu sisipkan tabel baru di posisi
+   * kursor. `grafik` (0.52.0): jendela langsung memilih grafik batang bila tabelnya belum bergrafik.
+   */
+  function sisipTabel(e: React.MouseEvent<HTMLElement>, grafik = false) {
     const form = e.currentTarget.closest("article");
     const aktif = document.activeElement;
     const el = aktif instanceof HTMLTextAreaElement && form?.contains(aktif) ? aktif : terakhirPanjang.current?.isConnected ? terakhirPanjang.current : form?.querySelector("textarea");
     if (!el) return;
     const a = el.selectionStart ?? el.value.length;
     const k = cariTabel(el.value).find((x) => x.awal <= a && a <= x.akhir);
-    setTabel(k ? { el, ...k } : { el, awal: a, akhir: el.selectionEnd ?? a, isi: null });
+    const baru: Penanda | null = grafik ? { jenis: "batang", judul: "" } : null;
+    setTabel(k ? { el, ...k, grafik: k.grafik ?? baru } : { el, awal: a, akhir: el.selectionEnd ?? a, isi: null, grafik: baru });
   }
 
   /** Hasil jendela Ubah tabel → teks "| a | b |" menggantikan tabel lama (atau disisipkan di baris sendiri). [] = hapus. */
-  function selesaiTabel(isi: string[][] | null) {
+  function selesaiTabel(isi: string[][] | null, grafik?: Penanda | null) {
     const t = tabel;
     setTabel(null);
     if (!t || isi === null || !t.el.isConnected) return;
     if (!t.isi && isi.flat().every((x) => !x.replace(JOROK, "").trim())) return; // tabel baru yang dibiarkan kosong
     const v = t.el.value;
-    let sisip = isi.length ? tulisTabel(isi) : "";
+    let sisip = isi.length ? (grafik ? `${tulisPenanda(grafik)}\n` : "") + tulisTabel(isi) : "";
     if (sisip && !t.isi) {
       if (t.awal > 0 && v[t.awal - 1] !== "\n") sisip = `\n${sisip}`;
       if (t.akhir < v.length && v[t.akhir] !== "\n") sisip += "\n";
@@ -842,6 +846,15 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
       >
         ▦ Tabel
       </button>
+      <button
+        type="button"
+        className="rounded-lg border h-10 px-3"
+        title="Sisipkan grafik batang/garis/lingkaran dari data angka (kursor di dalam tabel = jadikan tabel itu grafik)"
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={(e) => sisipTabel(e, true)}
+      >
+        📊 Grafik
+      </button>
       <button className="rounded-lg bg-hijau h-10 px-4 font-semibold text-white disabled:opacity-50" disabled={menyimpan} onClick={simpan}>
         {menyimpan ? "Menyimpan..." : "Simpan"}
       </button>
@@ -851,7 +864,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
   );
   return (
     <article className="space-y-3 rounded-lg border-2 border-hijau p-4 text-sm" onFocus={catatFokus} onClick={bukaTabelDiPratinjau}>
-      {tabel && <EditorTabel awal={tabel.isi} selesai={selesaiTabel} />}
+      {tabel && <EditorTabel awal={tabel.isi} grafik={tabel.grafik} selesai={selesaiTabel} />}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="font-semibold">{judul ?? `Edit soal nomor ${no}`}</p>
         {tombolSimpan}

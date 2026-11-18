@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { bacaAngka, bacaPenanda, dataGrafik, skala, svgGrafik } from "./grafik.ts";
-import { cariTabel, pecahBaris } from "./soal.ts";
+import { cariTabel, pecahBaris, periksaGrafik } from "./soal.ts";
 
 const SOAL = "Perhatikan grafik berikut!\n[[GRAFIK batang: Penjualan buku]]\n| Bulan | Kelas X | Kelas XI |\n|---|---|---|\n| Jan | 40 | 35 |\n| Feb | 65 | 50 |\n| Mar | 30 | 45 |\nSelisih terbesar ....";
 
@@ -62,4 +62,19 @@ test("svgGrafik: batang/garis/lingkaran tergambar, teks di-escape", () => {
   assert.equal(iris.match(/<path /g)!.length, 3);
   assert.match(iris, /Tani \(50%\)/);
   assert.equal(svgGrafik([["A", "B"], ["x", "?"], ["y", "1"]], { jenis: "batang", judul: "" }), null);
+});
+
+test("cariTabel: tabel bergrafik mulai dari baris penanda (ditulis ulang bersama jendela Ubah tabel)", () => {
+  const [k] = cariTabel(SOAL);
+  assert.deepEqual(k.grafik, { jenis: "batang", judul: "Penjualan buku" });
+  assert.ok(SOAL.slice(k.awal).startsWith("[[GRAFIK batang"));
+  assert.ok(SOAL.slice(0, k.akhir).endsWith("| Mar | 30 | 45 |"));
+  assert.equal(cariTabel("| a | b |\n| 1 | 2 |")[0].grafik, null);
+});
+
+test("periksaGrafik: penanda tanpa tabel, data tak bisa digambar, grafik di pilihan", () => {
+  assert.deepEqual(periksaGrafik({ pertanyaan: SOAL, pembahasan: "" }), []);
+  assert.match(periksaGrafik({ pertanyaan: "[[GRAFIK garis: Suhu]]\nSuhu tertinggi ....", pembahasan: "" })[0], /tanpa tabel/);
+  assert.match(periksaGrafik({ pertanyaan: "[[GRAFIK batang]]\n| A | B |\n| x | baik |\n| y | cukup |", pembahasan: "" })[0], /tidak bisa digambar/);
+  assert.match(periksaGrafik({ pertanyaan: "Grafik yang tepat?", pembahasan: "", pilihan: ["[[GRAFIK batang]]", "b"] })[0], /pilihan/);
 });

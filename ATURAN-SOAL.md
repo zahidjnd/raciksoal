@@ -216,8 +216,9 @@ mengatur skor). Persen level dipilih supaya jumlahnya persis surat (34/43/23 dan
    (lembar soal difotokopi): kelompok dibedakan isi hitam/abu/putih atau garis utuh/putus/titik, bukan warna.
    Boleh di pertanyaan, wacana, dan pembahasan (seperti tabel); tidak di pilihan. Kunci soal C3 ke atas tidak boleh
    terbaca langsung dari grafik tanpa diolah. 🔍 Data grafik yang tidak bisa digambar (bukan angka, kebanyakan
-   kolom/baris) tetap tampil sebagai tabel biasa. Guru mengubah datanya lewat jendela "Ubah tabel" dan bisa
-   menghapus baris penanda bila lebih suka tabel. Belum: grafik fungsi, piramida penduduk, grafik di pilihan jawaban.
+   kolom/baris) tetap tampil sebagai tabel biasa dan soalnya diberi peringatan (juga penanda tanpa tabel dan grafik
+   di pilihan). Guru mengubah data, jenis, dan judul grafik lewat jendela "Ubah tabel/grafik" (klik grafik di
+   Pratinjau atau tombol "📊 Grafik"), termasuk mengubahnya kembali menjadi tabel. Belum: grafik fungsi, piramida penduduk, grafik di pilihan jawaban.
 
 ### 4a. Nilai Kurikulum Berbasis Cinta (Kemenag 2025)
 Panduan KBC (Kepdirjen Pendis 6077/2025) memuat **Panca Cinta**: Cinta Allah dan Rasul-Nya, Cinta Ilmu,

@@ -194,6 +194,8 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   Pemisah ribuan/desimal di Word ikut bahasa Windows pembaca. Data tak bisa digambar / ditolak docx → tabel biasa.
   AI diperintah lewat butir "GRAFIK" di `buatSistem` (setelah TABEL; berlaku buat set & Ganti/Ubah). Uji DeepSeek:
   ±1 grafik per 9 soal, dari data materi (Ekonomi) atau data karangan wajar (Biologi). `POLA_SISIP` tidak menyentuh penanda.
+  Edit: `cariTabel` mengembalikan `grafik` & `awal` mulai dari baris penanda; `EditorTabel` punya "Tampil sebagai" +
+  judul + pratinjau `svgGrafik`; tombol "📊 Grafik" = `sisipTabel(e, true)`. Pemeriksa `periksaGrafik` (soal.ts).
 - **Rumus** (0.29.0): LaTeX `$...$` di teks mana pun (`POLA_RUMUS` gaya Pandoc di soal.ts: "US$ 5" bukan rumus). Web: KaTeX
   dimuat dinamis (`Rumus` di kartu-soal, salah tulis → teks asli). Word: `rumus.ts` LaTeX → OMML (subset; perintah tak
   dikenal → LaTeX dicetak apa adanya). Jawaban AI: `betulkanGarisMiring` (ai.ts) menggandakan `\` di dalam `$...$` sebelum
