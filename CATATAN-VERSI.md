@@ -52,6 +52,18 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.52.0 — 18 November 2026
+- **Grafik sungguhan di soal.** Untuk data angka, AI kini bisa membuat **grafik garis** (perubahan dari waktu ke
+  waktu), **grafik batang** (perbandingan), atau **grafik lingkaran** (persentase). AI hanya menulis datanya;
+  aplikasi yang menggambar, jadi angka di grafik selalu sama dengan datanya.
+- Grafik **hitam-putih** supaya tetap jelas saat lembar soal difotokopi.
+- **Di Word** grafiknya grafik asli: guru bisa mengubah angkanya lewat klik kanan → **Edit Data**. Tampil juga di WPS
+  dan LibreOffice. Pemisah angka (30.000 / 30,000) mengikuti bahasa Windows yang membuka file.
+- Mengubah data grafik di web: klik grafik di Pratinjau (jendela **Ubah tabel**). Supaya tampil sebagai tabel biasa,
+  hapus baris `[[GRAFIK ...]]` di atas tabelnya. Data yang tidak bisa digambar otomatis tampil sebagai tabel.
+
+---
+
 ## 0.51.0 — 17 November 2026
 - **Edit bacaan**: kotak bacaan soal grup (satu teks untuk beberapa nomor, mis. mapel bahasa) punya tombol
   **Edit bacaan**. Perubahan ikut ke semua nomor di grup itu, kisi-kisi, dan file Word.
