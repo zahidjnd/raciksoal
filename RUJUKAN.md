@@ -181,6 +181,7 @@ Semua butir di ATURAN-SOAL.md bagian 2 dan 10.
 | Soal hanya menunjuk nomor/huruf yang benar-benar tertulis di gambar (gambar tanpa label: keseluruhan/bentuk/warna) | R2 + R3 | Kaidah umum: stimulus harus sesuai dan berfungsi; keputusan pemilik 2026-11-14 (soal Biologi membran sel tanpa nomor) | Diperiksa aplikasi lewat keterangan gambar |
 | Nama tokoh beragam, satu skenario sekali per set | R3 | keputusan pemilik | |
 | Data berbaris-berkolom ditulis sebagai tabel (maks 6 × 10, tidak di pilihan) | R2 + R3 | D12 (stimulus TKA: grafik/tabel, data percobaan); batas ukuran & tempat = keputusan pemilik 2026-11-10 | |
+| Data angka boleh digambar sebagai grafik (batang/garis/lingkaran) dari tabel + penanda, hitam-putih | R2 + R3 | D12 (stimulus TKA: grafik/tabel); kaidah umum statistika (garis = perubahan waktu, batang = perbandingan, lingkaran = proporsi); format, batas & hitam-putih = keputusan pemilik 2026-11-18 | AI tidak menggambar, aplikasi yang menggambar |
 | Rumus ditulis sebagai rumus sungguhan (LaTeX `$...$`), desimal koma | R2 + R3 | Kaidah penulisan matematika (notasi baku, desimal koma PUEBI); format & tempat = keputusan pemilik 2026-11-10 | |
 | Nilai Panca Cinta boleh disisipkan secara wajar | R1 | ✔ D11 hlm 26–30 (integrasi nilai ke pembelajaran) | D11 tidak mengatur soal secara khusus. ATURAN-SOAL menulis "Cinta Diri dan Sesama"; nama resminya "Cinta Diri dan **Sesama Manusia**" |
 

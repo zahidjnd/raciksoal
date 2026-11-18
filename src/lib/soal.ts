@@ -1,6 +1,7 @@
 // Pemeriksaan hasil AI. Tanpa import "@/..." supaya bisa dites langsung: npm test
 import { BATAS_GAMBAR, type GambarBab } from "./gambar.ts";
 import { MAPEL_SEJARAH } from "./mapel.ts";
+import { bacaPenanda, type Penanda } from "./grafik.ts";
 
 export type Bentuk = "PG" | "PGK" | "BS" | "MJ" | "ISIAN" | "URAIAN";
 
@@ -794,8 +795,8 @@ export function paragrafArab(t: string) {
 export const POLA_RUMUS = String.raw`\$(?=[^\s$])[^$\n]*?[^\s$]\$(?!\d)`;
 export const adaRumus = (t: string) => new RegExp(POLA_RUMUS).test(String(t ?? ""));
 
-/** Satu baris teks soal, atau satu tabel utuh (`tabel` terisi, `teks` kosong). */
-export type Baris = { teks: string; arab: boolean; tabel?: string[][] };
+/** Satu baris teks soal, atau satu tabel utuh (`tabel` terisi, `teks` kosong; `grafik` = digambar, 0.52.0). */
+export type Baris = { teks: string; arab: boolean; tabel?: string[][]; grafik?: Penanda };
 
 const BARIS_TABEL = /^\|.*\|$/;
 const PEMISAH_TABEL = /^\|(\s*:?-+:?\s*\|)+$/;
@@ -839,6 +840,7 @@ export function cariTabel(t: string): { awal: number; akhir: number; isi: string
  * hiwar): ditampilkan sebagai satu blok kanan-ke-kiri, supaya titik dua, angka, dan tanda baca ikut urutan yang benar.
  * Tabel (0.28.0): baris-baris berurutan berbentuk "| a | b |" (minimal judul + 1 baris isi; baris "|---|---|" dibuang)
  * menjadi SATU baris ber-`tabel` (baris pertama = judul kolom, semua baris dibuat sama panjang). Kurang dari itu = teks biasa.
+ * Grafik (0.52.0): baris "[[GRAFIK jenis: judul]]" tepat di atas tabel ikut ke baris tabel itu sebagai `grafik`.
  */
 export function pecahBaris(t: string): Baris[] {
   const baris = String(t ?? "")
@@ -847,12 +849,14 @@ export function pecahBaris(t: string): Baris[] {
     .filter(Boolean);
   const hasil: Baris[] = [];
   for (let i = 0; i < baris.length; ) {
-    let j = i;
+    const grafik = bacaPenanda(baris[i]);
+    let j = grafik ? i + 1 : i;
+    const awal = j;
     while (j < baris.length && BARIS_TABEL.test(baris[j])) j++;
-    const isi = baris.slice(i, j).filter((b) => !PEMISAH_TABEL.test(b)).map(isiBaris);
+    const isi = baris.slice(awal, j).filter((b) => !PEMISAH_TABEL.test(b)).map(isiBaris);
     if (isi.length >= 2) {
       const kolom = Math.max(...isi.map((x) => x.length));
-      hasil.push({ teks: "", arab: false, tabel: isi.map((x) => [...x, ...Array(kolom - x.length).fill("")]) });
+      hasil.push({ teks: "", arab: false, tabel: isi.map((x) => [...x, ...Array(kolom - x.length).fill("")]), ...(grafik && { grafik }) });
       i = j;
     } else {
       for (const b of baris.slice(i, Math.max(j, i + 1))) hasil.push({ teks: b, arab: paragrafArab(b) });

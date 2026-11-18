@@ -165,7 +165,7 @@ mengatur skor). Persen level dipilih supaya jumlahnya persis surat (34/43/23 dan
 ## 4. Stimulus
 
 1. ✅ Stimulus kontekstual: dekat dengan kehidupan siswa MA (madrasah, pesantren, keluarga, masyarakat, media sosial).
-2. ✅ Ragam stimulus diperluas untuk semua mapel: kasus/cerita, berita, data/tabel, grafik (dideskripsikan dengan kata),
+2. ✅ Ragam stimulus diperluas untuk semua mapel: kasus/cerita, berita, data/tabel, grafik (digambar aplikasi, no. 9),
    teks bacaan, percakapan, kutipan tokoh, hasil percobaan, peta/denah (dideskripsikan), potongan dokumen sejarah.
 3. ✅ **Satu stimulus boleh dipakai untuk beberapa soal berurutan** ("soal grup"), umum di asesmen madrasah dan inti TKA.
    Dipakai di jenis **Latihan TKA** (bagian 9).
@@ -207,6 +207,17 @@ mengatur skor). Persen level dipilih supaya jumlahnya persis surat (34/43/23 dan
    Angka biasa dan satuan yang berdiri sendiri ("12 m/s", "2,5 kg") tetap teks biasa tanpa `$`, supaya pilihan angka
    tetap diurutkan kecil → besar. Desimal memakai koma sesuai kaidah Indonesia (`$2{,}5$`). Rumus di file Word materi
    guru (Equation) ikut terbaca; rumus di PDF belum.
+9. ✅ 🔍 (0.52.0, keputusan pemilik 2026-11-18) **Grafik sungguhan.** AI tidak menggambar: AI menulis **tabel data**
+   (aturan no. 7) dan satu baris penanda tepat di atasnya, `[[GRAFIK batang: judul]]` / `garis` / `lingkaran`;
+   aplikasi menggambar tabel itu sebagai grafik di web dan Word (Word 2016 ke atas). Pilihan jenis: **garis** =
+   perubahan dari waktu ke waktu, **batang** = perbandingan antarkelompok, **lingkaran** = bagian dari keseluruhan.
+   Kolom pertama = label (bulan, kelas, wilayah), kolom berikutnya = angka, **maks 3 kelompok data** (lingkaran: 1),
+   2–12 baris data (lingkaran 2–8); angka boleh bergaya Indonesia ("30.000", "2,5", "45%"). Grafik hitam-putih
+   (lembar soal difotokopi): kelompok dibedakan isi hitam/abu/putih atau garis utuh/putus/titik, bukan warna.
+   Boleh di pertanyaan, wacana, dan pembahasan (seperti tabel); tidak di pilihan. Kunci soal C3 ke atas tidak boleh
+   terbaca langsung dari grafik tanpa diolah. 🔍 Data grafik yang tidak bisa digambar (bukan angka, kebanyakan
+   kolom/baris) tetap tampil sebagai tabel biasa. Guru mengubah datanya lewat jendela "Ubah tabel" dan bisa
+   menghapus baris penanda bila lebih suka tabel. Belum: grafik fungsi, piramida penduduk, grafik di pilihan jawaban.
 
 ### 4a. Nilai Kurikulum Berbasis Cinta (Kemenag 2025)
 Panduan KBC (Kepdirjen Pendis 6077/2025) memuat **Panca Cinta**: Cinta Allah dan Rasul-Nya, Cinta Ilmu,

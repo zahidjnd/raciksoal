@@ -11,6 +11,7 @@ import { editRumus, isiKotak } from "./editor-rumus";
 import { EditorTabel } from "./editor-tabel";
 import { adaRumus, bisaDiperiksa, bukanDalil, isiSama, CARA_DALIL, CARA_PG, caraBolehBentuk, caraDalil, cariTabel, cocokCara, dalilKunci, kataArab, kataCara, kataTerjemah, NAMA_CARA_DALIL, PAKAI_POTONG, pecahGaris, pisahPengantar, potonganSah, susunPilihanDalil, tampilanDalil, type CaraDalil, type TampilDalil, JOROK, kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, POLA_RUMUS, tulisTabel, type Bab, type Bentuk, type Soal } from "@/lib/soal";
 import { MAKS_INSTRUKSI, namaBentuk } from "@/lib/prompt";
+import { svgGrafik, type Penanda } from "@/lib/grafik";
 
 const PECAH_ARAB = new RegExp(`(${POLA_ARAB})`);
 const PECAH_RUMUS = new RegExp(`(${POLA_RUMUS})`);
@@ -121,7 +122,7 @@ export function TeksBaris({ teks, jarak }: { teks: string; jarak?: boolean }) {
     <>
       {baris.map((b, i) =>
         b.tabel ? (
-          <TabelData key={i} isi={b.tabel} n={n++} />
+          b.grafik ? <GrafikData key={i} isi={b.tabel} grafik={b.grafik} n={n++} /> : <TabelData key={i} isi={b.tabel} n={n++} />
         ) : i === 0 ? (
           <span key={i}><Teks teks={b.teks} /></span>
         ) : b.arab ? (
@@ -153,6 +154,16 @@ function TabelData({ isi, n }: { isi: string[][]; n: number }) {
       </table>
     </div>
   );
+}
+
+/**
+ * Grafik data (0.52.0): SVG dari `svgGrafik` (teks di dalamnya sudah di-escape). Data tak bisa digambar → tabel biasa.
+ * Latar putih seperti gambar soal (juga di mode gelap). Klik di Pratinjau → jendela Ubah tabel (`data-tabel`).
+ */
+function GrafikData({ isi, grafik, n }: { isi: string[][]; grafik: Penanda; n: number }) {
+  const svg = svgGrafik(isi, grafik);
+  if (!svg) return <TabelData isi={isi} n={n} />;
+  return <div className="my-2 max-w-[480px] overflow-hidden rounded border [&_svg]:h-auto [&_svg]:w-full" data-tabel={n} dangerouslySetInnerHTML={{ __html: svg }} />;
 }
 
 /**
