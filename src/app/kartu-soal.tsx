@@ -163,7 +163,7 @@ function TabelData({ isi, n }: { isi: string[][]; n: number }) {
 function GrafikData({ isi, grafik, n }: { isi: string[][]; grafik: Penanda; n: number }) {
   const svg = svgGrafik(isi, grafik);
   if (!svg) return <TabelData isi={isi} n={n} />;
-  return <div className="my-2 max-w-[480px] overflow-hidden rounded border [&_svg]:h-auto [&_svg]:w-full" data-tabel={n} dangerouslySetInnerHTML={{ __html: svg }} />;
+  return <div className="my-2 w-fit max-w-full overflow-hidden rounded border [&_svg]:h-auto [&_svg]:max-w-full" data-tabel={n} dangerouslySetInnerHTML={{ __html: svg }} />;
 }
 
 /**
@@ -849,11 +849,11 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
       <button
         type="button"
         className="rounded-lg border h-10 px-3"
-        title="Sisipkan grafik (batang, garis, lingkaran, histogram, pencar, piramida penduduk) dari data angka (kursor di dalam tabel = jadikan tabel itu grafik)"
+        title="Sisipkan grafik (data angka) atau bagan (garis waktu, alur, siklus, pohon); kursor di dalam tabel = jadikan tabel itu grafik/bagan"
         onMouseDown={(e) => e.preventDefault()}
         onClick={(e) => sisipTabel(e, true)}
       >
-        📊 Grafik
+        📊 Grafik/Bagan
       </button>
       <button className="rounded-lg bg-hijau h-10 px-4 font-semibold text-white disabled:opacity-50" disabled={menyimpan} onClick={simpan}>
         {menyimpan ? "Menyimpan..." : "Simpan"}

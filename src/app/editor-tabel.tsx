@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { alasanGrafik, ATURAN_GRAFIK, contohSel, svgGrafik, type JenisGrafik, type Penanda } from "@/lib/grafik";
+import { adalahBagan, alasanGrafik, ATURAN_GRAFIK, contohSel, isiTampil, svgGrafik, type JenisGrafik, type Penanda } from "@/lib/grafik";
 import { JOROK } from "@/lib/soal";
 
 /** Lebih dari 6 kolom tidak muat di satu kolom lembar soal Word (huruf 10 pt), sama dengan batas untuk AI. */
@@ -28,11 +28,11 @@ export function EditorTabel({ awal, grafik, selesai }: { awal: string[][] | null
   const [judul, setJudul] = useState(grafik?.judul ?? "");
   const [pesan, setPesan] = useState("");
   const penanda = jenis ? { jenis, judul: judul.replace(/[[\]\r\n]+/g, " ").trim() } : null; // "]]" di judul memutus penanda
-  const adaKosong = !!jenis && isi.some((b) => b.some(selKosong));
-  const tampil = jenis ? isi.map((b, i) => b.map((t, j) => (selKosong(t) ? contohSel(jenis, i, j) : t))) : isi;
+  const adaKosong = !!jenis && isi.some((b) => b.some((t, j) => selKosong(t) && j !== ATURAN_GRAFIK[jenis].bolehKosong));
+  const tampil = jenis ? isiTampil(isi, jenis) : isi;
   const svg = penanda && svgGrafik(tampil, penanda);
   const alasan = penanda && !svg ? alasanGrafik(tampil, penanda.jenis) : null;
-  const nama = jenis ? "grafik" : "tabel";
+  const nama = jenis ? (adalahBagan(jenis) ? "bagan" : "grafik") : "tabel";
   function pilihJenis(j: JenisGrafik | "") {
     setJenis(j);
     setPesan("");
@@ -66,9 +66,9 @@ export function EditorTabel({ awal, grafik, selesai }: { awal: string[][] | null
         <h2 id="judul-tabel">{awal ? `Ubah ${nama}` : `Sisipkan ${nama}`}</h2>
         {jenis ? (
           <ol className="list-inside list-decimal text-pudar">
-            <li>Pilih jenis grafik.</li>
-            <li>Ganti tulisan abu-abu dengan data Anda: kolom pertama = label, kolom berikutnya = angka saja (satuan ditulis di judul kolom).</li>
-            <li>Lihat contohnya berubah, lalu tekan {awal ? "Simpan grafik" : "Masukkan"}.</li>
+            <li>Pilih jenis grafik atau bagan.</li>
+            <li>Ganti tulisan abu-abu dengan data Anda. {ATURAN_GRAFIK[jenis].petunjuk ?? "Kolom pertama = label, kolom berikutnya = angka saja (satuan ditulis di judul kolom)."}</li>
+            <li>Lihat contohnya berubah, lalu tekan {awal ? `Simpan ${nama}` : "Masukkan"}.</li>
           </ol>
         ) : (
           <p className="text-pudar">
@@ -80,12 +80,20 @@ export function EditorTabel({ awal, grafik, selesai }: { awal: string[][] | null
             Tampil sebagai
             <select className="h-10 rounded-lg border px-2" value={jenis} onChange={(e) => pilihJenis(e.target.value as JenisGrafik | "")}>
               <option value="">Tabel</option>
-              <option value="batang">Grafik batang (perbandingan)</option>
-              <option value="garis">Grafik garis (perubahan waktu)</option>
-              <option value="lingkaran">Grafik lingkaran (persentase)</option>
-              <option value="histogram">Histogram (data berkelompok)</option>
-              <option value="pencar">Diagram pencar (hubungan dua besaran)</option>
-              <option value="piramida">Piramida penduduk</option>
+              <optgroup label="Grafik (data angka)">
+                <option value="batang">Grafik batang (perbandingan)</option>
+                <option value="garis">Grafik garis (perubahan waktu)</option>
+                <option value="lingkaran">Grafik lingkaran (persentase)</option>
+                <option value="histogram">Histogram (data berkelompok)</option>
+                <option value="pencar">Diagram pencar (hubungan dua besaran)</option>
+                <option value="piramida">Piramida penduduk</option>
+              </optgroup>
+              <optgroup label="Bagan (urutan & hubungan)">
+                <option value="waktu">Garis waktu (urutan peristiwa)</option>
+                <option value="alur">Diagram alir (langkah, rantai sanad)</option>
+                <option value="siklus">Siklus (daur)</option>
+                <option value="pohon">Bagan pohon (klasifikasi, struktur)</option>
+              </optgroup>
             </select>
           </label>
           {jenis && (
@@ -131,7 +139,7 @@ export function EditorTabel({ awal, grafik, selesai }: { awal: string[][] | null
                           dir="auto"
                           className={`${jenis ? "w-32" : "w-40"} rounded-lg border px-2 max-md:w-28 placeholder:italic placeholder:text-pudar/70 ${i === 0 ? "bg-krem font-semibold" : ""} ${jorok(t) ? "pl-7" : ""}`}
                           aria-label={i === 0 ? `Judul kolom ${j + 1}` : `Baris ${i} kolom ${j + 1}`}
-                          placeholder={jenis ? contohSel(jenis, i, j) : undefined}
+                          placeholder={jenis ? contohSel(jenis, i, j) || (j === ATURAN_GRAFIK[jenis].bolehKosong ? "kosong = puncak" : "") : undefined}
                           value={t.replace(JOROK, "")}
                           onChange={(e) => {
                             setPesan("");
@@ -158,7 +166,7 @@ export function EditorTabel({ awal, grafik, selesai }: { awal: string[][] | null
           <div className="w-full max-w-[480px] min-w-64 flex-1 space-y-1">
             {adaKosong && <p className="text-pudar">Contoh: tulisan abu-abu belum diisi.</p>}
             {svg ? (
-              <div className="overflow-hidden rounded border [&_svg]:h-auto [&_svg]:w-full" dangerouslySetInnerHTML={{ __html: svg }} />
+              <div className="w-fit max-w-full overflow-hidden rounded border [&_svg]:h-auto [&_svg]:max-w-full" dangerouslySetInnerHTML={{ __html: svg }} />
             ) : (
               <p className="rounded-lg border border-peringatan-garis bg-peringatan-muda p-2 text-peringatan">{alasan} Selama belum diperbaiki, data ini tampil sebagai tabel.</p>
             )}

@@ -4,11 +4,14 @@
  * dengan data (`dataGrafik`) & sumbu (`skala`) yang sama. AI hanya menulis data.
  * Hitam-putih (lembar soal difotokopi): kelompok data dibedakan isi hitam/abu/putih atau garis utuh/putus/titik.
  */
-export type JenisGrafik = "batang" | "garis" | "lingkaran" | "histogram" | "pencar" | "piramida";
+import { ATURAN_BAGAN, alasanBagan, svgBagan, type JenisBagan } from "./bagan.ts";
+
+/** Jenis grafik data + jenis bagan (0.53.0, bagan.ts): penanda, jendela, pemeriksa, & Word memakai jalur yang sama. */
+export type JenisGrafik = "batang" | "garis" | "lingkaran" | "histogram" | "pencar" | "piramida" | JenisBagan;
 export type Penanda = { jenis: JenisGrafik; judul: string };
 export type DataGrafik = { sumbuX: string; label: string[]; seri: { nama: string; nilai: number[] }[] };
 
-const POLA_PENANDA = /^\[\[\s*GRAFIK\s+(batang|garis|lingkaran|histogram|pencar|piramida)\s*(?::\s*(.*?))?\s*\]\]$/i;
+const POLA_PENANDA = /^\[\[\s*(?:GRAFIK|BAGAN)\s+(batang|garis|lingkaran|histogram|pencar|piramida|waktu|alur|siklus|pohon)\s*(?::\s*(.*?))?\s*\]\]$/i;
 
 /** Satu baris teks → penanda grafik, atau null. */
 export function bacaPenanda(baris: string): Penanda | null {
@@ -17,7 +20,9 @@ export function bacaPenanda(baris: string): Penanda | null {
 }
 
 /** Penanda → teks baris (untuk jendela Ubah tabel). */
-export const tulisPenanda = (p: Penanda) => `[[GRAFIK ${p.jenis}${p.judul ? `: ${p.judul}` : ""}]]`;
+export const tulisPenanda = (p: Penanda) => `[[${adalahBagan(p.jenis) ? "BAGAN" : "GRAFIK"} ${p.jenis}${p.judul ? `: ${p.judul}` : ""}]]`;
+
+export const adalahBagan = (j: JenisGrafik): j is JenisBagan => j in ATURAN_BAGAN;
 
 /** Angka gaya Indonesia: "30.000" → 30000, "2,5" → 2.5, "45%" → 45, "Rp 1.500" → 1500. Bukan angka → NaN. */
 export function bacaAngka(s: string): number {
@@ -34,7 +39,12 @@ const bersih = (s: string) => String(s ?? "").replace(/[\t$]/g, "").trim();
  * Aturan tiap jenis: banyak kolom angka & baris data, angka minus, dan CONTOH (isi abu-abu jendela grafik, 0.52.0:
  * grafik langsung tergambar sebelum guru mengisi; contoh tidak pernah tersimpan).
  */
-export const ATURAN_GRAFIK: Record<JenisGrafik, { nama: string; kolom: [number, number]; baris: [number, number]; tanpaMinus?: boolean; xAngka?: boolean; contoh: string[][] }> = {
+type Aturan = { nama: string; kolom: [number, number]; baris: [number, number]; tanpaMinus?: boolean; xAngka?: boolean; contoh: string[][]; petunjuk?: string; bolehKosong?: number };
+const bagan = (j: JenisBagan, lain: Partial<Aturan> = {}): Aturan => {
+  const a = ATURAN_BAGAN[j];
+  return { nama: a.nama, kolom: [a.kolom, a.kolom], baris: a.baris, contoh: a.contoh, petunjuk: a.petunjuk, ...lain };
+};
+export const ATURAN_GRAFIK: Record<JenisGrafik, Aturan> = {
   batang: { nama: "Grafik batang", kolom: [1, 3], baris: [2, 12], contoh: [["Kelas", "Jumlah siswa"], ["X", "30"], ["XI", "45"], ["XII", "25"]] },
   garis: { nama: "Grafik garis", kolom: [1, 3], baris: [2, 12], contoh: [["Bulan", "Suhu (°C)"], ["Jan", "28"], ["Feb", "30"], ["Mar", "27"], ["Apr", "32"]] },
   lingkaran: { nama: "Grafik lingkaran", kolom: [1, 1], baris: [2, 8], tanpaMinus: true, contoh: [["Pekerjaan", "Jumlah"], ["Petani", "45"], ["Pedagang", "30"], ["Lainnya", "25"]] },
@@ -44,16 +54,33 @@ export const ATURAN_GRAFIK: Record<JenisGrafik, { nama: string; kolom: [number, 
   pencar: { nama: "Diagram pencar", kolom: [1, 3], baris: [3, 20], xAngka: true, contoh: [["Jam belajar per hari", "Nilai ujian"], ["1", "55"], ["2", "62"], ["3", "70"], ["4", "74"], ["5", "85"]] },
   // Kolom angka pertama di kiri (laki-laki), kedua di kanan (perempuan); umur termuda di bawah.
   piramida: { nama: "Piramida penduduk", kolom: [2, 2], baris: [2, 18], tanpaMinus: true, contoh: [["Umur (tahun)", "Laki-laki (ribu)", "Perempuan (ribu)"], ["0–14", "12", "11"], ["15–29", "10", "10"], ["30–44", "8", "8"], ["45–59", "5", "6"], ["60+", "3", "4"]] },
+  waktu: bagan("waktu"),
+  alur: bagan("alur"),
+  siklus: bagan("siklus"),
+  // Kolom induk boleh kosong (= kotak puncak), jadi tidak dihitung "belum diisi" di jendela.
+  pohon: bagan("pohon", { bolehKosong: 1 }),
 };
 
 /** Isi contoh satu sel (baris 0 = judul kolom). Di luar ukuran contoh: "Data n" / angka contoh. */
 export function contohSel(jenis: JenisGrafik, i: number, j: number): string {
   const c = ATURAN_GRAFIK[jenis].contoh;
+  if (adalahBagan(jenis)) return c[i]?.[j] ?? (i === 0 ? `Kolom ${j + 1}` : jenis === "pohon" ? (j ? "" : `Kotak ${i}`) : `Isi ${i}`);
   return c[i]?.[j] ?? (i === 0 ? `Kelompok ${j}` : j === 0 && !ATURAN_GRAFIK[jenis].xAngka ? `Data ${i}` : String(j === 0 ? i : 10 + ((i * 7 + j * 5) % 25)));
+}
+
+/**
+ * Isi yang digambar jendela grafik: sel kosong diganti contoh. Pohon: induk baris yang seluruhnya kosong = kotak baris
+ * pertama (supaya contoh tetap satu pohon meski nama puncak sudah diganti guru).
+ */
+export function isiTampil(isi: string[][], jenis: JenisGrafik): string[][] {
+  const t = isi.map((b, i) => b.map((s, j) => (s.trim() ? s : contohSel(jenis, i, j))));
+  if (jenis === "pohon") isi.forEach((b, i) => i > 1 && b.length > 1 && b.every((s) => !s.trim()) && (t[i][1] = t[1][0]));
+  return t;
 }
 
 /** Kenapa tabel ini tidak bisa digambar (kalimat untuk guru, menyebut letak sel), atau null bila bisa. */
 export function alasanGrafik(isi: string[][], jenis: JenisGrafik): string | null {
+  if (adalahBagan(jenis)) return alasanBagan(isi, jenis);
   const a = ATURAN_GRAFIK[jenis];
   const [judul, ...badan] = isi;
   const kolom = (judul?.length ?? 0) - 1;
@@ -72,7 +99,7 @@ export function alasanGrafik(isi: string[][], jenis: JenisGrafik): string | null
 
 /** Tabel (baris pertama = judul kolom) → data grafik; null bila tidak bisa digambar (tetap tampil sebagai tabel). */
 export function dataGrafik(isi: string[][], jenis: JenisGrafik): DataGrafik | null {
-  if (alasanGrafik(isi, jenis)) return null;
+  if (adalahBagan(jenis) || alasanGrafik(isi, jenis)) return null;
   const [judul, ...badan] = isi;
   const seri = judul.slice(1).map((nama, k) => ({ nama: bersih(nama), nilai: badan.map((b) => bacaAngka(b[k + 1])) }));
   return { sumbuX: bersih(judul[0]), label: badan.map((b) => bersih(b[0])), seri };
@@ -303,6 +330,7 @@ function lingkaran(d: DataGrafik, atas: number) {
 
 /** Tabel + penanda → SVG utuh (latar putih, lebar 480), atau null bila datanya tidak bisa digambar. */
 export function svgGrafik(isi: string[][], { jenis, judul }: Penanda): string | null {
+  if (adalahBagan(jenis)) return svgBagan(isi, jenis, judul);
   const d = dataGrafik(isi, jenis);
   if (!d) return null;
   const banyak = d.seri.length > 1; // lingkaran & histogram selalu satu kelompok

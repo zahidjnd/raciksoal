@@ -1414,11 +1414,11 @@ export function periksaGrafik(s: Pick<Soal, "wacana" | "pertanyaan" | "pembahasa
   const w: string[] = [];
   const baris = [s.wacana, s.pertanyaan, s.pembahasan].flatMap((t) => pecahBaris(String(t ?? "")));
   if (baris.some((b) => !b.tabel && bacaPenanda(b.teks)))
-    w.push('Ada baris "[[GRAFIK ...]]" tanpa tabel data tepat di bawahnya, jadi tertulis apa adanya. Hapus baris itu, atau tulis tabelnya tepat di bawahnya.');
+    w.push('Ada baris "[[GRAFIK ...]]" / "[[BAGAN ...]]" tanpa tabel tepat di bawahnya, jadi tertulis apa adanya. Hapus baris itu, atau tulis tabelnya tepat di bawahnya.');
   const alasan = baris.map((b) => b.grafik && alasanGrafik(b.tabel!, b.grafik.jenis)).find(Boolean);
-  if (alasan) w.push(`Data grafik tidak bisa digambar, jadi tampil sebagai tabel: ${alasan} Perbaiki lewat Ubah tabel (klik tabelnya di Edit), atau pilih tampil sebagai Tabel.`);
-  if ([...(s.pilihan ?? []), ...(s.pernyataan ?? [])].some((t) => /\[\[\s*GRAFIK/i.test(String(t ?? ""))))
-    w.push("Grafik tidak bisa ditampilkan di pilihan/pernyataan. Pindahkan grafiknya ke pertanyaan.");
+  if (alasan) w.push(`Data grafik/bagan tidak bisa digambar, jadi tampil sebagai tabel: ${alasan} Perbaiki lewat Ubah tabel (klik tabelnya di Edit), atau pilih tampil sebagai Tabel.`);
+  if ([...(s.pilihan ?? []), ...(s.pernyataan ?? [])].some((t) => /\[\[\s*(GRAFIK|BAGAN)/i.test(String(t ?? ""))))
+    w.push("Grafik/bagan tidak bisa ditampilkan di pilihan/pernyataan. Pindahkan ke pertanyaan.");
   return w;
 }
 

@@ -224,6 +224,19 @@ mengatur skor). Persen level dipilih supaya jumlahnya persis surat (34/43/23 dan
    Pratinjau atau tombol "📊 Grafik"), termasuk mengubahnya kembali menjadi tabel. Jendelanya menampilkan contoh
    abu-abu per jenis sehingga grafik langsung tergambar sebelum diisi (contoh tidak pernah tersimpan). Belum: grafik
    fungsi, kurva permintaan–penawaran, grafik v–t, ogive, grafik di pilihan jawaban.
+10. ✅ 🔍 (0.53.0, keputusan pemilik 2026-11-19) **Bagan.** Sama dengan grafik: AI menulis tabel + satu baris penanda
+   tepat di atasnya, aplikasi yang menggambar (hitam-putih). Jenis: **waktu** = garis waktu (`[[BAGAN waktu: judul]]`,
+   tepat 2 kolom: waktu | peristiwa, 2–10 baris), **alur** = diagram alir/tahapan berpanah dari atas ke bawah, juga
+   rantai sanad (1 kolom langkah, 2–8 baris), **siklus** = tahapan melingkar berpanah (1 kolom, 3–8 baris),
+   **pohon** = klasifikasi, struktur organisasi, peta konsep, pembagian (tepat 2 kolom: nama | induk; induk kosong =
+   puncak, tepat satu puncak; 2–15 kotak, maks 4 tingkat, maks 8 kotak paling bawah). Baris pertama tabel = judul
+   kolom (tidak digambar). Isi kotak singkat (peristiwa maks 120 huruf, langkah 80, tahap siklus 50, nama 40).
+   **Tanpa huruf Arab** di bagan (istilah ditulis Latin, mis. "Isim"; aturan 5: isi bagan tidak dicocokkan dengan
+   data mushaf/hadis); rantai sanad hanya nama perawi tanpa matan. Tahun di garis waktu mapel sejarah ikut aturan
+   tahun (harus ada di materi). Boleh di pertanyaan, wacana, dan pembahasan; tidak di pilihan. Di Word bagan berupa
+   gambar SVG (Word 2016 ke atas; aplikasi lama/WPS yang tidak bisa membaca SVG menampilkan gambar cadangan
+   "bagan tampil di Word 2016 ke atas"), diubah lewat web lalu diunduh ulang. 🔍 Bagan yang tidak bisa digambar tampil
+   sebagai tabel dan diberi peringatan, seperti grafik. Belum: pohon ahli waris (pasangan bukan hubungan induk–anak).
 
 ### 4a. Nilai Kurikulum Berbasis Cinta (Kemenag 2025)
 Panduan KBC (Kepdirjen Pendis 6077/2025) memuat **Panca Cinta**: Cinta Allah dan Rasul-Nya, Cinta Ilmu,
