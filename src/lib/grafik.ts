@@ -6,6 +6,7 @@
  */
 import { ATURAN_BAGAN, alasanBagan, svgBagan, type JenisBagan } from "./bagan.ts";
 import { contohGeometri, satuBangun, ATURAN_GEOMETRI, alasanGeometri, svgGeometri, type JenisGeometri } from "./geometri.ts";
+import { ATURAN_SKEMA, alasanSkema, svgSkema, type JenisSkema } from "./skema.ts";
 import { bacaAngka, skala } from "./skala.ts";
 
 export { bacaAngka, skala };
@@ -14,11 +15,11 @@ export { bacaAngka, skala };
  * Jenis grafik data + jenis bagan (0.53.0, bagan.ts) + geometri (0.54.0, geometri.ts): penanda, jendela, pemeriksa, & Word
  * memakai jalur yang sama.
  */
-export type JenisGrafik = "batang" | "garis" | "lingkaran" | "histogram" | "pencar" | "piramida" | JenisBagan | JenisGeometri;
+export type JenisGrafik = "batang" | "garis" | "lingkaran" | "histogram" | "pencar" | "piramida" | JenisBagan | JenisGeometri | JenisSkema;
 export type Penanda = { jenis: JenisGrafik; judul: string };
 export type DataGrafik = { sumbuX: string; label: string[]; seri: { nama: string; nilai: number[] }[] };
 
-const POLA_PENANDA = /^\[\[\s*(?:GRAFIK|BAGAN|GEOMETRI)\s+(batang|garis|lingkaran|histogram|pencar|piramida|waktu|alur|siklus|pohon|koordinat|bilangan|datar|sudut|ruang)\s*(?::\s*(.*?))?\s*\]\]$/i;
+const POLA_PENANDA = /^\[\[\s*(?:GRAFIK|BAGAN|GEOMETRI|SKEMA)\s+(batang|garis|lingkaran|histogram|pencar|piramida|waktu|alur|siklus|pohon|koordinat|bilangan|datar|sudut|ruang|listrik|atom|jaring)\s*(?::\s*(.*?))?\s*\]\]$/i;
 
 /** Satu baris teks → penanda grafik, atau null. */
 export function bacaPenanda(baris: string): Penanda | null {
@@ -27,12 +28,13 @@ export function bacaPenanda(baris: string): Penanda | null {
 }
 
 /** Penanda → teks baris (untuk jendela Ubah tabel). */
-export const tulisPenanda = (p: Penanda) => `[[${adalahBagan(p.jenis) ? "BAGAN" : adalahGeometri(p.jenis) ? "GEOMETRI" : "GRAFIK"} ${p.jenis}${p.judul ? `: ${p.judul}` : ""}]]`;
+export const tulisPenanda = (p: Penanda) => `[[${adalahBagan(p.jenis) ? "BAGAN" : adalahGeometri(p.jenis) ? "GEOMETRI" : adalahSkema(p.jenis) ? "SKEMA" : "GRAFIK"} ${p.jenis}${p.judul ? `: ${p.judul}` : ""}]]`;
 
 export const adalahBagan = (j: JenisGrafik): j is JenisBagan => j in ATURAN_BAGAN;
 export const adalahGeometri = (j: JenisGrafik): j is JenisGeometri => j in ATURAN_GEOMETRI;
 /** Digambar sebagai gambar SVG (bagan, geometri), bukan grafik data (Word: gambar, bukan grafik asli). */
-export const adalahGambar = (j: JenisGrafik) => adalahBagan(j) || adalahGeometri(j);
+export const adalahSkema = (j: JenisGrafik): j is JenisSkema => j in ATURAN_SKEMA;
+export const adalahGambar = (j: JenisGrafik) => adalahBagan(j) || adalahGeometri(j) || adalahSkema(j);
 
 const bersih = (s: string) => String(s ?? "").replace(/[\t$]/g, "").trim();
 
@@ -67,11 +69,14 @@ export const ATURAN_GRAFIK: Record<JenisGrafik, Aturan> = {
   datar: { ...ATURAN_GEOMETRI.datar, kolom: [2, 2] },
   sudut: { ...ATURAN_GEOMETRI.sudut, kolom: [2, 2] },
   ruang: { ...ATURAN_GEOMETRI.ruang, kolom: [2, 2] },
+  listrik: { ...ATURAN_SKEMA.listrik, kolom: [2, 2] },
+  atom: { ...ATURAN_SKEMA.atom, kolom: [2, 2] },
+  jaring: { ...ATURAN_SKEMA.jaring, kolom: [2, 2] },
 };
 
 /** Isi contoh satu sel (baris 0 = judul kolom). Di luar ukuran contoh: "Data n" / angka contoh. */
 export function contohSel(jenis: JenisGrafik, i: number, j: number, c = ATURAN_GRAFIK[jenis].contoh): string {
-  if (satuBangun(jenis)) return c[i]?.[j] ?? (i === 0 ? `Kolom ${j + 1}` : "");
+  if (satuBangun(jenis) || adalahSkema(jenis)) return c[i]?.[j] ?? (i === 0 ? `Kolom ${j + 1}` : "");
   if (adalahGeometri(jenis)) return c[i]?.[j] ?? (i === 0 ? `Kolom ${j + 1}` : j === 0 ? "titik" : j === 1 ? (jenis === "bilangan" ? String(i) : `(${i}, ${i})`) : "");
   if (adalahBagan(jenis)) return c[i]?.[j] ?? (i === 0 ? `Kolom ${j + 1}` : jenis === "pohon" ? (j ? "" : `Kotak ${i}`) : `Isi ${i}`);
   return c[i]?.[j] ?? (i === 0 ? `Kelompok ${j}` : j === 0 && !ATURAN_GRAFIK[jenis].xAngka ? `Data ${i}` : String(j === 0 ? i : 10 + ((i * 7 + j * 5) % 25)));
@@ -94,6 +99,7 @@ export function isiTampil(isi: string[][], jenis: JenisGrafik): string[][] {
 export function alasanGrafik(isi: string[][], jenis: JenisGrafik): string | null {
   if (adalahBagan(jenis)) return alasanBagan(isi, jenis);
   if (adalahGeometri(jenis)) return alasanGeometri(isi, jenis);
+  if (adalahSkema(jenis)) return alasanSkema(isi, jenis);
   const a = ATURAN_GRAFIK[jenis];
   const [judul, ...badan] = isi;
   const kolom = (judul?.length ?? 0) - 1;
@@ -329,6 +335,7 @@ function lingkaran(d: DataGrafik, atas: number) {
 export function svgGrafik(isi: string[][], { jenis, judul }: Penanda): string | null {
   if (adalahBagan(jenis)) return svgBagan(isi, jenis, judul);
   if (adalahGeometri(jenis)) return svgGeometri(isi, jenis, judul);
+  if (adalahSkema(jenis)) return svgSkema(isi, jenis, judul);
   const d = dataGrafik(isi, jenis);
   if (!d) return null;
   const banyak = d.seri.length > 1; // lingkaran & histogram selalu satu kelompok

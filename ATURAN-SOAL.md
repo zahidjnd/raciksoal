@@ -273,6 +273,18 @@ mengatur skor). Persen level dipilih supaya jumlahnya persis surat (34/43/23 dan
    putus-putus, elips alas tabung/kerucut separuh belakangnya putus-putus. 🔍 Semua angka dicocokkan dengan jarak 3D
    bangun jadi (diagonal ruang, rusuk tegak limas, garis pelukis, diameter = 2 × jari-jari). Belum: irisan bidang,
    jaring-jaring, tanda sudut garis–bidang, bangun gabungan, grafik di pilihan jawaban.
+12. ✅ 🔍 (0.57.0, keputusan pemilik 2026-11-19) **Skema IPA tahap 4a.** Sama dengan bangun: tabel 2 kolom
+   (Bagian | Isi) + penanda, aplikasi yang menggambar (hitam-putih). `[[SKEMA listrik: judul]]` = rangkaian listrik,
+   satu baris satu komponen urut sepanjang rangkaian: tepat satu **baterai**, hambatan R1, lampu L1, kapasitor C1,
+   saklar S (terbuka/tertutup), amperemeter, **paralel** "R2 = 6 Ω, R3 = 3 Ω" (2–4 cabang dalam satu baris),
+   **voltmeter** "R1" (dipasang sejajar dengan komponen itu, atau "baterai"); maks 8 komponen berurutan.
+   `[[SKEMA atom: judul]]` = model atom Bohr: unsur, nomor atom, konfigurasi (wajib bila nomor atom > 20), inti;
+   kulit K maks 2, L 8, M 18, kulit terluar maks 8, jumlah elektron = nomor atom. `[[SKEMA jaring: judul]]` =
+   jaring/rantai makanan: "rumput | belalang, tikus" (dimakan oleh), pemakan puncak boleh "-"; tingkat trofik
+   disusun aplikasi (produsen di bawah), maks 14 makhluk & 5 per tingkat. Gambar tidak menuliskan jawaban yang
+   ditanyakan. 🔍 Komponen dobel/tak dikenal, voltmeter tanpa sasaran, paralel satu cabang, jumlah elektron atau isi
+   kulit salah, dan lingkaran makan-memakan → tampil sebagai tabel + peringatan. Belum (tahap 4b): cermin & lensa,
+   gaya/bidang miring/katrol/tuas; belum: rumus struktur kimia, organ/sel/alat laboratorium (pakai gambar materi).
 
 ### 4a. Nilai Kurikulum Berbasis Cinta (Kemenag 2025)
 Panduan KBC (Kepdirjen Pendis 6077/2025) memuat **Panca Cinta**: Cinta Allah dan Rasul-Nya, Cinta Ilmu,

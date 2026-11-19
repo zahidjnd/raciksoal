@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { adalahBagan, adalahGeometri, alasanGrafik, ATURAN_GRAFIK, isiTampil, svgGrafik, type JenisGrafik, type Penanda } from "@/lib/grafik";
+import { adalahBagan, adalahGeometri, adalahSkema, alasanGrafik, ATURAN_GRAFIK, isiTampil, svgGrafik, type JenisGrafik, type Penanda } from "@/lib/grafik";
 import { contohGeometri, satuBangun } from "@/lib/geometri";
 import { JOROK } from "@/lib/soal";
 
@@ -33,7 +33,7 @@ export function EditorTabel({ awal, grafik, selesai }: { awal: string[][] | null
   const tampil = jenis ? isiTampil(isi, jenis) : isi;
   const svg = penanda && svgGrafik(tampil, penanda);
   const alasan = penanda && !svg ? alasanGrafik(tampil, penanda.jenis) : null;
-  const nama = jenis ? (adalahBagan(jenis) ? "bagan" : adalahGeometri(jenis) ? "gambar" : "grafik") : "tabel";
+  const nama = jenis ? (adalahBagan(jenis) ? "bagan" : adalahGeometri(jenis) || adalahSkema(jenis) ? "gambar" : "grafik") : "tabel";
   function pilihJenis(j: JenisGrafik | "") {
     setJenis(j);
     setPesan("");
@@ -110,6 +110,11 @@ export function EditorTabel({ awal, grafik, selesai }: { awal: string[][] | null
                 <option value="sudut">Sudut (berpelurus, bertolak belakang, garis sejajar)</option>
                 <option value="ruang">Bangun ruang (kubus, balok, prisma, limas, tabung, kerucut, bola)</option>
               </optgroup>
+              <optgroup label="Skema IPA">
+                <option value="listrik">Rangkaian listrik (hambatan, lampu, paralel, meter)</option>
+                <option value="atom">Model atom Bohr (kulit & elektron)</option>
+                <option value="jaring">Jaring / rantai makanan</option>
+              </optgroup>
             </select>
           </label>
           {jenis && (
@@ -153,7 +158,7 @@ export function EditorTabel({ awal, grafik, selesai }: { awal: string[][] | null
                         )}
                         <input
                           dir="auto"
-                          className={`${jenis && satuBangun(jenis) ? "w-44" : jenis && adalahGeometri(jenis) ? (j === 1 ? "w-48" : "w-28") : jenis ? "w-32" : "w-40"} rounded-lg border px-2 max-md:w-28 placeholder:italic placeholder:text-pudar/70 ${i === 0 ? "bg-krem font-semibold" : ""} ${jorok(t) ? "pl-7" : ""}`}
+                          className={`${jenis && (satuBangun(jenis) || adalahSkema(jenis)) ? "w-44" : jenis && adalahGeometri(jenis) ? (j === 1 ? "w-48" : "w-28") : jenis ? "w-32" : "w-40"} rounded-lg border px-2 max-md:w-28 placeholder:italic placeholder:text-pudar/70 ${i === 0 ? "bg-krem font-semibold" : ""} ${jorok(t) ? "pl-7" : ""}`}
                           aria-label={i === 0 ? `Judul kolom ${j + 1}` : `Baris ${i} kolom ${j + 1}`}
                           placeholder={jenis ? tampil[i][j] || (j === ATURAN_GRAFIK[jenis].bolehKosong ? (jenis === "pohon" ? "kosong = puncak" : "boleh kosong") : "") : undefined}
                           value={t.replace(JOROK, "")}

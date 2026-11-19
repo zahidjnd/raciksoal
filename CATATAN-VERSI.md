@@ -52,6 +52,23 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.57.0 — 19 November 2026
+- **Skema IPA tahap 1: rangkaian listrik, model atom, jaring makanan.**
+  - **Rangkaian listrik** (Fisika): baterai, hambatan, lampu, kapasitor, saklar terbuka/tertutup, amperemeter,
+    cabang paralel, dan voltmeter yang dipasang sejajar dengan komponen yang diukur.
+  - **Model atom Bohr** (Kimia): inti bertuliskan lambang unsur, kulit K, L, M, N dengan titik-titik elektron.
+    Konfigurasi dihitung otomatis untuk nomor atom sampai 20.
+  - **Jaring/rantai makanan** (Biologi): cukup tulis "padi | belalang, tikus" (padi dimakan belalang dan tikus);
+    aplikasi menyusun tingkat trofiknya sendiri, produsen di bawah, panah ke pemakan.
+- **Skema yang salah ketahuan**: komponen dobel, voltmeter tanpa sasaran, jumlah elektron tidak sama dengan nomor
+  atom, isi kulit berlebih, atau lingkaran makan-memakan → soal diberi peringatan.
+- AI memakai skema ini untuk soal rangkaian listrik, struktur atom, dan ekosistem. Uji DeepSeek: 5 skema, semua kunci
+  benar; satu rangkaian dengan "paralel" satu cabang tertangkap pemeriksa.
+- **Membuat sendiri**: di **📊 Grafik & gambar** ada kelompok baru "Skema IPA".
+- Belum: cermin & lensa, gaya/bidang miring/katrol/tuas (tahap berikutnya).
+
+---
+
 ## 0.56.0 — 19 November 2026
 - **Gambar geometri tahap 2b: bangun ruang.** Kubus, balok, prisma segitiga, limas segiempat, limas segitiga,
   tabung, kerucut, dan bola, digambar miring seperti buku paket: rusuk yang tertutup putus-putus, alas tabung dan
