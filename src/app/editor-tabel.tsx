@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { adalahBagan, adalahGeometri, alasanGrafik, ATURAN_GRAFIK, isiTampil, svgGrafik, type JenisGrafik, type Penanda } from "@/lib/grafik";
+import { contohBangun } from "@/lib/bangun";
 import { JOROK } from "@/lib/soal";
 
 /** Lebih dari 6 kolom tidak muat di satu kolom lembar soal Word (huruf 10 pt), sama dengan batas untuk AI. */
@@ -49,7 +50,15 @@ export function EditorTabel({ awal, grafik, selesai }: { awal: string[][] | null
   }, []);
   const kolom = isi[0].length;
   const kosong = () => Array<string>(kolom).fill("");
-  const ubahSel = (i: number, j: number, t: string) => setIsi(isi.map((b, x) => (x === i ? b.map((s, y) => (y === j ? t : s)) : b)));
+  const ubahSel = (i: number, j: number, t: string) => {
+    const baru = isi.map((b, x) => (x === i ? b.map((s, y) => (y === j ? t : s)) : b));
+    // bangun datar/sudut: nama bangun diketik & baris lain masih kosong → banyak baris ikut contoh bangun itu
+    const kunci = (jenis === "datar" || jenis === "sudut") && j === 1 ? baru[i][0].trim() || contohBangun(isi, jenis)[i]?.[0] || "" : "";
+    if (/^(bangun|bentuk)$/i.test(kunci)) baru[i][0] ||= kunci; // kolom "bangun" abu-abu ikut terisi
+    const c = /^(bangun|bentuk)$/i.test(kunci) ? contohBangun(baru, jenis as "datar" | "sudut") : null;
+    if (c && baru.every((b, x) => x === 0 || x === i || b.every(selKosong)) && c.length !== baru.length && c[i]) return setIsi(c.map((b, x) => (x === i ? baru[i] : b.map(() => ""))));
+    setIsi(baru);
+  };
   const sisipBaris = (i: number) => setIsi([...isi.slice(0, i + 1), kosong(), ...isi.slice(i + 1)]);
 
   return (
@@ -97,6 +106,8 @@ export function EditorTabel({ awal, grafik, selesai }: { awal: string[][] | null
               <optgroup label="Geometri">
                 <option value="koordinat">Bidang koordinat (titik, garis, kurva, vektor, daerah)</option>
                 <option value="bilangan">Garis bilangan (pertidaksamaan)</option>
+                <option value="datar">Bangun datar (segitiga, segiempat, lingkaran)</option>
+                <option value="sudut">Sudut (berpelurus, bertolak belakang, garis sejajar)</option>
               </optgroup>
             </select>
           </label>
@@ -141,7 +152,7 @@ export function EditorTabel({ awal, grafik, selesai }: { awal: string[][] | null
                         )}
                         <input
                           dir="auto"
-                          className={`${jenis && adalahGeometri(jenis) ? (j === 1 ? "w-48" : "w-28") : jenis ? "w-32" : "w-40"} rounded-lg border px-2 max-md:w-28 placeholder:italic placeholder:text-pudar/70 ${i === 0 ? "bg-krem font-semibold" : ""} ${jorok(t) ? "pl-7" : ""}`}
+                          className={`${jenis === "datar" || jenis === "sudut" ? "w-44" : jenis && adalahGeometri(jenis) ? (j === 1 ? "w-48" : "w-28") : jenis ? "w-32" : "w-40"} rounded-lg border px-2 max-md:w-28 placeholder:italic placeholder:text-pudar/70 ${i === 0 ? "bg-krem font-semibold" : ""} ${jorok(t) ? "pl-7" : ""}`}
                           aria-label={i === 0 ? `Judul kolom ${j + 1}` : `Baris ${i} kolom ${j + 1}`}
                           placeholder={jenis ? tampil[i][j] || (j === ATURAN_GRAFIK[jenis].bolehKosong ? (jenis === "pohon" ? "kosong = puncak" : "boleh kosong") : "") : undefined}
                           value={t.replace(JOROK, "")}

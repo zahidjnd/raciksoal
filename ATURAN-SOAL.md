@@ -251,8 +251,19 @@ mengatur skor). Persen level dipilih supaya jumlahnya persis surat (34/43/23 dan
    sebagai kode. Angka di gambar wajib konsisten dengan soal, kunci, dan pembahasan; gambar tidak menuliskan jawaban
    yang ditanyakan. Tanpa huruf Arab. Boleh di pertanyaan, wacana, dan pembahasan; tidak di pilihan. Di Word berupa
    gambar SVG seperti bagan. 🔍 Jenis benda tak dikenal, titik salah tulis, rumus tak terbaca, atau titik di luar
-   rentang sumbu → tampil sebagai tabel dan diberi peringatan. Belum (tahap 2): bangun datar, bangun ruang, sudut;
-   belum: grafik di pilihan jawaban.
+   rentang sumbu → tampil sebagai tabel dan diberi peringatan.
+   **Tahap 2a (0.55.0): bangun datar & sudut**, tabel **tepat 2 kolom** (Bagian | Isi), satu tabel = satu bangun.
+   `[[GEOMETRI datar: judul]]`: baris **bangun** (segitiga, segitiga siku-siku/sama kaki/sama sisi, persegi, persegi
+   panjang, jajargenjang, trapesium, trapesium siku-siku/sama kaki, belah ketupat, layang-layang, lingkaran), lalu
+   ukuran: sisi/diagonal "AB | 8 cm", "sudut B | 90°" (atau siku-siku), "tinggi | 4 cm", lingkaran "jari-jari",
+   "diameter", "juring | 60°". Titik A, B, C, D berlawanan arah jarum jam dari kiri bawah; nama lain lewat
+   "titik | P, Q, R" (huruf kelima = titik potong diagonal). `[[GEOMETRI sudut: judul]]`: baris **bentuk** (sudut,
+   berpelurus, berpenyiku, bertolak belakang, sejajar), lalu "sudut 1" (1 kanan atas, 2 kiri atas, 3 kiri bawah,
+   4 kanan bawah) atau "sudut A1"–"B4" untuk garis sejajar. Bangun **digambar sesuai ukuran** (segitiga lewat aturan
+   sinus/cosinus); ukuran yang ditanyakan ditulis "?" atau "x" (boleh bentuk aljabar "2x + 10°"). 🔍 Semua angka
+   yang ditulis dicocokkan dengan gambar jadi: ukuran mustahil atau tidak cocok (Pythagoras, jumlah sudut 180°, sisi
+   segitiga, tinggi, sudut sehadap/berseberangan/berpelurus) → tampil sebagai tabel dan diberi peringatan yang
+   menyebut ukuran yang benar. Belum (tahap 2b): bangun ruang; belum: bangun gabungan, grafik di pilihan jawaban.
 
 ### 4a. Nilai Kurikulum Berbasis Cinta (Kemenag 2025)
 Panduan KBC (Kepdirjen Pendis 6077/2025) memuat **Panca Cinta**: Cinta Allah dan Rasul-Nya, Cinta Ilmu,

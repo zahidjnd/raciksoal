@@ -5,9 +5,12 @@
  * SVG hitam-putih yang sama untuk web & Word (gambar SVG, lihat `gambarWord` di word.ts). Rumus kurva dihitung
  * pembaca rumus kecil di bawah (`bacaRumus`), TIDAK pernah dijalankan sebagai kode. Tanpa huruf Arab (aturan 5).
  */
+import { ATURAN_BANGUN, alasanBangun, svgBangun, type JenisBangun } from "./bangun.ts";
 import { bacaAngka } from "./skala.ts";
 
-export type JenisGeometri = "koordinat" | "bilangan";
+/** Tahap 1 di file ini; bangun datar & sudut (tahap 2a, 0.55.0) di bangun.ts. */
+export type JenisGeometri = "koordinat" | "bilangan" | JenisBangun;
+const adalahBangun = (j: JenisGeometri): j is JenisBangun => j in ATURAN_BANGUN;
 
 export const ATURAN_GEOMETRI: Record<JenisGeometri, { nama: string; baris: [number, number]; petunjuk: string; contoh: string[][] }> = {
   koordinat: {
@@ -23,6 +26,7 @@ export const ATURAN_GEOMETRI: Record<JenisGeometri, { nama: string; baris: [numb
     petunjuk: 'Satu baris = satu benda. Jenis: titik "3" (bulat penuh = termasuk); titik kosong "-1" (bulat kosong = tidak termasuk); daerah "-1..3", "2.." (ke kanan tak hingga), "..0" (ke kiri); rentang "-3..5" (angka yang tampil, boleh tidak ditulis). Label boleh kosong.',
     contoh: [["Jenis", "Isi", "Label"], ["rentang", "-3..5", ""], ["titik kosong", "-1", ""], ["titik", "3", ""], ["daerah", "-1..3", ""]],
   },
+  ...ATURAN_BANGUN,
 };
 
 const ARAB = /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/;
@@ -162,7 +166,7 @@ const normalJenis = (t: string) => {
   const k = bersih(t).toLowerCase().replace(/\s+/g, " ");
   return SINONIM[k] ?? k;
 };
-const JENIS: Record<JenisGeometri, string[]> = {
+const JENIS: Record<"koordinat" | "bilangan", string[]> = {
   koordinat: ["titik", "titik bantu", "garis", "ruas", "kurva", "panah", "daerah", "sumbu x", "sumbu y"],
   bilangan: ["titik", "titik kosong", "daerah", "rentang"],
 };
@@ -182,7 +186,7 @@ type Susunan = { benda: Benda[]; sumbuX: string; sumbuY: string; rx?: [number, n
 const peubahSumbu = (nama: string) => /^([a-z])(?![a-z])/i.exec(bersih(nama))?.[1] ?? "x";
 
 /** Tabel → benda-benda yang digambar, atau alasan (kalimat untuk guru, menyebut letak baris). */
-function susun(isi: string[][], jenis: JenisGeometri): Susunan | string {
+function susun(isi: string[][], jenis: "koordinat" | "bilangan"): Susunan | string {
   const a = ATURAN_GEOMETRI[jenis];
   const [judul, ...badan] = isi;
   const kolom = judul?.length ?? 0;
@@ -248,6 +252,7 @@ function susun(isi: string[][], jenis: JenisGeometri): Susunan | string {
 
 /** Kenapa tabel ini tidak bisa digambar (kalimat untuk guru), atau null. */
 export function alasanGeometri(isi: string[][], jenis: JenisGeometri): string | null {
+  if (adalahBangun(jenis)) return alasanBangun(isi, jenis);
   const s = susun(isi, jenis);
   return typeof s === "string" ? s : null;
 }
@@ -451,6 +456,7 @@ function bilangan(s: Susunan, atas: number) {
 }
 
 export function svgGeometri(isi: string[][], jenis: JenisGeometri, judul: string): string | null {
+  if (adalahBangun(jenis)) return svgBangun(isi, jenis, judul);
   const s = susun(isi, jenis);
   if (typeof s === "string") return null;
   const atas = judul ? 26 : 4;

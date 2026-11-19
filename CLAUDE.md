@@ -215,6 +215,11 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   `bacaAngka`/`skala` pindah ke `skala.ts` (grafik.ts ↔ geometri.ts tidak boleh saling impor: ATURAN_GRAFIK dievaluasi
   saat dimuat). Kolom Label `bolehKosong`; `isiTampil` tidak mengisi contoh di sel boleh-kosong pada baris yang sudah
   diisi. Satuan sumbu sama bila langkah x = y (vektor tidak gepeng). Tombol edit kini "📊 Grafik & gambar".
+  Tahap 2a (0.55.0, `bangun.ts`): `datar`/`sudut`, tabel 2 kolom Bagian | Isi, satu bangun per tabel. Segitiga
+  diselesaikan sinus/cosinus (`segitiga`), segiempat dari ukuran + bawaan (`segiempat`), lalu `cocokkan` membandingkan
+  SEMUA angka tertulis dengan gambar jadi (2% / 1°) = pemeriksa Pythagoras dll. Contoh abu-abu per bangun
+  (`CONTOH_BANGUN`, `contohBangun`; `contohSel` menerima contoh pengganti); mengetik nama bangun saat baris lain
+  kosong = jumlah baris ikut contoh & kolom "bangun" terisi sendiri (editor-tabel `ubahSel`).
 - **Rumus** (0.29.0): LaTeX `$...$` di teks mana pun (`POLA_RUMUS` gaya Pandoc di soal.ts: "US$ 5" bukan rumus). Web: KaTeX
   dimuat dinamis (`Rumus` di kartu-soal, salah tulis → teks asli). Word: `rumus.ts` LaTeX → OMML (subset; perintah tak
   dikenal → LaTeX dicetak apa adanya). Jawaban AI: `betulkanGarisMiring` (ai.ts) menggandakan `\` di dalam `$...$` sebelum

@@ -52,6 +52,25 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.55.0 — 19 November 2026
+- **Gambar geometri tahap 2a: bangun datar & sudut.**
+  - **Bangun datar**: segitiga (biasa, siku-siku, sama kaki, sama sisi), persegi, persegi panjang, jajargenjang,
+    trapesium (biasa, siku-siku, sama kaki), belah ketupat, layang-layang, dan lingkaran (jari-jari, diameter,
+    juring berarsir). Digambar **sesuai ukurannya**, lengkap dengan tanda siku-siku, garis tinggi putus-putus,
+    dan nama titik A, B, C, D.
+  - **Sudut**: sudut tunggal, berpelurus, berpenyiku, bertolak belakang, dan dua garis sejajar dipotong garis lain
+    (sudut A1–A4 dan B1–B4).
+- **Ukuran yang salah ketahuan.** Aplikasi mencocokkan semua angka di tabel dengan gambarnya. Kalau tidak cocok
+  (mis. sisi 8, 6, dan 11 pada segitiga siku-siku, atau sudut sehadap yang beda besar), soal diberi peringatan yang
+  menyebut ukuran yang benar. Ukuran yang ditanyakan ditulis "?" atau "x".
+- AI memakai gambar ini untuk soal trigonometri, Pythagoras, keliling/luas bangun datar, lingkaran, dan hubungan
+  antarsudut. Uji DeepSeek: 6 gambar, semua kunci benar; satu salah hitung sudut tertangkap pemeriksa.
+- **Membuat sendiri**: di **📊 Grafik & gambar** pilih "Bangun datar" atau "Sudut", lalu ketik nama bangunnya
+  (mis. "trapesium sama kaki"): contoh abu-abu dan gambarnya langsung berganti sesuai bangun itu.
+- Belum: bangun ruang (tahap berikutnya), sudut keliling, dan bangun gabungan.
+
+---
+
 ## 0.54.0 — 19 November 2026
 - **Gambar geometri tahap 1: bidang koordinat & garis bilangan.** Untuk Matematika, Fisika, dan Ekonomi, aplikasi
   kini bisa menggambar:
