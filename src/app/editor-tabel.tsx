@@ -114,6 +114,10 @@ export function EditorTabel({ awal, grafik, selesai }: { awal: string[][] | null
                 <option value="listrik">Rangkaian listrik (hambatan, lampu, paralel, meter)</option>
                 <option value="atom">Model atom Bohr (kulit & elektron)</option>
                 <option value="jaring">Jaring / rantai makanan</option>
+                <option value="optik">Cermin & lensa (bayangan, sinar istimewa)</option>
+                <option value="gaya">Gaya pada balok (bidang datar/miring)</option>
+                <option value="katrol">Katrol (tetap, bebas, meja)</option>
+                <option value="tuas">Tuas (jenis 1, 2, 3)</option>
               </optgroup>
             </select>
           </label>

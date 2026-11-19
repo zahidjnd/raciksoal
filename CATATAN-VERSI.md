@@ -52,6 +52,24 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.58.0 — 19 November 2026
+- **Skema IPA tahap 2: cermin & lensa, gaya, katrol, tuas** (Fisika).
+  - **Cermin & lensa** (cekung/cembung): titik F dan M (lensa: F1, F2, 2F1, 2F2), benda, lalu **bayangan dan sinar
+    istimewa dihitung aplikasi** dari 1/f = 1/s + 1/s'. Bayangan maya putus-putus. Bila letak/sifat bayangan yang
+    ditanyakan, tulis "bayangan | sembunyi" (sinarnya ikut disembunyikan).
+  - **Gaya pada balok**: bidang datar atau miring, panah w, N, f (gesek), F (tarik, boleh bersudut), dan uraian
+    w sin θ & w cos θ.
+  - **Katrol**: katrol tetap, katrol bebas, atau balok di meja yang ditarik beban tergantung.
+  - **Tuas** jenis 1, 2, 3 dengan beban, kuasa, dan garis ukur lengan beban & lengan kuasa.
+- **Angka yang salah ketahuan**: jarak/tinggi bayangan & perbesaran dicocokkan dengan rumus; tuas: beban × lengan
+  beban = kuasa × lengan kuasa, dan urutan lengan jenis 2/3 (lengan yang ditanyakan ikut dihitung).
+- Uji DeepSeek: 8 skema, 7 kunci benar; satu soal sekop (tuas jenis 3) yang mustahil secara fisika kini tertangkap
+  pemeriksa, dan perintah AI ditambah aturan urutan lengan tuas.
+- **Membuat sendiri**: di **📊 Grafik & gambar**, kelompok "Skema IPA" bertambah 4 pilihan.
+- Belum: pegas, fluida, rumus struktur kimia.
+
+---
+
 ## 0.57.0 — 19 November 2026
 - **Skema IPA tahap 1: rangkaian listrik, model atom, jaring makanan.**
   - **Rangkaian listrik** (Fisika): baterai, hambatan, lampu, kapasitor, saklar terbuka/tertutup, amperemeter,

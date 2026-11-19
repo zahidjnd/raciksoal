@@ -283,8 +283,17 @@ mengatur skor). Persen level dipilih supaya jumlahnya persis surat (34/43/23 dan
    jaring/rantai makanan: "rumput | belalang, tikus" (dimakan oleh), pemakan puncak boleh "-"; tingkat trofik
    disusun aplikasi (produsen di bawah), maks 14 makhluk & 5 per tingkat. Gambar tidak menuliskan jawaban yang
    ditanyakan. 🔍 Komponen dobel/tak dikenal, voltmeter tanpa sasaran, paralel satu cabang, jumlah elektron atau isi
-   kulit salah, dan lingkaran makan-memakan → tampil sebagai tabel + peringatan. Belum (tahap 4b): cermin & lensa,
-   gaya/bidang miring/katrol/tuas; belum: rumus struktur kimia, organ/sel/alat laboratorium (pakai gambar materi).
+   kulit salah, dan lingkaran makan-memakan → tampil sebagai tabel + peringatan.
+   **Tahap 4b (0.58.0):** `[[SKEMA optik: judul]]` = cermin cekung/cembung & lensa cembung/cekung: alat, fokus (cermin
+   boleh jari-jari), jarak benda, tinggi benda; bayangan & sinar istimewa dihitung aplikasi (1/f = 1/s + 1/s'),
+   maya putus-putus; "bayangan | sembunyi" bila letak/sifat bayangan ditanyakan (sinar ikut disembunyikan).
+   `[[SKEMA gaya: judul]]` = balok di bidang datar/miring θ dengan panah w, N, f (gesek, huruf kecil), F (huruf
+   besar, boleh bersudut), uraian w sin θ & w cos θ; panah tidak sebanding besarnya. `[[SKEMA katrol: judul]]` =
+   katrol tetap, bebas, atau balok di meja + beban tergantung. `[[SKEMA tuas: judul]]` = tuas jenis 1/2/3 dengan
+   beban, kuasa, lengan beban & lengan kuasa. 🔍 Jarak/tinggi bayangan & perbesaran yang ditulis dicocokkan dengan
+   rumus (bayangan maya boleh tanpa minus), sudut bidang 0–90°, beban katrol yang wajib, dan beban × lengan beban =
+   kuasa × lengan kuasa. Belum: pegas, fluida, rumus struktur kimia, organ/sel/alat laboratorium (pakai gambar
+   materi).
 
 ### 4a. Nilai Kurikulum Berbasis Cinta (Kemenag 2025)
 Panduan KBC (Kepdirjen Pendis 6077/2025) memuat **Panca Cinta**: Cinta Allah dan Rasul-Nya, Cinta Ilmu,

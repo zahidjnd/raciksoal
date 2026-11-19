@@ -228,6 +228,9 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   jalur sama dengan bagan (`adalahSkema` ⊂ `adalahGambar` → Word SVG). Listrik: slot berurutan di sisi atas (> 4:
   sisanya sisi bawah), paralel = tangga, voltmeter = jembatan di atas slot; rangkaian panjang = SVG lebih lebar dari
   360 (Word mengecilkan). Atom: `konfigurasiBohr` (≤ 20 saja). Jaring: tingkat = 1 + tingkat mangsa tertinggi.
+  Tahap 4b (0.58.0, `fisika.ts`, diteruskan skema.ts lewat `ATURAN_FISIKA`/`bacaFisika`/`gambarFisika`): optik, gaya,
+  katrol, tuas. Optik: sinar keluar = paraksial `mKeluar = mMasuk − q/f` (cermin = lensa yang dilipat), semua lewat
+  titik bayangan; "bayangan | sembunyi" juga menyembunyikan sinar. Gaya: "F" ≠ "f" (huruf besar/kecil dibedakan).
   Teks prompt ber-`\\n` ditulis lewat file (alat Write) lalu disisipkan, bukan heredoc (backslash hilang).
 - **Rumus** (0.29.0): LaTeX `$...$` di teks mana pun (`POLA_RUMUS` gaya Pandoc di soal.ts: "US$ 5" bukan rumus). Web: KaTeX
   dimuat dinamis (`Rumus` di kartu-soal, salah tulis → teks asli). Word: `rumus.ts` LaTeX → OMML (subset; perintah tak
