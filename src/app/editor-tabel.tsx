@@ -124,6 +124,11 @@ export function EditorTabel({ awal, grafik, selesai }: { awal: string[][] | null
                 <option value="waris">Bagan ahli waris (mawaris)</option>
                 <option value="arah">Mata angin & arah kiblat</option>
               </optgroup>
+              <optgroup label="Skema IPS">
+                <option value="lapisan">Lapisan bumi / atmosfer / tanah</option>
+                <option value="langit">Gerhana & fase bulan</option>
+                <option value="ekonomi">Interaksi pelaku ekonomi (2–4 sektor)</option>
+              </optgroup>
             </select>
           </label>
           {jenis && (

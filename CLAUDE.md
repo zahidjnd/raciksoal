@@ -234,8 +234,11 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   Tahap 5a (0.59.0, ATURAN-SOAL 4.13, `agama.ts`, diteruskan skema.ts lewat `ATURAN_AGAMA`/`bacaAgama`/`gambarAgama`):
   shaf, waris, arah. Waris: pemeriksa HANYA kaidah faraidh pasti (hijab, suami/istri, ibu/ayah bila ada keturunan,
   anak perempuan, jumlah > 1 = "aul | ya"); kasus khusus sengaja tidak. Bagan waris melebar bila saudaranya banyak.
-  Python lewat heredoc: `\\b` menjadi karakter backspace (kode 8) — susun garis miring dengan `chr(92)`, lalu cek
-  `grep -rlP '[\\x00-\\x08]' src/`.
+  Python lewat heredoc: `\b` menjadi karakter backspace (kode 8) — susun garis miring dengan `chr(92)`, lalu cek
+  `grep -rlP '[\x00-\x08]' src/`.
+  Tahap 5b (0.60.0, `ips.ts`, lewat `ATURAN_IPS`/`bacaIps`/`gambarIps`): lapisan, langit, ekonomi. Gerhana matahari:
+  jari-jari bulan dihitung supaya ujung umbra menyentuh Bumi. Fase bulan: wujud = `bulanTampak` (busur + elips).
+  Ekonomi: nomor arus = urutan panggilan `arus` (urutan ini juga tertulis di prompt; ubah keduanya bersamaan).
   Teks prompt ber-`\\n` ditulis lewat file (alat Write) lalu disisipkan, bukan heredoc (backslash hilang).
 - **Rumus** (0.29.0): LaTeX `$...$` di teks mana pun (`POLA_RUMUS` gaya Pandoc di soal.ts: "US$ 5" bukan rumus). Web: KaTeX
   dimuat dinamis (`Rumus` di kartu-soal, salah tulis → teks asli). Word: `rumus.ts` LaTeX → OMML (subset; perintah tak

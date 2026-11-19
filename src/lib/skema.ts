@@ -6,11 +6,13 @@
  */
 import { ARAB, bersih, esc, garis, LEBAR, normal, r1, tulis } from "./bangun.ts";
 import { ATURAN_AGAMA, bacaAgama, gambarAgama, type JenisAgama } from "./agama.ts";
+import { ATURAN_IPS, bacaIps, gambarIps, type JenisIps } from "./ips.ts";
 import { ATURAN_FISIKA, bacaFisika, gambarFisika, type JenisFisika } from "./fisika.ts";
 
-export type JenisSkema = "listrik" | "atom" | "jaring" | JenisFisika | JenisAgama;
+export type JenisSkema = "listrik" | "atom" | "jaring" | JenisFisika | JenisAgama | JenisIps;
 const adalahFisika = (j: JenisSkema): j is JenisFisika => j in ATURAN_FISIKA;
 const adalahAgama = (j: JenisSkema): j is JenisAgama => j in ATURAN_AGAMA;
+const adalahIps = (j: JenisSkema): j is JenisIps => j in ATURAN_IPS;
 type P = [number, number];
 const K = ["Bagian", "Isi"];
 
@@ -36,6 +38,7 @@ export const ATURAN_SKEMA: Record<JenisSkema, { nama: string; baris: [number, nu
   },
   ...ATURAN_FISIKA,
   ...ATURAN_AGAMA,
+  ...ATURAN_IPS,
 };
 
 const badanTabel = (isi: string[][]) => isi.slice(1).map((b, n) => ({ k: bersih(b[0] ?? ""), v: bersih(b[1] ?? ""), n: n + 1 })).filter((x) => x.k || x.v);
@@ -413,6 +416,7 @@ function gambarJaring(j: Jaring, atas: number) {
 function baca(isi: string[][], jenis: JenisSkema) {
   if (adalahFisika(jenis)) return bacaFisika(isi, jenis);
   if (adalahAgama(jenis)) return bacaAgama(isi, jenis);
+  if (adalahIps(jenis)) return bacaIps(isi, jenis);
   return jenis === "listrik" ? bacaListrik(isi) : jenis === "atom" ? bacaAtom(isi) : bacaJaring(isi);
 }
 
@@ -426,7 +430,7 @@ export function svgSkema(isi: string[][], jenis: JenisSkema, judul: string): str
   const h = baca(isi, jenis);
   if (typeof h === "string") return null;
   const atas = judul ? 26 : 4;
-  const g: { isi: string; tinggi: number; lebar?: number } = adalahFisika(jenis) ? gambarFisika(h as Parameters<typeof gambarFisika>[0], jenis, atas) : adalahAgama(jenis) ? gambarAgama(h as Parameters<typeof gambarAgama>[0], jenis, atas) : jenis === "listrik" ? gambarListrik(h as Listrik, atas) : jenis === "atom" ? gambarAtom(h as Atom, atas) : gambarJaring(h as Jaring, atas);
+  const g: { isi: string; tinggi: number; lebar?: number } = adalahFisika(jenis) ? gambarFisika(h as Parameters<typeof gambarFisika>[0], jenis, atas) : adalahAgama(jenis) ? gambarAgama(h as Parameters<typeof gambarAgama>[0], jenis, atas) : adalahIps(jenis) ? gambarIps(h as Parameters<typeof gambarIps>[0], jenis, atas) : jenis === "listrik" ? gambarListrik(h as Listrik, atas) : jenis === "atom" ? gambarAtom(h as Atom, atas) : gambarJaring(h as Jaring, atas);
   const t = Math.ceil(g.tinggi);
   const L = Math.ceil(g.lebar ?? LEBAR);
   const kepala = judul ? `<text x="${L / 2}" y="18" text-anchor="middle" font-size="13" font-weight="bold">${esc(judul)}</text>` : "";

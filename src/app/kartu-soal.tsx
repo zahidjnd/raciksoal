@@ -849,7 +849,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
       <button
         type="button"
         className="rounded-lg border h-10 px-3"
-        title="Sisipkan grafik (data angka), bagan (garis waktu, alur, siklus, pohon), gambar geometri (koordinat, bangun, sudut, bangun ruang), skema IPA (listrik, atom, jaring makanan, optik, gaya), atau skema agama (shaf, ahli waris, kiblat); kursor di dalam tabel = jadikan tabel itu grafik/gambar"
+        title="Sisipkan grafik (data angka), bagan (garis waktu, alur, siklus, pohon), gambar geometri (koordinat, bangun, sudut, bangun ruang), skema IPA (listrik, atom, jaring makanan, optik, gaya), skema agama (shaf, ahli waris, kiblat), atau skema IPS (lapisan, gerhana, arus ekonomi); kursor di dalam tabel = jadikan tabel itu grafik/gambar"
         onMouseDown={(e) => e.preventDefault()}
         onClick={(e) => sisipTabel(e, true)}
       >

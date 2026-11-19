@@ -305,8 +305,15 @@ mengatur skor). Persen level dipilih supaya jumlahnya persis surat (34/43/23 dan
    anak perempuan; jumlah bagian tetap > 1 wajib "aul | ya"; suami/istri sesuai jenis kelamin mayit. Kasus khusus
    (gharrawain, musyarakah, kakek bersama saudara, radd) tidak diperiksa: tetap tanggung jawab guru.
    `[[SKEMA arah: judul]]` = mawar mata angin 8 arah, panah kiblat (sudut dari utara atau nama arah), benda di suatu
-   arah; "nama arah | sembunyi" = hanya Utara yang ditulis. Belum (tahap 5b): lapisan bumi/atmosfer/tanah, gerhana
-   & fase bulan, arus ekonomi; tetap dari gambar materi: peta, denah, gerakan sholat.
+   arah; "nama arah | sembunyi" = hanya Utara yang ditulis.
+   **Tahap 5b (0.60.0): skema IPS**, tata letak tetap (tidak sesuai skala). `[[SKEMA lapisan: judul]]` = bentuk
+   **bumi** (setengah lingkaran berlapis, luar ke dalam), **atmosfer** (pita dari bawah ke atas, ketinggian harus
+   naik), **tanah** (horizon dari atas ke bawah), 2–7 lapisan "nama | keterangan" ("?" boleh). `[[SKEMA langit:
+   judul]]` = **gerhana matahari**/**gerhana bulan** (Matahari, penghalang, yang terkena bayangan; umbra & penumbra)
+   atau **fase bulan** (8 posisi, wujud dilihat dari Bumi); "nama | sembunyi" = huruf A, B, C / nomor 1–8.
+   `[[SKEMA ekonomi: judul]]` = interaksi pelaku ekonomi **2/3/4 sektor** (garis utuh = barang/jasa & faktor
+   produksi, putus-putus = uang); "label arus | angka" = nomor (1)–(14) dengan urutan baku. Gambar tidak menuliskan
+   jawaban yang ditanyakan (pakai "sembunyi"/"angka"/"?"). Tetap dari gambar materi: peta, denah, gerakan sholat.
 
 ### 4a. Nilai Kurikulum Berbasis Cinta (Kemenag 2025)
 Panduan KBC (Kepdirjen Pendis 6077/2025) memuat **Panca Cinta**: Cinta Allah dan Rasul-Nya, Cinta Ilmu,

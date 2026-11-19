@@ -19,7 +19,7 @@ export type JenisGrafik = "batang" | "garis" | "lingkaran" | "histogram" | "penc
 export type Penanda = { jenis: JenisGrafik; judul: string };
 export type DataGrafik = { sumbuX: string; label: string[]; seri: { nama: string; nilai: number[] }[] };
 
-const POLA_PENANDA = /^\[\[\s*(?:GRAFIK|BAGAN|GEOMETRI|SKEMA)\s+(batang|garis|lingkaran|histogram|pencar|piramida|waktu|alur|siklus|pohon|koordinat|bilangan|datar|sudut|ruang|listrik|atom|jaring|optik|gaya|katrol|tuas|shaf|waris|arah)\s*(?::\s*(.*?))?\s*\]\]$/i;
+const POLA_PENANDA = /^\[\[\s*(?:GRAFIK|BAGAN|GEOMETRI|SKEMA)\s+(batang|garis|lingkaran|histogram|pencar|piramida|waktu|alur|siklus|pohon|koordinat|bilangan|datar|sudut|ruang|listrik|atom|jaring|optik|gaya|katrol|tuas|shaf|waris|arah|lapisan|langit|ekonomi)\s*(?::\s*(.*?))?\s*\]\]$/i;
 
 /** Satu baris teks → penanda grafik, atau null. */
 export function bacaPenanda(baris: string): Penanda | null {
@@ -79,6 +79,9 @@ export const ATURAN_GRAFIK: Record<JenisGrafik, Aturan> = {
   shaf: { ...ATURAN_SKEMA.shaf, kolom: [2, 2] },
   waris: { ...ATURAN_SKEMA.waris, kolom: [2, 2] },
   arah: { ...ATURAN_SKEMA.arah, kolom: [2, 2] },
+  lapisan: { ...ATURAN_SKEMA.lapisan, kolom: [2, 2] },
+  langit: { ...ATURAN_SKEMA.langit, kolom: [2, 2] },
+  ekonomi: { ...ATURAN_SKEMA.ekonomi, kolom: [2, 2] },
 };
 
 /** Isi contoh satu sel (baris 0 = judul kolom). Di luar ukuran contoh: "Data n" / angka contoh. */

@@ -52,6 +52,21 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.60.0 — 19 November 2026
+- **Skema IPS: lapisan, gerhana & fase bulan, interaksi pelaku ekonomi** (Geografi, Ekonomi).
+  - **Lapisan**: lapisan bumi (setengah lingkaran berlapis), lapisan atmosfer (troposfer sampai eksosfer beserta
+    ketinggiannya), dan horizon tanah (O, A, B, C, R).
+  - **Gerhana matahari & gerhana bulan** dengan bayangan umbra dan penumbra, serta **8 fase bulan** lengkap dengan
+    wujudnya dilihat dari Bumi. Nama benda/fase bisa diganti huruf/nomor untuk ditanyakan ("Huruf B adalah ....").
+  - **Interaksi pelaku ekonomi** 2, 3, dan 4 sektor; garis utuh = barang/jasa, putus-putus = uang. Nama arus bisa
+    diganti nomor (1), (2), ... untuk soal "Arus nomor 8 menunjukkan ....".
+- Uji DeepSeek: gerhana bulan dan diagram ekonomi tergambar dengan kunci benar; "label arus | 1-8" tulisan AI kini
+  juga dibaca sebagai nomor.
+- **Membuat sendiri**: di **📊 Grafik & gambar** ada kelompok baru "Skema IPS".
+- Dengan versi ini, semua rencana gambar dari awal (grafik, bagan, geometri, skema IPA, skema agama & IPS) selesai.
+
+---
+
 ## 0.59.0 — 19 November 2026
 - **Skema agama: shaf sholat, ahli waris, mata angin & kiblat** (Fiqih, juga Geografi).
   - **Posisi shaf**: tampak atas sholat berjamaah (kiblat, imam, barisan laki-laki/anak-anak/perempuan sesuai tabel),
