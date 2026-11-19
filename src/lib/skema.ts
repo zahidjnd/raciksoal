@@ -63,7 +63,7 @@ type Komp = { jenis: Jenis; nama: string; nilai: string };
 type Slot = { komp: Komp[]; volt?: boolean }; // komp > 1 = paralel
 type Listrik = { baterai: string; slot: Slot[]; voltBaterai: boolean };
 
-function jenisKomp(nama: string): Jenis | null {
+export function jenisKomp(nama: string): Jenis | null {
   const k = normal(nama);
   if (/^(r\d*|hambatan\d*|resistor\d*)$/.test(k)) return "hambatan";
   if (/^(l\d*|lampu\d*)$/.test(k)) return "lampu";

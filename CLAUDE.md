@@ -246,7 +246,12 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   bangun/bentuk = isi diganti contoh bangun itu; pilihan lain menjaga data tetap sah (siku dipindah → sisi miring "?",
   jenis tuas → lengan ditukar). Test `formulir.test.mts` mencoba SEMUA pilihan di semua resep → tabel harus sah & tanpa
   sisa. Jendela: `PilihJenis` (kartu bergambar dari contoh + kata kunci `KATA`), `pilihDulu` dari tombol "📊 Grafik &
-  gambar"; mode tabel = "Lanjutan". 0.61.0 = 13 jenis "satu bangun"; daftar/pohon (0.62.0) & grafik data (0.63.0) menyusul.
+  gambar"; mode tabel = "Lanjutan". 0.61.0 = 13 jenis "satu bangun"; grafik data (0.63.0) menyusul.
+  0.62.0: 9 jenis daftar/pohon (waktu, alur, siklus, pohon, koordinat, bilangan, listrik, jaring, waris); banyak kolom
+  per jenis `kolomFormulir` (alur/siklus 1, koordinat/bilangan 3). Isian `simpul` = satu baris kotak (pohon menjorok,
+  alur bernomor). Resep daftar menulis ulang SELURUH tabel (pohon/jaring/waris: `dipakai` semua baris); pilihan yang
+  pasti membuat tabel tak sah tidak ditampilkan (jaring: lingkaran; listrik: voltmeter ikut nama/hapus komponen).
+  Nama kotak/makhluk kosong diabaikan (cabang tak kehilangan induk). Test juga mencoba semua tombol/centang/aksi.
   Teks prompt ber-`\\n` ditulis lewat file (alat Write) lalu disisipkan, bukan heredoc (backslash hilang).
 - **Rumus** (0.29.0): LaTeX `$...$` di teks mana pun (`POLA_RUMUS` gaya Pandoc di soal.ts: "US$ 5" bukan rumus). Web: KaTeX
   dimuat dinamis (`Rumus` di kartu-soal, salah tulis → teks asli). Word: `rumus.ts` LaTeX → OMML (subset; perintah tak

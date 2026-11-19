@@ -52,6 +52,31 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.62.0 — 19 November 2026
+- **Formulir gambar tahap 2: 9 jenis berbentuk daftar & cabang** kini juga diisi lewat formulir (bukan tabel abu-abu).
+  - **Bagan pohon**: tiap kotak tampil menjorok sesuai tingkatnya, tombol **+** di samping kotak = tambah cabang di
+    bawahnya (bisa bercabang terus sampai 4 tingkat), ↑ ↓ untuk menggeser, ✕ menghapus kotak beserta cabangnya.
+    Mengganti nama kotak induk otomatis ikut di cabangnya.
+  - **Diagram alir & siklus**: satu baris per langkah bernomor, tombol + Langkah, ↑ ↓ ✕.
+  - **Garis waktu**: tahun + peristiwa per baris, tombol "Urutkan menurut tahun".
+  - **Bidang koordinat**: sumbu (nama & batas), lalu tombol **+ Titik / + Garis / + Kurva / + Panah / + Garis patah /
+    + Daerah**; tiap titik diisi x dan y di kotak terpisah.
+  - **Garis bilangan**: cukup isi batas kiri & kanan (angka atau "tak hingga") dan pilih bulatan ● termasuk / ○ tidak
+    termasuk; pertidaksamaannya tertulis langsung (mis. "-1 < x ≤ 3").
+  - **Rangkaian listrik**: tombol + Hambatan / Lampu / Kapasitor / Saklar / Amperemeter / Cabang paralel, nama
+    otomatis (R4, L1, ...), satuan Ω/μF otomatis, voltmeter tinggal dipilih dari daftar komponen (ikut berganti bila
+    komponennya diganti nama, lepas bila komponennya dihapus).
+  - **Jaring makanan**: tulis nama makhluk, lalu centang "dimakan oleh" siapa saja. Pilihan yang membuat lingkaran
+    makan-memakan tidak ditampilkan.
+  - **Ahli waris**: pilih mayit laki-laki/perempuan, centang ahli waris per kelompok (pasangan, orang tua, anak & cucu,
+    saudara & paman), pilih bagiannya dari daftar, isi jumlah orang. Bagian yang salah menurut kaidah faraidh langsung
+    diberi garis merah (bagian tidak diisi otomatis; tetap guru yang menentukan).
+- Semua formulir: centang "ditanyakan" mengganti tulisan dengan "....", dan tombol yang berdampingan kini berjarak rapi.
+- Soal lama, file Word, dan AI tidak berubah. Berikutnya: grafik data (batang, garis, lingkaran, histogram, pencar,
+  piramida) dengan tempel dari Excel (0.63.0).
+
+---
+
 ## 0.61.0 — 19 November 2026
 - **Membuat & mengubah gambar jauh lebih mudah (tahap 1 dari 3).**
   - Tombol **📊 Grafik & gambar** kini membuka **kartu bergambar** per kelompok (Data, Urutan, Matematika, Fisika,

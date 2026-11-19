@@ -9,11 +9,13 @@
 import { CONTOH_BANGUN, normal } from "./bangun.ts";
 import { CONTOH_RUANG } from "./ruang.ts";
 import { bacaAngka } from "./skala.ts";
-import { konfigurasiBohr } from "./skema.ts";
+import { jenisKomp, konfigurasiBohr } from "./skema.ts";
+import { bacaNama, WARIS } from "./agama.ts";
 
-export type Baris = [string, string];
+/** Satu baris tabel tanpa baris judul; banyak kolom mengikuti jenisnya (`KOLOM`: 1–3). */
+export type Baris = string[];
 export type Isian =
-  | { t: "pilih"; label: string; opsi: [string, string][]; nilai: string; ubah: (v: string) => Baris[]; kartu?: boolean }
+  | { t: "pilih"; label: string; opsi: [string, string][]; nilai: string; ubah: (v: string) => Baris[]; kartu?: boolean; kunci?: string }
   | {
       t: "isi";
       label: string;
@@ -28,13 +30,15 @@ export type Isian =
   | { t: "centang"; label: string; nilai: boolean; ubah: (b: boolean) => Baris[] }
   | { t: "info"; teks: string }
   | { t: "kelompok"; label: string; isian: Isian[]; aksi?: { label: string; judul: string; jalankan: () => Baris[] }[]; grid?: boolean }
-  | { t: "tombol"; label: string; jalankan: () => Baris[] };
+  | { t: "tombol"; label: string; jalankan: () => Baris[] }
+  /** Satu kotak bagan pohon: menjorok sesuai tingkat, nama bisa diubah, tombol + cabang / ↑ / ↓ / ✕. */
+  | { t: "simpul"; tingkat: number; nomor?: string; nilai: string; contoh?: string; ubah: (v: string) => Baris[]; tanya: { aktif: boolean; ubah: (b: boolean) => Baris[] }; aksi: { label: string; judul: string; jalankan: () => Baris[] }[] };
 
 // ---------- alat bantu baris ----------
 
 /** Kunci satu huruf ("F" tarik vs "f" gesek) dibandingkan persis; selain itu tanpa beda huruf besar/spasi/tanda hubung. */
 const sama = (k: string, kunci: string) => (/^[A-Za-z]$/.test(kunci) ? k.trim() === kunci : normal(k) === normal(kunci));
-const salin = (b: Baris[]) => b.map((x) => [x[0], x[1]] as Baris);
+const salin = (b: Baris[]) => b.map((x) => [...x]);
 const cariDi = (b: Baris[], kunci: string | string[]) => {
   for (const k of [kunci].flat()) {
     const i = b.findIndex((x) => sama(x[0], k));
@@ -780,6 +784,601 @@ function resepShaf(p: Pb): Isian[] {
   return out;
 }
 
+// ---------- 0.62.0: daftar & pohon (bagan, koordinat, garis bilangan, listrik, jaring makanan, ahli waris) ----------
+
+/** Tombol ↑ / ↓ / ✕ untuk butir ke-k dari daftar indeks `idx`. */
+function aksiDaftar(p: Pb, idx: number[], k: number, o: { hapus?: boolean; naik?: string; turun?: string; judulHapus?: string } = {}) {
+  const i = idx[k];
+  return [
+    ...(k > 0 ? [{ label: "↑", judul: o.naik ?? "Pindah ke atas", jalankan: () => tukar(p.baris, i, idx[k - 1]) }] : []),
+    ...(k < idx.length - 1 ? [{ label: "↓", judul: o.turun ?? "Pindah ke bawah", jalankan: () => tukar(p.baris, i, idx[k + 1]) }] : []),
+    ...(o.hapus !== false ? [{ label: "✕", judul: o.judulHapus ?? "Hapus", jalankan: () => ubahBaris(p.baris, i, null) }] : []),
+  ];
+}
+const KOSONG_TANYA = "....";
+
+/** Garis waktu: baris "waktu | peristiwa". */
+function resepWaktu(p: Pb): Isian[] {
+  const idx = p.daftar(() => true);
+  const out: Isian[] = [info('Urut dari peristiwa paling awal. Centang "ditanyakan" untuk mengganti tulisannya dengan "....".')];
+  idx.forEach((i, k) => {
+    const [w, ev] = [p.baris[i][0] ?? "", p.baris[i][1] ?? ""];
+    out.push({
+      t: "kelompok",
+      label: `Peristiwa ${k + 1}`,
+      isian: [
+        { t: "isi", label: "Waktu / tahun", nilai: w === KOSONG_TANYA ? "" : w, contoh: "622 M", ubah: (x) => ubahBaris(p.baris, i, [x, ev]), tanya: { aktif: w === KOSONG_TANYA, ubah: (b) => ubahBaris(p.baris, i, [b ? KOSONG_TANYA : "tahun", ev]) } },
+        { t: "isi", label: "Peristiwa", nilai: ev === KOSONG_TANYA ? "" : ev, contoh: "Hijrah ke Madinah", ubah: (x) => ubahBaris(p.baris, i, [w, x]), tanya: { aktif: ev === KOSONG_TANYA, ubah: (b) => ubahBaris(p.baris, i, [w, b ? KOSONG_TANYA : "peristiwa"]) } },
+      ],
+      aksi: aksiDaftar(p, idx, k, { hapus: idx.length > 2, judulHapus: "Hapus peristiwa ini" }),
+    });
+  });
+  if (idx.length < 10) out.push({ t: "tombol", label: "+ Peristiwa", jalankan: () => [...salin(p.baris), ["tahun", "peristiwa"]] });
+  if (idx.length > 1)
+    out.push({
+      t: "tombol",
+      label: "Urutkan menurut tahun",
+      jalankan: () => {
+        // "...." dan tahun tanpa angka tetap di tempatnya; yang berangka diurutkan di antara mereka
+        const b = salin(p.baris);
+        const berangka = idx.filter((i) => Number.isFinite(angkaDari(b[i][0] ?? "")));
+        const urut = [...berangka].sort((x, y) => angkaDari(b[x][0]) - angkaDari(b[y][0])).map((i) => [...b[i]]);
+        berangka.forEach((i, k) => (b[i] = urut[k]));
+        return b;
+      },
+    });
+  return out;
+}
+
+/** Diagram alir & siklus: satu kolom langkah. */
+function resepLangkah(p: Pb, siklus: boolean): Isian[] {
+  const idx = p.daftar(() => true);
+  const [min, maks] = siklus ? [3, 8] : [2, 8];
+  const out: Isian[] = [info(siklus ? "Tahap urut melingkar; tahap terakhir kembali ke tahap pertama." : 'Langkah urut dari atas ke bawah (rantai sanad: nama perawi saja). Centang "ditanyakan" untuk mengganti tulisannya dengan "....".')];
+  idx.forEach((i, k) => {
+    const v = p.baris[i][0] ?? "";
+    out.push({
+      t: "simpul",
+      tingkat: 0,
+      nomor: `${k + 1}.`,
+      nilai: v === KOSONG_TANYA ? "" : v,
+      contoh: siklus ? "Penguapan" : "Membasuh muka",
+      ubah: (x) => ubahBaris(p.baris, i, [x]),
+      tanya: { aktif: v === KOSONG_TANYA, ubah: (b) => ubahBaris(p.baris, i, [b ? KOSONG_TANYA : siklus ? "tahap" : "langkah"]) },
+      aksi: aksiDaftar(p, idx, k, { hapus: idx.length > min, judulHapus: "Hapus" }),
+    });
+  });
+  if (idx.length < maks) out.push({ t: "tombol", label: siklus ? "+ Tahap" : "+ Langkah", jalankan: () => [...salin(p.baris), [siklus ? "tahap baru" : "langkah baru"]] });
+  return out;
+}
+
+/** Bagan pohon: baris "nama | induk"; tampil sebagai pohon menjorok dengan tombol + cabang. */
+function resepPohon(p: Pb): Isian[] {
+  const rows = p.baris;
+  rows.forEach((_, i) => p.dipakai.add(i));
+  const nama = (i: number) => (rows[i][0] ?? "").trim();
+  const induk = (i: number) => (rows[i][1] ?? "").trim();
+  const ada = (n: string) => rows.some((_, j) => nama(j) === n);
+  const anakDari = (n: string) => rows.map((_, i) => i).filter((i) => induk(i) === n && nama(i) !== n);
+  const keturunan = (i: number, lihat = new Set<number>()): number[] => {
+    if (lihat.has(i)) return [];
+    lihat.add(i);
+    return [i, ...anakDari(nama(i)).flatMap((a) => keturunan(a, lihat))];
+  };
+  const out: Isian[] = [info('Tombol "+" di samping kotak = tambah cabang di bawahnya. Maks 4 tingkat, 15 kotak, 8 kotak paling bawah; nama kotak tidak boleh sama.')];
+  const namaBaru = () => {
+    let n = 1;
+    while (ada(`Cabang ${n}`)) n++;
+    return `Cabang ${n}`;
+  };
+  // nama kosong diabaikan: kalau ditulis, cabang di bawahnya kehilangan induk
+  const ganti = (i: number, baru: string) => (!baru.trim() ? salin(rows) : rows.map((r, j) => (j === i ? [baru, r[1] ?? ""] : (r[1] ?? "").trim() === nama(i) ? [r[0], baru] : [...r])));
+  const dikunjungi = new Set<number>();
+  const jalan = (i: number, t: number) => {
+    if (dikunjungi.has(i)) return;
+    dikunjungi.add(i);
+    const saudara = rows.map((_, j) => j).filter((j) => (induk(j) || "") === (induk(i) || "") && (induk(i) ? true : !induk(j)));
+    const k = saudara.indexOf(i);
+    const aksi: { label: string; judul: string; jalankan: () => Baris[] }[] = [];
+    if (t < 3 && rows.length < 15)
+      aksi.push({
+        label: "+",
+        judul: "Tambah cabang di bawah kotak ini",
+        jalankan: () => {
+          const akhir = Math.max(...keturunan(i));
+          const b = salin(rows);
+          b.splice(akhir + 1, 0, [namaBaru(), nama(i)]);
+          return b;
+        },
+      });
+    if (k > 0) aksi.push({ label: "↑", judul: "Pindah ke kiri/atas", jalankan: () => tukar(rows, i, saudara[k - 1]) });
+    if (k >= 0 && k < saudara.length - 1) aksi.push({ label: "↓", judul: "Pindah ke kanan/bawah", jalankan: () => tukar(rows, i, saudara[k + 1]) });
+    if (t > 0 && rows.length - keturunan(i).length >= 2) aksi.push({ label: "✕", judul: "Hapus kotak ini beserta cabangnya", jalankan: () => rows.filter((_, j) => !keturunan(i).includes(j)).map((r) => [...r]) });
+    const v = nama(i);
+    out.push({
+      t: "simpul",
+      tingkat: t,
+      nilai: v === KOSONG_TANYA ? "" : v,
+      contoh: t === 0 ? "Kotak puncak" : "Nama kotak",
+      ubah: (x) => ganti(i, x),
+      tanya: { aktif: v === KOSONG_TANYA, ubah: (b) => ganti(i, b ? KOSONG_TANYA : namaBaru()) },
+      aksi,
+    });
+    for (const a of anakDari(v)) jalan(a, t + 1);
+  };
+  rows.forEach((_, i) => {
+    if (!induk(i) || !ada(induk(i))) jalan(i, 0);
+  });
+  rows.forEach((_, i) => jalan(i, 0)); // sisa (induk berputar): tetap tampil supaya bisa diperbaiki
+  return out;
+}
+
+// --- bidang koordinat ---
+
+const JENIS_BENDA: [string, string][] = [
+  ["titik", "Titik"],
+  ["titik bantu", "Titik + garis putus ke sumbu"],
+  ["garis", "Garis lurus (lewat 2 titik)"],
+  ["ruas", "Garis patah (beberapa titik)"],
+  ["kurva", "Kurva y = f(x)"],
+  ["panah", "Panah / vektor"],
+  ["daerah", "Daerah berarsir"],
+];
+const BAWAAN_BENDA: Record<string, [string, string]> = {
+  titik: ["(2, 3)", "A"],
+  "titik bantu": ["(4, 6)", "E"],
+  garis: ["(0, 4) (4, 0)", ""],
+  ruas: ["(0, 0) (2, 4) (5, 4)", ""],
+  kurva: ["y = x^2 - 4", "f"],
+  panah: ["(0, 0) (3, 4)", "a"],
+  daerah: ["(0, 0) (4, 0) (0, 3)", "HP"],
+};
+const SINONIM_BENDA: Record<string, string> = { vektor: "panah", fungsi: "kurva", grafik: "kurva", arsir: "daerah", poligon: "daerah", titikpenuh: "titik", titikbulat: "titik" };
+const jenisBenda = (k: string) => {
+  const n = normal(k);
+  return SINONIM_BENDA[n] ?? JENIS_BENDA.find(([j]) => normal(j) === n)?.[0] ?? "";
+};
+/** "(0, 10) (10, 0)" → [["0","10"],["10","0"]]; "(2,5; 3)" memakai titik koma. */
+const titikDari = (s: string): [string, string][] =>
+  [...s.matchAll(/\(([^()]*)\)/g)].map((m) => {
+    const b = m[1].includes(";") ? m[1].split(";") : m[1].split(",");
+    return [(b[0] ?? "").trim(), (b[1] ?? "").trim()];
+  });
+const tulisTitik = (pts: [string, string][]) => pts.map(([x, y]) => `(${x}${/,/.test(x + y) ? "; " : ", "}${y})`).join(" ");
+
+function resepKoordinat(p: Pb): Isian[] {
+  const out: Isian[] = [];
+  const sumbu = (label: string, kunci: string, bawaan: string) => {
+    const i = p.cari(kunci);
+    const r = i >= 0 ? p.baris[i] : [kunci, "", ""];
+    const m = /^\s*(-?[\d.,]+)?\s*\.\.\s*(-?[\d.,]+)?\s*$/.exec(r[2] ?? "");
+    const [a, b] = [m?.[1] ?? "", m?.[2] ?? ""];
+    const tulis = (nama: string, x: string, y: string): Baris[] => {
+      const isi: Baris = [kunci, nama.trim() || bawaan, x.trim() && y.trim() ? `${x.trim()}..${y.trim()}` : ""];
+      if (!nama.trim() && !x.trim() && !y.trim()) return i >= 0 ? ubahBaris(p.baris, i, null) : salin(p.baris);
+      return i >= 0 ? ubahBaris(p.baris, i, isi) : [...salin(p.baris), isi];
+    };
+    out.push({
+      t: "kelompok",
+      label,
+      grid: true,
+      isian: [
+        { t: "isi", label: "Nama sumbu", nilai: i >= 0 ? (r[1] ?? "") : "", contoh: bawaan, ubah: (x) => tulis(x, a, b) },
+        { t: "isi", label: "Dari (kosong = otomatis)", nilai: a, angka: true, contoh: "0", ubah: (x) => tulis(r[1] ?? bawaan, x, b) },
+        { t: "isi", label: "Sampai", nilai: b, angka: true, contoh: "10", ubah: (x) => tulis(r[1] ?? bawaan, a, x) },
+      ],
+    });
+  };
+  sumbu("Sumbu mendatar", "sumbu x", "x");
+  sumbu("Sumbu tegak", "sumbu y", "y");
+  const benda = p.daftar(([k]) => !!jenisBenda(k));
+  benda.forEach((i, k) => {
+    const [kj, isiB, label] = [p.baris[i][0] ?? "", p.baris[i][1] ?? "", p.baris[i][2] ?? ""];
+    const j = jenisBenda(kj);
+    const tulis = (isiBaru: string, labelBaru = label): Baris[] => ubahBaris(p.baris, i, [j, isiBaru, labelBaru]);
+    const isian: Isian[] = [
+      { t: "pilih", label: "Jenis", opsi: JENIS_BENDA, nilai: j, ubah: (v) => ubahBaris(p.baris, i, [v, BAWAAN_BENDA[v][0], label || BAWAAN_BENDA[v][1]]) },
+      { t: "isi", label: "Label (boleh kosong)", nilai: label, contoh: BAWAAN_BENDA[j]?.[1] || "A", ubah: (x) => tulis(isiB, x) },
+    ];
+    if (j === "kurva") {
+      isian.push(
+        { t: "isi", label: "Rumus", kunci: "rumus", nilai: isiB, contoh: "y = x^2 - 4", ubah: (x) => tulis(x) },
+        info("Pangkat pakai ^ (x^2), kali boleh tanpa tanda (2x), akar: sqrt(x). Peubah x atau huruf nama sumbu mendatar."),
+      );
+    } else {
+      const pts = titikDari(isiB);
+      const nama = j === "panah" ? ["Pangkal", "Ujung"] : j === "garis" ? ["Titik 1", "Titik 2"] : null;
+      const minimal = j === "daerah" ? 3 : j === "ruas" ? 2 : pts.length;
+      pts.forEach(([x, y], n) => {
+        const ganti = (xx: string, yy: string) => tulis(tulisTitik(pts.map((q, m) => (m === n ? [xx, yy] : q))));
+        isian.push({
+          t: "kelompok",
+          label: nama?.[n] ?? (pts.length > 1 ? `Titik ${n + 1}` : "Letak titik"),
+          grid: true,
+          isian: [
+            { t: "isi", label: "x", nilai: x, angka: true, ubah: (v) => ganti(v, y) },
+            { t: "isi", label: "y", nilai: y, angka: true, ubah: (v) => ganti(x, v) },
+          ],
+          aksi: (j === "ruas" || j === "daerah") && pts.length > minimal ? [{ label: "✕", judul: "Hapus titik ini", jalankan: () => tulis(tulisTitik(pts.filter((_, m) => m !== n))) }] : undefined,
+        });
+      });
+      if ((j === "ruas" || j === "daerah") && pts.length < 12) {
+        const akhir = pts[pts.length - 1] ?? ["0", "0"];
+        isian.push({ t: "tombol", label: "+ Titik", jalankan: () => tulis(tulisTitik([...pts, [String((angkaDari(akhir[0]) || 0) + 1), akhir[1]]])) });
+      }
+    }
+    out.push({ t: "kelompok", label: `${JENIS_BENDA.find(([x]) => x === j)?.[1] ?? j} ${k + 1}`, isian, aksi: [{ label: "✕", judul: "Hapus benda ini", jalankan: () => ubahBaris(p.baris, i, null) }] });
+  });
+  if (benda.length < 12)
+    for (const [j, lbl] of [["titik", "+ Titik"], ["garis", "+ Garis"], ["kurva", "+ Kurva"], ["panah", "+ Panah"], ["ruas", "+ Garis patah"], ["daerah", "+ Daerah"]] as const)
+      out.push({ t: "tombol", label: lbl, jalankan: () => [...salin(p.baris), [j, BAWAAN_BENDA[j][0], BAWAAN_BENDA[j][1]]] });
+  return out;
+}
+
+// --- garis bilangan ---
+
+const jenisBilangan = (k: string) => {
+  const n = normal(k);
+  return n === "titikkosong" || n === "titikterbuka" ? "titik kosong" : n === "titik" || n === "titikpenuh" || n === "titikbulat" ? "titik" : n === "daerah" ? "daerah" : n === "rentang" ? "rentang" : "";
+};
+/** Teks pertidaksamaan dari batas kiri/kanan (kosong = tak hingga). */
+function teksPertidaksamaan(a: string, aTutup: boolean, b: string, bTutup: boolean) {
+  if (a && b) return `${a} ${aTutup ? "≤" : "<"} x ${bTutup ? "≤" : "<"} ${b}`;
+  if (a) return `x ${aTutup ? "≥" : ">"} ${a}`;
+  if (b) return `x ${bTutup ? "≤" : "<"} ${b}`;
+  return "semua bilangan";
+}
+
+function resepBilangan(p: Pb): Isian[] {
+  const out: Isian[] = [];
+  const rows = p.baris;
+  // rentang angka yang tampil
+  const ri = p.cari("rentang");
+  const rm = /^\s*(-?[\d.,]+)?\s*\.\.\s*(-?[\d.,]+)?\s*$/.exec(ri >= 0 ? (rows[ri][1] ?? "") : "");
+  const [ra, rb] = [rm?.[1] ?? "", rm?.[2] ?? ""];
+  const tulisRentang = (a: string, b: string) => (a.trim() && b.trim() ? pasangDi(rows, "rentang", `${a.trim()}..${b.trim()}`).map((r) => (r.length < 3 ? [...r, ""] : r)) : pasangDi(rows, "rentang", ""));
+  out.push({
+    t: "kelompok",
+    label: "Angka yang tampil (kosong = otomatis)",
+    grid: true,
+    isian: [
+      { t: "isi", label: "Dari", nilai: ra, angka: true, contoh: "-3", ubah: (x) => tulisRentang(x, rb) },
+      { t: "isi", label: "Sampai", nilai: rb, angka: true, contoh: "5", ubah: (x) => tulisRentang(ra, x) },
+    ],
+  });
+  const lain = rows.map((_, i) => i).filter((i) => i !== ri);
+  lain.forEach((i) => p.dipakai.add(i));
+  const daerah = lain.filter((i) => jenisBilangan(rows[i][0] ?? "") === "daerah");
+  const titik = lain.filter((i) => jenisBilangan(rows[i][0] ?? "").startsWith("titik"));
+  const dm = daerah.length === 1 ? /^(.*?)\s*\.\.\s*(.*)$/.exec(rows[daerah[0]][1] ?? "") : null;
+  const [da, db] = [(dm?.[1] ?? "").trim(), (dm?.[2] ?? "").trim()];
+  const samaAngka = (u: string, v: string) => u !== "" && v !== "" && angkaDari(u) === angkaDari(v);
+  const polaCocok = !!dm && daerah.length === 1 && titik.length <= 2 && titik.every((i) => samaAngka(rows[i][1] ?? "", da) || samaAngka(rows[i][1] ?? "", db)) && lain.every((i) => !!jenisBilangan(rows[i][0] ?? ""));
+  if (polaCocok) {
+    // pembuat pertidaksamaan: batas kiri & kanan (angka atau tak hingga), termasuk (●) atau tidak (○)
+    const tutup = (v: string) => titik.some((i) => samaAngka(rows[i][1] ?? "", v) && jenisBilangan(rows[i][0] ?? "") === "titik");
+    const label = rows[daerah[0]][2] ?? "";
+    const [aT, bT] = [tutup(da), tutup(db)];
+    const susun = (a: string, aTutup: boolean, b: string, bTutup: boolean, lbl = label): Baris[] => [
+      ...(ri >= 0 ? [[...rows[ri]]] : []),
+      ...(a ? [[aTutup ? "titik" : "titik kosong", a, ""]] : []),
+      ...(b ? [[bTutup ? "titik" : "titik kosong", b, ""]] : []),
+      ["daerah", `${a}..${b}`, lbl],
+    ];
+    out.push(info(`Pertidaksamaan yang tergambar: ${teksPertidaksamaan(da, aT, db, bT)}.`));
+    const batas = (judul: string, v: string, t: boolean, ubah: (v: string, t: boolean) => Baris[], arah: string): Isian => ({
+      t: "kelompok",
+      label: judul,
+      grid: true,
+      isian: [
+        { t: "pilih", label: "Batas", opsi: [["angka", "Angka"], ["tak", `Tak hingga (terus ke ${arah})`]], nilai: v ? "angka" : "tak", ubah: (x) => ubah(x === "tak" ? "" : v || (arah === "kiri" ? "-1" : "3"), t) },
+        ...(v
+          ? ([
+              { t: "isi", label: "Angka", nilai: v, angka: true, ubah: (x: string) => ubah(x.trim(), t) },
+              { t: "pilih", label: "Bulatan", opsi: [["ya", "● termasuk (≤ / ≥)"], ["tidak", "○ tidak termasuk (< / >)"]], nilai: t ? "ya" : "tidak", ubah: (x: string) => ubah(v, x === "ya") },
+            ] as Isian[])
+          : []),
+      ],
+    });
+    out.push(
+      batas("Batas kiri", da, aT, (v, t) => susun(v, t, db, bT), "kiri"),
+      batas("Batas kanan", db, bT, (v, t) => susun(da, aT, v, t), "kanan"),
+      { t: "isi", label: "Tulisan di atas daerah (boleh kosong)", nilai: label, contoh: "HP", ubah: (x) => susun(da, aT, db, bT, x) },
+      { t: "tombol", label: "+ Titik atau daerah lain (isi bebas)", jalankan: () => [...salin(rows), ["titik", "0", ""]] },
+    );
+    return out;
+  }
+  // isi bebas: daftar titik / titik kosong / daerah
+  lain.forEach((i, k) => {
+    const [kj, v, lbl] = [rows[i][0] ?? "", rows[i][1] ?? "", rows[i][2] ?? ""];
+    const j = jenisBilangan(kj) || "titik";
+    out.push({
+      t: "kelompok",
+      label: `Benda ${k + 1}`,
+      grid: true,
+      isian: [
+        { t: "pilih", label: "Jenis", opsi: [["titik", "● Titik (termasuk)"], ["titik kosong", "○ Titik kosong (tidak termasuk)"], ["daerah", "Daerah (garis tebal)"]], nilai: j, ubah: (x) => ubahBaris(rows, i, [x, x === "daerah" ? (v.includes("..") ? v : `${v}..`) : v.split("..")[0] || "0", lbl]) },
+        { t: "isi", label: j === "daerah" ? 'Dari..sampai ("2.." = ke kanan terus)' : "Angka", nilai: v, contoh: j === "daerah" ? "-1..3" : "2", ubah: (x) => ubahBaris(rows, i, [j, x, lbl]) },
+        { t: "isi", label: "Tulisan (boleh kosong)", nilai: lbl, ubah: (x) => ubahBaris(rows, i, [j, v, x]) },
+      ],
+      aksi: [{ label: "✕", judul: "Hapus", jalankan: () => ubahBaris(rows, i, null) }],
+    });
+  });
+  out.push(
+    { t: "tombol", label: "+ Titik", jalankan: () => [...salin(rows), ["titik", "0", ""]] },
+    { t: "tombol", label: "+ Daerah", jalankan: () => [...salin(rows), ["daerah", "0..2", ""]] },
+  );
+  return out;
+}
+
+// --- rangkaian listrik ---
+
+const KOMP: Record<string, { awalan: string; nama: string; satuan: string }> = {
+  hambatan: { awalan: "R", nama: "Hambatan", satuan: "Ω" },
+  lampu: { awalan: "L", nama: "Lampu", satuan: "" },
+  kapasitor: { awalan: "C", nama: "Kapasitor", satuan: "μF" },
+  saklar: { awalan: "S", nama: "Saklar", satuan: "" },
+  ampere: { awalan: "A", nama: "Amperemeter", satuan: "" },
+};
+const jenisKompDari = (nama: string): string => jenisKomp(nama) ?? "";
+const pecahParalel = (v: string): [string, string][] =>
+  v
+    .split(/[;,]/)
+    .map((c) => c.trim())
+    .filter(Boolean)
+    .map((c) => {
+      const m = /^(\S+?)\s*(?:=\s*|\s+)(.*)$/.exec(c);
+      return m ? [m[1], m[2].trim()] : [c, ""];
+    });
+const tulisParalel = (c: [string, string][]) => c.map(([n, v]) => (v ? `${n} = ${v}` : n)).join(", ");
+
+function resepListrik(p: Pb): Isian[] {
+  const out: Isian[] = [isi(p, "Tegangan baterai", ["baterai", "sumber", "ggl"], { satuan: "V", tanya: true, contoh: "12" })];
+  const rows = p.baris;
+  const vi = p.cari(["voltmeter", "v"]);
+  const komp = p.daftar(([k]) => normal(k) === "paralel" || !!jenisKompDari(k));
+  // semua nama komponen (untuk nama baru & pilihan voltmeter)
+  const semua = komp.flatMap((i) => (normal(rows[i][0] ?? "") === "paralel" ? pecahParalel(rows[i][1] ?? "").map(([n]) => n) : [rows[i][0] ?? ""])).filter((n) => n && jenisKompDari(n) !== "ampere");
+  const namaBaru = (awalan: string, juga: string[] = []) => {
+    let n = 1;
+    while ([...semua, ...juga].some((x) => normal(x) === normal(`${awalan}${n}`))) n++;
+    return `${awalan}${n}`;
+  };
+  /** Voltmeter ikut komponennya: nama diganti = sasaran ikut; komponen dihapus = voltmeter dilepas. */
+  const sasaranVolt = vi >= 0 ? (rows[vi][1] ?? "") : "";
+  const gantiNama = (b: Baris[], lama: string, baru: string) => (normal(sasaranVolt) === normal(lama) && baru ? pasangDi(b, ["voltmeter", "v"], baru) : b);
+  const lepasVolt = (b: Baris[]) => {
+    const ada = b.flatMap(([k, v]) => (normal(k) === "paralel" ? pecahParalel(v ?? "").map(([n]) => n) : [k]));
+    return !sasaranVolt || normal(sasaranVolt) === "baterai" || ada.some((n) => normal(n) === normal(sasaranVolt)) ? b : pasangDi(b, ["voltmeter", "v"], "");
+  };
+  const hapusIkut = (a: { label: string; judul: string; jalankan: () => Baris[] }[]) => a.map((x) => (x.label === "✕" ? { ...x, jalankan: () => lepasVolt(x.jalankan()) } : x));
+  const nilaiKomp = (j: string, v: string, ubah: (x: string) => Baris[], label = "Nilai"): Isian =>
+    j === "saklar"
+      ? { t: "pilih", label: "Keadaan", opsi: [["tertutup", "Tertutup (arus mengalir)"], ["terbuka", "Terbuka (arus putus)"]], nilai: /buka|putus|off/i.test(v) ? "terbuka" : "tertutup", ubah }
+      : { t: "isi", label: `${label}${KOMP[j]?.satuan ? "" : " (boleh kosong)"}`, nilai: v === "?" ? "" : tanpaSatuan(v, KOMP[j]?.satuan || undefined), satuan: KOMP[j]?.satuan || undefined, angka: !!KOMP[j]?.satuan, contoh: j === "hambatan" ? "4" : j === "kapasitor" ? "10" : "", ubah: (x) => ubah(denganSatuan(x, KOMP[j]?.satuan || undefined)) };
+  komp.forEach((i, k) => {
+    const [kunci, v] = [rows[i][0] ?? "", rows[i][1] ?? ""];
+    if (normal(kunci) === "paralel") {
+      const cabang = pecahParalel(v);
+      const tulis = (c: [string, string][]) => ubahBaris(rows, i, ["paralel", tulisParalel(c)]);
+      const isian: Isian[] = cabang.map(([n, nv], m) => {
+        const j = jenisKompDari(n) || "hambatan";
+        return {
+          t: "kelompok" as const,
+          label: `Cabang ${m + 1}`,
+          grid: true,
+          isian: [
+            { t: "pilih" as const, label: "Komponen", opsi: (["hambatan", "lampu", "kapasitor", "saklar"] as const).map((x) => [x, KOMP[x].nama] as [string, string]), nilai: j, ubah: (x: string) => tulis(cabang.map((c, q) => (q === m ? [namaBaru(KOMP[x].awalan), x === "saklar" ? "tertutup" : ""] : c))) },
+            { t: "isi" as const, label: "Nama", nilai: n, contoh: `${KOMP[j].awalan}1`, ubah: (x: string) => gantiNama(tulis(cabang.map((c, q) => (q === m ? [x.trim(), nv] : c))), n, x.trim()) },
+            nilaiKomp(j, nv, (x) => tulis(cabang.map((c, q) => (q === m ? [n, x] : c)))),
+          ],
+          aksi: cabang.length > 2 ? [{ label: "✕", judul: "Hapus cabang ini", jalankan: () => lepasVolt(tulis(cabang.filter((_, q) => q !== m))) }] : undefined,
+        };
+      });
+      if (cabang.length < 4) isian.push({ t: "tombol", label: "+ Cabang", jalankan: () => tulis([...cabang, [namaBaru("R"), "3 Ω"]]) });
+      out.push({ t: "kelompok", label: `Komponen ${k + 1}: cabang paralel`, isian, aksi: hapusIkut(aksiDaftar(p, komp, k, { judulHapus: "Hapus cabang paralel ini" })) });
+      return;
+    }
+    const j = jenisKompDari(kunci);
+    out.push({
+      t: "kelompok",
+      label: `Komponen ${k + 1}: ${KOMP[j].nama}`,
+      grid: true,
+      isian: [
+        ...(j === "ampere" ? [] : [{ t: "isi" as const, label: "Nama", nilai: kunci, contoh: `${KOMP[j].awalan}1`, ubah: (x: string) => gantiNama(ubahBaris(rows, i, [x.trim() || kunci, v]), kunci, x.trim()) }]),
+        ...(j === "ampere" ? [info("Amperemeter dipasang seri di rangkaian.")] : [nilaiKomp(j, v, (x) => ubahBaris(rows, i, [kunci, x]))]),
+      ],
+      aksi: hapusIkut(aksiDaftar(p, komp, k, { judulHapus: "Hapus komponen ini" })),
+    });
+  });
+  if (komp.length < 8) {
+    for (const j of ["hambatan", "lampu", "kapasitor", "saklar", "ampere"] as const)
+      out.push({ t: "tombol", label: `+ ${KOMP[j].nama}`, jalankan: () => [...salin(rows), j === "ampere" ? ["amperemeter", "A"] : [namaBaru(KOMP[j].awalan), j === "hambatan" ? "2 Ω" : j === "kapasitor" ? "10 μF" : j === "saklar" ? "tertutup" : ""]] });
+    out.push({ t: "tombol", label: "+ Cabang paralel", jalankan: () => [...salin(rows), ["paralel", tulisParalel([[namaBaru("R"), "6 Ω"], [namaBaru("R", [namaBaru("R")]), "3 Ω"]])]] });
+  }
+  const sasaran = sasaranVolt;
+  out.push({
+    t: "pilih",
+    label: "Pasang voltmeter pada",
+    opsi: [["", "Tidak ada voltmeter"], ["baterai", "Baterai"], ...semua.map((n) => [n, n] as [string, string])],
+    nilai: normal(sasaran) === "baterai" ? "baterai" : (semua.find((n) => normal(n) === normal(sasaran)) ?? ""),
+    ubah: (x) => pasangDi(rows, ["voltmeter", "v"], x),
+  });
+  return out;
+}
+
+// --- jaring makanan ---
+
+function resepJaring(p: Pb): Isian[] {
+  const rows = p.baris;
+  rows.forEach((_, i) => p.dipakai.add(i));
+  const kosong = (v: string) => /^(-+|—|–|tidak ada|tidak dimakan|kosong)?$/i.test(v.trim());
+  const pecah = (v: string) => (kosong(v) ? [] : v.split(/[,;]|\bdan\b/).map((x) => x.trim()).filter(Boolean));
+  // nama makhluk (urut muncul) & panah mangsa → pemakan
+  const nama: string[] = [];
+  const tambahNama = (n: string) => n && !nama.some((x) => normal(x) === normal(n)) && nama.push(n);
+  rows.forEach((r) => tambahNama((r[0] ?? "").trim()));
+  rows.forEach((r) => pecah(r[1] ?? "").forEach(tambahNama));
+  const makan = (mangsa: string) => {
+    const r = rows.find((x) => normal(x[0] ?? "") === normal(mangsa));
+    return r ? pecah(r[1] ?? "") : [];
+  };
+  /** Apakah `ke` dicapai dari `dari` lewat rantai "dimakan oleh"? (dipakai supaya tak ada pilihan yang membuat lingkaran) */
+  const sampai = (dari: string, ke: string, lihat = new Set<string>()): boolean =>
+    normal(dari) === normal(ke) || (!lihat.has(normal(dari)) && (lihat.add(normal(dari)), makan(dari).some((x) => sampai(x, ke, lihat))));
+  /** Susun ulang tabel dari daftar nama & hubungan makan. */
+  const susun = (ns: string[], rel: (n: string) => string[]): Baris[] =>
+    ns.flatMap((n) => {
+      const pm = rel(n).filter((x) => ns.some((y) => normal(y) === normal(x)));
+      const pemakanOrangLain = ns.some((m) => rel(m).some((x) => normal(x) === normal(n)));
+      return pm.length ? [[n, pm.join(", ")]] : pemakanOrangLain ? [] : [[n, "-"]];
+    });
+  const out: Isian[] = [info('Tulis nama makhluk hidup, lalu centang siapa pemakannya. Contoh: "Rumput dimakan oleh: ☑ belalang ☑ tikus".')];
+  nama.forEach((n, k) => {
+    const pemakan = makan(n);
+    out.push({
+      t: "kelompok",
+      label: `Makhluk ${k + 1}`,
+      isian: [
+        {
+          t: "isi",
+          label: "Nama",
+          nilai: n,
+          contoh: "rumput",
+          ubah: (x) => {
+            const baru = x.trim();
+            if (!baru) return susun(nama, makan); // nama kosong diabaikan (makhluk tidak hilang)
+            const ns = nama.map((y) => (y === n ? baru : y)).filter(Boolean);
+            return susun(ns, (m) => (m === baru ? pemakan : makan(m).map((y) => (normal(y) === normal(n) ? baru : y))));
+          },
+        },
+        {
+          t: "kelompok",
+          label: `${n || "Makhluk ini"} dimakan oleh`,
+          grid: true,
+          isian: nama
+            .filter((m) => m !== n && (pemakan.some((x) => normal(x) === normal(m)) || !sampai(m, n)))
+            .map((m) => ({
+              t: "centang" as const,
+              label: m,
+              nilai: pemakan.some((x) => normal(x) === normal(m)),
+              ubah: (b: boolean) => susun(nama, (z) => (z === n ? (b ? [...pemakan, m] : pemakan.filter((x) => normal(x) !== normal(m))) : makan(z))),
+            })),
+        },
+      ],
+      aksi: nama.length > 2 ? [{ label: "✕", judul: "Hapus makhluk ini", jalankan: () => susun(nama.filter((m) => m !== n), (z) => makan(z).filter((x) => normal(x) !== normal(n))) }] : undefined,
+    });
+  });
+  if (nama.length < 14)
+    out.push({
+      t: "tombol",
+      label: "+ Makhluk hidup",
+      jalankan: () => {
+        let b = "makhluk baru";
+        for (let i = 2; nama.some((x) => normal(x) === normal(b)); i++) b = `makhluk baru ${i}`;
+        return [...susun(nama, makan), [b, "-"]];
+      },
+    });
+  return out;
+}
+
+// --- ahli waris ---
+
+const KELOMPOK_WARIS: [string, string[]][] = [
+  ["Pasangan", ["suami", "istri"]],
+  ["Orang tua & kakek-nenek", ["ayah", "ibu", "kakek", "nenek"]],
+  ["Anak & cucu", ["anak laki-laki", "anak perempuan", "cucu laki-laki", "cucu perempuan"]],
+  ["Saudara & paman", ["saudara laki-laki", "saudara perempuan", "saudara laki-laki seayah", "saudara perempuan seayah", "saudara seibu", "paman"]],
+];
+const SEMUA_WARIS = WARIS.filter((w) => KELOMPOK_WARIS.some(([, d]) => d.includes(w)));
+const BISA_BANYAK = new Set(["istri", "anak laki-laki", "anak perempuan", "cucu laki-laki", "cucu perempuan", "saudara laki-laki", "saudara perempuan", "saudara laki-laki seayah", "saudara perempuan seayah", "saudara seibu", "paman", "nenek"]);
+const BAGIAN: [string, string][] = [
+  ["?", "? (ditanyakan)"],
+  ["1/2", "1/2"],
+  ["1/3", "1/3"],
+  ["1/4", "1/4"],
+  ["1/6", "1/6"],
+  ["1/8", "1/8"],
+  ["2/3", "2/3"],
+  ["ashabah", "Ashabah (sisa)"],
+  ["1/6 + sisa", "1/6 + sisa"],
+  ["1/3 sisa", "1/3 sisa"],
+  ["mahjub", "Mahjub (terhalang)"],
+];
+
+function resepWaris(p: Pb): Isian[] {
+  const rows = p.baris;
+  const mi = p.cari(["mayit", "pewaris"]);
+  const ai = p.cari("aul");
+  const ahli = new Map<string, { i: number; jumlah: number; bagian: string }>();
+  rows.forEach((r, i) => {
+    if (i === mi || i === ai) return;
+    const n = bacaNama(r[0] ?? "");
+    if (n && !ahli.has(n.dasar)) {
+      ahli.set(n.dasar, { i, jumlah: n.jumlah, bagian: (r[1] ?? "").trim() });
+      p.dipakai.add(i);
+    }
+  });
+  const mayit = /perempuan|wanita/i.test(mi >= 0 ? (rows[mi][1] ?? "") : "") ? "perempuan" : /laki|pria/i.test(mi >= 0 ? (rows[mi][1] ?? "") : "") ? "laki-laki" : ahli.has("suami") ? "perempuan" : "laki-laki";
+  const kunciBaris = (d: string, n: number) => (n > 1 ? `${d} (${n})` : d);
+  /** Tabel baru: mayit dulu, ahli waris urut baku, 'aul di akhir; baris lain (tak dikenal) dibawa. */
+  const susun = (m: string, data: Map<string, { jumlah: number; bagian: string }>, aul: boolean): Baris[] => [
+    ["mayit", m],
+    ...SEMUA_WARIS.filter((d) => data.has(d)).map((d) => [kunciBaris(d, data.get(d)!.jumlah), data.get(d)!.bagian]),
+    ...rows.filter((_, i) => i !== mi && i !== ai && ![...ahli.values()].some((a) => a.i === i)).map((r) => [...r]),
+    ...(aul ? [["aul", "ya"]] : []),
+  ];
+  const data = new Map([...ahli].map(([d, a]) => [d, { jumlah: a.jumlah, bagian: a.bagian }]));
+  const aul = ai >= 0 && /ya|iya/i.test(rows[ai][1] ?? "");
+  const ganti = (f: (m: Map<string, { jumlah: number; bagian: string }>) => void, m = mayit, au = aul) => {
+    const d = new Map([...data].map(([k, v]) => [k, { ...v }]));
+    f(d);
+    return susun(m, d, au);
+  };
+  const out: Isian[] = [
+    {
+      t: "pilih",
+      label: "Mayit (yang meninggal)",
+      kartu: true,
+      opsi: [["laki-laki", "Laki-laki (meninggalkan istri)"], ["perempuan", "Perempuan (meninggalkan suami)"]],
+      nilai: mayit,
+      // ganti jenis kelamin mayit: suami ↔ istri ikut berganti
+      ubah: (v) =>
+        ganti((d) => {
+          const [lama, baru] = v === "perempuan" ? ["istri", "suami"] : ["suami", "istri"];
+          if (d.has(lama)) {
+            d.set(baru, { jumlah: 1, bagian: "?" });
+            d.delete(lama);
+          }
+        }, v),
+    },
+    info("Centang ahli waris yang ada, lalu pilih bagiannya. Kesalahan kaidah faraidh yang pasti langsung ditandai."),
+  ];
+  for (const [kel, daftar] of KELOMPOK_WARIS) {
+    const isian: Isian[] = [];
+    for (const d of daftar) {
+      if (d === (mayit === "laki-laki" ? "suami" : "istri")) continue;
+      const a = data.get(d);
+      isian.push({ t: "centang", label: kapital(d), nilai: !!a, ubah: (b) => ganti((m) => (b ? m.set(d, { jumlah: 1, bagian: "?" }) : m.delete(d))) });
+      if (!a) continue;
+      const opsi = BAGIAN.some(([v]) => normal(v) === normal(a.bagian)) ? BAGIAN : ([...BAGIAN, [a.bagian, a.bagian]] as [string, string][]);
+      isian.push({
+        t: "kelompok",
+        label: kapital(d),
+        grid: true,
+        isian: [
+          { t: "pilih", label: "Bagian", kunci: d, opsi, nilai: opsi.find(([v]) => normal(v) === normal(a.bagian))?.[0] ?? a.bagian, ubah: (v) => ganti((m) => m.set(d, { ...a, bagian: v })) },
+          ...(BISA_BANYAK.has(d) ? [{ t: "isi" as const, label: "Jumlah orang", nilai: String(a.jumlah), angka: true, ubah: (v: string) => ganti((m) => m.set(d, { ...a, jumlah: Math.max(1, Math.min(d === "istri" ? 4 : 12, Math.round(angkaDari(v)) || 1)) })) }] : []),
+        ],
+      });
+    }
+    out.push({ t: "kelompok", label: kel, isian });
+  }
+  out.push({ t: "centang", label: "Terjadi 'aul (jumlah bagian lebih dari 1)", nilai: aul, ubah: (b) => susun(mayit, data, b) });
+  if (mi >= 0) p.dipakai.add(mi);
+  return out;
+}
+
 const RESEP: Record<string, (p: Pb) => Isian[]> = {
   datar: resepDatar,
   ruang: resepRuang,
@@ -794,8 +1393,20 @@ const RESEP: Record<string, (p: Pb) => Isian[]> = {
   ekonomi: resepEkonomi,
   lapisan: resepLapisan,
   shaf: resepShaf,
+  waktu: resepWaktu,
+  alur: (p) => resepLangkah(p, false),
+  siklus: (p) => resepLangkah(p, true),
+  pohon: resepPohon,
+  koordinat: resepKoordinat,
+  bilangan: resepBilangan,
+  listrik: resepListrik,
+  jaring: resepJaring,
+  waris: resepWaris,
 };
 export const punyaFormulir = (jenis: string) => jenis in RESEP;
+/** Banyak kolom tabel tiap jenis berformulir (selain ini 2). */
+const KOLOM: Record<string, number> = { alur: 1, siklus: 1, koordinat: 3, bilangan: 3 };
+export const kolomFormulir = (jenis: string) => KOLOM[jenis] ?? 2;
 
 /** Tabel (tanpa baris judul) → isian formulir + indeks baris yang tidak dikenali resep. */
 export function formulir(jenis: string, baris: Baris[]): { isian: Isian[]; sisa: number[] } | null {

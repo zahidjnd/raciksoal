@@ -15,22 +15,20 @@ const disebut = (alasan: string | null, kunci?: string) => !!alasan && !!kunci &
  * `ubah` (tabel lengkap dengan baris judul). Baris yang tidak dikenali resep ditampilkan supaya bisa dihapus.
  */
 export function FormulirGambar({ jenis, isi, ubah, alasan }: { jenis: JenisGrafik; isi: string[][]; ubah: (isi: string[][]) => void; alasan: string | null }) {
-  const baris = isi.slice(1).map((b) => [b[0] ?? "", b[1] ?? ""] as Baris);
+  const baris = isi.slice(1).map((b) => [...b] as Baris);
   const f = formulir(jenis, baris);
   if (!f) return null;
   const set = (b: Baris[]) => ubah([isi[0] ?? ["Bagian", "Isi"], ...b]);
   return (
     <div className="space-y-3">
-      {f.isian.map((x, i) => (
-        <SatuIsian key={i} x={x} set={set} alasan={alasan} />
-      ))}
+      <Deret xs={f.isian} set={set} alasan={alasan} />
       {f.sisa.length > 0 && (
         <fieldset className="space-y-1 rounded-lg border border-peringatan-garis bg-peringatan-muda p-2">
           <legend className="px-1 text-peringatan">Baris lain (tidak dikenali formulir)</legend>
           {f.sisa.map((i) => (
             <div key={i} className="flex items-center gap-2">
               <span className="min-w-0 flex-1 break-words">
-                {baris[i][0]}: {baris[i][1]}
+                {baris[i].filter(Boolean).join(" | ")}
               </span>
               <button type="button" className={kecil} title="Hapus baris ini" aria-label={`Hapus baris ${baris[i][0]}`} onClick={() => set(baris.filter((_, j) => j !== i))}>
                 ✕
@@ -40,6 +38,27 @@ export function FormulirGambar({ jenis, isi, ubah, alasan }: { jenis: JenisGrafi
         </fieldset>
       )}
     </div>
+  );
+}
+
+/** Isian berurutan; tombol yang berdampingan ("+ Titik", "+ Garis", ...) dijadikan satu baris berjarak. */
+function Deret({ xs, set, alasan }: { xs: Isian[]; set: (b: Baris[]) => void; alasan: string | null }) {
+  const grup: Isian[][] = [];
+  for (const x of xs) {
+    const akhir = grup[grup.length - 1];
+    if (x.t === "tombol" && akhir?.[0].t === "tombol") akhir.push(x);
+    else grup.push([x]);
+  }
+  return grup.map((g, i) =>
+    g[0].t === "tombol" ? (
+      <div key={i} className="flex flex-wrap gap-2">
+        {g.map((x, j) => (
+          <SatuIsian key={j} x={x} set={set} alasan={alasan} />
+        ))}
+      </div>
+    ) : (
+      <SatuIsian key={i} x={g[0]} set={set} alasan={alasan} />
+    ),
   );
 }
 
@@ -60,7 +79,8 @@ function SatuIsian({ x, set, alasan }: { x: Isian; set: (b: Baris[]) => void; al
           <span>{x.label}</span>
         </label>
       );
-    case "pilih":
+    case "pilih": {
+      const salah = disebut(alasan, x.kunci);
       return x.kartu ? (
         <fieldset>
           <legend className="mb-1 font-medium">{x.label}</legend>
@@ -81,7 +101,7 @@ function SatuIsian({ x, set, alasan }: { x: Isian; set: (b: Baris[]) => void; al
       ) : (
         <label className="flex flex-col gap-1">
           <span className="font-medium">{x.label}</span>
-          <select className={kotak} value={x.nilai} onChange={(e) => set(x.ubah(e.target.value))}>
+          <select className={`${kotak} ${salah ? "border-bahaya-garis bg-bahaya-muda" : ""}`} aria-invalid={salah || undefined} value={x.nilai} onChange={(e) => set(x.ubah(e.target.value))}>
             {!x.opsi.some(([v]) => v === x.nilai) && <option value={x.nilai}>(pilih)</option>}
             {x.opsi.map(([v, label]) => (
               <option key={v} value={v}>
@@ -90,6 +110,34 @@ function SatuIsian({ x, set, alasan }: { x: Isian; set: (b: Baris[]) => void; al
             ))}
           </select>
         </label>
+      );
+    }
+    case "simpul":
+      return (
+        <div className="flex items-center gap-1" style={{ paddingLeft: `${x.tingkat * 1.5}rem` }}>
+          {x.tingkat > 0 && <span className="shrink-0 text-pudar">└</span>}
+          {x.nomor && <span className="w-6 shrink-0 text-right text-pudar">{x.nomor}</span>}
+          <input
+            className={`${kotak} min-w-0 flex-1 ${x.tanya.aktif ? "opacity-50" : ""}`}
+            aria-label={x.nomor ? `Langkah ${x.nomor}` : `Kotak tingkat ${x.tingkat + 1}`}
+            placeholder={x.tanya.aktif ? "ditanyakan (tampil ....)" : x.contoh}
+            disabled={x.tanya.aktif}
+            value={x.nilai}
+            onChange={(e) => set(x.ubah(e.target.value))}
+          />
+          <label className="flex shrink-0 items-center gap-1 text-pudar" title="Ditanyakan: tulisan kotak diganti ....">
+            <input type="checkbox" className="h-4 w-4 accent-hijau" checked={x.tanya.aktif} onChange={(e) => set(x.tanya.ubah(e.target.checked))} />
+            <span className="max-sm:sr-only">ditanyakan</span>
+          </label>
+          {/* lebar tetap supaya kotak isian semua baris rata kanan (pohon: + ↑ ↓ ✕; daftar: ↑ ↓ ✕) */}
+          <span className={`flex shrink-0 gap-1 ${x.nomor ? "w-[6.5rem]" : "w-[8.75rem]"}`}>
+            {x.aksi.map((a) => (
+              <button key={a.judul} type="button" className={kecil} title={a.judul} aria-label={a.judul} onClick={() => set(a.jalankan())}>
+                {a.label}
+              </button>
+            ))}
+          </span>
+        </div>
       );
     case "isi": {
       const salah = disebut(alasan, x.kunci);
@@ -133,9 +181,7 @@ function SatuIsian({ x, set, alasan }: { x: Isian; set: (b: Baris[]) => void; al
             ))}
           </legend>
           <div className={x.grid ? "grid gap-2 sm:grid-cols-2" : "space-y-2"}>
-            {x.isian.map((y, i) => (
-              <SatuIsian key={i} x={y} set={set} alasan={alasan} />
-            ))}
+            <Deret xs={x.isian} set={set} alasan={alasan} />
           </div>
         </fieldset>
       );

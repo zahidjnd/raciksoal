@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { adalahBagan, adalahGeometri, adalahSkema, alasanGrafik, ATURAN_GRAFIK, isiTampil, svgGrafik, type JenisGrafik, type Penanda } from "@/lib/grafik";
 import { contohGeometri, satuBangun } from "@/lib/geometri";
-import { punyaFormulir } from "@/lib/formulir";
+import { kolomFormulir, punyaFormulir } from "@/lib/formulir";
 import { JOROK } from "@/lib/soal";
 import { FormulirGambar, PilihJenis } from "./formulir-gambar";
 
@@ -43,7 +43,7 @@ export function EditorTabel({
   const [memilih, setMemilih] = useState(pilihDulu && !grafik);
   const [modeTabel, setModeTabel] = useState(false);
   const penanda = jenis ? { jenis, judul: judul.replace(/[[\]\r\n]+/g, " ").trim() } : null; // "]]" di judul memutus penanda
-  const bisaFormulir = !!jenis && punyaFormulir(jenis) && isi[0]?.length === 2;
+  const bisaFormulir = !!jenis && punyaFormulir(jenis) && isi[0]?.length === kolomFormulir(jenis);
   const pakaiFormulir = bisaFormulir && !modeTabel;
   const adaKosong = !pakaiFormulir && !!jenis && isi.some((b) => b.some((t, j) => selKosong(t) && j !== ATURAN_GRAFIK[jenis].bolehKosong));
   const tampil = jenis && !pakaiFormulir ? isiTampil(isi, jenis) : isi;

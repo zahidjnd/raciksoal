@@ -11,7 +11,7 @@ export type JenisAgama = "shaf" | "waris" | "arah";
 type P = [number, number];
 const K = ["Bagian", "Isi"];
 
-const WARIS = [
+export const WARIS = [
   "ayah", "ibu", "kakek", "nenek", "suami", "istri", "anak laki-laki", "anak perempuan", "cucu laki-laki", "cucu perempuan",
   "saudara laki-laki", "saudara perempuan", "saudara laki-laki seayah", "saudara perempuan seayah", "saudara seibu", "paman",
 ];
@@ -127,7 +127,7 @@ type Pewaris = { nama: string; dasar: string; jumlah: number; bagian: string; ma
 type Waris = { mayit: "laki-laki" | "perempuan" | ""; ahli: Pewaris[]; aul: boolean };
 
 /** "anak perempuan (2)", "2 anak perempuan", "saudara laki-laki kandung" → nama baku + jumlah. */
-function bacaNama(t: string): { dasar: string; jumlah: number } | null {
+export function bacaNama(t: string): { dasar: string; jumlah: number } | null {
   let s = t.toLowerCase();
   const j = /\((\d+)\)|^(\d+)\s|\s(\d+)\s*(orang)?$/.exec(s);
   const jumlah = j ? +(j[1] ?? j[2] ?? j[3]) : 1;
