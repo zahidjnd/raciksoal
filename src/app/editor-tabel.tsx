@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { adalahBagan, adalahGeometri, adalahSkema, alasanGrafik, ATURAN_GRAFIK, isiTampil, svgGrafik, type JenisGrafik, type Penanda } from "@/lib/grafik";
 import { contohGeometri, satuBangun } from "@/lib/geometri";
-import { kolomFormulir, punyaFormulir } from "@/lib/formulir";
+import { kolomFormulir, pakaiJudul, punyaFormulir } from "@/lib/formulir";
 import { JOROK } from "@/lib/soal";
 import { FormulirGambar, PilihJenis } from "./formulir-gambar";
 
@@ -43,14 +43,15 @@ export function EditorTabel({
   const [memilih, setMemilih] = useState(pilihDulu && !grafik);
   const [modeTabel, setModeTabel] = useState(false);
   const penanda = jenis ? { jenis, judul: judul.replace(/[[\]\r\n]+/g, " ").trim() } : null; // "]]" di judul memutus penanda
-  const bisaFormulir = !!jenis && punyaFormulir(jenis) && isi[0]?.length === kolomFormulir(jenis);
+  const [kMin, kMaks] = jenis ? kolomFormulir(jenis) : [0, 0];
+  const bisaFormulir = !!jenis && punyaFormulir(jenis) && isi.every((b) => b.length >= kMin && b.length <= kMaks);
   const pakaiFormulir = bisaFormulir && !modeTabel;
   const adaKosong = !pakaiFormulir && !!jenis && isi.some((b) => b.some((t, j) => selKosong(t) && j !== ATURAN_GRAFIK[jenis].bolehKosong));
   const tampil = jenis && !pakaiFormulir ? isiTampil(isi, jenis) : isi;
   const svg = penanda && svgGrafik(tampil, penanda);
   const alasanTabel = penanda && !svg ? alasanGrafik(tampil, penanda.jenis) : null;
   // di formulir, "baris 4" tidak berarti apa-apa bagi guru
-  const alasan = alasanTabel && pakaiFormulir ? alasanTabel.replace(/\s*\(baris \d+\)/gi, "").replace(/^Baris \d+:?\s*/i, "") : alasanTabel;
+  const alasan = alasanTabel && pakaiFormulir ? alasanTabel.replace(/\s*\(baris \d+\)/gi, "").replace(/^Baris \d+:\s*/i, "") : alasanTabel;
   const nama = jenis ? (adalahBagan(jenis) ? "bagan" : adalahGeometri(jenis) || adalahSkema(jenis) ? "gambar" : "grafik") : "tabel";
   function pilihJenis(j: JenisGrafik | "") {
     setMemilih(false);
@@ -59,7 +60,10 @@ export function EditorTabel({
     if (j === jenis) return;
     // tabel masih kosong, ganti dari jenis lain, atau jenis berformulir (isi tabel biasa tak bisa dipakai formulir)
     // → isi awal jenis itu. Tabel lama tetap utuh selama guru menekan Batal.
-    if (j && (isi.every((b) => b.every(selKosong)) || jenis || punyaFormulir(j))) setIsi(awalJenis(j));
+    // Kecuali grafik data: tabel biasa / grafik data lain yang banyak kolomnya cocok tetap dipakai (data guru tak hilang).
+    const [a, b] = j ? kolomFormulir(j) : [0, 0];
+    const tetap = !!j && pakaiJudul(j) && (!jenis || pakaiJudul(jenis)) && isi.some((r) => r.some((t) => !selKosong(t))) && isi.every((r) => r.length >= a && r.length <= b);
+    if (j && !tetap && (isi.every((r) => r.every(selKosong)) || jenis || punyaFormulir(j))) setIsi(awalJenis(j));
     setJenis(j);
   }
   function kirim() {

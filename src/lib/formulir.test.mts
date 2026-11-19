@@ -1,24 +1,26 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { formulir, hitungOptik, punyaFormulir, type Baris, type Isian } from "./formulir.ts";
+import { formulir, hitungFrekuensi, hitungOptik, pakaiJudul, punyaFormulir, tempelData, type Baris, type Isian } from "./formulir.ts";
 import { alasanGrafik, ATURAN_GRAFIK, type JenisGrafik } from "./grafik.ts";
 
 const SATU = ["datar", "ruang", "sudut", "optik", "gaya", "katrol", "tuas", "atom", "arah", "langit", "ekonomi", "lapisan", "shaf"] as JenisGrafik[];
 const DAFTAR = ["waktu", "alur", "siklus", "pohon", "koordinat", "bilangan", "listrik", "jaring", "waris"] as JenisGrafik[];
-const JENIS = [...SATU, ...DAFTAR];
-const badan = (j: JenisGrafik): Baris[] => ATURAN_GRAFIK[j].contoh.slice(1).map((b) => [...b]);
-const alasan = (j: JenisGrafik, b: Baris[]) => alasanGrafik([ATURAN_GRAFIK[j].contoh[0], ...b], j);
+const DATA = ["batang", "garis", "lingkaran", "histogram", "pencar", "piramida"] as JenisGrafik[];
+const JENIS = [...SATU, ...DAFTAR, ...DATA];
+/** Grafik data: formulir menerima tabel lengkap dengan baris judul (nama sumbu & seri). */
+const badan = (j: JenisGrafik): Baris[] => (pakaiJudul(j) ? ATURAN_GRAFIK[j].contoh : ATURAN_GRAFIK[j].contoh.slice(1)).map((b) => [...b]);
+const alasan = (j: JenisGrafik, b: Baris[]) => alasanGrafik(pakaiJudul(j) ? b : [ATURAN_GRAFIK[j].contoh[0], ...b], j);
 /** Semua isian, termasuk yang di dalam kelompok. */
 const rata = (xs: Isian[]): Isian[] => xs.flatMap((x) => (x.t === "kelompok" ? [x, ...rata(x.isian)] : [x]));
 
-test("22 jenis punya formulir; contoh terbaca habis (tanpa baris sisa)", () => {
+test("28 jenis punya formulir; contoh terbaca habis (tanpa baris sisa)", () => {
   for (const j of JENIS) {
     assert.ok(punyaFormulir(j), j);
     const f = formulir(j, badan(j))!;
     assert.deepEqual(f.sisa, [], `${j}: baris tak dikenal ${f.sisa.map((i) => badan(j)[i].join(" | "))}`);
     assert.ok(f.isian.length > 0, j);
   }
-  assert.equal(punyaFormulir("batang"), false);
+  assert.equal(punyaFormulir("tabel"), false);
 });
 
 test("setiap pilihan di setiap formulir menghasilkan tabel yang bisa digambar", () => {
@@ -139,4 +141,74 @@ test("jaring: centang pemakan menulis ulang tabel; waris: ganti mayit menukar su
   const b = mayit.ubah("perempuan");
   assert.ok(b.some((r) => r[0] === "suami") && !b.some((r) => r[0] === "istri"));
   assert.equal(alasan("waris", b), null);
+});
+
+test("grafik data: setiap tombol, aksi baris & bantuan menghasilkan grafik yang bisa digambar", () => {
+  for (const j of DATA) {
+    const f = formulir(j, badan(j))!;
+    const coba = (nama: string, b: Baris[]) => {
+      assert.equal(alasan(j, b), null, `${j} → ${nama}: ${alasan(j, b)}`);
+      assert.deepEqual(formulir(j, b)!.sisa, [], `${j} → ${nama}: ada baris sisa`);
+    };
+    for (const x of rata(f.isian)) {
+      if (x.t === "tombol") coba(x.label, x.jalankan());
+      if (x.t === "kelompok") for (const a of x.aksi ?? []) coba(`${x.label} ${a.judul}`, a.jalankan());
+      if (x.t === "lembar") x.isi.forEach((_, i) => x.aksi(i).forEach((a) => coba(a.judul, a.jalankan())));
+    }
+  }
+});
+
+test("grafik data: nama + satuan menulis judul kolom; sel lembar mengubah angka", () => {
+  const f = formulir("garis", badan("garis"))!; // Bulan | Suhu (°C)
+  const satuan = rata(f.isian).find((x) => x.t === "isi" && x.kunci === "satuan1");
+  assert.ok(satuan && satuan.t === "isi" && satuan.nilai === "°C");
+  assert.deepEqual(satuan.ubah("mm")[0], ["Bulan", "Suhu (mm)"]);
+  assert.deepEqual(satuan.ubah("")[0], ["Bulan", "Suhu"]);
+  const nama = rata(f.isian).find((x) => x.t === "isi" && x.label === "Nama");
+  assert.ok(nama && nama.t === "isi");
+  assert.deepEqual(nama.ubah("Curah hujan ")[0], ["Bulan", "Curah hujan  (°C)"]); // spasi saat mengetik tidak hilang
+  const lembar = f.isian.find((x) => x.t === "lembar");
+  assert.ok(lembar && lembar.t === "lembar");
+  assert.deepEqual(lembar.ubah(1, 1, "31,5")[2], ["Feb", "31,5"]);
+});
+
+test("tempel dari Excel: judul dikenali, angka Indonesia, Rp & % dibersihkan", () => {
+  const b = tempelData("batang", ["Kelas", "Jumlah"], "Bulan\tPenjualan (Rp)\tLaba\nJan\tRp 1.250\t20%\nFeb\t1.500,5\t25%\n");
+  assert.ok(Array.isArray(b));
+  assert.deepEqual(b, [["Bulan", "Penjualan (Rp)", "Laba"], ["Jan", "1.250", "20"], ["Feb", "1.500,5", "25"]]);
+  assert.equal(alasanGrafik(b, "batang"), null);
+  // tanpa judul: judul lama dipakai; tanpa pemisah tab: "nama angka"
+  assert.deepEqual(tempelData("lingkaran", ["Pekerjaan", "Jumlah"], "Petani 45\nPedagang 30"), [["Pekerjaan", "Jumlah"], ["Petani", "45"], ["Pedagang", "30"]]);
+  // tabel bergaris "|" (dari Word/Markdown)
+  assert.deepEqual(tempelData("pencar", ["x", "y"], "| x | y |\n|---|---|\n| 1 | 5 |\n| 2 | 6 |\n| 3 | 8 |"), [["x", "y"], ["1", "5"], ["2", "6"], ["3", "8"]]);
+  assert.match(String(tempelData("piramida", [], "0–14\t12")), /3 kolom/);
+  assert.match(String(tempelData("lingkaran", [], "A\t1")), /2–8 baris/);
+});
+
+test("histogram: kelas otomatis & frekuensi dari nilai siswa", () => {
+  const f = formulir("histogram", badan("histogram"))!; // 51–60 ... 81–90
+  const kelas = rata(f.isian).filter((x) => x.t === "isi" && x.angka) as Extract<Isian, { t: "isi" }>[];
+  assert.deepEqual(kelas.map((x) => x.nilai), ["51", "10", "4"]);
+  const b = kelas[2].ubah("5");
+  assert.deepEqual(b.map((r) => r[0]), ["Nilai", "51–60", "61–70", "71–80", "81–90", "91–100"]);
+  assert.equal(b[5][1], "0");
+  assert.deepEqual(kelas[1].ubah("5").slice(1, 3).map((r) => r[0]), ["51–55", "56–60"]);
+  assert.deepEqual(hitungFrekuensi("55 60 61, 75 75,5\n90", 51, 10, 4), [2, 1, 2, 1]);
+  assert.match(String(hitungFrekuensi("50 95", 51, 10, 4)), /di luar kelas \(50, 95\)/);
+  const tempel = rata(f.isian).find((x) => x.t === "tempel" && x.label.startsWith("Hitung"));
+  assert.ok(tempel && tempel.t === "tempel");
+  assert.deepEqual((tempel.jalankan("55 65 66 85") as Baris[]).map((r) => r[1]), ["Frekuensi", "1", "2", "0", "1"]);
+});
+
+test("piramida: kelompok umur siap pakai; satuan ditulis di kedua kolom", () => {
+  const f = formulir("piramida", badan("piramida"))!;
+  const umur = f.isian.find((x) => x.t === "pilih" && x.label === "Kelompok umur");
+  assert.ok(umur && umur.t === "pilih" && umur.nilai === "15");
+  const b = umur.ubah("5");
+  assert.equal(b.length, 17);
+  assert.deepEqual(b[1].slice(0, 1), ["0–4"]);
+  assert.equal(alasan("piramida", b), null);
+  const satuan = rata(f.isian).find((x) => x.t === "isi" && x.label === "Satuan angka");
+  assert.ok(satuan && satuan.t === "isi" && satuan.nilai === "ribu");
+  assert.deepEqual(satuan.ubah("juta")[0], ["Umur (tahun)", "Laki-laki (juta)", "Perempuan (juta)"]);
 });

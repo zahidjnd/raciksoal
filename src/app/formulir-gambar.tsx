@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { formulir, type Baris, type Isian } from "@/lib/formulir";
+import { formulir, pakaiJudul, type Baris, type Isian } from "@/lib/formulir";
 import { ATURAN_GRAFIK, svgGrafik, type JenisGrafik } from "@/lib/grafik";
 
 const kotak = "h-10 rounded-lg border px-2 max-md:h-11";
@@ -15,10 +15,12 @@ const disebut = (alasan: string | null, kunci?: string) => !!alasan && !!kunci &
  * `ubah` (tabel lengkap dengan baris judul). Baris yang tidak dikenali resep ditampilkan supaya bisa dihapus.
  */
 export function FormulirGambar({ jenis, isi, ubah, alasan }: { jenis: JenisGrafik; isi: string[][]; ubah: (isi: string[][]) => void; alasan: string | null }) {
-  const baris = isi.slice(1).map((b) => [...b] as Baris);
+  // grafik data: baris judul (nama sumbu & seri) ikut diatur formulir
+  const judul = pakaiJudul(jenis);
+  const baris = (judul ? isi : isi.slice(1)).map((b) => [...b] as Baris);
   const f = formulir(jenis, baris);
   if (!f) return null;
-  const set = (b: Baris[]) => ubah([isi[0] ?? ["Bagian", "Isi"], ...b]);
+  const set = (b: Baris[]) => ubah(judul ? b : [isi[0] ?? ["Bagian", "Isi"], ...b]);
   return (
     <div className="space-y-3">
       <Deret xs={f.isian} set={set} alasan={alasan} />
@@ -64,6 +66,10 @@ function Deret({ xs, set, alasan }: { xs: Isian[]; set: (b: Baris[]) => void; al
 
 function SatuIsian({ x, set, alasan }: { x: Isian; set: (b: Baris[]) => void; alasan: string | null }) {
   switch (x.t) {
+    case "lembar":
+      return <Lembar x={x} set={set} alasan={alasan} />;
+    case "tempel":
+      return <Tempel x={x} set={set} />;
     case "info":
       return <p className="rounded-lg bg-krem p-2 text-pudar">{x.teks}</p>;
     case "tombol":
@@ -152,11 +158,19 @@ function SatuIsian({ x, set, alasan }: { x: Isian; set: (b: Baris[]) => void; al
                 aria-label={x.label}
                 aria-invalid={salah || undefined}
                 placeholder={x.tanya?.aktif ? "ditanyakan (tampil ?)" : x.contoh}
+                list={x.saran ? `saran-${x.kunci ?? x.label}` : undefined}
                 disabled={x.tanya?.aktif}
                 value={x.nilai}
                 onChange={(e) => set(x.ubah(e.target.value))}
               />
               {x.satuan && <span className="shrink-0 text-pudar">{x.satuan}</span>}
+              {x.saran && (
+                <datalist id={`saran-${x.kunci ?? x.label}`}>
+                  {x.saran.map((v) => (
+                    <option key={v} value={v} />
+                  ))}
+                </datalist>
+              )}
             </div>
             {x.tanya && (
               <label className="flex shrink-0 items-center gap-1 text-pudar">
@@ -186,6 +200,122 @@ function SatuIsian({ x, set, alasan }: { x: Isian; set: (b: Baris[]) => void; al
         </fieldset>
       );
   }
+}
+
+/**
+ * Lembar data grafik (0.63.0): tabel kotak isian seperti Excel. Enter = kotak di bawahnya; menempel tabel (ada tab /
+ * baris baru) di kotak mana pun = seluruh data diganti tempelan. Sel yang disebut pemeriksa ("Baris 2 kolom 3") merah.
+ */
+function Lembar({ x, set, alasan }: { x: Extract<Isian, { t: "lembar" }>; set: (b: Baris[]) => void; alasan: string | null }) {
+  const [pesan, setPesan] = useState("");
+  const m = /Baris (\d+) kolom (\d+)/i.exec(alasan ?? "");
+  const salah = m ? [Number(m[1]) - 1, Number(m[2]) - 1] : null;
+  return (
+    <div className="space-y-1">
+      <div className="overflow-x-auto">
+        <table className="w-full border-separate border-spacing-1">
+          <thead>
+            <tr>
+              {x.kolom.map((k, j) => (
+                <th key={j} scope="col" className="px-1 text-left font-medium">
+                  {k.label}
+                </th>
+              ))}
+              <th>
+                <span className="sr-only">Tombol baris</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {x.isi.map((r, i) => (
+              <tr key={i}>
+                {r.map((v, j) => {
+                  const merah = salah?.[0] === i && salah?.[1] === j;
+                  return (
+                    <td key={j}>
+                      <input
+                        data-sel={`${i}-${j}`}
+                        className={`${kotak} w-full min-w-16 ${merah ? "border-bahaya-garis bg-bahaya-muda" : ""}`}
+                        aria-label={`${x.kolom[j]?.label ?? "Kolom"} baris ${i + 1}`}
+                        aria-invalid={merah || undefined}
+                        inputMode={x.kolom[j]?.angka ? "decimal" : undefined}
+                        value={v}
+                        onChange={(e) => set(x.ubah(i, j, e.target.value))}
+                        onKeyDown={(e) => {
+                          if (e.key !== "Enter") return;
+                          e.preventDefault();
+                          e.currentTarget.closest("table")?.querySelector<HTMLInputElement>(`[data-sel="${i + 1}-${j}"]`)?.focus();
+                        }}
+                        onPaste={(e) => {
+                          const t = e.clipboardData.getData("text");
+                          if (!/[\t\n]/.test(t.trim())) return; // satu angka biasa: tempel seperti biasa
+                          e.preventDefault();
+                          const h = x.tempel(t);
+                          if (typeof h === "string") setPesan(h);
+                          else {
+                            setPesan("");
+                            set(h);
+                          }
+                        }}
+                      />
+                    </td>
+                  );
+                })}
+                <td className="whitespace-nowrap">
+                  <span className="flex gap-1">
+                    {x.aksi(i).map((a) => (
+                      <button key={a.judul} type="button" className={kecil} title={a.judul} aria-label={a.judul} onClick={() => set(a.jalankan())}>
+                        {a.label}
+                      </button>
+                    ))}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {pesan && <p className="text-bahaya">{pesan}</p>}
+    </div>
+  );
+}
+
+/** Kotak tempel (0.63.0): tempelan langsung dipakai; kalau ditolak, teksnya tetap ada beserta alasannya. */
+function Tempel({ x, set }: { x: Extract<Isian, { t: "tempel" }>; set: (b: Baris[]) => void }) {
+  const [teks, setTeks] = useState("");
+  const [pesan, setPesan] = useState("");
+  const pakai = (t: string) => {
+    const h = x.jalankan(t);
+    if (typeof h === "string") return setPesan(h);
+    set(h);
+    setTeks("");
+    setPesan("");
+  };
+  return (
+    <details className="rounded-lg border p-2">
+      <summary className="cursor-pointer font-medium">{x.label}</summary>
+      <div className="mt-2 space-y-2">
+        <p className="text-pudar">{x.petunjuk}</p>
+        <textarea
+          className="w-full rounded-lg border p-2"
+          rows={4}
+          aria-label={x.label}
+          value={teks}
+          onChange={(e) => setTeks(e.target.value)}
+          onPaste={(e) => {
+            const t = e.clipboardData.getData("text");
+            e.preventDefault();
+            setTeks(t);
+            pakai(t);
+          }}
+        />
+        {pesan && <p className="text-bahaya">{pesan}</p>}
+        <button type="button" className={`${kotak} hover:bg-krem disabled:opacity-50`} disabled={!teks.trim()} onClick={() => pakai(teks)}>
+          Pakai teks ini
+        </button>
+      </div>
+    </details>
+  );
 }
 
 /** Kelompok kartu pilih jenis (0.61.0), tiap kartu bergambar contohnya. */

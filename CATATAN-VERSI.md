@@ -52,6 +52,29 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.63.0 — 19 November 2026
+- **Formulir gambar tahap 3 (terakhir): grafik data** (batang, garis, lingkaran, histogram, pencar, piramida penduduk).
+  Kini SEMUA jenis gambar diisi lewat formulir; tabel abu-abu tinggal di "Lanjutan".
+  - **Lembar data seperti Excel**: nama sumbu diisi di kotak berlabel jelas, satuan dipilih dari daftar (orang, %,
+    °C, ton, Rp, ribu, juta, ...) atau diketik sendiri. Tombol + Baris, ↑ ↓ ✕, Enter pindah ke kotak di bawahnya.
+  - **Tempel dari Excel / Google Sheets**: salin tabel di Excel lalu tempel di kotak mana pun pada lembar data (atau di
+    kotak "Tempel dari Excel"); baris judul dikenali sendiri, "Rp 1.250" dan "25%" dibaca sebagai angka.
+  - **Batang & garis**: tombol "+ Seri data (pembanding)", misalnya Padi dan Jagung (maks 3 seri).
+  - **Lingkaran**: jumlah & persen tiap bagian langsung tertulis; bila satuannya "%" dan jumlahnya belum 100, ada
+    peringatan.
+  - **Histogram**: "Buat kelas otomatis" (batas bawah, panjang kelas, banyak kelas → 51–60, 61–70, ...) dan
+    "Hitung frekuensi dari nilai siswa" (tempel daftar nilai, frekuensi tiap kelas dihitung sendiri).
+  - **Piramida penduduk**: kelompok umur siap pakai (3 kelompok 0–14/15–64/65+, 15 tahunan, 10 tahunan,
+    5 tahunan), satuan ribu/juta/jiwa sekali pilih untuk kedua kolom.
+  - Kotak yang bukan angka langsung bergaris merah.
+  - Mengganti jenis grafik (mis. lingkaran → batang) atau menjadikan tabel biasa sebagai grafik: datanya tetap
+    dipakai, tidak diganti contoh.
+- Perbaikan 0.62.0: nama dua kata (mis. "burung elang", "0–12 km", nama sumbu "Jumlah barang") kini bisa diketik
+  (sebelumnya spasi di ujung hilang saat mengetik).
+- Soal lama, file Word, dan AI tidak berubah.
+
+---
+
 ## 0.62.0 — 19 November 2026
 - **Formulir gambar tahap 2: 9 jenis berbentuk daftar & cabang** kini juga diisi lewat formulir (bukan tabel abu-abu).
   - **Bagan pohon**: tiap kotak tampil menjorok sesuai tingkatnya, tombol **+** di samping kotak = tambah cabang di

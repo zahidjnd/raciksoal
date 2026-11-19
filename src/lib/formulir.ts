@@ -26,11 +26,17 @@ export type Isian =
       contoh?: string;
       angka?: boolean;
       tanya?: { aktif: boolean; ubah: (b: boolean) => Baris[] };
+      /** Pilihan siap pakai, tetap boleh mengetik sendiri (datalist). */
+      saran?: string[];
     }
   | { t: "centang"; label: string; nilai: boolean; ubah: (b: boolean) => Baris[] }
   | { t: "info"; teks: string }
   | { t: "kelompok"; label: string; isian: Isian[]; aksi?: { label: string; judul: string; jalankan: () => Baris[] }[]; grid?: boolean }
   | { t: "tombol"; label: string; jalankan: () => Baris[] }
+  /** Lembar data seperti Excel (grafik data): sel per baris, tombol per baris, tempel tabel di sel mana pun. */
+  | { t: "lembar"; kolom: { label: string; angka: boolean }[]; isi: string[][]; ubah: (i: number, j: number, v: string) => Baris[]; aksi: (i: number) => { label: string; judul: string; jalankan: () => Baris[] }[]; tempel: (teks: string) => Baris[] | string }
+  /** Kotak tempel teks; `jalankan` mengembalikan tabel baru atau kalimat kenapa ditolak. */
+  | { t: "tempel"; label: string; petunjuk: string; jalankan: (teks: string) => Baris[] | string }
   /** Satu kotak bagan pohon: menjorok sesuai tingkat, nama bisa diubah, tombol + cabang / ↑ / ↓ / ✕. */
   | { t: "simpul"; tingkat: number; nomor?: string; nilai: string; contoh?: string; ubah: (v: string) => Baris[]; tanya: { aktif: boolean; ubah: (b: boolean) => Baris[] }; aksi: { label: string; judul: string; jalankan: () => Baris[] }[] };
 
@@ -372,7 +378,7 @@ const BENTUK_SUDUT: [string, string][] = [
 ];
 /** Isian sudut: angka (diberi °), huruf (x), atau bentuk aljabar ("2x + 10" → "2x + 10°"). */
 const isiSudut = (p: Pb, label: string, kunci: string) =>
-  isi(p, label, kunci, { tanya: true, contoh: "65 atau x", tulis: (x) => (/\d$/.test(x.trim()) ? `${x.trim()}°` : x.trim()), satuan: "°", angka: false });
+  isi(p, label, kunci, { tanya: true, contoh: "65 atau x", tulis: (x) => (/\d$/.test(x.trim()) ? `${x.trim()}°` : x), satuan: "°", angka: false });
 
 function resepSudut(p: Pb): Isian[] {
   const bentuk = BENTUK_SUDUT.find(([b]) => normal(b) === normal(p.nilai(["bentuk", "bangun"])))?.[0] ?? "sudut";
@@ -722,7 +728,7 @@ function resepLapisan(p: Pb): Isian[] {
       grid: true,
       isian: [
         { t: "isi", label: "Nama lapisan", nilai: nama === "?" ? "" : nama, contoh: "troposfer", ubah: (x) => ubahBaris(p.baris, i, [x, ket]), tanya: { aktif: nama === "?", ubah: (b) => ubahBaris(p.baris, i, [b ? "?" : "lapisan", ket]) } },
-        { t: "isi", label: "Keterangan", nilai: ket === "?" || ket === "-" ? "" : ket, contoh: "0–12 km", ubah: (x) => ubahBaris(p.baris, i, [nama, x.trim() || "-"]), tanya: { aktif: ket === "?", ubah: (b) => ubahBaris(p.baris, i, [nama, b ? "?" : "-"]) } },
+        { t: "isi", label: "Keterangan", nilai: ket === "?" || ket === "-" ? "" : ket, contoh: "0–12 km", ubah: (x) => ubahBaris(p.baris, i, [nama, x.trim() ? x : "-"]), tanya: { aktif: ket === "?", ubah: (b) => ubahBaris(p.baris, i, [nama, b ? "?" : "-"]) } },
       ],
       aksi: [
         ...(k > 0 ? [{ label: "↑", judul: "Pindah ke atas", jalankan: () => tukar(p.baris, i, lapis[k - 1]) }] : []),
@@ -954,7 +960,7 @@ function resepKoordinat(p: Pb): Isian[] {
     const m = /^\s*(-?[\d.,]+)?\s*\.\.\s*(-?[\d.,]+)?\s*$/.exec(r[2] ?? "");
     const [a, b] = [m?.[1] ?? "", m?.[2] ?? ""];
     const tulis = (nama: string, x: string, y: string): Baris[] => {
-      const isi: Baris = [kunci, nama.trim() || bawaan, x.trim() && y.trim() ? `${x.trim()}..${y.trim()}` : ""];
+      const isi: Baris = [kunci, nama.trim() ? nama : bawaan, x.trim() && y.trim() ? `${x.trim()}..${y.trim()}` : ""];
       if (!nama.trim() && !x.trim() && !y.trim()) return i >= 0 ? ubahBaris(p.baris, i, null) : salin(p.baris);
       return i >= 0 ? ubahBaris(p.baris, i, isi) : [...salin(p.baris), isi];
     };
@@ -1246,8 +1252,8 @@ function resepJaring(p: Pb): Isian[] {
           nilai: n,
           contoh: "rumput",
           ubah: (x) => {
-            const baru = x.trim();
-            if (!baru) return susun(nama, makan); // nama kosong diabaikan (makhluk tidak hilang)
+            const baru = x; // spasi di ujung dibiarkan selama mengetik ("burung elang")
+            if (!baru.trim()) return susun(nama, makan); // nama kosong diabaikan (makhluk tidak hilang)
             const ns = nama.map((y) => (y === n ? baru : y)).filter(Boolean);
             return susun(ns, (m) => (m === baru ? pemakan : makan(m).map((y) => (normal(y) === normal(n) ? baru : y))));
           },
@@ -1379,6 +1385,238 @@ function resepWaris(p: Pb): Isian[] {
   return out;
 }
 
+// ---------- 0.63.0: grafik data (tabel ber-JUDUL: baris 0 = nama sumbu mendatar + nama tiap seri) ----------
+
+const DATA_GRAFIK = ["batang", "garis", "lingkaran", "histogram", "pencar", "piramida"];
+/** Resep jenis ini menerima tabel LENGKAP dengan baris judul (judul = nama sumbu, bukan sekadar kepala tabel). */
+export const pakaiJudul = (jenis: string) => DATA_GRAFIK.includes(jenis);
+const SERI: Record<string, [number, number]> = { batang: [1, 3], garis: [1, 3], pencar: [1, 3], lingkaran: [1, 1], histogram: [1, 1], piramida: [2, 2] };
+const BARIS_DATA: Record<string, [number, number]> = { batang: [2, 12], garis: [2, 12], lingkaran: [2, 8], histogram: [2, 12], pencar: [3, 20], piramida: [2, 18] };
+const SATUAN_DATA = ["orang", "siswa", "jiwa", "ribu jiwa", "juta jiwa", "%", "°C", "mm", "cm", "m", "km", "km²", "g", "kg", "ton", "ribu ton", "liter", "Rp", "ribu rupiah", "juta rupiah", "miliar rupiah", "unit", "buah", "ekor", "hektare", "detik", "menit", "jam", "hari", "tahun"];
+/** "Suhu (°C)" → ["Suhu", "°C"]. */
+const pecahNama = (s: string): [string, string] => {
+  const m = /^(.*?)\s*\(([^()]*)\)\s*$/.exec(s ?? "");
+  return m ? [m[1], m[2]] : [s ?? "", ""];
+};
+const susunNama = (nama: string, satuan: string) => (satuan.trim() ? `${nama} (${satuan.trim()})` : nama);
+/** Angka "ketat" untuk mengenali baris judul tempelan ("Kelas 7" bukan angka, "Rp 1.500" & "45%" angka). */
+const angkaKetat = (s: string) => /^\s*(Rp\.?\s*)?[-−]?\d[\d.,]*\s*%?\s*$/i.test(s);
+const bersihAngka = (s: string) => s.trim().replace(/^Rp\.?\s*/i, "").replace(/\s*%$/, "");
+
+/** Teks tempelan Excel/Google Sheets/Word (tab), titik koma, "|", atau "nama angka angka" → sel. */
+export function bacaTempelan(teks: string): string[][] {
+  const baris = teks
+    .replace(/\r/g, "")
+    .split("\n")
+    .filter((b) => b.trim() && !/^\s*\|?[\s:|-]+\|?\s*$/.test(b)); // baris "|---|---|" dibuang
+  const pisah = baris.some((b) => b.includes("\t")) ? "\t" : baris.some((b) => b.includes("|")) ? "|" : baris.some((b) => b.includes(";")) ? ";" : null;
+  return baris.map((b) => {
+    if (pisah === "|") return b.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((s) => s.trim());
+    if (pisah) return b.split(pisah).map((s) => s.trim());
+    // tanpa pemisah: "Petani 45" / "1 55" → nama + angka-angka di ujung
+    const m = /^(.*?)\s+((?:[-−]?[\d.,]+%?\s*)+)$/.exec(b.trim());
+    return m ? [m[1], ...m[2].trim().split(/\s+/)] : [b.trim()];
+  });
+}
+
+/** Tempelan → tabel grafik lengkap (judul ikut bila baris pertama berisi tulisan), atau kalimat kenapa ditolak. */
+export function tempelData(jenis: string, judulLama: string[], teks: string): Baris[] | string {
+  const t = bacaTempelan(teks);
+  if (!t.length) return "Tidak ada data yang terbaca.";
+  const xAngka = jenis === "pencar";
+  const adaJudul = t[0].slice(xAngka ? 0 : 1).some((s) => s && !angkaKetat(s));
+  const judul = adaJudul ? t.shift()! : null;
+  const [minS, maxS] = SERI[jenis];
+  const [minB, maxB] = BARIS_DATA[jenis];
+  const lebar = Math.min(Math.max(0, ...t.map((r) => r.length)), maxS + 1);
+  if (lebar < minS + 1) return minS === 2 ? "Butuh 3 kolom: kelompok umur, laki-laki, perempuan." : "Butuh minimal 2 kolom: nama dan angka.";
+  if (t.length < minB || t.length > maxB) return `Butuh ${minB}–${maxB} baris data (tertempel ${t.length}).`;
+  const kepala = Array.from({ length: lebar }, (_, j) => judul?.[j]?.trim() || judulLama[j] || (j ? `Seri ${j}` : "Kategori"));
+  return [kepala, ...t.map((r) => Array.from({ length: lebar }, (_, j) => (j === 0 && !xAngka ? (r[0] ?? "") : bersihAngka(r[j] ?? ""))))];
+}
+
+const KELAS = /^\s*([-−]?\d+)\s*[–—-]\s*([-−]?\d+)\s*$/;
+const susunKelas = (a: number, pj: number, n: number) => Array.from({ length: n }, (_, i) => `${a + i * pj}–${a + i * pj + pj - 1}`);
+/** Nilai mentah siswa → frekuensi tiap kelas (kelas = batas bawah + panjang, data bulat atau desimal). */
+export function hitungFrekuensi(teks: string, a: number, pj: number, n: number): number[] | string {
+  const nilai = teks
+    .split(/[\s;]+/)
+    .map((s) => s.replace(/,$/, ""))
+    .filter(Boolean)
+    .map(bacaAngka);
+  if (!nilai.length || nilai.some((v) => !Number.isFinite(v))) return "Tempel angka saja, dipisah spasi, enter, atau koma + spasi.";
+  const f = Array<number>(n).fill(0);
+  const luar: number[] = [];
+  for (const v of nilai) {
+    const i = Math.floor((v - a) / pj);
+    if (i >= 0 && i < n) f[i]++;
+    else luar.push(v);
+  }
+  if (luar.length) return `Ada nilai di luar kelas (${luar.slice(0, 5).map(tampilAngka).join(", ")}${luar.length > 5 ? ", ..." : ""}). Ubah batas bawah atau banyak kelas dulu.`;
+  return f;
+}
+
+const UMUR: [string, string, string[]][] = [
+  ["3", "3 kelompok (0–14, 15–64, 65+)", ["0–14", "15–64", "65+"]],
+  ["15", "15 tahunan (0–14 … 60+)", ["0–14", "15–29", "30–44", "45–59", "60+"]],
+  ["10", "10 tahunan (0–9 … 70+)", ["0–9", "10–19", "20–29", "30–39", "40–49", "50–59", "60–69", "70+"]],
+  ["5", "5 tahunan (0–4 … 75+)", [...Array.from({ length: 15 }, (_, i) => `${i * 5}–${i * 5 + 4}`), "75+"]],
+];
+const samaUmur = (a: string, b: string) => a.replace(/\s|-|—/g, "–").replace(/–+/g, "–") === b.replace(/\s|-|—/g, "–").replace(/–+/g, "–");
+
+function resepData(p: Pb, jenis: string): Isian[] {
+  const rows = p.baris;
+  rows.forEach((_, i) => p.dipakai.add(i));
+  const lebar = Math.max(2, ...rows.map((r) => r.length));
+  const t = rows.map((r) => Array.from({ length: lebar }, (_, j) => r[j] ?? ""));
+  if (!t.length) t.push(Array<string>(lebar).fill(""));
+  const kepala = t[0];
+  const badan = t.slice(1);
+  const nSeri = lebar - 1;
+  const [minS, maxS] = SERI[jenis];
+  const [minB, maxB] = BARIS_DATA[jenis];
+  const xAngka = jenis === "pencar";
+  const sel = (i: number, j: number, v: string): Baris[] => t.map((r, x) => (x === i ? r.map((s, y) => (y === j ? v : s)) : [...r]));
+  const out: Isian[] = [];
+
+  // --- nama sumbu & seri ---
+  const LABEL_X: Record<string, string> = { batang: "Nama kategori (di bawah batang)", garis: "Nama sumbu mendatar", lingkaran: "Nama kategori", histogram: "Nama data (mis. Nilai ulangan)", pencar: "Sumbu mendatar (x)", piramida: "Nama kelompok umur" };
+  const nama: Isian[] = [{ t: "isi", label: LABEL_X[jenis], nilai: kepala[0], contoh: ATURAN_CONTOH[jenis]?.[0] ?? "", ubah: (x) => sel(0, 0, x) }];
+  if (jenis === "piramida") {
+    const u = pecahNama(kepala[1])[1] || pecahNama(kepala[2])[1];
+    nama.push({
+      t: "isi",
+      label: "Satuan angka",
+      nilai: u,
+      contoh: "ribu",
+      saran: ["ribu", "juta", "jiwa", "orang", "%"],
+      ubah: (x) => t.map((r, i) => (i ? [...r] : [r[0], susunNama(pecahNama(r[1])[0] || "Laki-laki", x), susunNama(pecahNama(r[2])[0] || "Perempuan", x)])),
+    });
+    out.push({ t: "kelompok", label: "Nama sumbu", grid: true, isian: nama });
+  } else {
+    out.push({ t: "kelompok", label: "Nama sumbu", isian: nama });
+    for (let k = 1; k <= nSeri; k++) {
+      const [n, u] = pecahNama(kepala[k]);
+      const satu = nSeri === 1;
+      const judul = satu ? (jenis === "pencar" ? "Sumbu tegak (y)" : jenis === "lingkaran" ? "Angka" : jenis === "histogram" ? "Frekuensi" : "Angka (sumbu tegak)") : `${jenis === "pencar" ? "Kelompok" : "Seri"} ${k}`;
+      out.push({
+        t: "kelompok",
+        label: judul,
+        grid: true,
+        isian: [
+          { t: "isi", label: satu ? "Nama" : "Nama (tampil di keterangan)", nilai: n, contoh: satu ? "Jumlah siswa" : "Laki-laki", ubah: (x) => sel(0, k, susunNama(x, u)) },
+          { t: "isi", label: "Satuan (boleh kosong)", kunci: `satuan${k}`, nilai: u, contoh: "orang", saran: SATUAN_DATA, ubah: (x) => sel(0, k, susunNama(n, x)) },
+        ],
+        aksi: nSeri > minS ? [{ label: "✕", judul: `Hapus ${judul.toLowerCase()}`, jalankan: () => t.map((r) => r.filter((_, j) => j !== k)) }] : undefined,
+      });
+    }
+    if (nSeri < maxS)
+      out.push({
+        t: "tombol",
+        label: jenis === "pencar" ? "+ Kelompok titik" : "+ Seri data (pembanding)",
+        // isi seri baru = salinan seri pertama, supaya grafik tetap tergambar; guru tinggal mengganti angkanya
+        jalankan: () => t.map((r, i) => [...r, i ? r[1] : jenis === "pencar" ? `Kelompok ${nSeri + 1}` : `Seri ${nSeri + 1}`]),
+      });
+  }
+
+  // --- bantuan khusus ---
+  if (jenis === "histogram") {
+    const kls = badan.map((r) => KELAS.exec(r[0]));
+    const rapi = kls.length > 0 && kls.every(Boolean);
+    const a = rapi ? Number(kls[0]![1].replace("−", "-")) : 51;
+    const pj = rapi ? Number(kls[0]![2].replace("−", "-")) - a + 1 : 10;
+    const n = badan.length;
+    const buat = (aa: number, pp: number, nn: number): Baris[] => {
+      if (![aa, pp, nn].every(Number.isInteger) || pp < 1 || nn < minB || nn > maxB) return salin(t);
+      return [[...kepala], ...susunKelas(aa, pp, nn).map((k, i) => [k, badan[i]?.[1] ?? "0"])];
+    };
+    const bulat = (v: string) => (v.trim() ? Number(v.trim().replace("−", "-")) : NaN);
+    out.push({
+      t: "kelompok",
+      label: "Buat kelas otomatis",
+      grid: true,
+      isian: [
+        { t: "isi", label: "Batas bawah kelas pertama", nilai: String(a), angka: true, ubah: (v) => buat(bulat(v), pj, n) },
+        { t: "isi", label: "Panjang kelas", nilai: String(pj), angka: true, ubah: (v) => buat(a, bulat(v), n) },
+        { t: "isi", label: `Banyak kelas (${minB}–${maxB})`, nilai: String(n), angka: true, ubah: (v) => buat(a, pj, bulat(v)) },
+        ...(rapi ? [] : [info("Kelas sekarang tidak berpola angka–angka; mengubah salah satu isian di atas menyusun ulang semua kelas.")]),
+      ],
+    });
+    out.push({
+      t: "tempel",
+      label: "Hitung frekuensi dari nilai siswa",
+      petunjuk: "Tempel nilai siswa satu per satu (dari Excel atau diketik, dipisah spasi/enter). Frekuensi tiap kelas dihitung otomatis.",
+      jalankan: (teks) => {
+        if (!rapi) return "Susun kelasnya dulu lewat “Buat kelas otomatis”.";
+        const f = hitungFrekuensi(teks, a, pj, n);
+        return typeof f === "string" ? f : t.map((r, i) => (i ? [r[0], String(f[i - 1])] : [...r]));
+      },
+    });
+  }
+  if (jenis === "piramida") {
+    const pola = UMUR.find(([, , ls]) => ls.length === badan.length && ls.every((l, i) => samaUmur(l, badan[i][0])));
+    out.push({
+      t: "pilih",
+      label: "Kelompok umur",
+      opsi: [...(pola ? [] : ([["", "(tulisan sendiri)"]] as [string, string][])), ...UMUR.map(([v, l]) => [v, l] as [string, string])],
+      nilai: pola?.[0] ?? "",
+      ubah: (v) => {
+        const ls = UMUR.find(([x]) => x === v)?.[2];
+        if (!ls) return salin(t);
+        const m = ls.length;
+        // banyak kelompok sama = angka lama dipakai; selain itu contoh berbentuk piramida (makin tua makin sedikit)
+        return [[...kepala], ...ls.map((l, i) => (m === badan.length ? [l, badan[i][1], badan[i][2]] : [l, String(Math.max(1, Math.round((12 * (m - i)) / m))), String(Math.max(1, Math.round((12 * (m - i)) / m) + (i % 2)))]))];
+      },
+    });
+  }
+  if (jenis === "lingkaran") {
+    const ns = badan.map((r) => bacaAngka(r[1]));
+    const total = ns.reduce((s, v) => s + (Number.isFinite(v) ? v : 0), 0);
+    const persen = /%/.test(pecahNama(kepala[1])[1]);
+    if (total > 0)
+      out.push(
+        info(
+          `Jumlah ${tampilAngka(total)}${persen && Math.abs(total - 100) > 0.01 ? " — belum 100%, periksa lagi angkanya" : ""}. Bagian: ${badan.map((r, i) => `${r[0] || "?"} ${tampilAngka(((Number.isFinite(ns[i]) ? ns[i] : 0) / total) * 100)}%`).join(", ")}.`,
+        ),
+      );
+  }
+
+  // --- lembar data ---
+  const kolom = kepala.map((k, j) => ({ label: j === 0 ? pecahNama(k)[0] || "Nama" : pecahNama(k)[0] || `Seri ${j}`, angka: j > 0 || xAngka }));
+  const geser = jenis !== "histogram";
+  out.push({
+    t: "lembar",
+    kolom,
+    isi: badan,
+    ubah: (i, j, v) => sel(i + 1, j, v),
+    aksi: (i) => [
+      ...(geser && i > 0 ? [{ label: "↑", judul: `Pindahkan baris ${i + 1} ke atas`, jalankan: () => tukar(t, i + 1, i) }] : []),
+      ...(geser && i < badan.length - 1 ? [{ label: "↓", judul: `Pindahkan baris ${i + 1} ke bawah`, jalankan: () => tukar(t, i + 1, i + 2) }] : []),
+      ...(badan.length > minB ? [{ label: "✕", judul: `Hapus baris ${i + 1}`, jalankan: () => ubahBaris(t, i + 1, null) }] : []),
+    ],
+    tempel: (teks) => tempelData(jenis, kepala, teks),
+  });
+  if (badan.length < maxB && jenis !== "histogram")
+    out.push({
+      t: "tombol",
+      label: "+ Baris",
+      jalankan: () => {
+        const akhir = badan[badan.length - 1] ?? kepala.map(() => "1");
+        const x = xAngka ? tampilAngka((bacaAngka(akhir[0]) || 0) + 1) : `Data ${badan.length + 1}`;
+        return [...salin(t), [x, ...akhir.slice(1)]];
+      },
+    });
+  out.push({
+    t: "tempel",
+    label: "Tempel dari Excel / Google Sheets",
+    petunjuk: "Blok tabel di Excel (boleh beserta baris judulnya), salin (Ctrl+C), lalu tempel (Ctrl+V) di kotak ini. Bisa juga langsung tempel di salah satu kotak tabel di atas.",
+    jalankan: (teks) => tempelData(jenis, kepala, teks),
+  });
+  return out;
+}
+/** Contoh nama sumbu mendatar tiap jenis (placeholder). */
+const ATURAN_CONTOH: Record<string, string[]> = { batang: ["Kelas"], garis: ["Bulan"], lingkaran: ["Pekerjaan"], histogram: ["Nilai"], pencar: ["Jam belajar per hari"], piramida: ["Umur (tahun)"] };
+
 const RESEP: Record<string, (p: Pb) => Isian[]> = {
   datar: resepDatar,
   ruang: resepRuang,
@@ -1402,11 +1640,12 @@ const RESEP: Record<string, (p: Pb) => Isian[]> = {
   listrik: resepListrik,
   jaring: resepJaring,
   waris: resepWaris,
+  ...Object.fromEntries(DATA_GRAFIK.map((j) => [j, (p: Pb) => resepData(p, j)])),
 };
 export const punyaFormulir = (jenis: string) => jenis in RESEP;
-/** Banyak kolom tabel tiap jenis berformulir (selain ini 2). */
+/** Banyak kolom tabel [min, maks] tiap jenis berformulir (selain ini tepat 2). */
 const KOLOM: Record<string, number> = { alur: 1, siklus: 1, koordinat: 3, bilangan: 3 };
-export const kolomFormulir = (jenis: string) => KOLOM[jenis] ?? 2;
+export const kolomFormulir = (jenis: string): [number, number] => (SERI[jenis] ? [SERI[jenis][0] + 1, SERI[jenis][1] + 1] : [KOLOM[jenis] ?? 2, KOLOM[jenis] ?? 2]);
 
 /** Tabel (tanpa baris judul) → isian formulir + indeks baris yang tidak dikenali resep. */
 export function formulir(jenis: string, baris: Baris[]): { isian: Isian[]; sisa: number[] } | null {

@@ -252,6 +252,12 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   alur bernomor). Resep daftar menulis ulang SELURUH tabel (pohon/jaring/waris: `dipakai` semua baris); pilihan yang
   pasti membuat tabel tak sah tidak ditampilkan (jaring: lingkaran; listrik: voltmeter ikut nama/hapus komponen).
   Nama kotak/makhluk kosong diabaikan (cabang tak kehilangan induk). Test juga mencoba semua tombol/centang/aksi.
+  0.63.0: grafik data (`resepData`): `pakaiJudul` = resep menerima tabel LENGKAP (baris judul = nama sumbu + seri
+  "Nama (satuan)", `pecahNama`/`susunNama`); `kolomFormulir` = [min, maks]. Isian `lembar` (sel ala Excel, tempel
+  tabel di sel) & `tempel` (kotak tempel, hasil tabel atau kalimat penolakan); `isi.saran` = datalist. `tempelData`
+  (tab / "|" / ";" / "nama angka"), histogram `hitungFrekuensi` + kelas dari batas bawah/panjang/banyak, piramida
+  `UMUR`. Pesan "Baris n kolom m" TIDAK dibuang di mode formulir (dipakai menandai sel merah). Ganti jenis antar grafik
+  data / tabel biasa → data tetap. JANGAN `.trim()` nilai ketikan di `ubah` (spasi di ujung hilang saat mengetik).
   Teks prompt ber-`\\n` ditulis lewat file (alat Write) lalu disisipkan, bukan heredoc (backslash hilang).
 - **Rumus** (0.29.0): LaTeX `$...$` di teks mana pun (`POLA_RUMUS` gaya Pandoc di soal.ts: "US$ 5" bukan rumus). Web: KaTeX
   dimuat dinamis (`Rumus` di kartu-soal, salah tulis → teks asli). Word: `rumus.ts` LaTeX → OMML (subset; perintah tak
