@@ -52,6 +52,15 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.63.1 — 19 November 2026
+- **Pengumuman pembaruan baru** (muncul sekali di tiap perangkat): soal kini bisa bergambar (grafik, bagan, gambar
+  pelajaran) beserta daftar jenisnya, cara membuat/mengubah lewat **📊 Grafik & gambar**, dan penjelasan bahwa
+  gambar ini bukan foto/ilustrasi buatan AI, melainkan gambar garis sederhana untuk jenis-jenis tertentu saja.
+- **Panduan** bagian "Rumus dan gambar di soal" diperbarui dengan isi yang sama (kalimat lama "AI tidak bisa membuat
+  gambar sendiri" diganti).
+
+---
+
 ## 0.63.0 — 19 November 2026
 - **Formulir gambar tahap 3 (terakhir): grafik data** (batang, garis, lingkaran, histogram, pencar, piramida penduduk).
   Kini SEMUA jenis gambar diisi lewat formulir; tabel abu-abu tinggal di "Lanjutan".

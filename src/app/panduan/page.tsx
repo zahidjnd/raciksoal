@@ -169,7 +169,9 @@ const TOPIK: { id: string; judul: string; isi: React.ReactNode }[] = [
         <li><b>Gambar dari materi</b>: saat Analisa, AI memilih gambar pelajaran (diagram, grafik, peta) dari file Word/PowerPoint/PDF; logo dan hiasan tidak dipakai. Bisa juga tempel gambar (<b>Ctrl+V</b>) atau <b>+ Tambah gambar</b>.</li>
         <li><b>Potong gambar</b>: kalau potongan AI ikut tulisan, tekan <b>✂ Potong</b> di bawah gambar, geser kotaknya atau tarik sudutnya, lalu <b>Simpan potongan</b>. Set yang sudah dibuat tetap memakai gambar lama.</li>
         <li><b>Gambar per soal</b>: saat Edit, pilih <b>Tanpa gambar</b>, salah satu gambar materi, atau <b>Unggah gambar lain</b>.</li>
-        <li>Ingin lebih banyak soal bergambar? Tulis di <b>Catatan untuk AI</b>, mis. “buat 5 soal yang memakai gambar”. AI tidak bisa membuat gambar sendiri.</li>
+        <li><b>Grafik, bagan, dan gambar pelajaran</b>: aplikasi bisa menggambar sendiri grafik data, bagan (garis waktu, alur, siklus, pohon), bidang koordinat, garis bilangan, bangun datar/ruang, sudut, rangkaian listrik, cermin &amp; lensa, gaya, katrol, tuas, atom, jaring makanan, shaf, ahli waris, arah kiblat, lapisan bumi/atmosfer, gerhana, dan pelaku ekonomi. Ini <b>bukan foto atau ilustrasi buatan AI</b>, melainkan gambar garis hitam-putih sederhana seperti di buku pelajaran, hanya untuk jenis-jenis tersebut. Gambar bebas (hewan, tumbuhan, tokoh, peta, alat praktikum) tetap memakai gambar dari materi atau <b>Unggah gambar lain</b>.</li>
+        <li><b>Membuat atau mengubah gambar</b>: saat Edit, tekan <b>📊 Grafik &amp; gambar</b>, pilih kartunya (bisa dicari, mis. “segitiga”), lalu isi formulirnya; gambar langsung tampil. Gambar yang sudah ada: klik gambarnya di kotak <b>Pratinjau</b>. Data grafik bisa ditempel dari Excel. Di file Word, grafik menjadi grafik Word asli.</li>
+        <li>Ingin lebih banyak soal bergambar? Tulis di <b>Catatan untuk AI</b>, mis. “buat 3 soal dengan grafik” atau “buat 5 soal yang memakai gambar materi”.</li>
       </ul>
     ),
   },
