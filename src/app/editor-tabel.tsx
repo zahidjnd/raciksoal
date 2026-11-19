@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { adalahBagan, alasanGrafik, ATURAN_GRAFIK, isiTampil, svgGrafik, type JenisGrafik, type Penanda } from "@/lib/grafik";
+import { adalahBagan, adalahGeometri, alasanGrafik, ATURAN_GRAFIK, isiTampil, svgGrafik, type JenisGrafik, type Penanda } from "@/lib/grafik";
 import { JOROK } from "@/lib/soal";
 
 /** Lebih dari 6 kolom tidak muat di satu kolom lembar soal Word (huruf 10 pt), sama dengan batas untuk AI. */
@@ -32,7 +32,7 @@ export function EditorTabel({ awal, grafik, selesai }: { awal: string[][] | null
   const tampil = jenis ? isiTampil(isi, jenis) : isi;
   const svg = penanda && svgGrafik(tampil, penanda);
   const alasan = penanda && !svg ? alasanGrafik(tampil, penanda.jenis) : null;
-  const nama = jenis ? (adalahBagan(jenis) ? "bagan" : "grafik") : "tabel";
+  const nama = jenis ? (adalahBagan(jenis) ? "bagan" : adalahGeometri(jenis) ? "gambar" : "grafik") : "tabel";
   function pilihJenis(j: JenisGrafik | "") {
     setJenis(j);
     setPesan("");
@@ -66,7 +66,7 @@ export function EditorTabel({ awal, grafik, selesai }: { awal: string[][] | null
         <h2 id="judul-tabel">{awal ? `Ubah ${nama}` : `Sisipkan ${nama}`}</h2>
         {jenis ? (
           <ol className="list-inside list-decimal text-pudar">
-            <li>Pilih jenis grafik atau bagan.</li>
+            <li>Pilih jenis grafik, bagan, atau gambar.</li>
             <li>Ganti tulisan abu-abu dengan data Anda. {ATURAN_GRAFIK[jenis].petunjuk ?? "Kolom pertama = label, kolom berikutnya = angka saja (satuan ditulis di judul kolom)."}</li>
             <li>Lihat contohnya berubah, lalu tekan {awal ? `Simpan ${nama}` : "Masukkan"}.</li>
           </ol>
@@ -94,10 +94,14 @@ export function EditorTabel({ awal, grafik, selesai }: { awal: string[][] | null
                 <option value="siklus">Siklus (daur)</option>
                 <option value="pohon">Bagan pohon (klasifikasi, struktur)</option>
               </optgroup>
+              <optgroup label="Geometri">
+                <option value="koordinat">Bidang koordinat (titik, garis, kurva, vektor, daerah)</option>
+                <option value="bilangan">Garis bilangan (pertidaksamaan)</option>
+              </optgroup>
             </select>
           </label>
           {jenis && (
-            <input className="h-10 min-w-0 flex-1 rounded-lg border px-2" aria-label="Judul grafik" placeholder="Judul grafik (boleh kosong)" value={judul} onChange={(e) => setJudul(e.target.value)} />
+            <input className="h-10 min-w-0 flex-1 rounded-lg border px-2" aria-label={`Judul ${nama}`} placeholder={`Judul ${nama} (boleh kosong)`} value={judul} onChange={(e) => setJudul(e.target.value)} />
           )}
         </div>
         <div className={jenis ? "flex flex-wrap items-start gap-4" : ""}>
@@ -137,9 +141,9 @@ export function EditorTabel({ awal, grafik, selesai }: { awal: string[][] | null
                         )}
                         <input
                           dir="auto"
-                          className={`${jenis ? "w-32" : "w-40"} rounded-lg border px-2 max-md:w-28 placeholder:italic placeholder:text-pudar/70 ${i === 0 ? "bg-krem font-semibold" : ""} ${jorok(t) ? "pl-7" : ""}`}
+                          className={`${jenis && adalahGeometri(jenis) ? (j === 1 ? "w-48" : "w-28") : jenis ? "w-32" : "w-40"} rounded-lg border px-2 max-md:w-28 placeholder:italic placeholder:text-pudar/70 ${i === 0 ? "bg-krem font-semibold" : ""} ${jorok(t) ? "pl-7" : ""}`}
                           aria-label={i === 0 ? `Judul kolom ${j + 1}` : `Baris ${i} kolom ${j + 1}`}
-                          placeholder={jenis ? tampil[i][j] || (j === ATURAN_GRAFIK[jenis].bolehKosong ? "kosong = puncak" : "") : undefined}
+                          placeholder={jenis ? tampil[i][j] || (j === ATURAN_GRAFIK[jenis].bolehKosong ? (jenis === "pohon" ? "kosong = puncak" : "boleh kosong") : "") : undefined}
                           value={t.replace(JOROK, "")}
                           onChange={(e) => {
                             setPesan("");

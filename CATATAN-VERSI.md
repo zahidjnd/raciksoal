@@ -52,6 +52,25 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.54.0 — 19 November 2026
+- **Gambar geometri tahap 1: bidang koordinat & garis bilangan.** Untuk Matematika, Fisika, dan Ekonomi, aplikasi
+  kini bisa menggambar:
+  - **bidang koordinat**: titik, garis lurus, garis patah (grafik v–t / s–t), kurva fungsi (y = x² − 2x − 3),
+    panah vektor, daerah berarsir (program linear), nama & rentang sumbu bebas (Q–P untuk permintaan–penawaran,
+    t–v untuk gerak);
+  - **garis bilangan**: bulatan penuh (termasuk), bulatan kosong (tidak termasuk), dan daerah penyelesaian
+    pertidaksamaan.
+- AI memakainya bila materinya tentang grafik fungsi, persamaan garis, vektor, program linear, permintaan–penawaran,
+  grafik gerak, atau pertidaksamaan. Angka di gambar dibuat sama dengan kunci, dan gambar tidak menuliskan jawabannya.
+- **Membuat sendiri**: tombol di form Edit kini bernama **📊 Grafik & gambar**, dengan kelompok baru "Geometri".
+  Satu baris = satu benda (mis. "garis | (0, 10) (10, 0) | D"); contoh abu-abu langsung tergambar dan berubah tiap
+  ketikan. Kolom Label boleh kosong.
+- **Di Word** tampil sebagai gambar seperti bagan. Kotak pesan untuk aplikasi lama kini berbunyi "Gambar tidak tampil
+  di aplikasi ini".
+- Belum: bangun datar, bangun ruang, dan sudut (tahap 2).
+
+---
+
 ## 0.53.0 — 19 November 2026
 - **Bagan di soal.** Selain grafik, aplikasi kini bisa menggambar 4 jenis bagan:
   - **garis waktu**: urutan peristiwa (SKI, Sejarah, Al-Quds);

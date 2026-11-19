@@ -5,13 +5,20 @@
  * Hitam-putih (lembar soal difotokopi): kelompok data dibedakan isi hitam/abu/putih atau garis utuh/putus/titik.
  */
 import { ATURAN_BAGAN, alasanBagan, svgBagan, type JenisBagan } from "./bagan.ts";
+import { ATURAN_GEOMETRI, alasanGeometri, svgGeometri, type JenisGeometri } from "./geometri.ts";
+import { bacaAngka, skala } from "./skala.ts";
 
-/** Jenis grafik data + jenis bagan (0.53.0, bagan.ts): penanda, jendela, pemeriksa, & Word memakai jalur yang sama. */
-export type JenisGrafik = "batang" | "garis" | "lingkaran" | "histogram" | "pencar" | "piramida" | JenisBagan;
+export { bacaAngka, skala };
+
+/**
+ * Jenis grafik data + jenis bagan (0.53.0, bagan.ts) + geometri (0.54.0, geometri.ts): penanda, jendela, pemeriksa, & Word
+ * memakai jalur yang sama.
+ */
+export type JenisGrafik = "batang" | "garis" | "lingkaran" | "histogram" | "pencar" | "piramida" | JenisBagan | JenisGeometri;
 export type Penanda = { jenis: JenisGrafik; judul: string };
 export type DataGrafik = { sumbuX: string; label: string[]; seri: { nama: string; nilai: number[] }[] };
 
-const POLA_PENANDA = /^\[\[\s*(?:GRAFIK|BAGAN)\s+(batang|garis|lingkaran|histogram|pencar|piramida|waktu|alur|siklus|pohon)\s*(?::\s*(.*?))?\s*\]\]$/i;
+const POLA_PENANDA = /^\[\[\s*(?:GRAFIK|BAGAN|GEOMETRI)\s+(batang|garis|lingkaran|histogram|pencar|piramida|waktu|alur|siklus|pohon|koordinat|bilangan)\s*(?::\s*(.*?))?\s*\]\]$/i;
 
 /** Satu baris teks → penanda grafik, atau null. */
 export function bacaPenanda(baris: string): Penanda | null {
@@ -20,18 +27,12 @@ export function bacaPenanda(baris: string): Penanda | null {
 }
 
 /** Penanda → teks baris (untuk jendela Ubah tabel). */
-export const tulisPenanda = (p: Penanda) => `[[${adalahBagan(p.jenis) ? "BAGAN" : "GRAFIK"} ${p.jenis}${p.judul ? `: ${p.judul}` : ""}]]`;
+export const tulisPenanda = (p: Penanda) => `[[${adalahBagan(p.jenis) ? "BAGAN" : adalahGeometri(p.jenis) ? "GEOMETRI" : "GRAFIK"} ${p.jenis}${p.judul ? `: ${p.judul}` : ""}]]`;
 
 export const adalahBagan = (j: JenisGrafik): j is JenisBagan => j in ATURAN_BAGAN;
-
-/** Angka gaya Indonesia: "30.000" → 30000, "2,5" → 2.5, "45%" → 45, "Rp 1.500" → 1500. Bukan angka → NaN. */
-export function bacaAngka(s: string): number {
-  let t = String(s ?? "").replace(/−/g, "-").replace(/[^\d.,-]/g, "").replace(/^[.,]+|[.,]+$/g, "");
-  if (!/\d/.test(t)) return NaN;
-  if (t.includes(",")) t = t.replace(/\./g, "").replace(",", ".");
-  else if (/^-?\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, "");
-  return Number(t);
-}
+export const adalahGeometri = (j: JenisGrafik): j is JenisGeometri => j in ATURAN_GEOMETRI;
+/** Digambar sebagai gambar SVG (bagan, geometri), bukan grafik data (Word: gambar, bukan grafik asli). */
+export const adalahGambar = (j: JenisGrafik) => adalahBagan(j) || adalahGeometri(j);
 
 const bersih = (s: string) => String(s ?? "").replace(/[\t$]/g, "").trim();
 
@@ -59,11 +60,15 @@ export const ATURAN_GRAFIK: Record<JenisGrafik, Aturan> = {
   siklus: bagan("siklus"),
   // Kolom induk boleh kosong (= kotak puncak), jadi tidak dihitung "belum diisi" di jendela.
   pohon: bagan("pohon", { bolehKosong: 1 }),
+  // Kolom label (dan rentang sumbu) boleh kosong.
+  koordinat: { ...ATURAN_GEOMETRI.koordinat, kolom: [3, 3], bolehKosong: 2 },
+  bilangan: { ...ATURAN_GEOMETRI.bilangan, kolom: [3, 3], bolehKosong: 2 },
 };
 
 /** Isi contoh satu sel (baris 0 = judul kolom). Di luar ukuran contoh: "Data n" / angka contoh. */
 export function contohSel(jenis: JenisGrafik, i: number, j: number): string {
   const c = ATURAN_GRAFIK[jenis].contoh;
+  if (adalahGeometri(jenis)) return c[i]?.[j] ?? (i === 0 ? `Kolom ${j + 1}` : j === 0 ? "titik" : j === 1 ? (jenis === "bilangan" ? String(i) : `(${i}, ${i})`) : "");
   if (adalahBagan(jenis)) return c[i]?.[j] ?? (i === 0 ? `Kolom ${j + 1}` : jenis === "pohon" ? (j ? "" : `Kotak ${i}`) : `Isi ${i}`);
   return c[i]?.[j] ?? (i === 0 ? `Kelompok ${j}` : j === 0 && !ATURAN_GRAFIK[jenis].xAngka ? `Data ${i}` : String(j === 0 ? i : 10 + ((i * 7 + j * 5) % 25)));
 }
@@ -73,7 +78,9 @@ export function contohSel(jenis: JenisGrafik, i: number, j: number): string {
  * pertama (supaya contoh tetap satu pohon meski nama puncak sudah diganti guru).
  */
 export function isiTampil(isi: string[][], jenis: JenisGrafik): string[][] {
-  const t = isi.map((b, i) => b.map((s, j) => (s.trim() ? s : contohSel(jenis, i, j))));
+  const boleh = ATURAN_GRAFIK[jenis].bolehKosong;
+  // sel "boleh kosong" di baris yang sudah diisi guru = memang kosong (label tak berisi), bukan contoh
+  const t = isi.map((b, i) => b.map((s, j) => (s.trim() ? s : j === boleh && b.some((x) => x.trim()) ? "" : contohSel(jenis, i, j))));
   if (jenis === "pohon") isi.forEach((b, i) => i > 1 && b.length > 1 && b.every((s) => !s.trim()) && (t[i][1] = t[1][0]));
   return t;
 }
@@ -81,6 +88,7 @@ export function isiTampil(isi: string[][], jenis: JenisGrafik): string[][] {
 /** Kenapa tabel ini tidak bisa digambar (kalimat untuk guru, menyebut letak sel), atau null bila bisa. */
 export function alasanGrafik(isi: string[][], jenis: JenisGrafik): string | null {
   if (adalahBagan(jenis)) return alasanBagan(isi, jenis);
+  if (adalahGeometri(jenis)) return alasanGeometri(isi, jenis);
   const a = ATURAN_GRAFIK[jenis];
   const [judul, ...badan] = isi;
   const kolom = (judul?.length ?? 0) - 1;
@@ -99,7 +107,7 @@ export function alasanGrafik(isi: string[][], jenis: JenisGrafik): string | null
 
 /** Tabel (baris pertama = judul kolom) → data grafik; null bila tidak bisa digambar (tetap tampil sebagai tabel). */
 export function dataGrafik(isi: string[][], jenis: JenisGrafik): DataGrafik | null {
-  if (adalahBagan(jenis) || alasanGrafik(isi, jenis)) return null;
+  if (adalahGambar(jenis) || alasanGrafik(isi, jenis)) return null;
   const [judul, ...badan] = isi;
   const seri = judul.slice(1).map((nama, k) => ({ nama: bersih(nama), nilai: badan.map((b) => bacaAngka(b[k + 1])) }));
   return { sumbuX: bersih(judul[0]), label: badan.map((b) => bersih(b[0])), seri };
@@ -114,22 +122,6 @@ const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 const r = (n: number) => Math.round(n * 10) / 10;
 const angka = (n: number) => n.toLocaleString("id-ID", { maximumFractionDigits: 2 });
 const tulis = (x: number, y: number, isi: string, opsi = "") => `<text x="${r(x)}" y="${r(y)}" ${opsi}>${esc(isi)}</text>`;
-
-/** Rentang sumbu Y "rapi" (langkah 1/2/2,5/5 × 10ⁿ, ±8 garis: mudah dibaca siswa). Batang selalu memuat 0. */
-export function skala(min: number, max: number, nol: boolean) {
-  let lo = nol ? Math.min(0, min) : min;
-  let hi = nol ? Math.max(0, max) : max;
-  if (hi === lo) {
-    const d = Math.abs(hi) * 0.1 || 1;
-    if (!nol || lo < 0) lo -= d;
-    hi += d;
-  }
-  const kasar = (hi - lo) / 8;
-  const p = 10 ** Math.floor(Math.log10(kasar));
-  const f = kasar / p;
-  const langkah = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p;
-  return { a: Math.floor(lo / langkah + 1e-9) * langkah, b: Math.ceil(hi / langkah - 1e-9) * langkah, langkah };
-}
 
 /** Sumbu diagram pencar: ruang 5% di kedua ujung supaya titik terkecil/terbesar tidak terpotong (data ≥ 0 tidak turun di bawah 0). */
 export function skalaPencar(ns: number[]) {
@@ -331,6 +323,7 @@ function lingkaran(d: DataGrafik, atas: number) {
 /** Tabel + penanda → SVG utuh (latar putih, lebar 480), atau null bila datanya tidak bisa digambar. */
 export function svgGrafik(isi: string[][], { jenis, judul }: Penanda): string | null {
   if (adalahBagan(jenis)) return svgBagan(isi, jenis, judul);
+  if (adalahGeometri(jenis)) return svgGeometri(isi, jenis, judul);
   const d = dataGrafik(isi, jenis);
   if (!d) return null;
   const banyak = d.seri.length > 1; // lingkaran & histogram selalu satu kelompok

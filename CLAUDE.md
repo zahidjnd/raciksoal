@@ -208,6 +208,13 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   Word: `baganWord` = ImageRun SVG + cadangan `public/word/bagan-cadangan.png` (keputusan pemilik: tanpa library PNG;
   bila guru WPS/Word lama mengeluh, baru pertimbangkan `@resvg/resvg-wasm`). Jendela: `isiTampil` (pohon: induk
   baris kosong = kotak baris pertama), `bolehKosong` kolom induk, placeholder = isi yang sedang digambar.
+- **Geometri** (0.54.0, ATURAN-SOAL 4.11, `geometri.ts`): `[[GEOMETRI koordinat|bilangan: judul]]` + tabel 3 kolom
+  Jenis | Isi | Label (satu baris = satu benda: titik, titik bantu, garis, ruas, kurva, panah, daerah, sumbu x/y;
+  bilangan: titik, titik kosong, daerah "2..", rentang), jalur sama dengan bagan (`adalahGeometri`, `adalahGambar` →
+  Word SVG `baganWord`, cadangan "Gambar tidak tampil"). Kurva = `bacaRumus` (pengurai sendiri, TANPA eval).
+  `bacaAngka`/`skala` pindah ke `skala.ts` (grafik.ts ↔ geometri.ts tidak boleh saling impor: ATURAN_GRAFIK dievaluasi
+  saat dimuat). Kolom Label `bolehKosong`; `isiTampil` tidak mengisi contoh di sel boleh-kosong pada baris yang sudah
+  diisi. Satuan sumbu sama bila langkah x = y (vektor tidak gepeng). Tombol edit kini "📊 Grafik & gambar".
 - **Rumus** (0.29.0): LaTeX `$...$` di teks mana pun (`POLA_RUMUS` gaya Pandoc di soal.ts: "US$ 5" bukan rumus). Web: KaTeX
   dimuat dinamis (`Rumus` di kartu-soal, salah tulis → teks asli). Word: `rumus.ts` LaTeX → OMML (subset; perintah tak
   dikenal → LaTeX dicetak apa adanya). Jawaban AI: `betulkanGarisMiring` (ai.ts) menggandakan `\` di dalam `$...$` sebelum

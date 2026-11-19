@@ -24,7 +24,7 @@ import {
 } from "docx";
 import { ChartRun, type ChartRunOptions } from "docx/charts";
 import { ukuranWord } from "./gambar";
-import { adalahBagan, bacaAngka, dataGrafik, skala, skalaPencar, skalaPiramida, svgGrafik } from "./grafik";
+import { adalahGambar, bacaAngka, dataGrafik, skala, skalaPencar, skalaPiramida, svgGrafik } from "./grafik";
 import { MAPEL_INGGRIS } from "./mapel";
 import { hariTanggal, mapelTka, NAMA_BENTUK, semesterDari, TKA, WAKTU_BAWAAN, type Pengaturan } from "./prompt";
 import { kunciSatu } from "./kunci";
@@ -196,7 +196,7 @@ const formatAngka = (ns: number[]) => {
  */
 function tabelAtauGrafik(b: Baris, kiri: number, lebar = LEBAR_KOLOM): Paragraph | Table {
   const isi = b.tabel!;
-  if (b.grafik && adalahBagan(b.grafik.jenis)) return baganWord(isi, b.grafik, kiri, lebar);
+  if (b.grafik && adalahGambar(b.grafik.jenis)) return baganWord(isi, b.grafik, kiri, lebar);
   const d = b.grafik && dataGrafik(isi, b.grafik.jenis);
   if (!b.grafik || !d) return tabelData(isi, kiri, lebar);
   const w = Math.round((lebar - kiri) / 15); // twip → piksel (96 dpi)
@@ -294,7 +294,7 @@ function tabelAtauGrafik(b: Baris, kiri: number, lebar = LEBAR_KOLOM): Paragraph
 }
 
 /**
- * Bagan (0.53.0, ATURAN-SOAL 4.10): gambar SVG yang sama dengan web (Word 2016 ke atas). Library docx mewajibkan
+ * Bagan (0.53.0, ATURAN-SOAL 4.10) & geometri (0.54.0, 4.11): gambar SVG yang sama dengan web (Word 2016 ke atas). Library docx mewajibkan
  * gambar cadangan; aplikasi yang tidak bisa membaca SVG (Word lama, sebagian WPS) menampilkan `bagan-cadangan.png`
  * ("Buka file dengan Microsoft Word 2016 ke atas"). Lebar = satu kolom (bagan 360 px dikecilkan ±0,85). Tak bisa digambar → tabel.
  */

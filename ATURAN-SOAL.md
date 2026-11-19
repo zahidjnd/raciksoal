@@ -237,6 +237,22 @@ mengatur skor). Persen level dipilih supaya jumlahnya persis surat (34/43/23 dan
    gambar SVG (Word 2016 ke atas; aplikasi lama/WPS yang tidak bisa membaca SVG menampilkan gambar cadangan
    "bagan tampil di Word 2016 ke atas"), diubah lewat web lalu diunduh ulang. 🔍 Bagan yang tidak bisa digambar tampil
    sebagai tabel dan diberi peringatan, seperti grafik. Belum: pohon ahli waris (pasangan bukan hubungan induk–anak).
+11. ✅ 🔍 (0.54.0, keputusan pemilik 2026-11-19) **Geometri tahap 1: bidang koordinat & garis bilangan.** Sama dengan
+   grafik & bagan: AI menulis tabel **tepat 3 kolom** (Jenis | Isi | Label) + satu baris penanda di atasnya, aplikasi
+   yang menggambar (hitam-putih). Satu baris = satu benda. `[[GEOMETRI koordinat: judul]]` (grafik fungsi, persamaan
+   garis, vektor, program linear, permintaan–penawaran, grafik v–t/s–t): **titik** "(4, 6)", **titik bantu** (titik +
+   garis putus-putus ke kedua sumbu), **garis** lurus lewat tepat 2 titik (digambar sampai tepi), **ruas** = garis
+   patah lewat 2–12 titik, **kurva** = rumus "y = x^2 - 2x - 3" (peubah x atau huruf sumbu mendatar), **panah** =
+   vektor, **daerah** = segi banyak berarsir (3–12 titik pojok), **sumbu x / sumbu y** = nama sumbu + rentang
+   "0..10" (boleh kosong: otomatis memuat semua titik & titik asal). `[[GEOMETRI bilangan: judul]]` (pertidaksamaan):
+   **titik** = bulatan penuh (termasuk), **titik kosong** = bulatan kosong (tidak termasuk), **daerah** "-1..3",
+   "2.." (ke kanan), "..0" (ke kiri), **rentang**. 1–12 baris (garis bilangan 1–10), label maks 20 huruf, desimal di
+   dalam kurung memakai titik koma "(2,5; 3)". Rumus kurva dibaca pembaca rumus aplikasi, tidak pernah dijalankan
+   sebagai kode. Angka di gambar wajib konsisten dengan soal, kunci, dan pembahasan; gambar tidak menuliskan jawaban
+   yang ditanyakan. Tanpa huruf Arab. Boleh di pertanyaan, wacana, dan pembahasan; tidak di pilihan. Di Word berupa
+   gambar SVG seperti bagan. 🔍 Jenis benda tak dikenal, titik salah tulis, rumus tak terbaca, atau titik di luar
+   rentang sumbu → tampil sebagai tabel dan diberi peringatan. Belum (tahap 2): bangun datar, bangun ruang, sudut;
+   belum: grafik di pilihan jawaban.
 
 ### 4a. Nilai Kurikulum Berbasis Cinta (Kemenag 2025)
 Panduan KBC (Kepdirjen Pendis 6077/2025) memuat **Panca Cinta**: Cinta Allah dan Rasul-Nya, Cinta Ilmu,
