@@ -220,6 +220,10 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   SEMUA angka tertulis dengan gambar jadi (2% / 1°) = pemeriksa Pythagoras dll. Contoh abu-abu per bangun
   (`CONTOH_BANGUN`, `contohBangun`; `contohSel` menerima contoh pengganti); mengetik nama bangun saat baris lain
   kosong = jumlah baris ikut contoh & kolom "bangun" terisi sendiri (editor-tabel `ubahSel`).
+  Tahap 2b (0.56.0, `ruang.ts`): `ruang` (8 bangun). Titik 3D → `proyeksi` miring (½, 45°); rusuk tersembunyi =
+  kedua bidangnya membelakangi arah `PANDANG` (benar secara proyeksi: limas pendek bisa menampakkan TD utuh,
+  beda dari kebiasaan buku). Alas segitiga prisma/limas = `segitigaDasar` (bangun.ts). `satuBangun`/`contohGeometri`
+  (geometri.ts) = satu pintu contoh abu-abu datar/sudut/ruang. Jarak 3D semua ukuran tertulis dicocokkan (2%).
 - **Rumus** (0.29.0): LaTeX `$...$` di teks mana pun (`POLA_RUMUS` gaya Pandoc di soal.ts: "US$ 5" bukan rumus). Web: KaTeX
   dimuat dinamis (`Rumus` di kartu-soal, salah tulis → teks asli). Word: `rumus.ts` LaTeX → OMML (subset; perintah tak
   dikenal → LaTeX dicetak apa adanya). Jawaban AI: `betulkanGarisMiring` (ai.ts) menggandakan `\` di dalam `$...$` sebelum

@@ -8,7 +8,7 @@
 import { bacaAngka } from "./skala.ts";
 
 export type JenisBangun = "datar" | "sudut";
-type P = [number, number];
+export type P = [number, number];
 
 const DATAR = ["segitiga", "segitiga siku-siku", "segitiga sama kaki", "segitiga sama sisi", "persegi", "persegi panjang", "jajargenjang", "trapesium", "trapesium siku-siku", "trapesium sama kaki", "belah ketupat", "layang-layang", "lingkaran"];
 const BENTUK = ["sudut", "berpelurus", "berpenyiku", "bertolak belakang", "sejajar"];
@@ -51,13 +51,13 @@ export const ATURAN_BANGUN: Record<JenisBangun, { nama: string; baris: [number, 
   },
 };
 
-const ARAB = /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/;
-const bersih = (s: string) => String(s ?? "").replace(/[\t$]/g, "").trim();
-const normal = (s: string) => bersih(s).toLowerCase().replace(/[\s-]+/g, "");
+export const ARAB = /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/;
+export const bersih = (s: string) => String(s ?? "").replace(/[\t$]/g, "").trim();
+export const normal = (s: string) => bersih(s).toLowerCase().replace(/[\s-]+/g, "");
 const MAKS_LABEL = 20;
 
 /** Nama bangun/bentuk yang ditulis guru (tanpa beda spasi/tanda hubung), atau null. */
-const cariNama = (daftar: string[], t: string) => daftar.find((d) => normal(d) === normal(t)) ?? null;
+export const cariNama = (daftar: string[], t: string) => daftar.find((d) => normal(d) === normal(t)) ?? null;
 
 /** Contoh untuk bangun/bentuk yang sedang diketik di tabel (jendela edit). */
 export function contohBangun(isi: string[][], jenis: JenisBangun): string[][] {
@@ -67,7 +67,7 @@ export function contohBangun(isi: string[][], jenis: JenisBangun): string[][] {
 }
 
 /** "8 cm", "2,5", "12 m" → angka; "?", "x", "3√2" → undefined (hanya label). */
-function angkaUkuran(t: string): number | undefined {
+export function angkaUkuran(t: string): number | undefined {
   const m = /^\s*(\d+(?:[.,]\d+)?)\s*(?:mm|cm|dm|m|km|satuan)?\s*$/i.exec(t);
   return m ? bacaAngka(m[1]) : undefined;
 }
@@ -77,7 +77,7 @@ function angkaSudut(t: string): number | undefined {
   const m = /^\s*(\d+(?:[.,]\d+)?)\s*(?:°|derajat|o)?\s*$/i.exec(t);
   return m ? bacaAngka(m[1]) : undefined;
 }
-const fmt = (n: number) => (Math.round(n * 10) / 10).toLocaleString("id-ID");
+export const fmt = (n: number) => (Math.round(n * 10) / 10).toLocaleString("id-ID");
 
 // ---------- membaca tabel ----------
 
@@ -154,11 +154,22 @@ function bacaDatar(isi: string[][]): DataDatar | string {
 
 const rad = (g: number) => (g * Math.PI) / 180;
 const deg = (r: number) => (r * 180) / Math.PI;
-const jarak = (a: P, b: P) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+export const jarak = (a: P, b: P) => Math.hypot(a[0] - b[0], a[1] - b[1]);
 const ruasN = (d: DataDatar, i: number, j: number) => d.ruas.get(i < j ? `${i}-${j}` : `${j}-${i}`)?.n;
 const pertama = (...v: (number | undefined)[]) => v.find((x) => x !== undefined && x > 0);
 
 /** Segitiga ABC: aturan sinus/cosinus sampai ketiga sisi & sudut diketahui; yang kurang diisi bentuk bawaan jenisnya. */
+/** Segitiga alas prisma/limas (ruang.ts): sisi & sudut ABC → titik 2D, atau alasan. */
+export function segitigaDasar(sisi: Record<string, number | undefined>, sudut: Record<string, number | undefined>): P[] | string {
+  const d: DataDatar = { bangun: "segitiga", nama: ["A", "B", "C"], ruas: new Map(), sudut: new Map() };
+  for (const [k, n] of Object.entries(sisi)) if (n !== undefined) {
+    const [i, j] = k.split("").map((h) => "ABC".indexOf(h)).sort();
+    d.ruas.set(`${i}-${j}`, { teks: String(n), n, baris: 0, i, j });
+  }
+  for (const [k, n] of Object.entries(sudut)) if (n !== undefined) d.sudut.set("ABC".indexOf(k), { teks: String(n), n, baris: 0 });
+  return segitiga(d);
+}
+
 function segitiga(d: DataDatar): P[] | string {
   const s = [ruasN(d, 1, 2), ruasN(d, 0, 2), ruasN(d, 0, 1)]; // s[i] = sisi di depan titik i
   const a = [0, 1, 2].map((i) => d.sudut.get(i)?.n);
@@ -463,20 +474,20 @@ function susun(isi: string[][], jenis: JenisBangun): Susun | string {
 
 // ---------- gambar ----------
 
-const LEBAR = 360;
-const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-const r1 = (n: number) => Math.round(n * 10) / 10;
-const tulis = (p: P, isi: string, opsi = "") => `<text x="${r1(p[0])}" y="${r1(p[1] + 4)}" text-anchor="middle" ${opsi}>${esc(isi)}</text>`;
-const garis = (a: P, b: P, opsi = 'stroke="#000" stroke-width="1.5"') => `<line x1="${r1(a[0])}" y1="${r1(a[1])}" x2="${r1(b[0])}" y2="${r1(b[1])}" ${opsi}/>`;
-const PUTUS = 'stroke="#000" stroke-width="1" stroke-dasharray="4 3"';
-const arah = (a: P, b: P): P => {
+export const LEBAR = 360;
+export const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+export const r1 = (n: number) => Math.round(n * 10) / 10;
+export const tulis = (p: P, isi: string, opsi = "") => `<text x="${r1(p[0])}" y="${r1(p[1] + 4)}" text-anchor="middle" ${opsi}>${esc(isi)}</text>`;
+export const garis = (a: P, b: P, opsi = 'stroke="#000" stroke-width="1.5"') => `<line x1="${r1(a[0])}" y1="${r1(a[1])}" x2="${r1(b[0])}" y2="${r1(b[1])}" ${opsi}/>`;
+export const PUTUS = 'stroke="#000" stroke-width="1" stroke-dasharray="4 3"';
+export const arah = (a: P, b: P): P => {
   const n = jarak(a, b) || 1;
   return [(b[0] - a[0]) / n, (b[1] - a[1]) / n];
 };
-const tambah = (a: P, u: P, k: number): P => [a[0] + u[0] * k, a[1] + u[1] * k];
+export const tambah = (a: P, u: P, k: number): P => [a[0] + u[0] * k, a[1] + u[1] * k];
 
 /** Busur sudut di v antara arah ke a dan ke b (+ label di garis bagi), atau tanda siku. */
-function busur(v: P, a: P, b: P, label: string, jari = 18, siku = false): string {
+export function busur(v: P, a: P, b: P, label: string, jari = 18, siku = false): string {
   const [ua, ub] = [arah(v, a), arah(v, b)];
   if (siku) {
     const s = 10;

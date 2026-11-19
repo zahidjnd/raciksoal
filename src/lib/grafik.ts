@@ -5,8 +5,7 @@
  * Hitam-putih (lembar soal difotokopi): kelompok data dibedakan isi hitam/abu/putih atau garis utuh/putus/titik.
  */
 import { ATURAN_BAGAN, alasanBagan, svgBagan, type JenisBagan } from "./bagan.ts";
-import { contohBangun } from "./bangun.ts";
-import { ATURAN_GEOMETRI, alasanGeometri, svgGeometri, type JenisGeometri } from "./geometri.ts";
+import { contohGeometri, satuBangun, ATURAN_GEOMETRI, alasanGeometri, svgGeometri, type JenisGeometri } from "./geometri.ts";
 import { bacaAngka, skala } from "./skala.ts";
 
 export { bacaAngka, skala };
@@ -19,7 +18,7 @@ export type JenisGrafik = "batang" | "garis" | "lingkaran" | "histogram" | "penc
 export type Penanda = { jenis: JenisGrafik; judul: string };
 export type DataGrafik = { sumbuX: string; label: string[]; seri: { nama: string; nilai: number[] }[] };
 
-const POLA_PENANDA = /^\[\[\s*(?:GRAFIK|BAGAN|GEOMETRI)\s+(batang|garis|lingkaran|histogram|pencar|piramida|waktu|alur|siklus|pohon|koordinat|bilangan|datar|sudut)\s*(?::\s*(.*?))?\s*\]\]$/i;
+const POLA_PENANDA = /^\[\[\s*(?:GRAFIK|BAGAN|GEOMETRI)\s+(batang|garis|lingkaran|histogram|pencar|piramida|waktu|alur|siklus|pohon|koordinat|bilangan|datar|sudut|ruang)\s*(?::\s*(.*?))?\s*\]\]$/i;
 
 /** Satu baris teks → penanda grafik, atau null. */
 export function bacaPenanda(baris: string): Penanda | null {
@@ -67,11 +66,12 @@ export const ATURAN_GRAFIK: Record<JenisGrafik, Aturan> = {
   // Satu tabel = satu bangun; contoh abu-abu ikut nama bangun yang diketik (`contohBangun`).
   datar: { ...ATURAN_GEOMETRI.datar, kolom: [2, 2] },
   sudut: { ...ATURAN_GEOMETRI.sudut, kolom: [2, 2] },
+  ruang: { ...ATURAN_GEOMETRI.ruang, kolom: [2, 2] },
 };
 
 /** Isi contoh satu sel (baris 0 = judul kolom). Di luar ukuran contoh: "Data n" / angka contoh. */
 export function contohSel(jenis: JenisGrafik, i: number, j: number, c = ATURAN_GRAFIK[jenis].contoh): string {
-  if (jenis === "datar" || jenis === "sudut") return c[i]?.[j] ?? (i === 0 ? `Kolom ${j + 1}` : "");
+  if (satuBangun(jenis)) return c[i]?.[j] ?? (i === 0 ? `Kolom ${j + 1}` : "");
   if (adalahGeometri(jenis)) return c[i]?.[j] ?? (i === 0 ? `Kolom ${j + 1}` : j === 0 ? "titik" : j === 1 ? (jenis === "bilangan" ? String(i) : `(${i}, ${i})`) : "");
   if (adalahBagan(jenis)) return c[i]?.[j] ?? (i === 0 ? `Kolom ${j + 1}` : jenis === "pohon" ? (j ? "" : `Kotak ${i}`) : `Isi ${i}`);
   return c[i]?.[j] ?? (i === 0 ? `Kelompok ${j}` : j === 0 && !ATURAN_GRAFIK[jenis].xAngka ? `Data ${i}` : String(j === 0 ? i : 10 + ((i * 7 + j * 5) % 25)));
@@ -84,7 +84,7 @@ export function contohSel(jenis: JenisGrafik, i: number, j: number, c = ATURAN_G
 export function isiTampil(isi: string[][], jenis: JenisGrafik): string[][] {
   const boleh = ATURAN_GRAFIK[jenis].bolehKosong;
   // sel "boleh kosong" di baris yang sudah diisi guru = memang kosong (label tak berisi), bukan contoh
-  const c = jenis === "datar" || jenis === "sudut" ? contohBangun(isi, jenis) : undefined; // ikut bangun yang diketik
+  const c = satuBangun(jenis) ? contohGeometri(isi, jenis) : undefined; // ikut bangun yang diketik
   const t = isi.map((b, i) => b.map((s, j) => (s.trim() ? s : j === boleh && b.some((x) => x.trim()) ? "" : contohSel(jenis, i, j, c))));
   if (jenis === "pohon") isi.forEach((b, i) => i > 1 && b.length > 1 && b.every((s) => !s.trim()) && (t[i][1] = t[1][0]));
   return t;

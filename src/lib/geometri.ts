@@ -5,12 +5,16 @@
  * SVG hitam-putih yang sama untuk web & Word (gambar SVG, lihat `gambarWord` di word.ts). Rumus kurva dihitung
  * pembaca rumus kecil di bawah (`bacaRumus`), TIDAK pernah dijalankan sebagai kode. Tanpa huruf Arab (aturan 5).
  */
-import { ATURAN_BANGUN, alasanBangun, svgBangun, type JenisBangun } from "./bangun.ts";
+import { ATURAN_BANGUN, alasanBangun, contohBangun, svgBangun, type JenisBangun } from "./bangun.ts";
+import { alasanRuang, ATURAN_RUANG, contohRuang, svgRuang } from "./ruang.ts";
 import { bacaAngka } from "./skala.ts";
 
 /** Tahap 1 di file ini; bangun datar & sudut (tahap 2a, 0.55.0) di bangun.ts. */
-export type JenisGeometri = "koordinat" | "bilangan" | JenisBangun;
+export type JenisGeometri = "koordinat" | "bilangan" | JenisBangun | "ruang";
 const adalahBangun = (j: JenisGeometri): j is JenisBangun => j in ATURAN_BANGUN;
+/** Satu tabel = satu bangun (bangun datar, sudut, bangun ruang): contoh abu-abu ikut nama bangun yang diketik. */
+export const satuBangun = (j: string): j is JenisBangun | "ruang" => j === "datar" || j === "sudut" || j === "ruang";
+export const contohGeometri = (isi: string[][], j: JenisBangun | "ruang") => (j === "ruang" ? contohRuang(isi) : contohBangun(isi, j));
 
 export const ATURAN_GEOMETRI: Record<JenisGeometri, { nama: string; baris: [number, number]; petunjuk: string; contoh: string[][] }> = {
   koordinat: {
@@ -27,6 +31,7 @@ export const ATURAN_GEOMETRI: Record<JenisGeometri, { nama: string; baris: [numb
     contoh: [["Jenis", "Isi", "Label"], ["rentang", "-3..5", ""], ["titik kosong", "-1", ""], ["titik", "3", ""], ["daerah", "-1..3", ""]],
   },
   ...ATURAN_BANGUN,
+  ruang: ATURAN_RUANG,
 };
 
 const ARAB = /[؀-ۿݐ-ݿࢠ-ࣿﭐ-﷿ﹰ-﻿]/;
@@ -253,6 +258,7 @@ function susun(isi: string[][], jenis: "koordinat" | "bilangan"): Susunan | stri
 /** Kenapa tabel ini tidak bisa digambar (kalimat untuk guru), atau null. */
 export function alasanGeometri(isi: string[][], jenis: JenisGeometri): string | null {
   if (adalahBangun(jenis)) return alasanBangun(isi, jenis);
+  if (jenis === "ruang") return alasanRuang(isi);
   const s = susun(isi, jenis);
   return typeof s === "string" ? s : null;
 }
@@ -457,6 +463,7 @@ function bilangan(s: Susunan, atas: number) {
 
 export function svgGeometri(isi: string[][], jenis: JenisGeometri, judul: string): string | null {
   if (adalahBangun(jenis)) return svgBangun(isi, jenis, judul);
+  if (jenis === "ruang") return svgRuang(isi, judul);
   const s = susun(isi, jenis);
   if (typeof s === "string") return null;
   const atas = judul ? 26 : 4;

@@ -263,7 +263,16 @@ mengatur skor). Persen level dipilih supaya jumlahnya persis surat (34/43/23 dan
    sinus/cosinus); ukuran yang ditanyakan ditulis "?" atau "x" (boleh bentuk aljabar "2x + 10°"). 🔍 Semua angka
    yang ditulis dicocokkan dengan gambar jadi: ukuran mustahil atau tidak cocok (Pythagoras, jumlah sudut 180°, sisi
    segitiga, tinggi, sudut sehadap/berseberangan/berpelurus) → tampil sebagai tabel dan diberi peringatan yang
-   menyebut ukuran yang benar. Belum (tahap 2b): bangun ruang; belum: bangun gabungan, grafik di pilihan jawaban.
+   menyebut ukuran yang benar.
+   **Tahap 2b (0.56.0): bangun ruang**, `[[GEOMETRI ruang: judul]]`, tabel 2 kolom yang sama: baris **bangun** (kubus,
+   balok, prisma segitiga, limas segiempat, limas segitiga, tabung, kerucut, bola). Titik baku kubus/balok ABCD.EFGH
+   (ABCD alas, A kiri depan), prisma ABC.DEF, limas T.ABCD / T.ABC; nama lain lewat "titik | PQRS.TUVW". Ukuran:
+   rusuk/garis "AB | 8 cm" (garis yang bukan rusuk, mis. diagonal AG, ikut digambar), kubus "rusuk", "tinggi",
+   tabung/kerucut/bola "jari-jari", "diameter", "tinggi", "garis pelukis"; titik tengah "titik P | tengah EH" untuk
+   soal jarak dimensi tiga. Gambar miring gaya buku paket (kedalaman 45°, setengah panjang); rusuk yang tertutup
+   putus-putus, elips alas tabung/kerucut separuh belakangnya putus-putus. 🔍 Semua angka dicocokkan dengan jarak 3D
+   bangun jadi (diagonal ruang, rusuk tegak limas, garis pelukis, diameter = 2 × jari-jari). Belum: irisan bidang,
+   jaring-jaring, tanda sudut garis–bidang, bangun gabungan, grafik di pilihan jawaban.
 
 ### 4a. Nilai Kurikulum Berbasis Cinta (Kemenag 2025)
 Panduan KBC (Kepdirjen Pendis 6077/2025) memuat **Panca Cinta**: Cinta Allah dan Rasul-Nya, Cinta Ilmu,

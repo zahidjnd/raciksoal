@@ -52,6 +52,23 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.56.0 — 19 November 2026
+- **Gambar geometri tahap 2b: bangun ruang.** Kubus, balok, prisma segitiga, limas segiempat, limas segitiga,
+  tabung, kerucut, dan bola, digambar miring seperti buku paket: rusuk yang tertutup putus-putus, alas tabung dan
+  kerucut berupa elips. Nama titik baku ABCD.EFGH / T.ABCD (bisa diganti, mis. PQRS.TUVW).
+- **Untuk soal dimensi tiga**: titik tengah rusuk ("titik P | tengah EH") dan garis tambahan seperti diagonal ruang
+  ("AG | ?") ikut tergambar.
+- **Ukuran yang salah ketahuan**: diagonal ruang, rusuk tegak limas, garis pelukis kerucut, dan diameter dihitung
+  ulang. Kalau tidak cocok, soal diberi peringatan beserta ukuran yang benar.
+- AI memakai gambar ini untuk soal jarak dimensi tiga, luas permukaan, dan volume. Uji DeepSeek: 6 gambar, semua
+  kunci benar (mis. jarak A ke titik tengah EH = 3√5 cm, tinggi limas = 2√7 cm).
+- **Membuat sendiri**: di **📊 Grafik & gambar** pilih "Bangun ruang", ketik nama bangunnya, contoh abu-abu dan
+  gambarnya langsung berganti.
+- Perbaikan kecil: contoh di perintah AI untuk gambar geometri kini ditulis sama dengan contoh grafik/bagan.
+- Belum: irisan bidang, jaring-jaring, dan bangun gabungan.
+
+---
+
 ## 0.55.0 — 19 November 2026
 - **Gambar geometri tahap 2a: bangun datar & sudut.**
   - **Bangun datar**: segitiga (biasa, siku-siku, sama kaki, sama sisi), persegi, persegi panjang, jajargenjang,
