@@ -743,7 +743,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
   };
 
   // Jendela Ubah tabel (0.41.0): kotak teks pemilik tabel + letak teks tabelnya (isi null = tabel baru di posisi kursor).
-  const [tabel, setTabel] = useState<{ el: HTMLTextAreaElement; awal: number; akhir: number; isi: string[][] | null; grafik: Penanda | null } | null>(null);
+  const [tabel, setTabel] = useState<{ el: HTMLTextAreaElement; awal: number; akhir: number; isi: string[][] | null; grafik: Penanda | null; pilih?: boolean } | null>(null);
 
   /** Klik tabel di Pratinjau → buka tabel ke-n dari kotak teks pemiliknya (label yang sama). Klik rumus di sel = jendela rumus. */
   function bukaTabelDiPratinjau(e: React.MouseEvent<HTMLElement>) {
@@ -767,8 +767,9 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
     if (!el) return;
     const a = el.selectionStart ?? el.value.length;
     const k = cariTabel(el.value).find((x) => x.awal <= a && a <= x.akhir);
-    const baru: Penanda | null = grafik ? { jenis: "batang", judul: "" } : null;
-    setTabel(k ? { el, ...k, grafik: k.grafik ?? baru } : { el, awal: a, akhir: el.selectionEnd ?? a, isi: null, grafik: baru });
+    // 0.61.0: tombol "📊 Grafik & gambar" pada tabel tanpa grafik / tempat kosong = jendela dibuka di kartu pilih jenis
+    const pilih = grafik && !k?.grafik;
+    setTabel(k ? { el, ...k, pilih } : { el, awal: a, akhir: el.selectionEnd ?? a, isi: null, grafik: null, pilih });
   }
 
   /** Hasil jendela Ubah tabel → teks "| a | b |" menggantikan tabel lama (atau disisipkan di baris sendiri). [] = hapus. */
@@ -864,7 +865,7 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
   );
   return (
     <article className="space-y-3 rounded-lg border-2 border-hijau p-4 text-sm" onFocus={catatFokus} onClick={bukaTabelDiPratinjau}>
-      {tabel && <EditorTabel awal={tabel.isi} grafik={tabel.grafik} selesai={selesaiTabel} />}
+      {tabel && <EditorTabel awal={tabel.isi} grafik={tabel.grafik} pilihDulu={tabel.pilih} selesai={selesaiTabel} />}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="font-semibold">{judul ?? `Edit soal nomor ${no}`}</p>
         {tombolSimpan}

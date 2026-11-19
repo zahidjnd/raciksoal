@@ -52,6 +52,26 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.61.0 — 19 November 2026
+- **Membuat & mengubah gambar jauh lebih mudah (tahap 1 dari 3).**
+  - Tombol **📊 Grafik & gambar** kini membuka **kartu bergambar** per kelompok (Data, Urutan, Matematika, Fisika,
+    Kimia & Biologi, Agama, IPS) dengan kotak **Cari** (mis. ketik "segitiga", "lensa", "waris").
+  - 13 jenis kini diisi lewat **formulir**, bukan tabel abu-abu: bangun datar, bangun ruang, sudut, cermin & lensa,
+    gaya, katrol, tuas, atom, mata angin & kiblat, gerhana & fase bulan, ekonomi, lapisan, dan shaf.
+  - Formulir: **pilih dari daftar** (tidak ada lagi salah ketik nama bangun), **satuan otomatis** (cukup ketik angka),
+    centang **"ditanyakan"** (gambar menampilkan "?"), langsung terisi contoh sungguhan, dan isian yang salah diberi
+    garis merah. Isiannya menyesuaikan pilihan: pilih "Tabung" → muncul jari-jari & tinggi saja.
+  - Bantuan hitung untuk guru: cermin & lensa menampilkan jarak/tinggi bayangan, perbesaran, dan sifatnya; tuas
+    menghitung isian yang kosong; atom menampilkan konfigurasi elektron.
+  - Sudut pada garis sejajar diisi di kotak yang tersusun seperti gambarnya (kiri atas, kanan atas, dst.); bangun
+    ruang punya tombol "+ Titik tengah rusuk" dan "+ Garis tambahan" (pilih titiknya dari daftar).
+  - Mode tabel lama tetap ada di tombol "Lanjutan: ubah sebagai tabel".
+- Soal lama, file Word, dan AI tidak berubah (isi di balik formulir tetap sama).
+- Berikutnya: bagan (pohon dengan tombol "+ cabang"), bidang koordinat, garis bilangan, listrik, jaring makanan,
+  ahli waris (0.62.0), lalu grafik data (0.63.0).
+
+---
+
 ## 0.60.0 — 19 November 2026
 - **Skema IPS: lapisan, gerhana & fase bulan, interaksi pelaku ekonomi** (Geografi, Ekonomi).
   - **Lapisan**: lapisan bumi (setengah lingkaran berlapis), lapisan atmosfer (troposfer sampai eksosfer beserta

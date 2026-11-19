@@ -239,6 +239,14 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   Tahap 5b (0.60.0, `ips.ts`, lewat `ATURAN_IPS`/`bacaIps`/`gambarIps`): lapisan, langit, ekonomi. Gerhana matahari:
   jari-jari bulan dihitung supaya ujung umbra menyentuh Bumi. Fase bulan: wujud = `bulanTampak` (busur + elips).
   Ekonomi: nomor arus = urutan panggilan `arus` (urutan ini juga tertulis di prompt; ubah keduanya bersamaan).
+- **Formulir gambar** (0.61.0, `lib/formulir.ts` + `app/formulir-gambar.tsx`): pengganti tabel abu-abu. Tiap jenis =
+  RESEP (fungsi murni) baris tabel → ISIAN (pilih/isi/centang/info/kelompok/tombol), tiap isian membawa `ubah` yang
+  mengembalikan baris BARU → isi tersimpan tetap tabel + penanda yang sama (AI/Word/pemeriksa tak berubah). Baris yang
+  tak dikenali resep = `sisa` (ditampilkan, bisa dihapus). Kunci 1 huruf dibandingkan persis ("F" ≠ "f"). Ganti
+  bangun/bentuk = isi diganti contoh bangun itu; pilihan lain menjaga data tetap sah (siku dipindah → sisi miring "?",
+  jenis tuas → lengan ditukar). Test `formulir.test.mts` mencoba SEMUA pilihan di semua resep → tabel harus sah & tanpa
+  sisa. Jendela: `PilihJenis` (kartu bergambar dari contoh + kata kunci `KATA`), `pilihDulu` dari tombol "📊 Grafik &
+  gambar"; mode tabel = "Lanjutan". 0.61.0 = 13 jenis "satu bangun"; daftar/pohon (0.62.0) & grafik data (0.63.0) menyusul.
   Teks prompt ber-`\\n` ditulis lewat file (alat Write) lalu disisipkan, bukan heredoc (backslash hilang).
 - **Rumus** (0.29.0): LaTeX `$...$` di teks mana pun (`POLA_RUMUS` gaya Pandoc di soal.ts: "US$ 5" bukan rumus). Web: KaTeX
   dimuat dinamis (`Rumus` di kartu-soal, salah tulis → teks asli). Word: `rumus.ts` LaTeX → OMML (subset; perintah tak
