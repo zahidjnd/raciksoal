@@ -231,6 +231,11 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   Tahap 4b (0.58.0, `fisika.ts`, diteruskan skema.ts lewat `ATURAN_FISIKA`/`bacaFisika`/`gambarFisika`): optik, gaya,
   katrol, tuas. Optik: sinar keluar = paraksial `mKeluar = mMasuk − q/f` (cermin = lensa yang dilipat), semua lewat
   titik bayangan; "bayangan | sembunyi" juga menyembunyikan sinar. Gaya: "F" ≠ "f" (huruf besar/kecil dibedakan).
+  Tahap 5a (0.59.0, ATURAN-SOAL 4.13, `agama.ts`, diteruskan skema.ts lewat `ATURAN_AGAMA`/`bacaAgama`/`gambarAgama`):
+  shaf, waris, arah. Waris: pemeriksa HANYA kaidah faraidh pasti (hijab, suami/istri, ibu/ayah bila ada keturunan,
+  anak perempuan, jumlah > 1 = "aul | ya"); kasus khusus sengaja tidak. Bagan waris melebar bila saudaranya banyak.
+  Python lewat heredoc: `\\b` menjadi karakter backspace (kode 8) — susun garis miring dengan `chr(92)`, lalu cek
+  `grep -rlP '[\\x00-\\x08]' src/`.
   Teks prompt ber-`\\n` ditulis lewat file (alat Write) lalu disisipkan, bukan heredoc (backslash hilang).
 - **Rumus** (0.29.0): LaTeX `$...$` di teks mana pun (`POLA_RUMUS` gaya Pandoc di soal.ts: "US$ 5" bukan rumus). Web: KaTeX
   dimuat dinamis (`Rumus` di kartu-soal, salah tulis → teks asli). Word: `rumus.ts` LaTeX → OMML (subset; perintah tak

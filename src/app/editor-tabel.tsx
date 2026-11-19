@@ -119,6 +119,11 @@ export function EditorTabel({ awal, grafik, selesai }: { awal: string[][] | null
                 <option value="katrol">Katrol (tetap, bebas, meja)</option>
                 <option value="tuas">Tuas (jenis 1, 2, 3)</option>
               </optgroup>
+              <optgroup label="Skema agama">
+                <option value="shaf">Posisi shaf sholat</option>
+                <option value="waris">Bagan ahli waris (mawaris)</option>
+                <option value="arah">Mata angin & arah kiblat</option>
+              </optgroup>
             </select>
           </label>
           {jenis && (

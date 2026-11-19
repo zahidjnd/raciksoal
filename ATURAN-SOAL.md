@@ -294,6 +294,19 @@ mengatur skor). Persen level dipilih supaya jumlahnya persis surat (34/43/23 dan
    rumus (bayangan maya boleh tanpa minus), sudut bidang 0–90°, beban katrol yang wajib, dan beban × lengan beban =
    kuasa × lengan kuasa. Belum: pegas, fluida, rumus struktur kimia, organ/sel/alat laboratorium (pakai gambar
    materi).
+13. ✅ 🔍 (0.59.0, keputusan pemilik 2026-11-19) **Skema agama tahap 5a.** Tabel 2 kolom (Bagian | Isi) + penanda,
+   tulisan Latin saja (aturan 5). `[[SKEMA shaf: judul]]` = tampak atas sholat berjamaah: kiblat di atas, imam, lalu
+   barisan makmum urut seperti tabel ("makmum laki-laki | 5", "makmum anak-anak | 3", "makmum perempuan | 4"; 1–12
+   orang), bentuk "berdua" = satu makmum di kanan imam; "nama baris | sembunyi" = barisan berhuruf A, B, C.
+   `[[SKEMA waris: judul]]` = bagan ahli waris: mayit di tengah, orang tua (dan kakek/nenek) di atas, saudara di
+   samping, pasangan bergaris ganda, anak & cucu di bawah, bagian di tiap kotak, yang mahjub dicoret; 16 ahli waris
+   dikenal (jumlah orang dalam kurung). 🔍 Pemeriksa memakai kaidah faraidh yang pasti saja: hijab anak laki-laki,
+   ayah, ibu, cucu laki-laki, keturunan atas saudara seibu; bagian suami, istri, ibu & ayah bila ada keturunan,
+   anak perempuan; jumlah bagian tetap > 1 wajib "aul | ya"; suami/istri sesuai jenis kelamin mayit. Kasus khusus
+   (gharrawain, musyarakah, kakek bersama saudara, radd) tidak diperiksa: tetap tanggung jawab guru.
+   `[[SKEMA arah: judul]]` = mawar mata angin 8 arah, panah kiblat (sudut dari utara atau nama arah), benda di suatu
+   arah; "nama arah | sembunyi" = hanya Utara yang ditulis. Belum (tahap 5b): lapisan bumi/atmosfer/tanah, gerhana
+   & fase bulan, arus ekonomi; tetap dari gambar materi: peta, denah, gerakan sholat.
 
 ### 4a. Nilai Kurikulum Berbasis Cinta (Kemenag 2025)
 Panduan KBC (Kepdirjen Pendis 6077/2025) memuat **Panca Cinta**: Cinta Allah dan Rasul-Nya, Cinta Ilmu,

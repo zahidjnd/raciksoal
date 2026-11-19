@@ -52,6 +52,23 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.59.0 — 19 November 2026
+- **Skema agama: shaf sholat, ahli waris, mata angin & kiblat** (Fiqih, juga Geografi).
+  - **Posisi shaf**: tampak atas sholat berjamaah (kiblat, imam, barisan laki-laki/anak-anak/perempuan sesuai tabel),
+    juga bentuk "berdua" (makmum di kanan imam). Barisan bisa diberi huruf A/B/C bila urutannya ditanyakan.
+  - **Bagan ahli waris**: mayit di tengah, orang tua di atas, saudara di samping, suami/istri bergaris ganda, anak
+    dan cucu di bawah, lengkap dengan bagiannya; yang mahjub (terhalang) dicoret.
+  - **Mata angin & arah kiblat**: 8 arah, panah kiblat (mis. 295°), dan benda di arah tertentu. Nama arah bisa
+    disembunyikan bila arahnya yang ditanyakan.
+- **Pemeriksa ahli waris** memakai kaidah faraidh yang pasti: siapa yang terhalang (oleh anak laki-laki, ayah,
+  ibu, cucu laki-laki), bagian suami/istri, ibu & ayah bila ada keturunan, anak perempuan, dan jumlah bagian lebih
+  dari 1 harus ditandai 'aul. Kasus khusus (gharrawain dan sejenisnya) tetap diperiksa guru.
+- Uji DeepSeek: shaf, ahli waris, dan kiblat tergambar dengan kunci benar; satu bagan "mayit laki-laki meninggalkan
+  suami" tertangkap pemeriksa, dan arah kiblat yang ditanyakan kini disembunyikan dari gambar.
+- **Membuat sendiri**: di **📊 Grafik & gambar** ada kelompok baru "Skema agama".
+
+---
+
 ## 0.58.0 — 19 November 2026
 - **Skema IPA tahap 2: cermin & lensa, gaya, katrol, tuas** (Fisika).
   - **Cermin & lensa** (cekung/cembung): titik F dan M (lensa: F1, F2, 2F1, 2F2), benda, lalu **bayangan dan sinar
