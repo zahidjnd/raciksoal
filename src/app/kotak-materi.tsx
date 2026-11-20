@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { analisaMateri } from "./actions";
 import { Gambar, gambarTempelan, pratinjauAI, TOMBOL_KECIL, TombolGambar, unggah } from "./gambar";
 import { PotongGambar } from "./potong-gambar";
+import { PilihHalamanPdf } from "./pilih-halaman-pdf";
 import { ambilAyat, cocokkanDalil } from "./materi/actions";
 import { Teks } from "./kartu-soal";
 import { Panah } from "./panah";
@@ -419,6 +420,14 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
           <p>
             <b>{pilihPdf.f.name}</b> berisi {pilihPdf.jumlah} halaman. AI membaca paling banyak {MAKS_HALAMAN_PDF} halaman sekali lampir (tabel, rumus, dan gambar ikut terbaca). Pilih halaman bab yang diperlukan:
           </p>
+          <PilihHalamanPdf
+            f={pilihPdf.f}
+            jumlah={pilihPdf.jumlah}
+            dari={pilihPdf.dari}
+            sampai={pilihPdf.sampai}
+            maks={MAKS_HALAMAN_PDF}
+            ubah={(dari, sampai) => setPilihPdf({ ...pilihPdf, dari, sampai })}
+          />
           <div className="flex flex-wrap items-center gap-2">
             Halaman
             <input type="number" min={1} max={pilihPdf.jumlah} aria-label="Dari halaman" className="h-8 w-20 rounded-lg border bg-kartu px-2 max-md:min-h-11" value={pilihPdf.dari} onChange={(e) => setPilihPdf({ ...pilihPdf, dari: Number(e.target.value) })} />

@@ -52,6 +52,19 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.64.0 — 20 November 2026
+- **Memilih halaman PDF kini lewat gambar.** Untuk PDF lebih dari 75 halaman, guru tidak perlu lagi menebak nomor
+  halaman. Tampil gambar kecil tiap halaman: gulir, ketuk halaman pertama bab, lalu halaman terakhirnya. Angka di
+  bawah gambar = nomor halaman file PDF (bukan nomor cetak buku). Jalan untuk semua jenis PDF (cetakan, scan, foto,
+  ber-bookmark) karena yang dilihat adalah gambarnya.
+- Gambar halaman dibuat hanya untuk yang sedang terlihat, jadi ringan walau PDF-nya ratusan halaman. Rentang lebih dari
+  75 halaman dipotong otomatis beserta pesan penjelasnya. Isian angka "Dari / Sampai" tetap ada untuk penyesuaian halus.
+- **Panduan** bagian PDF diperbarui.
+- Diuji: PDF buatan 120 halaman di laptop dan ukuran HP, termasuk lewat form Set baru sampai AI mulai membaca rentang
+  yang dipilih. Belum dicoba dengan PDF scan / buku Al-Fatah asli.
+
+---
+
 ## 0.63.1 — 19 November 2026
 - **Pengumuman pembaruan baru** (muncul sekali di tiap perangkat): soal kini bisa bergambar (grafik, bagan, gambar
   pelajaran) beserta daftar jenisnya, cara membuat/mengubah lewat **📊 Grafik & gambar**, dan penjelasan bahwa
