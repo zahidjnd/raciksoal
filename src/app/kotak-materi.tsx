@@ -477,6 +477,9 @@ export function lihatDalil({ no, kolom }: { no: number; kolom: "arab" | "sumber"
   }, 50);
 }
 
+// Seukuran tombol "Ambil ayat" / "✕ Batalkan" di kartu yang sama (0.65.1: dulu h-10, terlalu besar).
+const TOMBOL_HIJAU = "h-8 rounded-lg bg-hijau px-3 text-sm font-semibold text-white disabled:opacity-40 max-md:min-h-11";
+
 /** 0.65.0: gulir ke kotak TP (dari pesan di dekat tombol Buat soal/Simpan), fokus ke tombolnya, kotak berkedip sebentar. */
 export function lihatTp() {
   const kotak = document.getElementById("kotak-tp");
@@ -605,7 +608,7 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
             {ubahTp ? (
               <button
                 type="button"
-                className="h-10 rounded-lg bg-hijau px-4 font-semibold text-white disabled:opacity-40 max-md:min-h-11"
+                className={TOMBOL_HIJAU}
                 disabled={!daftarTp.length}
                 onClick={() => {
                   setUbahTp(false);
@@ -617,11 +620,11 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
             ) : (
               <>
                 {tungguTp && (
-                  <button id="setuju-tp" type="button" className="h-10 rounded-lg bg-hijau px-4 font-semibold text-white max-md:min-h-11" onClick={() => ubah({ tpDibaca: true })}>
+                  <button id="setuju-tp" type="button" className={TOMBOL_HIJAU} onClick={() => ubah({ tpDibaca: true })}>
                     ✓ Sesuai, pakai TP ini
                   </button>
                 )}
-                <button type="button" className={`${tungguTp ? "h-10 px-4 max-md:min-h-11" : "h-8 px-3 text-sm max-md:min-h-11"} rounded-lg border bg-kartu hover:bg-krem`} onClick={() => setUbahTp(true)}>
+                <button type="button" className={TOMBOL_KECIL} onClick={() => setUbahTp(true)}>
                   Ubah TP
                 </button>
               </>

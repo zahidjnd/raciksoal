@@ -52,6 +52,10 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.65.1 — 20 November 2026
+- Tombol **"✓ Sesuai, pakai TP ini"**, **"✓ Selesai, pakai TP ini"**, dan **"Ubah TP"** dikecilkan, seukuran tombol lain di
+  kartu materi (Ambil ayat, ✕ Batalkan). Di HP tetap minimal 44 px supaya mudah diketuk. Gambar Panduan diperbarui.
+
 ## 0.65.0 — 20 November 2026
 - **Langkah TP lebih mudah.** TP di kartu materi sekarang tampil sebagai **daftar yang mudah dibaca**, bukan kotak isian
   (dulu guru mengira harus mengetik).
