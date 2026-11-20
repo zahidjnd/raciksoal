@@ -52,6 +52,10 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.64.3 — 20 November 2026
+- Tombol batal di kotak pilih halaman PDF sekarang **"✕ Batalkan"** di pojok kanan atas (sama dengan tombol Batalkan
+  di kartu materi). Dulu berupa tautan kecil "Batal" di ujung kalimat panjang, mudah terlewat.
+
 ## 0.64.2 — 20 November 2026
 - **Zoom gambar halaman PDF bertahap** (pengganti tombol "Perbesar gambar" yang langsung sangat besar): tombol **−** / **+**
   (10% per ketukan), penggeser, dan angka persen. Di laptop juga bisa **Ctrl + roda mouse** atau **cubit touchpad**

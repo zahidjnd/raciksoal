@@ -418,9 +418,14 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
 
       {pilihPdf && (
         <div className="space-y-2 rounded-lg border border-peringatan-garis bg-peringatan-muda p-3 text-sm" role="group" aria-label="Pilih halaman PDF">
-          <p>
-            <b>{pilihPdf.f.name}</b> berisi {pilihPdf.jumlah} halaman. AI membaca paling banyak {MAKS_HALAMAN_PDF} halaman sekali lampir (tabel, rumus, dan gambar ikut terbaca). Pilih halaman bab yang diperlukan:
-          </p>
+          <div className="flex items-start justify-between gap-2">
+            <p className="min-w-0">
+              <b className="break-all">{pilihPdf.f.name}</b> berisi {pilihPdf.jumlah} halaman. AI membaca paling banyak {MAKS_HALAMAN_PDF} halaman sekali lampir (tabel, rumus, dan gambar ikut terbaca). Pilih halaman bab yang diperlukan:
+            </p>
+            <button type="button" className={`${TOMBOL_KECIL} shrink-0 text-pudar hover:text-bahaya`} onClick={() => setPilihPdf(null)}>
+              ✕ Batalkan
+            </button>
+          </div>
           <PilihHalamanPdf
             f={pilihPdf.f}
             jumlah={pilihPdf.jumlah}
@@ -445,8 +450,6 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
           <p className="text-sm text-pudar">
             Nomor halaman menurut file PDF (bukan nomor yang tercetak di buku).{" "}
             <button className="underline" onClick={() => lanjutPdf(false)}>Pakai teks saja, semua halaman (tanpa AI: tabel, rumus, dan gambar tidak terbaca)</button>
-            {" · "}
-            <button className="underline" onClick={() => setPilihPdf(null)}>Batal</button>
           </p>
         </div>
       )}
