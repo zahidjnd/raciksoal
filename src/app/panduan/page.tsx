@@ -107,7 +107,7 @@ const TOPIK: { id: string; judul: string; isi: React.ReactNode }[] = [
     isi: (
       <>
         <ul>
-          <li>Ayat Al-Qur’an <b>diambil dari data mushaf</b> di aplikasi, tidak dikarang AI. Ayat yang dikenali bertanda hijau.</li>
+          <li>Ayat Al-Qur’an <b>diambil dari data mushaf</b> di aplikasi, tidak dikarang AI. Ayat yang dikenali bertanda hijau, cukup satu baris; tekan <b>Lihat</b> untuk membaca teks, mengisi terjemah, atau menghapusnya. Di atasnya tertulis ringkasan, mis. “4 teks Arab: 2 ✓ dikenali otomatis · 2 perlu Anda periksa”.</li>
           <li>Di kotak <b>Ayat &amp; hadis</b> pada kartu materi, ketik rujukan (mis. <b>QS An-Nur: 2</b>) lalu tekan <b>Ambil ayat</b>.</li>
           <li>
             Hadis dari <b>9 kitab</b> (Bukhari, Muslim, Abu Dawud, Tirmidzi, Nasa&apos;i, Ibnu Majah, Malik, Ahmad, Darimi) dikenali
@@ -115,11 +115,14 @@ const TOPIK: { id: string; judul: string; isi: React.ReactNode }[] = [
             Kitab yang ditulis di materi (mis. &quot;HR. Muslim&quot;) didahulukan.
           </li>
           <li>
-            Hadis yang tidak dikenali (Baihaqi, Thabrani, Hakim, atau lafalnya berbeda) bertanda kuning; tulisan di kotaknya
-            menyebut yang masih kurang. Isi sumbernya, periksa teksnya, lalu centang pernyataan pemeriksaan. Hadis lain bisa
-            ditambah dengan <b>+ Tambah hadis</b>: begitu teks Arabnya selesai ditempel, hadis 9 kitab langsung berubah hijau.
+            Teks Arab yang tidak dikenali (hadis Baihaqi, Thabrani, Hakim, lafal berbeda, atau doa/niat/kaidah) bertanda kuning
+            dengan pertanyaan <b>“Ini apa?”</b>. Pilih <b>Hadis dari kitab lain</b> lalu isi sumbernya (mis. HR. Baihaqi), atau
+            <b> Bukan ayat/hadis</b> untuk doa, niat, kaidah, dan istilah, atau <b>✕ Hapus</b> bila tidak dipakai. Setelah semua kotak
+            kuning beres, periksa teks dan harakat hadisnya, lalu tekan <b>✓ Teks &amp; harakat hadis sudah saya periksa sesuai
+            kitabnya</b>. Hadis lain bisa ditambah dengan <b>+ Tambah hadis</b>: begitu teks Arabnya selesai ditempel, hadis 9 kitab
+            langsung berubah hijau.
           </li>
-          <li>Teks Arab pendek (≤ 3 kata) dianggap istilah. Teks Arab yang bukan dalil (doa, niat, kaidah): tekan <b>Bukan ayat/hadis</b>.</li>
+          <li>Teks Arab pendek (≤ 3 kata) dianggap istilah dan dipakai apa adanya.</li>
           <li>Dari PDF dan foto: ayat dan hadis 9 kitab dikenali lalu diganti teks resmi dari data; teks Arab lain dibuang. Tempel sendiri bila perlu.</li>
         </ul>
       </>
@@ -233,7 +236,7 @@ const TANYA: { t: string; j: React.ReactNode }[] = [
   { t: "Kunci jawabannya salah. Bagaimana?", j: <>Tekan <b>Edit</b>, betulkan kuncinya, lalu <b>Simpan</b>. File Word ikut berubah. AI bisa salah, terutama soal hitungan.</> },
   { t: "Jatah hari ini habis.", j: <>Jatah kembali pukul 00.00 WIB. Sementara itu, <b>Edit</b> dan <b>Tulis soal sendiri</b> tetap bisa dipakai.</> },
   { t: "PDF saya tidak terbaca atau hasilnya kacau.", j: <>Pilih halaman bab saja (sebaiknya ≤ 10 halaman). Bila masih kacau, salin teksnya lalu tempel, atau simpan bab itu sebagai file Word.</> },
-  { t: "Hadis saya berwarna kuning dan Buat soal terkunci.", j: <>Tekan <b>Lihat kotaknya</b> di bawah tombol: aplikasi langsung menuju kotak yang kurang. Lengkapi <b>sumber</b> hadis, periksa teksnya, lalu centang pernyataan pemeriksaan di kotak <b>Ayat &amp; hadis</b>. Teks Arab yang bukan hadis (doa, niat, kaidah): tekan <b>Bukan ayat/hadis</b>.</> },
+  { t: "Hadis saya berwarna kuning dan Buat soal terkunci.", j: <>Tekan <b>Lihat kotaknya</b> di bawah tombol: aplikasi langsung menuju kotak yang kurang. Jawab pertanyaan <b>“Ini apa?”</b> di kotak kuning: <b>Hadis dari kitab lain</b> (lalu isi sumbernya) atau <b>Bukan ayat/hadis</b> (doa, niat, kaidah). Setelah itu periksa teks hadisnya dan tekan <b>✓ Teks &amp; harakat hadis sudah saya periksa sesuai kitabnya</b>.</> },
   { t: "Bagaimana membuat Paket B untuk kelas sebelah?", j: <>Tekan <b>Unduh</b>, pilih huruf <b>A</b> dan <b>B</b>, lalu unduh. Soalnya sama, urutannya diacak.</> },
   { t: "Bisa membuat soal dari dua bab sekaligus?", j: <>Bisa: di kotak materi pilih beberapa materi (paling banyak 5) lewat <b>Pakai materi sebelumnya</b>, cocok untuk AFTS dan ASAS.</> },
   { t: "Bagaimana memasang Racik Soal seperti aplikasi di HP?", j: <>Buka Racik Soal di <b>Chrome</b>, tekan <b>⋮</b> di kanan atas, pilih <b>Instal aplikasi</b> (atau <b>Tambahkan ke layar utama</b> → <b>Instal</b>). Ikon bintang hijau muncul di layar HP dan Racik Soal terbuka layar penuh tanpa bilah alamat. Kalau dulu sudah memasang pintasan lama, hapus dulu pintasan itu.</> },

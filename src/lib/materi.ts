@@ -145,7 +145,7 @@ export function rapikanMateri(x: Partial<IsianMateri>, id: string, cariAyat?: Ca
   }
   // Centang hanya untuk hadis di luar data (bukan dari mushaf/data hadis dan tidak ditandai "Bukan ayat/hadis").
   if (dalilMentah.some((d) => !d.mushaf && !d.kitab && !d.bukan) && x?.diverifikasi !== true)
-    return "Ada teks Arab yang tidak ditemukan di mushaf maupun data hadis. Centang pernyataan bahwa teks itu sudah Anda periksa, atau tekan \"Bukan ayat/hadis\" bila memang bukan.";
+    return "Ada teks Arab yang tidak ditemukan di mushaf maupun data hadis. Periksa teksnya lalu tekan \"Teks & harakat hadis sudah saya periksa\", atau tekan \"Bukan ayat/hadis\" bila memang bukan.";
   const dalil = dalilMentah.map(({ mushaf, kitab, bukan, ...d }, i) => ({ id: `dalil-${i + 1}`, ...d, mufradat: [], ...(mushaf && { mushaf }), ...(kitab && { kitab }), ...(bukan && { bukan }) }));
 
   // Buang teks Arab yang tidak berasal dari kotak ayat/hadis terverifikasi, KECUALI istilah pendek (istilahArab, <= 3 kata).
@@ -203,10 +203,10 @@ export function alasanTp(draf: IsianMateri): string | null {
 export function alasanDalil(draf: IsianMateri): { pesan: string; no: number; kolom: "arab" | "sumber" | "centang" } | null {
   for (const [i, d] of draf.dalil.entries()) {
     const k = kurangDalil(d);
-    if (k) return { no: i, kolom: k, pesan: k === "arab" ? `Teks Arab di kotak dalil ke-${i + 1} belum diisi.` : `Hadis ke-${i + 1} belum diberi sumber.` };
+    if (k) return { no: i, kolom: k, pesan: k === "arab" ? `Teks Arab di kotak dalil ke-${i + 1} belum diisi.` : `Teks Arab ke-${i + 1} di Ayat & hadis belum selesai: hadis atau bukan?` };
   }
   const n = draf.dalil.findIndex(perluCentang);
-  return n >= 0 && !draf.diverifikasi ? { no: n, kolom: "centang", pesan: "Centang pernyataan pemeriksaan hadis." } : null;
+  return n >= 0 && !draf.diverifikasi ? { no: n, kolom: "centang", pesan: "Periksa teks hadis, lalu tekan tombol pemeriksaan di kotak Ayat & hadis." } : null;
 }
 
 /** Mapel yang teks Arabnya isi pelajaran (Tahap F; Nahwu sejak 2026-11-09). */

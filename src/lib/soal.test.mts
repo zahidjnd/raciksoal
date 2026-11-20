@@ -642,7 +642,7 @@ test("materi di halaman utama: ayat dari mushaf, hadis jadi usulan, basmalah dib
   assert.equal(hasil.dalil[1].sumber, "HR. Bukhari");
   assert.equal(hasil.dalil[1].terjemah, ""); // tidak tertulis di teks guru → dibuang
   // tersimpan lewat rapikanMateri: hadis tetap wajib dicentang; terjemah boleh kosong
-  assert.match(String(rapikanMateri(hasil, "x")), /Centang/);
+  assert.match(String(rapikanMateri(hasil, "x")), /sudah saya periksa/);
   const r = rapikanMateri({ ...hasil, diverifikasi: true, tpDibaca: true }, "x");
   assert.ok(typeof r !== "string" && r.bab.pokok?.[0] === "Larangan mendekati zina" && r.bab.dalil[1].terjemah === "");
 });
@@ -709,7 +709,7 @@ test("materi sendiri: TP diberi kode, teks Arab hanya dipercaya dari kotak ayat 
   assert.ok(!r.bab.materi[0].includes("الشَّيْخُ")); // karangan > 3 kata → dibuang
   assert.equal(r.dihapus.length, 1);
   // tanpa centang verifikasi → ditolak
-  assert.match(String(rapikanMateri({ ...isian, diverifikasi: false }, "x")), /Centang/);
+  assert.match(String(rapikanMateri({ ...isian, diverifikasi: false }, "x")), /sudah saya periksa/);
   // kolom Arab tanpa huruf Arab → ditolak
   assert.match(String(rapikanMateri({ ...isian, dalil: [{ sumber: "QS", arab: "la taqrabu", terjemah: "t" }] }, "x")), /tidak berisi huruf Arab/);
   assert.match(String(rapikanMateri({ ...isian, tp: " " }, "x")), /TP/);

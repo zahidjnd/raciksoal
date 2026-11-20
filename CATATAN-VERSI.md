@@ -52,6 +52,18 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.66.0 — 20 November 2026
+- **Kotak Ayat & hadis lebih ringkas.** Di atasnya ada ringkasan, mis. "4 teks Arab: 2 ✓ dikenali otomatis · 2 perlu Anda
+  periksa" (juga tertulis di judul lipatan). Ayat & hadis yang dikenali otomatis (hijau) serta teks "Bukan ayat/hadis"
+  cukup **satu baris**; tekan **Lihat** untuk membaca teks, mengisi terjemah, atau menghapus.
+- **Kotak kuning bertanya "Ini apa?"** dengan tiga tombol: **Hadis dari kitab lain** (lalu kolom sumber langsung siap
+  diketik), **Bukan ayat/hadis (doa, niat, kaidah, istilah)**, dan **✕ Hapus**. Dulu kolom sumber, terjemah, dan tombol
+  tampil bersamaan sehingga guru bingung mulai dari mana.
+- **Centang pemeriksaan hadis jadi tombol** "✓ Teks & harakat hadis sudah saya periksa sesuai kitabnya" (aktif setelah
+  kotak kuning lengkap; bisa dibatalkan). Pesan di dekat Buat soal disesuaikan, tetap dengan "Lihat kotaknya".
+- **Aturan 5 tidak berubah**: hadis di luar data tetap wajib bersumber dan dinyatakan sudah diperiksa guru; AI tidak
+  dipakai memeriksa ayat/hadis; pencocokan otomatis ke mushaf & 9 kitab sama seperti sebelumnya.
+
 ## 0.65.1 — 20 November 2026
 - Tombol **"✓ Sesuai, pakai TP ini"**, **"✓ Selesai, pakai TP ini"**, dan **"Ubah TP"** dikecilkan, seukuran tombol lain di
   kartu materi (Ambil ayat, ✕ Batalkan). Di HP tetap minimal 44 px supaya mudah diketuk. Gambar Panduan diperbarui.

@@ -123,7 +123,10 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   kunci ada di terjemah. Bukan PGK/MJ (`caraBolehBentuk`; set 154 PGK berkunci ganda). Mapel lain tak merencanakan garis.
 - **Materi**: ayat otomatis dari mushaf (kotak hijau); hadis di luar data = sumber + centang guru; tulisan Arab ≤ 3 kata = istilah, diterima
   apa adanya (`istilahArab`); teks Arab bukan dalil = tombol "Bukan ayat/hadis" (`bukan: true`, tanpa sumber & centang).
-  Teks Arab dari PDF tidak pernah dipakai apa adanya (hanya penunjuk ayat). TP: tertulis di materi = hijau; usulan AI = wajib dicentang.
+  Teks Arab dari PDF tidak pernah dipakai apa adanya (hanya penunjuk ayat). TP: tertulis di materi = hijau; usulan AI = wajib
+  disetujui (0.65.0: daftar + tombol "Sesuai, pakai TP ini" / "Ubah TP", `alasanTp` + `lihatTp`). Kotak dalil (0.66.0):
+  hijau & "Bukan" satu baris + Lihat; kuning bertanya "Ini apa?" (Hadis dari kitab lain / Bukan / Hapus, `pilihHadis`);
+  pernyataan pemeriksaan hadis = tombol `#centang-hadis` (nama `diverifikasi` & kolom "centang" tetap).
 - **Alur set**: kisi-kisi dulu (level per nomor ditentukan aplikasi `rencanaLevelSet`, AI tidak bisa menghitung komposisi) →
   AI memeriksa kisi untuk baris kembar lintas bentuk → soal BERTAHAP maks 10 per panggilan (`bagiTahap`) → `periksaSoal` →
   perbaikan otomatis 1x untuk soal merah (isian bocor: 3 calon, dipilih yang bersih). Jalan di belakang (`hasil_soal.status`),

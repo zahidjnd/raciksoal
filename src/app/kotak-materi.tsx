@@ -471,7 +471,8 @@ export function lihatDalil({ no, kolom }: { no: number; kolom: "arab" | "sumber"
   setTimeout(() => {
     const kotak = document.getElementById(`dalil-${no}`);
     const tuju =
-      kolom === "centang" ? document.getElementById("centang-hadis") : kotak?.querySelector<HTMLElement>(kolom === "sumber" ? "input[data-kolom=sumber]" : "textarea");
+      // sumber: kolom sumber, atau tombol "Hadis dari kitab lain" bila kotak masih bertanya "Ini apa?" (0.66.0)
+      kolom === "centang" ? document.getElementById("centang-hadis") : kotak?.querySelector<HTMLElement>(kolom === "sumber" ? "[data-kolom=sumber]" : "textarea");
     (tuju ?? kotak)?.scrollIntoView({ behavior: "smooth", block: "center" });
     tuju?.focus({ preventScroll: true });
   }, 50);
@@ -496,7 +497,7 @@ function StatusDalil({ d, diperiksa, mencocokkan }: { d: IsianMateri["dalil"][nu
   if (!d.arab.trim()) return <span className="text-peringatan">Tempel teks Arab hadisnya di sini (hadis 9 kitab otomatis dikenali), lalu isi sumbernya.</span>;
   if (kurang === "arab") return <span className="text-peringatan">Kolom teks Arab belum berisi huruf Arab.</span>;
   if (kurang === "sumber") return <span className="text-peringatan">Tidak ada di mushaf maupun data hadis 9 kitab. Isi sumbernya (mis. HR. Baihaqi), lalu periksa teksnya.</span>;
-  return <span className="text-hijau-teks">{diperiksa ? "✓ Lengkap dan sudah diperiksa." : "✓ Lengkap. Tinggal centang pernyataan pemeriksaan di bawah."}</span>;
+  return <span className="text-hijau-teks">{diperiksa ? "✓ Lengkap dan sudah diperiksa." : "✓ Lengkap. Periksa teks & harakatnya, lalu tekan tombol pemeriksaan di bawah."}</span>;
 }
 
 /**
@@ -517,6 +518,24 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
   const daftarTp = draf.tp.split("\n").map((t) => t.trim()).filter(Boolean);
   const tulisTp = ubahTp || !daftarTp.length;
   const tungguTp = !!draf.tpUsulan && !draf.tpDibaca;
+  // 0.66.0: kotak hijau/abu-abu yang sedang dibuka, dan kotak kuning yang sudah dijawab "Hadis dari kitab lain" (per nomor kotak)
+  const [buka, setBuka] = useState<Set<number>>(new Set());
+  const [pilihHadis, setPilihHadis] = useState<Set<number>>(new Set());
+  const otomatis = draf.dalil.filter((d) => d.mushaf || d.kitab).length;
+  const jumlahBukan = draf.dalil.filter(bukanDalil).length;
+  const perluPeriksa = draf.dalil.filter((d) => !d.mushaf && !d.kitab && !bukanDalil(d) && (kurangDalil(d) || !draf.diverifikasi)).length;
+  const adaKurang = draf.dalil.some((d) => kurangDalil(d));
+  const balik = (s: Set<number>, i: number) => {
+    const b = new Set(s);
+    if (!b.delete(i)) b.add(i);
+    return b;
+  };
+  const tanpa = (s: Set<number>, i: number) => new Set([...s].filter((j) => j !== i).map((j) => (j > i ? j - 1 : j)));
+  function hapusDalil(i: number) {
+    ubah({ dalil: draf.dalil.filter((_, j) => j !== i) });
+    setBuka(tanpa(buka, i));
+    setPilihHadis(tanpa(pilihHadis, i));
+  }
   // 0.36.1: teks Arab kotak kuning dicocokkan ke mushaf/data hadis begitu guru selesai menempel (keluar dari kolom).
   const [mencocokkan, setMencocokkan] = useState<number | null>(null);
   const terkini = useRef(draf);
@@ -640,42 +659,100 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
           </ul>
         </div>
       )}
-      {/* Terbuka bila sudah ada dalil; mapel tanpa ayat/hadis cukup melihat judulnya. */}
+      {/* Terbuka bila sudah ada dalil; mapel tanpa ayat/hadis cukup melihat judulnya.
+          0.66.0: ringkasan; kotak hijau (dikenali) & abu-abu (bukan ayat/hadis) cukup satu baris + Lihat; kotak kuning
+          bertanya "Ini apa?" dengan 3 tombol; centang pemeriksaan jadi tombol. Aturan 5 tetap: hadis di luar data wajib
+          bersumber dan dinyatakan sudah diperiksa guru (server memeriksa lagi di rapikanMateri). */}
       <details id="ayat-hadis" open={draf.dalil.length > 0} className="space-y-2">
-        <summary className="cursor-pointer">Ayat & hadis ({draf.dalil.length})</summary>
+        <summary className="cursor-pointer">
+          Ayat & hadis ({draf.dalil.length})
+          {perluPeriksa > 0 && <span className="text-peringatan"> · {perluPeriksa} perlu Anda periksa</span>}
+        </summary>
         <div className="mt-2 space-y-2">
-          {draf.dalil.map((d, i) => (
-            <div key={i} id={`dalil-${i}`} className={`space-y-1 rounded-lg border p-2 ${d.mushaf || d.kitab ? "border-hijau" : bukanDalil(d) ? "bg-krem" : "border-peringatan-garis bg-peringatan-muda"}`}>
-              <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-                {d.mushaf ? (
-                  <span className="text-hijau-teks">✓ Ayat dari mushaf: {d.sumber}</span>
-                ) : d.kitab ? (
-                  <span className="text-hijau-teks">✓ Hadis dari data kitab: {d.sumber}</span>
-                ) : bukanDalil(d) ? (
+          {draf.dalil.length > 0 && (
+            <p className="text-sm">
+              {draf.dalil.length} teks Arab: <span className="text-hijau-teks">{otomatis} ✓ dikenali otomatis</span>
+              {jumlahBukan > 0 && <span className="text-pudar"> · {jumlahBukan} bukan ayat/hadis</span>}
+              {perluPeriksa > 0 && <b className="text-peringatan"> · {perluPeriksa} perlu Anda periksa</b>}
+            </p>
+          )}
+          {draf.dalil.map((d, i) => {
+            const hijau = d.mushaf || d.kitab;
+            if (hijau || bukanDalil(d)) {
+              const terbuka = buka.has(i);
+              return (
+                <div key={i} id={`dalil-${i}`} className={`rounded-lg border p-2 ${hijau ? "border-hijau" : "bg-krem"}`}>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className={`min-w-0 ${hijau ? "text-hijau-teks" : "text-pudar"}`}>{hijau ? `✓ ${d.sumber}` : "Bukan ayat/hadis"}</span>
+                    {!terbuka && <bdi dir="rtl" lang="ar" className="min-w-0 flex-1 truncate text-right font-arab text-base max-sm:hidden">{d.arab}</bdi>}
+                    <button type="button" className={`${TOMBOL_KECIL} ml-auto shrink-0`} aria-expanded={terbuka} onClick={() => setBuka(balik(buka, i))}>
+                      {terbuka ? "Tutup" : "Lihat"}
+                    </button>
+                  </div>
+                  {terbuka && (
+                    <div className="mt-2 space-y-1">
+                      <p className="text-sm text-pudar">
+                        {d.mushaf ? "Ayat dari data mushaf (Tanzil)." : d.kitab ? "Hadis dari data 9 kitab hadis." : "Teks Arab materi, tidak perlu sumber."}
+                        {!hijau && <> <button type="button" className="underline hover:text-tinta" onClick={() => ubahDalil(i, { bukan: false, sumber: "" })}>Ternyata ayat/hadis? Ubah</button></>}
+                      </p>
+                      {hijau ? (
+                        <p dir="rtl" lang="ar" className="font-arab text-xl leading-loose">{d.arab}</p>
+                      ) : (
+                        <textarea dir="rtl" lang="ar" rows={2} className={`${kotak} font-arab text-xl`} aria-label={`Teks Arab ${i + 1}`} value={d.arab} onChange={(e) => ubahDalil(i, { arab: e.target.value })} />
+                      )}
+                      <input className={kotak} placeholder="Terjemah (opsional)" value={d.terjemah} onChange={(e) => ubahDalil(i, { terjemah: e.target.value })} />
+                      <button type="button" className={`${TOMBOL_KECIL} text-pudar hover:text-bahaya`} onClick={() => hapusDalil(i)}>✕ Hapus dari materi</button>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+            // Kotak kuning: belum dijawab "ini apa?" = ada teks Arab, belum bersumber, belum dipilih Hadis.
+            const tanya = !!d.arab.trim() && kurangDalil(d) !== "arab" && !d.sumber.trim() && !pilihHadis.has(i) && mencocokkan !== i;
+            return (
+              <div key={i} id={`dalil-${i}`} className="space-y-2 rounded-lg border border-peringatan-garis bg-peringatan-muda p-2">
+                {tanya ? (
                   <>
-                    <span className="text-pudar">Teks Arab materi (bukan ayat/hadis): tidak perlu sumber</span>
-                    <button className="underline hover:text-tinta" onClick={() => ubahDalil(i, { bukan: false, sumber: "" })}>Batalkan</button>
+                    <p className="text-sm text-peringatan">Teks Arab ini tidak ada di mushaf maupun data 9 kitab hadis. Ini apa?</p>
+                    <p dir="rtl" lang="ar" className="font-arab text-xl leading-loose">{d.arab}</p>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        data-kolom="sumber"
+                        className={TOMBOL_KECIL}
+                        onClick={() => {
+                          setPilihHadis(new Set(pilihHadis).add(i));
+                          ubah({ diverifikasi: false }); // hadis baru = pemeriksaan diulang (aturan 5)
+                        }}
+                      >
+                        Hadis dari kitab lain
+                      </button>
+                      <button type="button" className={TOMBOL_KECIL} onClick={() => ubahDalil(i, { bukan: true, sumber: SUMBER_BUKAN })}>
+                        Bukan ayat/hadis (doa, niat, kaidah, istilah)
+                      </button>
+                      <button type="button" className={`${TOMBOL_KECIL} text-pudar hover:text-bahaya`} onClick={() => hapusDalil(i)}>
+                        ✕ Hapus
+                      </button>
+                    </div>
                   </>
                 ) : (
                   <>
-                    <StatusDalil d={d} diperiksa={draf.diverifikasi} mencocokkan={mencocokkan === i} />
-                    {/* Satu klik untuk teks Arab yang memang bukan ayat/hadis (dulu guru mengetik "bukan ayat/hadis" di kolom sumber). */}
-                    <button className="h-8 rounded-lg border bg-kartu px-3 text-sm text-tinta hover:bg-krem max-md:min-h-11" onClick={() => ubahDalil(i, { bukan: true, sumber: SUMBER_BUKAN })}>
-                      Bukan ayat/hadis
-                    </button>
+                    <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                      <StatusDalil d={d} diperiksa={draf.diverifikasi} mencocokkan={mencocokkan === i} />
+                      {/* Satu klik untuk teks Arab yang memang bukan ayat/hadis (dulu guru mengetik "bukan ayat/hadis" di kolom sumber). */}
+                      <button type="button" className={TOMBOL_KECIL} onClick={() => ubahDalil(i, { bukan: true, sumber: SUMBER_BUKAN })}>
+                        Bukan ayat/hadis
+                      </button>
+                    </p>
+                    <textarea dir="rtl" lang="ar" rows={2} className={`${kotak} font-arab text-xl`} placeholder="نص الحديث" aria-label={`Teks Arab dalil ${i + 1}`} value={d.arab} onChange={(e) => ubahDalil(i, { arab: e.target.value })} onBlur={() => cocokkan(i)} />
+                    <input data-kolom="sumber" autoFocus={pilihHadis.has(i) && !d.sumber} className={kotak} placeholder="Sumber, mis. HR. Baihaqi" aria-label={`Sumber dalil ${i + 1}`} value={d.sumber} onChange={(e) => ubahDalil(i, { sumber: e.target.value })} />
+                    <input className={kotak} placeholder="Terjemah (opsional)" value={d.terjemah} onChange={(e) => ubahDalil(i, { terjemah: e.target.value })} />
+                    <button type="button" className={`${TOMBOL_KECIL} text-pudar hover:text-bahaya`} onClick={() => hapusDalil(i)}>✕ Hapus dari materi</button>
                   </>
                 )}
-              </p>
-              {d.mushaf || d.kitab ? (
-                <p dir="rtl" lang="ar" className="font-arab text-xl leading-loose">{d.arab}</p>
-              ) : (
-                <textarea dir="rtl" lang="ar" rows={2} className={`${kotak} font-arab text-xl`} placeholder="نص الحديث" aria-label={`Teks Arab dalil ${i + 1}`} value={d.arab} onChange={(e) => ubahDalil(i, { arab: e.target.value })} onBlur={() => cocokkan(i)} />
-              )}
-              {!d.mushaf && !d.kitab && !bukanDalil(d) && <input data-kolom="sumber" className={kotak} placeholder="Sumber, mis. HR. Bukhari dan Muslim" value={d.sumber} onChange={(e) => ubahDalil(i, { sumber: e.target.value })} />}
-              <input className={kotak} placeholder="Terjemah (opsional)" value={d.terjemah} onChange={(e) => ubahDalil(i, { terjemah: e.target.value })} />
-              <button className={`${TOMBOL_KECIL} text-pudar hover:text-bahaya`} onClick={() => ubah({ dalil: draf.dalil.filter((_, j) => j !== i) })}>✕ Hapus dari materi</button>
-            </div>
-          ))}
+              </div>
+            );
+          })}
           {!penuh && (
             <div className="flex flex-wrap items-center gap-2">
               <input
@@ -711,11 +788,23 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
               </p>
             </div>
           )}
+          {/* Pernyataan pemeriksaan guru (aturan 5), 0.66.0: tombol, dulu centang kecil. Aktif setelah kotak kuning lengkap. */}
           {adaHadis && (
-            <label className="flex items-start gap-2">
-              <input id="centang-hadis" type="checkbox" className="mt-1" checked={draf.diverifikasi} onChange={(e) => ubah({ diverifikasi: e.target.checked })} />
-              Saya sudah memeriksa teks Arab dan harakat hadis/teks di atas yang bukan dari mushaf sesuai kitab sumbernya.
-            </label>
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              {draf.diverifikasi ? (
+                <>
+                  <span className="text-hijau-teks">✓ Teks & harakat hadis sudah Anda periksa sesuai kitabnya.</span>
+                  <button type="button" className={TOMBOL_KECIL} onClick={() => ubah({ diverifikasi: false })}>Batalkan</button>
+                </>
+              ) : (
+                <>
+                  <button id="centang-hadis" type="button" className={TOMBOL_HIJAU} disabled={adaKurang} onClick={() => ubah({ diverifikasi: true })}>
+                    ✓ Teks & harakat hadis sudah saya periksa sesuai kitabnya
+                  </button>
+                  {adaKurang && <span className="text-pudar">Lengkapi kotak kuning dulu.</span>}
+                </>
+              )}
+            </div>
           )}
           <p className="text-sm text-pudar">
             Teks Al-Qur&apos;an: <a className="underline" href="https://tanzil.net" target="_blank" rel="noreferrer">Tanzil Project (tanzil.net)</a>. Teks hadis

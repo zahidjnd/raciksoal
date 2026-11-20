@@ -73,7 +73,7 @@ test("materi: hadis 9 kitab jadi kotak hijau tanpa centang; doa/niat tetap wajib
   assert.equal(r.bab.dalil[0].terjemah, "Amal tergantung niat");
   // Niat (tidak ada di data) → masih wajib centang.
   const niat = dasar.dalil.map((d) => (d.usulan ? { ...d, sumber: "Lafal niat puasa" } : d));
-  assert.match(String(rapikanMateri({ ...dasar, dalil: niat }, "", cariDalil)), /Centang/);
+  assert.match(String(rapikanMateri({ ...dasar, dalil: niat }, "", cariDalil)), /sudah saya periksa/);
   assert.ok(typeof rapikanMateri({ ...dasar, dalil: niat, diverifikasi: true }, "", cariDalil) !== "string");
   // Mode Bahasa Arab memakai pencari ayat saja: hadis tetap teks biasa.
   const bahasa = susunDraf({ mapel: "Bahasa Arab", kelas: "X", paragraf: [isi, "إنما الأعمال بالنيات وإنما لكل امرئ ما نوى"] }, m.cari, m.basmalah);
@@ -86,8 +86,8 @@ test("0.36.1: kekurangan kotak hadis terbaca sebelum Buat soal, sama dengan peme
   const kasus = [
     { dalil: [{ sumber: "", arab: "", terjemah: "" }], harap: null }, // kotak kosong diabaikan server
     { dalil: [{ sumber: "HR. Baihaqi", arab: "", terjemah: "" }], harap: "Teks Arab di kotak dalil ke-1 belum diisi." },
-    { dalil: [{ sumber: "", arab, terjemah: "" }], harap: "Hadis ke-1 belum diberi sumber." },
-    { dalil: [{ sumber: "HR. Baihaqi", arab, terjemah: "" }], harap: "Centang pernyataan pemeriksaan hadis." },
+    { dalil: [{ sumber: "", arab, terjemah: "" }], harap: "Teks Arab ke-1 di Ayat & hadis belum selesai: hadis atau bukan?" },
+    { dalil: [{ sumber: "HR. Baihaqi", arab, terjemah: "" }], harap: "Periksa teks hadis, lalu tekan tombol pemeriksaan di kotak Ayat & hadis." },
     { dalil: [{ sumber: "Bukan ayat/hadis", arab, terjemah: "", bukan: true }], harap: null },
     { dalil: [{ sumber: "HR. Bukhari no. 1", arab, terjemah: "", kitab: true }], harap: null },
   ];
