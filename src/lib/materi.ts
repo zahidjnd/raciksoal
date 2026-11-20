@@ -165,7 +165,7 @@ export function rapikanMateri(x: Partial<IsianMateri>, id: string, cariAyat?: Ca
   if (!barisTp.length) return "Tujuan Pembelajaran (TP) wajib diisi, satu per baris.";
   if (barisTp.length > B.tp) return `TP maksimal ${B.tp} baris.`;
   if (barisTp.some((b) => b.length > B.teksTp)) return `Satu TP maksimal ${B.teksTp} huruf.`;
-  if (x?.tpUsulan && x?.tpDibaca !== true) return "Ada TP usulan AI. Baca TP-nya, ubah bila perlu, lalu centang pernyataan bahwa TP sudah Anda baca.";
+  if (x?.tpUsulan && x?.tpDibaca !== true) return "Ada TP usulan AI. Baca TP-nya, ubah bila perlu, lalu tekan “Sesuai, pakai TP ini”.";
   const tp = barisTp.map((b, i) => {
     const m = /^TP\s*([\d.]+)\s*[:.\-–]?\s*(.+)$/i.exec(b);
     return m ? { kode: `TP ${m[1].replace(/\.$/, "")}`, teks: bersihkan(m[2]) } : { kode: `TP ${i + 1}`, teks: bersihkan(b) };
@@ -191,6 +191,12 @@ export function kurangDalil(d: DalilIsian): "arab" | "sumber" | null {
   if (d.mushaf || d.kitab || kosong(d)) return null;
   if (!new RegExp(POLA_ARAB).test(d.arab)) return "arab";
   return bukanDalil(d) || d.sumber.trim() ? null : "sumber";
+}
+
+/** Alasan kartu materi belum bisa dipakai karena TP (pesan di dekat tombol Buat soal/Simpan, sama dengan rapikanMateri). */
+export function alasanTp(draf: IsianMateri): string | null {
+  if (!draf.tp.trim()) return "Isi Tujuan Pembelajaran (TP) di kartu materi dulu.";
+  return draf.tpUsulan && !draf.tpDibaca ? "Setujui TP usulan AI di kartu materi dulu." : null;
 }
 
 /** Alasan kartu materi belum bisa dipakai karena kotak Ayat & hadis (pesan di dekat tombol; `no` = kotak ke berapa). */
@@ -314,7 +320,7 @@ export function terapkanAnalisa(ai: unknown, draf: IsianMateri, teksGuru: string
     (Array.isArray(x) ? x : []).map((t) => tanpaArab(teks(t)).replace(/^TP\s*[\d.]*\s*[:.\-–]?\s*/i, "").slice(0, 300)).filter(Boolean).slice(0, maks);
 
   // TP dirumuskan guru (RUJUKAN.md D): TP yang tertulis di teks guru disalin dengan kodenya; selebihnya = usulan AI,
-  // yang wajib dibaca & dicentang guru (`tpUsulan`).
+  // yang wajib dibaca & disetujui guru (`tpUsulan`, tombol "Sesuai, pakai TP ini").
   const tp = (Array.isArray(a.tp) ? a.tp : [])
     .map((t) => /^(?:TP\s*([\d.]*\d)\.?\s*[:.\-–]?\s*)?(.+)$/i.exec(teks(t).slice(0, BATAS_MATERI.teksTp)))
     .filter((m): m is RegExpExecArray => !!m)

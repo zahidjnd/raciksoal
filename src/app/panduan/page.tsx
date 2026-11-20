@@ -53,10 +53,10 @@ const LANGKAH: { judul: string; isi: React.ReactNode; gambar: React.ReactNode[] 
     isi: (
       <>
         <p>AI menyusun judul, <b>Tujuan Pembelajaran (TP)</b>, dan pokok materi. Baca sebentar, ubah bila perlu.</p>
-        <p>TP <b>hijau</b> = disalin dari materi Anda. TP <b>kuning</b> = usulan AI: baca, lalu centang “Saya sudah membaca TP ini…”.</p>
+        <p>TP <b>hijau</b> = disalin dari materi Anda. TP <b>kuning</b> = usulan AI karena di materi tidak tertulis TP: baca, lalu tekan <b>✓ Sesuai, pakai TP ini</b>. Ingin mengganti kalimatnya? Tekan <b>Ubah TP</b>, tulis satu TP per baris, lalu <b>Selesai</b>.</p>
       </>
     ),
-    gambar: [<Gambar key="2" nama="2-kartu-materi" alt="Kartu materi hasil analisa dengan kotak TP hijau" lebar={469} tinggi={612} />],
+    gambar: [<Gambar key="2" nama="2-kartu-materi" alt="Kartu materi hasil analisa dengan kotak TP usulan AI dan tombol Sesuai, pakai TP ini" lebar={469} tinggi={803} />],
   },
   {
     judul: "Pilih jenis ujian, lalu Buat soal",

@@ -477,6 +477,15 @@ export function lihatDalil({ no, kolom }: { no: number; kolom: "arab" | "sumber"
   }, 50);
 }
 
+/** 0.65.0: gulir ke kotak TP (dari pesan di dekat tombol Buat soal/Simpan), fokus ke tombolnya, kotak berkedip sebentar. */
+export function lihatTp() {
+  const kotak = document.getElementById("kotak-tp");
+  if (!kotak) return;
+  kotak.scrollIntoView({ behavior: "smooth", block: "center" });
+  kotak.querySelector<HTMLElement>("#setuju-tp, textarea")?.focus({ preventScroll: true });
+  kotak.animate([{ boxShadow: "0 0 0 4px var(--color-peringatan-garis)" }, { boxShadow: "0 0 0 0 transparent" }], { duration: 900, iterations: 2 });
+}
+
 /** Status kotak kuning: apa yang masih kurang (sama dengan pemeriksaan server, kurangDalil). */
 function StatusDalil({ d, diperiksa, mencocokkan }: { d: IsianMateri["dalil"][number]; diperiksa: boolean; mencocokkan: boolean }) {
   if (mencocokkan) return <span className="text-pudar">Mencocokkan ke mushaf dan data hadis 9 kitab...</span>;
@@ -501,6 +510,10 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
   const penuh = draf.dalil.length >= BATAS_MATERI.dalil;
   const [rujukan, setRujukan] = useState("");
   const [ayat, setAyat] = useState<{ proses: boolean; pesan?: string }>({ proses: false });
+  const [ubahTp, setUbahTp] = useState(false);
+  const daftarTp = draf.tp.split("\n").map((t) => t.trim()).filter(Boolean);
+  const tulisTp = ubahTp || !daftarTp.length;
+  const tungguTp = !!draf.tpUsulan && !draf.tpDibaca;
   // 0.36.1: teks Arab kotak kuning dicocokkan ke mushaf/data hadis begitu guru selesai menempel (keluar dari kolom).
   const [mencocokkan, setMencocokkan] = useState<number | null>(null);
   const terkini = useRef(draf);
@@ -552,30 +565,68 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
         Judul
         <input className={`${kotak} mt-1`} maxLength={150} value={draf.judul} onChange={(e) => ubah({ judul: e.target.value })} />
       </label>
-      {/* TP dirumuskan guru (RUJUKAN.md D): TP usulan AI wajib dibaca & dicentang; server ikut memeriksa (rapikanMateri). */}
-      <div className={`space-y-1 rounded-lg border p-2 ${draf.tpUsulan || !draf.tp.trim() ? "border-peringatan-garis bg-peringatan-muda" : "border-hijau"}`}>
-        <label className="block">
-          Tujuan Pembelajaran (TP), satu per baris
-          <span className={`block text-sm ${draf.tpUsulan || !draf.tp.trim() ? "text-peringatan" : "text-hijau-teks"}`}>
-            {draf.tpUsulan
-              ? "TP usulan AI. Baca dulu dan ubah bila perlu, sesuaikan dengan yang Anda ajarkan."
-              : draf.tp.trim()
-                ? "✓ TP dari materi Anda"
-                : "Tidak ada TP. Tulis atau tempel TP dari ATP/modul ajar Anda."}
+      {/* TP dirumuskan guru (RUJUKAN.md D): TP usulan AI wajib disetujui guru; server ikut memeriksa (rapikanMateri).
+          0.65.0: TP tampil sebagai daftar + tombol "Sesuai" / "Ubah TP" (dulu kotak isian + centang kecil: guru awam
+          mengira harus mengetik, centangnya terlewat). */}
+      <div id="kotak-tp" className={`space-y-2 rounded-lg border p-2 ${tungguTp || !daftarTp.length ? "border-peringatan-garis bg-peringatan-muda" : "border-hijau"}`}>
+        <p>
+          Tujuan Pembelajaran (TP)
+          <span className={`block text-sm ${tungguTp || !daftarTp.length ? "text-peringatan" : "text-hijau-teks"}`}>
+            {!daftarTp.length
+              ? "Tidak ada TP di materi Anda. Tulis atau tempel TP dari ATP/modul ajar Anda, satu per baris."
+              : tulisTp
+                ? "Satu TP per baris. Tekan Selesai bila sudah."
+                : tungguTp
+                  ? "Di materi Anda tidak tertulis TP, jadi AI mengusulkan TP di bawah. Baca dulu: sudah sesuai dengan yang Anda ajarkan?"
+                  : draf.tpUsulan
+                    ? "✓ TP sudah Anda setujui."
+                    : "✓ TP dari materi Anda."}
           </span>
+        </p>
+        {tulisTp ? (
           <textarea
             rows={4}
-            className={`${kotak} mt-1`}
+            className={kotak}
+            aria-label="Tujuan Pembelajaran, satu per baris"
             placeholder={"TP 1.1: Peserta didik mampu ...\nTP 1.2: Peserta didik mampu ..."}
             value={draf.tp}
-            onChange={(e) => ubah({ tp: e.target.value })}
+            onChange={(e) => {
+              setUbahTp(true); // mulai mengetik di kotak kosong: tetap kotak isian sampai Selesai
+              ubah({ tp: e.target.value });
+            }}
           />
-        </label>
-        {draf.tpUsulan && (
-          <label className="flex items-start gap-2">
-            <input type="checkbox" className="mt-1" checked={!!draf.tpDibaca} onChange={(e) => ubah({ tpDibaca: e.target.checked })} />
-            Saya sudah membaca TP ini dan sesuai dengan yang saya ajarkan.
-          </label>
+        ) : (
+          <ul className="space-y-1 rounded-lg border bg-kartu p-2">
+            {daftarTp.map((t, i) => <li key={i}>{t}</li>)}
+          </ul>
+        )}
+        {(tungguTp || ubahTp || daftarTp.length > 0) && (
+          <div className="flex flex-wrap gap-2">
+            {ubahTp ? (
+              <button
+                type="button"
+                className="h-10 rounded-lg bg-hijau px-4 font-semibold text-white disabled:opacity-40 max-md:min-h-11"
+                disabled={!daftarTp.length}
+                onClick={() => {
+                  setUbahTp(false);
+                  if (draf.tpUsulan) ubah({ tpDibaca: true }); // guru sendiri yang menulis/menyunting lalu menekan Selesai
+                }}
+              >
+                ✓ Selesai, pakai TP ini
+              </button>
+            ) : (
+              <>
+                {tungguTp && (
+                  <button id="setuju-tp" type="button" className="h-10 rounded-lg bg-hijau px-4 font-semibold text-white max-md:min-h-11" onClick={() => ubah({ tpDibaca: true })}>
+                    ✓ Sesuai, pakai TP ini
+                  </button>
+                )}
+                <button type="button" className={`${tungguTp ? "h-10 px-4 max-md:min-h-11" : "h-8 px-3 text-sm max-md:min-h-11"} rounded-lg border bg-kartu hover:bg-krem`} onClick={() => setUbahTp(true)}>
+                  Ubah TP
+                </button>
+              </>
+            )}
+          </div>
         )}
       </div>
       {!!draf.pokok?.length && (

@@ -52,6 +52,16 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.65.0 — 20 November 2026
+- **Langkah TP lebih mudah.** TP di kartu materi sekarang tampil sebagai **daftar yang mudah dibaca**, bukan kotak isian
+  (dulu guru mengira harus mengetik).
+- **TP usulan AI** (di materi tidak tertulis TP): centang kecil "Saya sudah membaca TP ini…" diganti **tombol besar
+  "✓ Sesuai, pakai TP ini"** dan **"Ubah TP"**. Ubah TP membuka kotak isian; tekan **"✓ Selesai, pakai TP ini"** bila sudah.
+  Aturannya tetap: TP usulan AI wajib disetujui guru sebelum membuat soal.
+- Pesan di bawah tombol Buat soal / Simpan materi ("Setujui TP usulan AI…") punya tautan **"Lihat kotaknya"**: halaman
+  menggulir ke kotak TP, tombol Sesuai langsung terpilih, dan kotaknya berkedip sebentar.
+- Berlaku di Set baru dan Materi saya. Gambar Panduan "Periksa kartu materi" diambil ulang.
+
 ## 0.64.3 — 20 November 2026
 - Tombol batal di kotak pilih halaman PDF sekarang **"✕ Batalkan"** di pojok kanan atas (sama dengan tombol Batalkan
   di kartu materi). Dulu berupa tautan kecil "Batal" di ujung kalimat panjang, mudah terlewat.

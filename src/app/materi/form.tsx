@@ -5,8 +5,8 @@ import { beriTahu, tanya } from "../tanya";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { KELAS } from "@/lib/soal";
-import { KartuMateri, KotakMateri, lihatDalil, PilihMapel } from "../kotak-materi";
-import { alasanDalil, modeArab, type IsianMateri } from "@/lib/materi";
+import { KartuMateri, KotakMateri, lihatDalil, lihatTp, PilihMapel } from "../kotak-materi";
+import { alasanDalil, alasanTp, modeArab, type IsianMateri } from "@/lib/materi";
 import { hapusMateri, simpanMateri } from "./actions";
 
 const TERSIMPAN = "Materi tersimpan. Bisa dipilih lewat “Pakai materi sebelumnya” saat membuat soal.";
@@ -35,11 +35,11 @@ export function FormMateri({ id: idAwal, awal, bawaan }: { id: number | null; aw
   }
 
   const dalilKurang = draf ? alasanDalil(draf) : null;
+  const tpKurang = draf ? alasanTp(draf) : null;
   const alasan =
     !mapel || !kelas ? "Pilih mata pelajaran dan kelas dulu." :
     !draf ? "Tempel teks atau lampirkan file, lalu tekan Analisa materi." :
-    !draf.tp.trim() ? "Isi Tujuan Pembelajaran (TP) di kartu materi dulu." :
-    draf.tpUsulan && !draf.tpDibaca ? "Baca TP usulan AI di kartu materi, lalu centang persetujuannya." :
+    tpKurang ? tpKurang :
     dalilKurang ? dalilKurang.pesan : "";
 
   async function simpan() {
@@ -80,6 +80,9 @@ export function FormMateri({ id: idAwal, awal, bawaan }: { id: number | null; aw
       {alasan && (
         <p className="text-sm text-pudar">
           {alasan}
+          {tpKurang && alasan === tpKurang && (
+            <> <button className="underline hover:text-tinta" onClick={lihatTp}>Lihat kotaknya</button></>
+          )}
           {dalilKurang && alasan === dalilKurang.pesan && (
             <> <button className="underline hover:text-tinta" onClick={() => lihatDalil(dalilKurang)}>Lihat kotaknya</button></>
           )}
