@@ -52,6 +52,17 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.64.2 — 20 November 2026
+- **Zoom gambar halaman PDF bertahap** (pengganti tombol "Perbesar gambar" yang langsung sangat besar): tombol **−** / **+**
+  (10% per ketukan), penggeser, dan angka persen. Di laptop juga bisa **Ctrl + roda mouse** atau **cubit touchpad**
+  (hanya di dalam kotak gambar; roda biasa tetap untuk menggulir).
+- Saat zoom digeser, gambar langsung ikut membesar; ±½ detik setelah berhenti gambar dipertajam tanpa berkedip.
+  Letak gulir tetap di halaman yang sama.
+- Batas zoom mengikuti lebar layar: laptop sampai 300%, HP sampai ±170% (sudah 1 kolom selebar layar), jadi tombol +
+  tidak pernah "tidak berbuat apa-apa".
+- Diuji dengan buku FIKIH Kelas 10 (307 halaman): laptop 7 kolom (100%) sampai 2 kolom (300%), HP 3 kolom sampai 1
+  kolom; Ctrl + roda dan cubit touchpad jalan; ketuk halaman 123 lalu 125 tetap mengisi angka dengan benar.
+
 ## 0.64.1 — 20 November 2026
 - **Tombol "Perbesar gambar"** di pemilih halaman PDF: gambar halaman jadi 1 kolom (HP) / 2 kolom (laptop) sehingga
   judul bab dan isi halaman terbaca. Letak gulir tetap di halaman yang sama saat diperbesar/diperkecil.
