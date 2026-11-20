@@ -93,7 +93,7 @@ const TOPIK: { id: string; judul: string; isi: React.ReactNode }[] = [
           <li>Tabel di file ikut terbaca sebagai tabel (di kotak isi tampil sebagai baris <b>| sel | sel |</b>), jadi AI bisa membuat soal dari datanya.</li>
           <li>Rumus Word (<b>Insert → Equation</b>) ikut terbaca, tampil sebagai <b>$...$</b> di kotak isi.</li>
           <li><b>PDF dibaca AI</b> halaman demi halaman, termasuk tabel, rumus, gambar, dan PDF hasil scan. Muncul tulisan “AI membaca PDF: … halaman”.</li>
-          <li>PDF lebih dari {MAKS_HALAMAN_PDF} halaman: muncul gambar kecil tiap halaman. Gulir, ketuk halaman pertama bab lalu halaman terakhirnya (angka di bawah gambar = nomor halaman file, bukan nomor cetak buku), lalu tekan <b>Baca dengan AI</b>. Makin banyak halaman makin lama dibaca (10 halaman ±1 menit).</li>
+          <li>PDF lebih dari {MAKS_HALAMAN_PDF} halaman: muncul gambar kecil tiap halaman (tekan <b>Perbesar gambar</b> bila tulisannya belum terbaca). Gulir, ketuk halaman pertama bab lalu halaman terakhirnya (angka di bawah gambar = nomor halaman file, bukan nomor cetak buku), lalu tekan <b>Baca dengan AI</b>. Makin banyak halaman makin lama dibaca (10 halaman ±1 menit).</li>
           <li><b>Foto halaman buku</b>: tombol <b>kamera</b> memotret satu halaman (tekan lagi untuk halaman berikutnya); tombol <b>klip</b> memilih beberapa foto sekaligus dari galeri, dibaca berurutan sesuai urutan dipilih. Foto tegak, terang, satu halaman penuh, tanpa bayangan. Setiap foto dihitung satu halaman dari jatah halaman PDF harian. Periksa hasilnya di kotak isi.</li>
           <li>Materi yang pernah dipakai bisa dipilih lagi lewat <b>Pakai materi sebelumnya</b>.</li>
         </ul>

@@ -52,6 +52,20 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.64.1 — 20 November 2026
+- **Tombol "Perbesar gambar"** di pemilih halaman PDF: gambar halaman jadi 1 kolom (HP) / 2 kolom (laptop) sehingga
+  judul bab dan isi halaman terbaca. Letak gulir tetap di halaman yang sama saat diperbesar/diperkecil.
+- **Belum ada halaman terpilih saat PDF dilampirkan.** Dulu halaman 1–10 terpilih otomatis, jadi guru yang langsung
+  menekan "Baca dengan AI" membuat AI membaca sampul dan kata pengantar. Sekarang tombol itu baru aktif setelah guru
+  memilih halaman.
+- Gambar halaman lebih tajam di HP (mengikuti kerapatan layar) dan gambar yang sudah jauh digulir dilepas lagi, jadi
+  memori tetap kecil walau seluruh buku digulir. Angka yang diketik terbalik (mis. 50 sampai 40) tidak lagi
+  menampilkan "-9 halaman".
+- Diuji dengan buku asli FIKIH Kelas 10 (307 halaman, 57 MB) di laptop dan ukuran HP: gambar muncul ±0,3 detik
+  setelah digulir, memori ±80 MB setelah seluruh buku digulir. Dari 15 buku guru (175–312 halaman), 10 tanpa bookmark.
+
+---
+
 ## 0.64.0 — 20 November 2026
 - **Memilih halaman PDF kini lewat gambar.** Untuk PDF lebih dari 75 halaman, guru tidak perlu lagi menebak nomor
   halaman. Tampil gambar kecil tiap halaman: gulir, ketuk halaman pertama bab, lalu halaman terakhirnya. Angka di

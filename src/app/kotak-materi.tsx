@@ -205,8 +205,9 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
           if (jumlah > MAKS_HALAMAN_PDF) {
             setFile([...file, ...baru]);
             setProses("");
-            // Bawaan 10 halaman (±20 ribu huruf buku Kemenag, ±1 menit dibaca AI); guru bisa menaikkan sampai MAKS_HALAMAN_PDF.
-            setPilihPdf({ f, jumlah, dari: 1, sampai: Math.min(10, MAKS_HALAMAN_PDF) });
+            // 0.64.1: belum ada halaman terpilih (dulu bawaan 1–10 = sampul & kata pengantar ikut terbaca bila guru
+            // langsung menekan Baca). Guru memilih lewat gambar halaman (PilihHalamanPdf) atau isian angka.
+            setPilihPdf({ f, jumlah, dari: 0, sampai: 0 });
             if (i < daftarFile.length - 1) setPesan({ ok: false, teks: "File sesudah PDF ini belum dibaca. Lampirkan lagi setelah memilih halaman PDF." });
             return;
           }
@@ -430,10 +431,16 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
           />
           <div className="flex flex-wrap items-center gap-2">
             Halaman
-            <input type="number" min={1} max={pilihPdf.jumlah} aria-label="Dari halaman" className="h-8 w-20 rounded-lg border bg-kartu px-2 max-md:min-h-11" value={pilihPdf.dari} onChange={(e) => setPilihPdf({ ...pilihPdf, dari: Number(e.target.value) })} />
+            <input type="number" min={1} max={pilihPdf.jumlah} aria-label="Dari halaman" className="h-8 w-20 rounded-lg border bg-kartu px-2 max-md:min-h-11" value={pilihPdf.dari || ""} onChange={(e) => setPilihPdf({ ...pilihPdf, dari: Number(e.target.value) })} />
             sampai
-            <input type="number" min={1} max={pilihPdf.jumlah} aria-label="Sampai halaman" className="h-8 w-20 rounded-lg border bg-kartu px-2 max-md:min-h-11" value={pilihPdf.sampai} onChange={(e) => setPilihPdf({ ...pilihPdf, sampai: Number(e.target.value) })} />
-            <button className="h-8 rounded-lg bg-hijau px-3 font-semibold text-white max-md:min-h-11" onClick={() => lanjutPdf(true)}>Baca dengan AI</button>
+            <input type="number" min={1} max={pilihPdf.jumlah} aria-label="Sampai halaman" className="h-8 w-20 rounded-lg border bg-kartu px-2 max-md:min-h-11" value={pilihPdf.sampai || ""} onChange={(e) => setPilihPdf({ ...pilihPdf, sampai: Number(e.target.value) })} />
+            <button
+              className="h-8 rounded-lg bg-hijau px-3 font-semibold text-white disabled:opacity-40 max-md:min-h-11"
+              disabled={!(pilihPdf.dari >= 1 && pilihPdf.sampai >= pilihPdf.dari && pilihPdf.dari <= pilihPdf.jumlah)}
+              onClick={() => lanjutPdf(true)}
+            >
+              Baca dengan AI
+            </button>
           </div>
           <p className="text-sm text-pudar">
             Nomor halaman menurut file PDF (bukan nomor yang tercetak di buku).{" "}
