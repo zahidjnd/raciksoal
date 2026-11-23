@@ -9,6 +9,7 @@ import { PilihHalamanPdf } from "./pilih-halaman-pdf";
 import { ambilAyat, cocokkanDalil } from "./materi/actions";
 import { Teks } from "./kartu-soal";
 import { Panah } from "./panah";
+import { sidikFile, simpanDraf } from "./simpanan";
 import { BATAS_GAMBAR } from "@/lib/gambar";
 import { MAKS_HALAMAN_PDF } from "@/lib/pembatas";
 import { BATAS_MATERI, buangTandaGambar, geserTandaGambar, kurangDalil, type IsianMateri } from "@/lib/materi";
@@ -39,6 +40,7 @@ type Props = {
   draf: IsianMateri | null; // materi baru yang sudah dianalisa AI, belum tersimpan (tersimpan saat "Buat soal")
   setDraf: (d: IsianMateri | null) => void;
   gabung?: boolean; // false di halaman Materi saya: tanpa hitungan gabung & "Pakai materi sebelumnya"
+  pemilik: string; // id guru: tanda simpanan hasil AI di browser (simpanan.ts, aturan 3)
 };
 
 const kotak = "w-full rounded-lg border p-2 text-sm";
@@ -61,7 +63,7 @@ export const DRAF_TEKS = "raciksoal-draf-materi";
  * (judul, usulan TP, pokok materi, sumber/terjemah dalil yang tertulis) → kartu materi yang bisa diedit guru.
  * Bisa digabung dengan materi sebelumnya (PTS/PAS). Ayat diambil dari mushaf; hadis wajib dicentang (aturan 5).
  */
-export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, setDraf, gabung = true }: Props) {
+export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, setDraf, gabung = true, pemilik }: Props) {
   const [teks, setTeksMentah] = useState("");
   // Draf teks hanya di halaman Set baru (gabung): tab tertutup sebelum Analisa materi → teks kembali saat dibuka lagi.
   useEffect(() => {
@@ -86,6 +88,14 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
   const [file, setFile] = useState<FileMateri[]>([]); // file yang dilampirkan (urut), bisa dilepas satu per satu
   const [proses, setProses] = useState("");
   const [pesan, setPesan] = useState<{ ok: boolean; teks: string } | null>(null);
+  // 0.68.0: AI sedang membaca/menganalisa → refresh/tutup tab ditanya dulu oleh browser ("Tinggalkan situs?").
+  // Pindah menu di dalam aplikasi tidak perlu: prosesnya tetap jalan dan hasilnya disimpan (simpanan.ts).
+  useEffect(() => {
+    if (!proses) return;
+    const tahan = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", tahan);
+    return () => window.removeEventListener("beforeunload", tahan);
+  }, [proses]);
   const [lihatLama, setLihatLama] = useState(false);
   // Gambar yang ditempel (Ctrl+V) di kotak materi sebelum analisa; diunggah bersama gambar file saat analisa.
   const [tempelan, setTempelan] = useState<File[]>([]);
@@ -169,7 +179,11 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
     setTerpakai(dipakai);
     setDitolak(tolak);
     setTempelan([]);
-    setDraf(gambar.length ? { ...r.isian, gambar } : r.isian);
+    const drafBaru = gambar.length ? { ...r.isian, gambar } : r.isian;
+    // Disimpan di sini (bukan hanya lewat state): kalau guru sudah pindah menu, komponen ini sudah hilang tapi hasilnya
+    // tetap tersimpan dan ditawarkan lagi di Set baru (0.68.0).
+    if (gabung) simpanDraf(pemilik, mapel, kelas, drafBaru);
+    setDraf(drafBaru);
     const catatan = [r.catatan, gagal && `Sebagian gambar tidak terunggah: ${gagal}`, ...catatanBaca].filter(Boolean).join(" ");
     if (catatan) setPesan({ ok: false, teks: catatan });
   }
@@ -193,7 +207,7 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
       if (daftarFoto.length) {
         const { bacaFotoDenganAI } = await import("./baca-pdf");
         setProses(`AI membaca foto: 0 dari ${daftarFoto.length}...`);
-        const isi = await bacaFotoDenganAI(daftarFoto, mapel, (s, t) => setProses(`AI membaca foto: ${s} dari ${t}...`));
+        const isi = await bacaFotoDenganAI(daftarFoto, mapel, (s, t) => setProses(`AI membaca foto: ${s} dari ${t}...`), pemilik);
         baru.push({ nama: daftarFoto.length === 1 ? "Foto halaman" : `${daftarFoto.length} foto halaman`, paragraf: isi.paragraf, gambar: isi.gambar });
         catatanBaca.push(...isi.catatan);
       }
@@ -234,7 +248,7 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
   async function bacaPdf(f: File, dari: number, sampai: number) {
     const { bacaPdfDenganAI } = await import("./baca-pdf");
     setProses(`AI membaca PDF: halaman ${dari}–${sampai}...`);
-    const hasil = await bacaPdfDenganAI(await f.arrayBuffer(), mapel, dari, sampai, (s, t) => setProses(`AI membaca PDF: ${s} dari ${t} halaman...`));
+    const hasil = await bacaPdfDenganAI(await f.arrayBuffer(), mapel, dari, sampai, (s, t) => setProses(`AI membaca PDF: ${s} dari ${t} halaman...`), { pemilik, sidik: sidikFile(f) });
     const nama = dari === 1 && sampai >= hasil.halaman ? f.name : `${f.name} (hlm ${dari}–${sampai})`;
     return { file: { nama, paragraf: hasil.paragraf, gambar: hasil.gambar }, catatan: hasil.catatan };
   }

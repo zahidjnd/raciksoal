@@ -9,6 +9,7 @@ import { DRAF_TEKS, KotakMateri, lihatDalil, lihatTp, PilihMapel, type MateriLam
 import { FormIdentitas, ringkasIdentitas } from "./form-identitas";
 import { StepAngka } from "./step-angka";
 import { Panah } from "./panah";
+import { ambilDraf, EVENT_DRAF, hapusDraf, simpanDraf, type DrafTersimpan } from "./simpanan";
 import { skorOtomatis } from "@/lib/skor";
 import { kunciRingkas } from "@/lib/kunci";
 import { PAKET, susunPaket, type Paket } from "@/lib/paket";
@@ -106,7 +107,7 @@ function TabelKisi({ kisi }: { kisi: BarisKisi[] }) {
   );
 }
 
-export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: string; awalId: number | null; awalMateri: string[]; bawaan: Preferensi }) {
+export function BuatSoal({ sapaan, awalId, awalMateri, bawaan, guruId }: { sapaan: string; awalId: number | null; awalMateri: string[]; bawaan: Preferensi; guruId: string }) {
   const router = useRouter();
   const [p, setP] = useState<Pengaturan>({
     babId: "",
@@ -127,6 +128,28 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: strin
   const [daftarBab, setDaftarBab] = useState<MateriLama[]>([]); // materi milik guru (tersimpan otomatis)
   const [pilihan, setPilihan] = useState<string[]>(awalMateri); // materi lama yang dipakai (?materi= dari "Pakai materi ini lagi")
   const [draf, setDraf] = useState<IsianMateri | null>(null); // materi baru hasil analisa AI, tersimpan saat "Buat soal"
+  // 0.68.0: hasil analisa yang belum dipakai (tersimpan di browser, simpanan.ts) ditawarkan lagi: Lanjutkan / Buang.
+  const [tawaran, setTawaran] = useState<DrafTersimpan | null>(null);
+  /** Draf dibuang guru (Batal, ganti mapel, sudah tersimpan di server) → simpanan browser ikut dihapus. */
+  const ubahDraf = (d: IsianMateri | null) => {
+    if (!d) {
+      hapusDraf();
+      setTawaran(null);
+    }
+    setDraf(d);
+  };
+  // Perubahan guru di kartu materi ikut disimpan (ditunda 0,5 dtk: materi bisa 150 ribu huruf, jangan tiap ketukan).
+  useEffect(() => {
+    if (!draf) return;
+    const t = setTimeout(() => simpanDraf(guruId, mapel, kelas, draf), 500);
+    return () => clearTimeout(t);
+  }, [draf, guruId, mapel, kelas]);
+  // Analisa selesai saat guru sedang di menu lain lalu kembali ke sini: tawaran muncul begitu hasilnya tersimpan.
+  useEffect(() => {
+    const dengar = () => setTawaran(ambilDraf(guruId));
+    window.addEventListener(EVENT_DRAF, dengar);
+    return () => window.removeEventListener(EVENT_DRAF, dengar);
+  }, [guruId]);
   const [menyiapkan, setMenyiapkan] = useState(false);
   const [banding, setBanding] = useState<{ nama: string; id?: number; pesan?: string }[]>([]);
   const [id, setId] = useState<number | null>(awalId); // dari ?id= (dibaca server), mis. buka set dari riwayat
@@ -189,17 +212,19 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: strin
         const k = dari.kelas || bawaan.kelas;
         if (m) setMapel(m);
         if (k) setKelas(k);
+        // Sesudah mapel awal terpasang, supaya "Lanjutkan" tidak tertimpa mapel bawaan.
+        setTawaran(ambilDraf(guruId));
       })
       .catch(() => {});
     muatJatah();
-  }, [awalMateri, bawaan]);
+  }, [awalMateri, bawaan, guruId]);
 
   /** Ganti mapel/kelas: materi yang sudah dipilih (mapel lain) dilepas, pilihan diingat di perangkat ini. */
   function pilihMapel(m: string, k: string) {
     setMapel(m);
     setKelas(k);
     setPilihan([]);
-    setDraf(null);
+    ubahDraf(null);
     try {
       localStorage.setItem(INGAT, JSON.stringify({ mapel: m, kelas: k }));
     } catch {
@@ -218,7 +243,7 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: strin
       // Penyimpanan browser diblokir: tidak ada draf untuk dihapus.
     }
     const id = `materi-${r.id}`;
-    setDraf(null);
+    ubahDraf(null);
     setPilihan([...pilihan, id]); // supaya tidak tersimpan dua kali kalau pembuatan soal diulang
     setDaftarBab([{ id, judul: r.isian.judul, mapel, kelas }, ...daftarBab]);
     return [...pilihan, id];
@@ -345,7 +370,33 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan }: { sapaan: strin
               <FormIdentitas nilai={p.identitas ?? {}} ubah={(identitas) => setP({ ...p, identitas })} />
             </div>
           </details>
-          <KotakMateri mapel={mapel} kelas={kelas} daftar={daftarBab} pilihan={pilihan} setPilihan={setPilihan} draf={draf} setDraf={setDraf} />
+          {tawaran && !draf && (
+            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-hijau/40 bg-hijau-muda/40 p-3 text-sm" role="status">
+              <p className="min-w-0 flex-1">
+                Ada hasil analisa materi yang belum dipakai: <b dir="auto">{tawaran.draf.judul || "tanpa judul"}</b> ({tawaran.mapel}, kelas {tawaran.kelas},{" "}
+                {new Date(tawaran.waktu).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" })}).
+              </p>
+              <button
+                className="h-8 rounded-lg bg-hijau px-3 font-semibold text-white max-md:min-h-11"
+                onClick={() => {
+                  setMapel(tawaran.mapel);
+                  setKelas(tawaran.kelas);
+                  setPilihan([]);
+                  setDraf(tawaran.draf);
+                  setTawaran(null);
+                  try {
+                    localStorage.setItem(INGAT, JSON.stringify({ mapel: tawaran.mapel, kelas: tawaran.kelas }));
+                  } catch {
+                    // diblokir: tidak diingat
+                  }
+                }}
+              >
+                Lanjutkan
+              </button>
+              <button className="h-8 rounded-lg border bg-kartu px-3 hover:bg-krem max-md:min-h-11" onClick={() => ubahDraf(null)}>Buang</button>
+            </div>
+          )}
+          <KotakMateri mapel={mapel} kelas={kelas} daftar={daftarBab} pilihan={pilihan} setPilihan={setPilihan} draf={draf} setDraf={ubahDraf} pemilik={guruId} />
 
           {/* Kartu jenis soal: pilihan setara, jadi sengaja berbentuk sama. Memilih kartu ikut mengatur komposisi level. */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5" role="radiogroup" aria-label="Jenis soal">

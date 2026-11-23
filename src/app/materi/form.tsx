@@ -15,7 +15,7 @@ const TERSIMPAN = "Materi tersimpan. Bisa dipilih lewat “Pakai materi sebelumn
  * Tambah/ubah materi di halaman Materi saya. Memakai kotak & kartu yang SAMA dengan Set baru (kotak-materi.tsx):
  * materi baru = tempel/lampirkan → Analisa materi → kartu → Simpan materi (tanpa membuat soal).
  */
-export function FormMateri({ id: idAwal, awal, bawaan }: { id: number | null; awal: IsianMateri | null; bawaan: { mapel: string[]; kelas: string } }) {
+export function FormMateri({ id: idAwal, awal, bawaan, guruId }: { id: number | null; awal: IsianMateri | null; bawaan: { mapel: string[]; kelas: string }; guruId: string }) {
   const router = useRouter();
   const [id, setId] = useState(idAwal);
   const [draf, setDraf] = useState<IsianMateri | null>(awal);
@@ -65,7 +65,7 @@ export function FormMateri({ id: idAwal, awal, bawaan }: { id: number | null; aw
       {id && draf ? (
         <KartuMateri draf={draf} setDraf={setDraf} judul="Isi materi (semua bisa diubah)" />
       ) : (
-        <KotakMateri mapel={mapel} kelas={kelas} daftar={[]} pilihan={[]} setPilihan={() => {}} draf={draf} setDraf={setDraf} gabung={false} />
+        <KotakMateri mapel={mapel} kelas={kelas} daftar={[]} pilihan={[]} setPilihan={() => {}} draf={draf} setDraf={setDraf} gabung={false} pemilik={guruId} />
       )}
 
       <div className="flex flex-wrap items-center gap-2">

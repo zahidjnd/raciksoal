@@ -7,6 +7,7 @@ import { bacaHalamanPdf } from "./actions";
 import { BATAS_GAMBAR } from "@/lib/gambar";
 import { geserTandaGambar, POLA_TANDA_GAMBAR, TANDA_PDF, tandaGambar } from "@/lib/materi";
 import { bukaPdf, buangKepalaHalaman, cakupanKata, teksHalamanPdf, type GambarFile } from "@/lib/office";
+import { ambilHalaman, sidikFile, simpanHalaman } from "./simpanan";
 
 const SISI = 1600; // px sisi terpanjang foto halaman: huruf kecil & rumus masih terbaca (uji 2026-11-11)
 const SERENTAK = 3; // halaman yang dibaca bersamaan
@@ -70,12 +71,19 @@ async function bergiliran(n: number, kerja: (ke: number) => Promise<void>) {
  * 0.40.0: foto halaman buku dari HP (kamera/galeri) dibaca AI seperti halaman PDF, urut sesuai pilihan guru.
  * Tanpa teks asli: tidak ada cek cakupan dan tidak ada cadangan teks; foto yang gagal hanya dicatat.
  */
-export async function bacaFotoDenganAI(daftar: File[], mapel: string, kemajuan: (selesai: number, total: number) => void) {
+// pemilik = id guru (0.68.0): hasil baca tiap foto/halaman disimpan di browser; file sama dilampirkan lagi → tanpa AI.
+export async function bacaFotoDenganAI(daftar: File[], mapel: string, kemajuan: (selesai: number, total: number) => void, pemilik = "") {
   const hasil: { paragraf: string[]; gambar: GambarFile[] }[] = [];
   const catatan = new Set<string>();
   let selesai = 0;
   await bergiliran(daftar.length, async (ke) => {
     hasil[ke] = { paragraf: [], gambar: [] };
+    const sidik = sidikFile(daftar[ke]);
+    const tersimpan = await ambilHalaman(pemilik, sidik, mapel, 1);
+    if (tersimpan) {
+      hasil[ke] = tersimpan;
+      return kemajuan(++selesai, daftar.length);
+    }
     let bmp: ImageBitmap | null = null;
     try {
       bmp = await createImageBitmap(daftar[ke]); // arah foto (EXIF) diikuti browser
@@ -94,7 +102,10 @@ export async function bacaFotoDenganAI(daftar: File[], mapel: string, kemajuan: 
       bmp.close();
       const r = await kirimFoto(foto, mapel);
       if (!r.ok) catatan.add(`Foto ${ke + 1} tidak terbaca: ${r.pesan.split(";")[0].replace(/\.$/, "")}.`);
-      else hasil[ke] = await pasangPotongan(foto, r, `foto-${ke + 1}`);
+      else {
+        hasil[ke] = await pasangPotongan(foto, r, `foto-${ke + 1}`);
+        await simpanHalaman(pemilik, sidik, mapel, 1, hasil[ke]);
+      }
       foto.width = 0;
     }
     kemajuan(++selesai, daftar.length);
@@ -113,7 +124,7 @@ export async function bacaFotoDenganAI(daftar: File[], mapel: string, kemajuan: 
  * Baca halaman `dari`..`sampai` dengan AI. Hasil: paragraf materi (urut halaman, tanda [[GAMBAR n]] bernomor urut
  * seluruh PDF), gambar hasil potongan (nomor sama dengan tandanya), dan catatan untuk guru.
  */
-export async function bacaPdfDenganAI(data: ArrayBuffer, mapel: string, dari: number, sampai: number, kemajuan: (selesai: number, total: number) => void) {
+export async function bacaPdfDenganAI(data: ArrayBuffer, mapel: string, dari: number, sampai: number, kemajuan: (selesai: number, total: number) => void, simpan?: { pemilik: string; sidik: string }) {
   const { doc, tutup } = await bukaPdf(data);
   try {
     const nomor = Array.from({ length: Math.max(0, Math.min(sampai, doc.numPages) - dari + 1) }, (_, i) => dari + i);
@@ -123,6 +134,13 @@ export async function bacaPdfDenganAI(data: ArrayBuffer, mapel: string, dari: nu
     let selesai = 0;
 
     async function satuHalaman(n: number, ke: number) {
+      const tersimpan = simpan && (await ambilHalaman(simpan.pemilik, simpan.sidik, mapel, n));
+      if (tersimpan) {
+        // Sudah pernah dibaca AI (0.68.0): tanpa foto & tanpa AI; teks asli tetap diambil untuk buangKepalaHalaman.
+        asliSemua[ke] = await teksHalamanPdf(doc, n);
+        hasil[ke] = tersimpan;
+        return kemajuan(++selesai, nomor.length);
+      }
       const halaman = await doc.getPage(n);
       const dasar = halaman.getViewport({ scale: 1 });
       const viewport = halaman.getViewport({ scale: SISI / Math.max(dasar.width, dasar.height) });
@@ -140,7 +158,10 @@ export async function bacaPdfDenganAI(data: ArrayBuffer, mapel: string, dari: nu
       let isi = { paragraf: asli, gambar: [] as GambarFile[] };
       if (!r.ok) catatan.add(r.pesan);
       else if ((cakupanKata(asli, r.paragraf) ?? 1) < BATAS_CAKUPAN) catatan.add(`Halaman ${n}: bacaan AI kurang lengkap, jadi dipakai teks PDF biasa.`);
-      else isi = await pasangPotongan(foto, r, `halaman-${n}`);
+      else {
+        isi = await pasangPotongan(foto, r, `halaman-${n}`);
+        if (simpan) await simpanHalaman(simpan.pemilik, simpan.sidik, mapel, n, isi); // hanya bacaan AI yang berhasil
+      }
       foto.width = 0; // lepaskan memori foto halaman
       hasil[ke] = isi;
       kemajuan(++selesai, nomor.length);

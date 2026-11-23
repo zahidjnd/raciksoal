@@ -15,7 +15,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ i
   return (
     <Kerangka p={p} lebar setAktif={id}>
       {/* Sapaan dipilih di server tiap halaman dibuka (berganti-ganti, sesuai jam WIB); tidak diacak di browser. */}
-      <BuatSoal sapaan={pilihSapaan(p.nama)} awalId={id} awalMateri={materi} bawaan={await ambilPreferensi(p.id)} />
+      <BuatSoal sapaan={pilihSapaan(p.nama)} awalId={id} awalMateri={materi} bawaan={await ambilPreferensi(p.id)} guruId={p.id} />
     </Kerangka>
   );
 }

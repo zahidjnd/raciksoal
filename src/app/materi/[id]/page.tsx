@@ -21,7 +21,7 @@ export default async function UbahMateri({ params }: { params: Promise<{ id: str
   }
   return (
     <Kerangka p={p}>
-      <FormMateri id={id === "baru" ? null : Number(id)} awal={awal} bawaan={await ambilPreferensi(p.id)} />
+      <FormMateri id={id === "baru" ? null : Number(id)} awal={awal} bawaan={await ambilPreferensi(p.id)} guruId={p.id} />
     </Kerangka>
   );
 }
