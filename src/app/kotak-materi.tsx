@@ -93,6 +93,7 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
   const [ditolak, setDitolak] = useState<Set<GambarFile>>(new Set()); // dinilai AI bukan isi pelajaran (logo, hiasan)
   const calon = useMemo(() => file.flatMap((f) => f.gambar).filter((g) => !terpakai.has(g)), [file, terpakai]);
   const sesuai = daftar.filter((m) => m.mapel.toLowerCase() === mapel.toLowerCase() && m.kelas === kelas);
+  const sedikit = pilihan.flatMap((id) => daftar.find((x) => x.id === id) ?? []).filter((m) => m.huruf !== undefined && m.huruf < MATERI_SEDIKIT);
   const siap = !!mapel && !!kelas;
   const penuh = pilihan.length + (draf ? 1 : 0) >= MAKS_GABUNG;
 
@@ -277,21 +278,34 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
         </div>
       )}
 
-      {/* Materi sebelumnya yang dipakai (bisa lebih dari satu untuk PTS/PAS). */}
-      {pilihan.map((id) => {
-        const m = daftar.find((x) => x.id === id);
-        return (
-          <div key={id} className="space-y-2">
-            <div className="flex items-center justify-between gap-2 rounded-lg border border-hijau/40 bg-hijau-muda/40 px-3 py-2 text-sm">
-              <span className="min-w-0 truncate">✓ {m?.judul ?? id}</span>
-              <button className={`${TOMBOL_KECIL} shrink-0 text-pudar hover:text-bahaya`} aria-label={`Lepas materi ${m?.judul ?? id}`} onClick={() => setPilihan(pilihan.filter((x) => x !== id))}>
-                ✕ Lepas
-              </button>
-            </div>
-            {m?.huruf !== undefined && m.huruf < MATERI_SEDIKIT && <PeringatanSedikit huruf={m.huruf} />}
+      {/* Materi sebelumnya yang dipakai (bisa lebih dari satu untuk PTS/PAS). 0.68.0: chip kecil berbaris menyamping
+          (dulu satu baris penuh per materi: 10 materi = halaman sangat panjang); peringatan "sedikit" digabung satu. */}
+      {pilihan.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {pilihan.map((id) => {
+              const judul = daftar.find((x) => x.id === id)?.judul ?? id;
+              return (
+                <span key={id} className="inline-flex h-8 max-w-full items-center gap-1 rounded-full border border-hijau/40 bg-hijau-muda/40 pl-3 text-sm max-md:min-h-11" title={judul}>
+                  <span dir="auto" className="min-w-0 max-w-56 truncate">✓ {judul}</span>
+                  <button className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-pudar hover:text-bahaya max-md:h-11 max-md:w-11" aria-label={`Lepas materi ${judul}`} onClick={() => setPilihan(pilihan.filter((x) => x !== id))}>
+                    ✕
+                  </button>
+                </span>
+              );
+            })}
+            {pilihan.length > 4 && (
+              <button className={`${TOMBOL_KECIL} text-pudar hover:text-bahaya`} onClick={() => setPilihan([])}>Lepas semua</button>
+            )}
           </div>
-        );
-      })}
+          {sedikit.length > 0 && (
+            <p className="rounded-lg border border-peringatan-garis bg-peringatan-muda p-2 text-sm text-peringatan" role="alert">
+              {sedikit.length === 1 ? "Isi materi" : `Isi ${sedikit.length} materi`} ini sedikit sekali: {sedikit.map((m) => `${m.judul} (${m.huruf!.toLocaleString("id-ID")} huruf)`).join("; ")}. AI akan menebak isi
+              pelajaran sendiri, jadi soal bisa tidak sesuai buku/kurikulum. Sebaiknya tempel atau lampirkan isi bab dari buku atau modul. Tetap boleh lanjut.
+            </p>
+          )}
+        </div>
+      )}
 
       {draf ? (
         <KartuMateri draf={draf} setDraf={setDraf} calon={calon} ditolak={ditolak} judul="Materi baru (hasil analisa AI, silakan periksa)" batal={() => { setDraf(null); setTeks(""); setFile([]); setTempelan([]); setTerpakai(new Set()); setDitolak(new Set()); setPesan(null); }} />
