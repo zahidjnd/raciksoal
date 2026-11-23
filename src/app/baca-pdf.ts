@@ -121,13 +121,13 @@ export async function bacaFotoDenganAI(daftar: File[], mapel: string, kemajuan: 
 }
 
 /**
- * Baca halaman `dari`..`sampai` dengan AI. Hasil: paragraf materi (urut halaman, tanda [[GAMBAR n]] bernomor urut
+ * Baca halaman terpilih (urut, boleh loncat antar bab) dengan AI. Hasil: paragraf materi (urut halaman, tanda [[GAMBAR n]] bernomor urut
  * seluruh PDF), gambar hasil potongan (nomor sama dengan tandanya), dan catatan untuk guru.
  */
-export async function bacaPdfDenganAI(data: ArrayBuffer, mapel: string, dari: number, sampai: number, kemajuan: (selesai: number, total: number) => void, simpan?: { pemilik: string; sidik: string }) {
+export async function bacaPdfDenganAI(data: ArrayBuffer, mapel: string, halaman: number[], kemajuan: (selesai: number, total: number) => void, simpan?: { pemilik: string; sidik: string }) {
   const { doc, tutup } = await bukaPdf(data);
   try {
-    const nomor = Array.from({ length: Math.max(0, Math.min(sampai, doc.numPages) - dari + 1) }, (_, i) => dari + i);
+    const nomor = halaman.filter((n) => n >= 1 && n <= doc.numPages); // 0.68.0: boleh beberapa bab (tidak berurutan)
     const hasil: { paragraf: string[]; gambar: GambarFile[] }[] = [];
     const asliSemua: string[][] = [];
     const catatan = new Set<string>();

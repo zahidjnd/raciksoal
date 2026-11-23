@@ -7,8 +7,9 @@
 // walau seluruh buku digulir), belum ada halaman terpilih sebelum guru mengetuk.
 // 0.64.2: tombol Perbesar diganti zoom 100–300% (tombol − / +, penggeser, Ctrl + roda mouse, cubit touchpad). Saat
 // zoom berubah gambar langsung ditarik (CSS); ±½ detik setelah berhenti baru digambar ulang setajam ukuran barunya.
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type RefObject } from "react";
 import type { bukaPdf } from "@/lib/office";
+import { rapikan, rentang, tulisRentang } from "@/lib/halaman";
 
 type Dok = Awaited<ReturnType<typeof bukaPdf>>["doc"];
 type Antrean = { current: Promise<void> };
@@ -88,25 +89,38 @@ function Gambar({ no, dok, antrean, akar, ukuran }: { no: number; dok: Dok; antr
   );
 }
 
+/**
+ * 0.68.0: beberapa bab sekaligus. Klik biasa tetap "ketuk halaman pertama, lalu halaman terakhir" (cara lama).
+ * Laptop seperti File Explorer: Shift+klik = rentang dari klik terakhir, Ctrl+klik = tambah/lepas satu halaman,
+ * Ctrl+Shift+klik = tambah rentang. HP (tanpa Ctrl/Shift): tombol "+ Tambah bab lain".
+ */
 export function PilihHalamanPdf({
   f,
   jumlah,
-  dari,
-  sampai,
+  halaman,
   maks,
   ubah,
 }: {
   f: File;
   jumlah: number;
-  /** 0 = belum dipilih */
-  dari: number;
-  sampai: number;
+  /** halaman terpilih (urut); kosong = belum dipilih */
+  halaman: number[];
   maks: number;
-  ubah: (dari: number, sampai: number) => void;
+  ubah: (halaman: number[]) => void;
 }) {
   const [dok, setDok] = useState<Dok | null>(null);
   const [galat, setGalat] = useState(false);
   const [menunggu, setMenunggu] = useState(false); // sudah mengetuk halaman pertama, menunggu halaman terakhir
+  const [tambah, setTambah] = useState(false); // HP: "+ Tambah bab lain" → ketukan berikutnya tidak melepas pilihan lama
+  const jangkarKlik = useRef<number | null>(null); // halaman klik terakhir (awal rentang Shift / ketukan kedua)
+  const dasar = useRef<number[]>([]); // pilihan sebelum ketukan pertama bab yang sedang dipilih
+  const kirimanTerakhir = useRef(""); // pilihan yang terakhir dikirim dari sini (bedanya = guru mengetik di kotak angka)
+  useEffect(() => {
+    if (tulisRentang(halaman) === kirimanTerakhir.current) return;
+    setMenunggu(false); // diubah lewat kotak angka: ketukan yang setengah jalan dibatalkan
+    setTambah(false);
+    jangkarKlik.current = null;
+  }, [halaman]);
   const [catatan, setCatatan] = useState("");
   const [zoom, setZoom] = useState(ZOOM_MIN);
   const [tajam, setTajam] = useState(ZOOM_MIN); // zoom yang sudah tenang ±½ detik → gambar ulang
@@ -195,38 +209,68 @@ export function PilihHalamanPdf({
     return () => w.removeEventListener("wheel", roda);
   }, [ubahZoom]);
 
-  function ketuk(n: number) {
+  /** Pilihan baru, dipotong di `maks` halaman (halaman terkecil didahulukan) dengan pesan. */
+  function pasang(h: number[]) {
+    const urut = rapikan(h);
+    if (urut.length > maks) setCatatan(`AI membaca paling banyak ${maks} halaman sekali lampir, jadi pilihan berhenti di halaman ${urut[maks - 1]}.`);
+    kirimanTerakhir.current = tulisRentang(urut.slice(0, maks));
+    ubah(urut.slice(0, maks));
+  }
+
+  function ketuk(n: number, e: MouseEvent) {
     setCatatan("");
-    if (!menunggu || n < dari) {
-      ubah(n, n);
+    const ctrl = e.ctrlKey || e.metaKey; // metaKey = Cmd di Mac
+    const awal = jangkarKlik.current ?? n;
+    if (ctrl && e.shiftKey) pasang([...halaman, ...rentang(awal, n)]); // tambah rentang, jangkar tetap
+    else if (e.shiftKey) pasang(rentang(awal, n));
+    else if (ctrl) {
+      pasang(halaman.includes(n) ? halaman.filter((x) => x !== n) : [...halaman, n]);
+      jangkarKlik.current = n;
+    } else if (menunggu) {
+      pasang([...dasar.current, ...rentang(awal, n)]); // ketukan kedua: halaman terakhir bab
+      setTambah(false);
+    } else {
+      dasar.current = tambah ? halaman : [];
+      pasang([...dasar.current, n]); // ketukan pertama: halaman pertama bab
+      jangkarKlik.current = n;
       setMenunggu(true);
       return;
     }
-    const akhir = Math.min(n, dari + maks - 1);
-    if (akhir < n) setCatatan(`AI membaca paling banyak ${maks} halaman sekali lampir, jadi pilihan berhenti di halaman ${akhir}.`);
-    ubah(dari, akhir);
     setMenunggu(false);
   }
 
   if (galat) return null; // pemilih gambar gagal: isian angka di bawahnya tetap bisa dipakai
-  const sah = dari >= 1 && sampai >= dari && sampai <= jumlah;
-  const banyak = sampai - dari + 1;
+  const banyak = halaman.length;
+  const tombolTeks = "h-8 rounded-lg border bg-kartu px-3 text-sm hover:bg-krem max-md:min-h-11";
   const tombol = "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border bg-kartu text-lg leading-none hover:bg-krem disabled:opacity-40 max-md:h-11 max-md:w-11";
   const lebar = Math.round((LEBAR_DASAR * zoom) / 100);
   return (
     <div className="space-y-1">
       <p className="text-sm" role="status">
         {menunggu ? (
-          <b>Halaman pertama: {dari}. Sekarang ketuk halaman terakhir bab ini.</b>
-        ) : sah ? (
+          <b>Halaman pertama: {jangkarKlik.current}. Sekarang ketuk halaman terakhir bab ini.</b>
+        ) : banyak ? (
           <>
-            Terpilih: <b>halaman {dari}–{sampai}</b> ({banyak} halaman). Ingin ganti? Ketuk halaman pertama bab, lalu halaman terakhirnya.
-            {banyak > maks && <span className="text-peringatan"> Lebih dari {maks} halaman: hanya halaman {dari}–{dari + maks - 1} yang dibaca.</span>}
+            Terpilih: <b>halaman {tulisRentang(halaman)}</b> ({banyak} halaman). Ingin ganti? Ketuk halaman pertama bab, lalu halaman terakhirnya.
+            {banyak > maks && <span className="text-peringatan"> Lebih dari {maks} halaman: hanya {maks} halaman pertama yang dibaca.</span>}
           </>
         ) : (
-          <b>Gulir, lalu ketuk halaman pertama bab dan halaman terakhirnya.</b>
+          <b>{tambah ? "Ketuk halaman pertama bab berikutnya, lalu halaman terakhirnya." : "Gulir, lalu ketuk halaman pertama bab dan halaman terakhirnya."}</b>
         )}
+        <span className="hidden text-pudar pointer-fine:inline"> Beberapa bab: Ctrl + klik, Shift + klik, seperti memilih file.</span>
       </p>
+      {banyak > 0 && !menunggu && (
+        <div className="flex flex-wrap gap-2">
+          {banyak < maks && (
+            <button type="button" className={tombolTeks} aria-pressed={tambah} onClick={() => setTambah(!tambah)}>
+              {tambah ? "Batal tambah bab" : "+ Tambah bab lain"}
+            </button>
+          )}
+          <button type="button" className={`${tombolTeks} text-pudar hover:text-bahaya`} onClick={() => { pasang([]); setTambah(false); jangkarKlik.current = null; }}>
+            Hapus pilihan
+          </button>
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <div className="flex items-center gap-1.5">
           <button type="button" aria-label="Perkecil gambar" disabled={zoom <= ZOOM_MIN} onClick={() => ubahZoom(Math.ceil(zoom / 10) * 10 - 10)} className={tombol}>
@@ -258,9 +302,9 @@ export function PilihHalamanPdf({
         {!dok ? (
           <p className="p-4 text-center text-sm text-pudar">Menyiapkan gambar halaman...</p>
         ) : (
-          <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(min(${lebar}px, 100%), 1fr))` }}>
+          <div className="grid gap-2 select-none" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(min(${lebar}px, 100%), 1fr))` }}>
             {Array.from({ length: jumlah }, (_, i) => i + 1).map((n) => {
-              const dalam = n >= dari && n <= sampai;
+              const dalam = halaman.includes(n);
               return (
                 <button
                   key={n}
@@ -268,7 +312,7 @@ export function PilihHalamanPdf({
                   data-hal={n}
                   aria-label={`Halaman ${n}`}
                   aria-pressed={dalam}
-                  onClick={() => ketuk(n)}
+                  onClick={(e) => ketuk(n, e)}
                   className={`flex flex-col items-center gap-1 rounded-lg border p-1 text-xs ${dalam ? "border-hijau bg-hijau-muda ring-1 ring-hijau" : "bg-kartu hover:border-pudar/40"}`}
                 >
                   <Gambar no={n} dok={dok} antrean={antrean} akar={wadah} ukuran={tajam} />

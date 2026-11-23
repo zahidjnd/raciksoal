@@ -10,6 +10,7 @@ import { ambilAyat, cocokkanDalil } from "./materi/actions";
 import { Teks } from "./kartu-soal";
 import { Panah } from "./panah";
 import { sidikFile, simpanDraf } from "./simpanan";
+import { bacaRentang, rentang, tulisRentang } from "@/lib/halaman";
 import { BATAS_GAMBAR } from "@/lib/gambar";
 import { MAKS_HALAMAN_PDF } from "@/lib/pembatas";
 import { BATAS_MATERI, buangTandaGambar, geserTandaGambar, kurangDalil, type IsianMateri } from "@/lib/materi";
@@ -108,7 +109,8 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
   const penuh = pilihan.length + (draf ? 1 : 0) >= MAKS_GABUNG;
 
   // PDF lebih dari MAKS_HALAMAN_PDF halaman: guru memilih rentang halaman yang dibaca AI (0.31.0).
-  const [pilihPdf, setPilihPdf] = useState<{ f: File; jumlah: number; dari: number; sampai: number } | null>(null);
+  // 0.68.0: halaman = kumpulan halaman (beberapa bab); teks = isian "15-30, 70-85" (selalu sama dengan halaman).
+  const [pilihPdf, setPilihPdf] = useState<{ f: File; jumlah: number; halaman: number[]; teks: string } | null>(null);
 
   async function analisa(daftarFile = file, catatanBaca: string[] = []) {
     if (!siap) return setPesan({ ok: false, teks: "Pilih mata pelajaran dan kelas dulu." });
@@ -222,11 +224,11 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
             setProses("");
             // 0.64.1: belum ada halaman terpilih (dulu bawaan 1–10 = sampul & kata pengantar ikut terbaca bila guru
             // langsung menekan Baca). Guru memilih lewat gambar halaman (PilihHalamanPdf) atau isian angka.
-            setPilihPdf({ f, jumlah, dari: 0, sampai: 0 });
+            setPilihPdf({ f, jumlah, halaman: [], teks: "" });
             if (i < daftarFile.length - 1) setPesan({ ok: false, teks: "File sesudah PDF ini belum dibaca. Lampirkan lagi setelah memilih halaman PDF." });
             return;
           }
-          const isi = await bacaPdf(f, 1, jumlah);
+          const isi = await bacaPdf(f, rentang(1, jumlah));
           baru.push(isi.file);
           catatanBaca.push(...isi.catatan);
           continue;
@@ -244,27 +246,27 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
     }
   }
 
-  /** PDF halaman `dari`..`sampai` dibaca AI (tabel, rumus, gambar, juga PDF hasil scan). */
-  async function bacaPdf(f: File, dari: number, sampai: number) {
+  /** Halaman PDF terpilih (boleh beberapa bab) dibaca AI (tabel, rumus, gambar, juga PDF hasil scan). */
+  async function bacaPdf(f: File, halaman: number[]) {
     const { bacaPdfDenganAI } = await import("./baca-pdf");
-    setProses(`AI membaca PDF: halaman ${dari}–${sampai}...`);
-    const hasil = await bacaPdfDenganAI(await f.arrayBuffer(), mapel, dari, sampai, (s, t) => setProses(`AI membaca PDF: ${s} dari ${t} halaman...`), { pemilik, sidik: sidikFile(f) });
-    const nama = dari === 1 && sampai >= hasil.halaman ? f.name : `${f.name} (hlm ${dari}–${sampai})`;
+    const nomor = tulisRentang(halaman);
+    setProses(`AI membaca PDF: halaman ${nomor}...`);
+    const hasil = await bacaPdfDenganAI(await f.arrayBuffer(), mapel, halaman, (s, t) => setProses(`AI membaca PDF: ${s} dari ${t} halaman...`), { pemilik, sidik: sidikFile(f) });
+    const nama = halaman.length >= hasil.halaman ? f.name : `${f.name} (hlm ${nomor})`;
     return { file: { nama, paragraf: hasil.paragraf, gambar: hasil.gambar }, catatan: hasil.catatan };
   }
 
   /** Lanjutan PDF panjang setelah guru memilih halaman: dibaca AI, atau seluruhnya dengan teks biasa (cara lama). */
   async function lanjutPdf(pakaiAI: boolean) {
     if (!pilihPdf) return;
-    const { f, jumlah } = pilihPdf;
-    const dari = Math.min(Math.max(1, Math.round(pilihPdf.dari) || 1), jumlah);
-    const sampai = Math.min(Math.max(dari, Math.round(pilihPdf.sampai) || dari), jumlah, dari + MAKS_HALAMAN_PDF - 1);
+    const { f } = pilihPdf;
+    const halaman = pilihPdf.halaman.slice(0, MAKS_HALAMAN_PDF);
     setPilihPdf(null);
     setPesan(null);
     try {
       let baru: FileMateri;
       let catatanBaca: string[] = [];
-      if (pakaiAI) ({ file: baru, catatan: catatanBaca } = await bacaPdf(f, dari, sampai));
+      if (pakaiAI) ({ file: baru, catatan: catatanBaca } = await bacaPdf(f, halaman));
       else {
         setProses("Membaca file...");
         const { bacaFileOffice } = await import("@/lib/office");
@@ -458,19 +460,22 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
           <PilihHalamanPdf
             f={pilihPdf.f}
             jumlah={pilihPdf.jumlah}
-            dari={pilihPdf.dari}
-            sampai={pilihPdf.sampai}
+            halaman={pilihPdf.halaman}
             maks={MAKS_HALAMAN_PDF}
-            ubah={(dari, sampai) => setPilihPdf({ ...pilihPdf, dari, sampai })}
+            ubah={(halaman) => setPilihPdf({ ...pilihPdf, halaman, teks: tulisRentang(halaman, "-") })}
           />
           <div className="flex flex-wrap items-center gap-2">
             Halaman
-            <input type="number" min={1} max={pilihPdf.jumlah} aria-label="Dari halaman" className="h-8 w-20 rounded-lg border bg-kartu px-2 max-md:min-h-11" value={pilihPdf.dari || ""} onChange={(e) => setPilihPdf({ ...pilihPdf, dari: Number(e.target.value) })} />
-            sampai
-            <input type="number" min={1} max={pilihPdf.jumlah} aria-label="Sampai halaman" className="h-8 w-20 rounded-lg border bg-kartu px-2 max-md:min-h-11" value={pilihPdf.sampai || ""} onChange={(e) => setPilihPdf({ ...pilihPdf, sampai: Number(e.target.value) })} />
+            <input
+              aria-label="Halaman yang dibaca"
+              placeholder="mis. 15-30, 70-85"
+              className="h-8 w-48 rounded-lg border bg-kartu px-2 max-md:min-h-11"
+              value={pilihPdf.teks}
+              onChange={(e) => setPilihPdf({ ...pilihPdf, teks: e.target.value, halaman: bacaRentang(e.target.value, pilihPdf.jumlah) })}
+            />
             <button
               className="h-8 rounded-lg bg-hijau px-3 font-semibold text-white disabled:opacity-40 max-md:min-h-11"
-              disabled={!(pilihPdf.dari >= 1 && pilihPdf.sampai >= pilihPdf.dari && pilihPdf.dari <= pilihPdf.jumlah)}
+              disabled={!pilihPdf.halaman.length}
               onClick={() => lanjutPdf(true)}
             >
               Baca dengan AI
