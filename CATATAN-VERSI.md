@@ -52,6 +52,13 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
+## 0.67.0 — 23 November 2026
+- **Materi saya**: judul materi kini bisa **diklik untuk langsung membuka** materinya. Menu ⋯ punya pilihan baru
+  **Ganti nama** (ketik di tempat, Enter untuk simpan, Esc batal) tanpa masuk ke halaman Ubah.
+- **Ayat & hadis setelah analisa**: tiap teks Arab punya **ikon sampah** untuk menghapus cepat (ikon saja, tanpa tulisan).
+
+---
+
 ## 0.66.0 — 20 November 2026
 - **Kotak Ayat & hadis lebih ringkas.** Di atasnya ada ringkasan, mis. "4 teks Arab: 2 ✓ dikenali otomatis · 2 perlu Anda
   periksa" (juga tertulis di judul lipatan). Ayat & hadis yang dikenali otomatis (hijau) serta teks "Bukan ayat/hadis"

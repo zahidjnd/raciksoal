@@ -138,6 +138,8 @@ cek((await halaman(B, `/materi/${idMateriA}`)).status === 404, "B ditolak: membu
 const isianUji = { mapel: "Fikih", kelas: "XI", teksArab: "dalil", judul: "DIRETAS", tp: "Uji", isi: "Uji pemisahan data antar guru. ".repeat(5), dalil: [], diverifikasi: true };
 const simpan = (await aksi(B, "simpanMateri", idMateriA, isianUji)).nilai;
 cek(simpan?.ok === false && /tidak ditemukan/i.test(simpan.pesan), "B ditolak: simpanMateri (mengubah materi A)", JSON.stringify(simpan));
+const nama = (await aksi(B, "gantiNamaMateri", idMateriA, "DIRETAS")).nilai;
+cek(nama?.ok === false && /tidak ditemukan/i.test(nama.pesan), "B ditolak: gantiNamaMateri", JSON.stringify(nama));
 const hapus = (await aksi(B, "hapusMateri", idMateriA)).nilai;
 cek(hapus?.ok === false && /tidak ditemukan/i.test(hapus.pesan), "B ditolak: hapusMateri", JSON.stringify(hapus));
 const buat = (await aksi(B, "mulaiBuatSoal", {

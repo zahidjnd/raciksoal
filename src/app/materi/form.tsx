@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { KELAS } from "@/lib/soal";
 import { KartuMateri, KotakMateri, lihatDalil, lihatTp, PilihMapel } from "../kotak-materi";
-import { alasanDalil, alasanTp, modeArab, type IsianMateri } from "@/lib/materi";
-import { hapusMateri, simpanMateri } from "./actions";
+import { alasanDalil, alasanTp, BATAS_MATERI, modeArab, type IsianMateri } from "@/lib/materi";
+import { gantiNamaMateri, hapusMateri, simpanMateri } from "./actions";
 
 const TERSIMPAN = "Materi tersimpan. Bisa dipilih lewat “Pakai materi sebelumnya” saat membuat soal.";
 
@@ -191,7 +191,9 @@ export function DaftarMateri({ daftar, sorot }: { daftar: BarisMateri[]; sorot?:
 }
 
 function BarisMateriSaya({ m, sorot }: { m: BarisMateri; sorot: boolean }) {
+  const router = useRouter();
   const [menu, setMenu] = useState(false);
+  const [ketik, setKetik] = useState<string | null>(null); // null = tidak sedang mengganti nama
   const kotak = useRef<HTMLDivElement>(null);
   const baris = useRef<HTMLElement>(null);
   useEffect(() => {
@@ -209,13 +211,38 @@ function BarisMateriSaya({ m, sorot }: { m: BarisMateri; sorot: boolean }) {
       document.removeEventListener("keydown", esc);
     };
   }, [menu]);
+  async function simpanNama() {
+    const baru = (ketik ?? "").trim();
+    setKetik(null);
+    if (!baru || baru === m.judul) return;
+    const r = await gantiNamaMateri(m.id, baru).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
+    if (!r.ok) return beriTahu(r.pesan);
+    router.refresh();
+  }
   const itemMenu = "flex w-full items-center rounded-md px-3 text-left text-sm hover:bg-krem-sorot h-9 max-md:min-h-11 disabled:opacity-50";
 
   return (
     <article ref={baris} className={`flex items-center gap-2 p-3 first:rounded-t-xl last:rounded-b-xl ${sorot ? "bg-hijau-muda" : ""}`}>
       <div className="min-w-0 flex-1">
         {/* Judul panjang dipotong "…" satu baris (permintaan pemilik); judul utuh di title & halaman Ubah. */}
-        <p dir="auto" className="truncate font-semibold" title={m.judul}>{m.judul}</p>
+        {ketik !== null ? (
+          <input
+            autoFocus
+            aria-label="Judul materi"
+            maxLength={BATAS_MATERI.judul}
+            className="h-9 w-full rounded-lg border border-hijau bg-kartu px-2 text-sm max-md:min-h-11"
+            value={ketik}
+            onFocus={(e) => e.target.select()}
+            onChange={(e) => setKetik(e.target.value)}
+            onBlur={simpanNama}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.currentTarget.blur();
+              if (e.key === "Escape") setKetik(null);
+            }}
+          />
+        ) : (
+          <Link href={`/materi/${m.id}`} dir="auto" className="block truncate font-semibold hover:underline" title={m.judul}>{m.judul}</Link>
+        )}
         <p className="text-xs text-pudar">{m.info}</p>
       </div>
       {/* <a> biasa (muat penuh): Buat Soal membaca ?materi= hanya saat dimuat */}
@@ -236,6 +263,7 @@ function BarisMateriSaya({ m, sorot }: { m: BarisMateri; sorot: boolean }) {
         </button>
         {menu && (
           <div role="menu" className="absolute top-full right-0 z-20 mt-1 w-40 rounded-lg border bg-kartu p-1 shadow-lg">
+            <button role="menuitem" className={itemMenu} onClick={() => (setMenu(false), setKetik(m.judul))}>Ganti nama</button>
             <Link role="menuitem" href={`/materi/${m.id}`} className={itemMenu}>Ubah</Link>
             <TombolHapusMateri id={m.id} judul={m.judul} kelas={`${itemMenu} text-bahaya`} />
           </div>

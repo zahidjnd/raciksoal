@@ -65,6 +65,22 @@ export async function simpanMateri(id: number | null, isian: IsianMateri) {
   return { ok: true as const, id: idBaru!, isian: keIsian(r.bab), dihapus: r.dihapus };
 }
 
+/** Ganti judul materi milik sendiri (aturan 3: hanya milik guru). Judul hanya satu kunci di jsonb `bab`. */
+export async function gantiNamaMateri(id: number, judul: string) {
+  const saya = await penggunaSaatIni();
+  if (!saya) return { ok: false as const, pesan: SESI_HABIS };
+  const baru = String(judul ?? "").replace(/\s+/g, " ").trim().slice(0, BATAS_MATERI.judul);
+  if (!baru) return { ok: false as const, pesan: "Judul materi tidak boleh kosong." };
+  const [ubah] = await db
+    .update(materi)
+    .set({ bab: sql`jsonb_set(${materi.bab}, '{judul}', to_jsonb(${baru}::text))`, diubah: sql`now()` })
+    .where(and(eq(materi.id, Number(id)), eq(materi.guruId, saya.id)))
+    .returning({ id: materi.id });
+  if (!ubah) return { ok: false as const, pesan: "Materi tidak ditemukan." };
+  revalidatePath("/materi");
+  return { ok: true as const };
+}
+
 /** Hapus materi milik sendiri. Set soal yang sudah dibuat tetap utuh (menyimpan salinan materinya). */
 export async function hapusMateri(id: number) {
   const saya = await penggunaSaatIni();

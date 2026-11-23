@@ -500,6 +500,23 @@ function StatusDalil({ d, diperiksa, mencocokkan }: { d: IsianMateri["dalil"][nu
   return <span className="text-hijau-teks">{diperiksa ? "✓ Lengkap dan sudah diperiksa." : "✓ Lengkap. Periksa teks & harakatnya, lalu tekan tombol pemeriksaan di bawah."}</span>;
 }
 
+/** Tombol ikon sampah (hapus cepat satu dalil); ikon saja supaya ringkas. */
+function TombolSampah({ onKlik, label }: { onKlik: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onKlik}
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border bg-kartu text-pudar hover:bg-krem-sorot hover:text-bahaya max-md:h-11 max-md:w-11"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6" />
+      </svg>
+    </button>
+  );
+}
+
 /**
  * Kartu materi: dipakai bersama oleh Set baru (hasil analisa AI) dan halaman Materi saya (tambah/ubah).
  * Semua bisa diedit guru. Ayat diambil dari mushaf ("Ambil ayat"); hadis diketik guru dan wajib dicentang (aturan 5).
@@ -688,6 +705,7 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
                     <button type="button" className={`${TOMBOL_KECIL} ml-auto shrink-0`} aria-expanded={terbuka} onClick={() => setBuka(balik(buka, i))}>
                       {terbuka ? "Tutup" : "Lihat"}
                     </button>
+                    <TombolSampah label={`Hapus dalil ${i + 1} dari materi`} onKlik={() => hapusDalil(i)} />
                   </div>
                   {terbuka && (
                     <div className="mt-2 space-y-1">
@@ -701,7 +719,6 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
                         <textarea dir="rtl" lang="ar" rows={2} className={`${kotak} font-arab text-xl`} aria-label={`Teks Arab ${i + 1}`} value={d.arab} onChange={(e) => ubahDalil(i, { arab: e.target.value })} />
                       )}
                       <input className={kotak} placeholder="Terjemah (opsional)" value={d.terjemah} onChange={(e) => ubahDalil(i, { terjemah: e.target.value })} />
-                      <button type="button" className={`${TOMBOL_KECIL} text-pudar hover:text-bahaya`} onClick={() => hapusDalil(i)}>✕ Hapus dari materi</button>
                     </div>
                   )}
                 </div>
@@ -730,9 +747,7 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
                       <button type="button" className={TOMBOL_KECIL} onClick={() => ubahDalil(i, { bukan: true, sumber: SUMBER_BUKAN })}>
                         Bukan ayat/hadis (doa, niat, kaidah, istilah)
                       </button>
-                      <button type="button" className={`${TOMBOL_KECIL} text-pudar hover:text-bahaya`} onClick={() => hapusDalil(i)}>
-                        ✕ Hapus
-                      </button>
+                      <TombolSampah label={`Hapus dalil ${i + 1} dari materi`} onKlik={() => hapusDalil(i)} />
                     </div>
                   </>
                 ) : (
@@ -747,7 +762,7 @@ export function KartuMateri({ draf, setDraf, judul, batal, calon, ditolak }: { d
                     <textarea dir="rtl" lang="ar" rows={2} className={`${kotak} font-arab text-xl`} placeholder="نص الحديث" aria-label={`Teks Arab dalil ${i + 1}`} value={d.arab} onChange={(e) => ubahDalil(i, { arab: e.target.value })} onBlur={() => cocokkan(i)} />
                     <input data-kolom="sumber" autoFocus={pilihHadis.has(i) && !d.sumber} className={kotak} placeholder="Sumber, mis. HR. Baihaqi" aria-label={`Sumber dalil ${i + 1}`} value={d.sumber} onChange={(e) => ubahDalil(i, { sumber: e.target.value })} />
                     <input className={kotak} placeholder="Terjemah (opsional)" value={d.terjemah} onChange={(e) => ubahDalil(i, { terjemah: e.target.value })} />
-                    <button type="button" className={`${TOMBOL_KECIL} text-pudar hover:text-bahaya`} onClick={() => hapusDalil(i)}>✕ Hapus dari materi</button>
+                    <TombolSampah label={`Hapus dalil ${i + 1} dari materi`} onKlik={() => hapusDalil(i)} />
                   </>
                 )}
               </div>
