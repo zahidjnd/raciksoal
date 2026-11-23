@@ -52,10 +52,25 @@ Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubr
 
 ---
 
-## 0.67.0 — 23 November 2026
+## 0.68.0 — 23 November 2026
+Dari keluhan guru (catatan pemilik):
 - **Materi saya**: judul materi kini bisa **diklik untuk langsung membuka** materinya. Menu ⋯ punya pilihan baru
   **Ganti nama** (ketik di tempat, Enter untuk simpan, Esc batal) tanpa masuk ke halaman Ubah.
 - **Ayat & hadis setelah analisa**: tiap teks Arab punya **ikon sampah** untuk menghapus cepat (ikon saja, tanpa tulisan).
+- **Materi sebelumnya yang dipilih** tidak lagi memanjang ke bawah: tampil sebagai **chip sama lebar** (2 kolom di HP,
+  3 di laptop) dengan ✕ untuk melepas; tombol "Lepas semua" bila lebih dari 4. Peringatan materi pendek digabung satu.
+- **Hasil baca AI tidak hilang** saat halaman di-refresh atau pindah menu:
+  - Halaman PDF/foto yang sudah dibaca AI disimpan di browser 3 hari. File yang sama dilampirkan lagi → halaman itu
+    tidak dikirim ke AI lagi (hemat jatah & biaya).
+  - Hasil analisa materi yang belum dipakai ditawarkan lagi saat membuka Set baru ("Lanjutkan" / "Buang").
+  - Selama AI masih membaca, browser bertanya dulu sebelum halaman ditutup.
+  - Simpanan ini milik masing-masing guru; guru lain di browser yang sama tidak melihatnya.
+- **PDF tebal: pilih beberapa bab sekaligus.** Di laptop seperti memilih file (Ctrl + klik, Shift + klik); di HP tombol
+  **+ Tambah bab lain**. Atau ketik halamannya seperti saat mencetak: `15-30, 70-85`. Semua bab jadi satu materi
+  (batas 75 halaman tetap berlaku untuk gabungannya).
+- **Edit soal: tombol Tebal, Miring, Garis bawah** (B / I / U). Blok kata lalu tekan tombolnya; tekan lagi untuk melepas.
+  Tampil di kartu soal dan file Word. Ditulis di teks sebagai `**tebal**`, `*miring*`, `__garis bawah__`, jadi tanda
+  `**...**` yang kadang ditulis AI kini ikut tampil tebal.
 
 ---
 

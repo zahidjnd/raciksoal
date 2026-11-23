@@ -282,6 +282,12 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   (isi gambar tetap tak pernah diubah; set lama memakai gambar lama). Hanya potong, sengaja tanpa putar/coret.
   Label (0.46.2): keterangan analisa diakhiri "berlabel A–E" / "tanpa label"; `periksaSoal` menandai soal yang menunjuk
   nomor/huruf (`SEBUT_LABEL`) pada gambar yang keterangannya tanpa kata label (`gambarBerlabel`; kosong/lama = tanpa label).
+- **Gaya huruf** (0.68.0): `**tebal**`, `*miring*`, `__garis__` di teks mana pun (`pecahGaya`/`adaGaya` soal.ts; rumus
+  dilindungi dulu; isi tanda tak boleh diawali/diakhiri spasi → "5 * 3" & "____" aman). Web `Teks`, Word `teks()`.
+  Tombol B/I/U = `gayakan` (FormSoal). AI tidak diperintah memakai gaya (BUKAN/KECUALI tetap kapital).
+- **Simpanan browser** (0.68.0, `app/simpanan.ts`): hasil baca AI per halaman PDF/foto di IndexedDB (kunci guru|mapel|
+  `sidikFile`|no) + draf analisa Set baru di localStorage; bertanda id guru (aturan 3), umur 3 hari, gagal = diam.
+  Halaman PDF = `number[]` (`lib/halaman.ts`: `bacaRentang`/`tulisRentang`), pemilih Ctrl/Shift ala Explorer.
 - **Pilihan ulang** (0.46.2): baris pertanyaan PG/PGK yang sama dengan pilihan dibuang `buangPilihanUlang` (≥ 2 baris).
 - **PDF dibaca AI** (0.31.0): browser memfoto halaman (pdf.js, 1600 px, `intent: "print"` WAJIB: tanpa itu render
   memakai requestAnimationFrame yang berhenti di tab tersembunyi) → aksi `bacaHalamanPdf` (1 halaman/panggilan, JSON
