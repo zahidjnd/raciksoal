@@ -795,6 +795,31 @@ export function paragrafArab(t: string) {
 export const POLA_RUMUS = String.raw`\$(?=[^\s$])[^$\n]*?[^\s$]\$(?!\d)`;
 export const adaRumus = (t: string) => new RegExp(POLA_RUMUS).test(String(t ?? ""));
 
+/**
+ * 0.68.0: gaya huruf di teks mana pun, ditulis seperti Markdown: **tebal**, *miring*, __garis bawah__ (boleh bersarang).
+ * Isi tanda tidak boleh diawali/diakhiri spasi, jadi "5 * 3" dan garis isian "____ dan ____" bukan gaya.
+ * Rumus "$...$" dilindungi dulu (bintang di dalam rumus tidak dibaca sebagai miring).
+ */
+export type Potong = { teks: string; tebal?: boolean; miring?: boolean; garis?: boolean };
+const POLA_GAYA = /\*\*(?=\S)(.+?)(?<=\S)\*\*(?!\*)|__(?=[^\s_])(.+?)(?<=[^\s_])__|\*(?=[^\s*])(.+?)(?<=[^\s*])\*/;
+export const adaGaya = (t: string) => POLA_GAYA.test(String(t ?? "").replace(new RegExp(POLA_RUMUS, "g"), ""));
+
+export function pecahGaya(t: string): Potong[] {
+  const rumus: string[] = [];
+  const balik = (s: string) => s.replace(/\u0001(\d+)\u0001/g, (_, n) => rumus[Number(n)]);
+  const hasil: Potong[] = [];
+  const pecah = (s: string, gaya: Omit<Potong, "teks">) => {
+    for (let m = s.match(POLA_GAYA); m; m = s.match(POLA_GAYA)) {
+      if (m.index) hasil.push({ teks: balik(s.slice(0, m.index)), ...gaya });
+      pecah(m[1] ?? m[2] ?? m[3], m[1] ? { ...gaya, tebal: true } : m[2] ? { ...gaya, garis: true } : { ...gaya, miring: true });
+      s = s.slice(m.index! + m[0].length);
+    }
+    if (s) hasil.push({ teks: balik(s), ...gaya });
+  };
+  pecah(String(t ?? "").replace(new RegExp(POLA_RUMUS, "g"), (x) => `\u0001${rumus.push(x) - 1}\u0001`), {});
+  return hasil;
+}
+
 /** Satu baris teks soal, atau satu tabel utuh (`tabel` terisi, `teks` kosong; `grafik` = digambar, 0.52.0). */
 export type Baris = { teks: string; arab: boolean; tabel?: string[][]; grafik?: Penanda };
 

@@ -9,7 +9,7 @@ import { Gambar, gambarTempelan, TombolGambar, unggah } from "./gambar";
 import { PotongGambar } from "./potong-gambar";
 import { editRumus, isiKotak } from "./editor-rumus";
 import { EditorTabel } from "./editor-tabel";
-import { adaRumus, bisaDiperiksa, bukanDalil, isiSama, CARA_DALIL, CARA_PG, caraBolehBentuk, caraDalil, cariTabel, cocokCara, dalilKunci, kataArab, kataCara, kataTerjemah, NAMA_CARA_DALIL, PAKAI_POTONG, pecahGaris, pisahPengantar, potonganSah, susunPilihanDalil, tampilanDalil, type CaraDalil, type TampilDalil, JOROK, kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, POLA_RUMUS, tulisTabel, type Bab, type Bentuk, type Soal } from "@/lib/soal";
+import { adaGaya, adaRumus, pecahGaya, bisaDiperiksa, bukanDalil, isiSama, CARA_DALIL, CARA_PG, caraBolehBentuk, caraDalil, cariTabel, cocokCara, dalilKunci, kataArab, kataCara, kataTerjemah, NAMA_CARA_DALIL, PAKAI_POTONG, pecahGaris, pisahPengantar, potonganSah, susunPilihanDalil, tampilanDalil, type CaraDalil, type TampilDalil, JOROK, kategoriBaru, KUNCI_PGK, LABEL_KATEGORI, LEVEL, mjLama, pecahBaris, POLA_ARAB, POLA_RUMUS, tulisTabel, type Bab, type Bentuk, type Soal } from "@/lib/soal";
 import { MAKS_INSTRUKSI, namaBentuk } from "@/lib/prompt";
 import { svgGrafik, tulisPenanda, type Penanda } from "@/lib/grafik";
 
@@ -21,9 +21,24 @@ const tombol = "rounded-lg border bg-kartu h-8 px-3 text-sm hover:bg-krem disabl
 
 /** Teks campuran Latin + Arab + rumus: bagian Arab kanan-ke-kiri dengan font Arab, "$...$" jadi rumus. */
 export function Teks({ teks }: { teks: string }) {
+  // 0.68.0: **tebal**, *miring*, __garis bawah__ (pecahGaya) membungkus potongan Arab/rumus di dalamnya
   return (
     <>
-      {String(teks ?? "")
+      {pecahGaya(teks).map((p, k) => {
+        let isi = <TeksPolos teks={p.teks} />;
+        if (p.garis) isi = <u>{isi}</u>;
+        if (p.miring) isi = <em>{isi}</em>;
+        if (p.tebal) isi = <strong>{isi}</strong>;
+        return <Fragment key={k}>{isi}</Fragment>;
+      })}
+    </>
+  );
+}
+
+function TeksPolos({ teks }: { teks: string }) {
+  return (
+    <>
+      {teks
         .split(PECAH_RUMUS)
         .map((r, n) =>
           n % 2 ? (
@@ -78,14 +93,16 @@ async function ubahRumusDiPratinjau(e: React.MouseEvent<HTMLElement>) {
  */
 function Pratinjau({ teks }: { teks: string }) {
   const tabel = pecahBaris(teks).some((b) => b.tabel);
-  if (!adaRumus(teks) && !tabel) return null;
+  if (!adaRumus(teks) && !tabel && !adaGaya(teks)) return null;
   return (
     <div
       data-pratinjau
       className="mt-1 rounded-lg bg-krem px-2 py-1 [&_[data-tex]]:cursor-pointer [&_[data-tex]]:rounded [&_[data-tex]:hover]:bg-hijau-muda [&_[data-tabel]]:cursor-pointer [&_[data-tabel]:hover]:outline-2 [&_[data-tabel]:hover]:outline-hijau"
       onClick={ubahRumusDiPratinjau}
     >
-      <span className="text-sm text-pudar">Pratinjau (klik {tabel ? (adaRumus(teks) ? "rumus atau tabel/grafik/gambar" : "tabel/grafik/gambar") : "rumus"} untuk mengubahnya): </span>
+      <span className="text-sm text-pudar">
+        Pratinjau{tabel || adaRumus(teks) ? ` (klik ${tabel ? (adaRumus(teks) ? "rumus atau tabel/grafik/gambar" : "tabel/grafik/gambar") : "rumus"} untuk mengubahnya)` : ""}:{" "}
+      </span>
       <TeksBaris teks={teks} />
     </div>
   );
@@ -818,6 +835,25 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
     isiKotak(el, v.slice(0, i) + sisip + v.slice(j), i + sisip.length);
   }
 
+  /**
+   * 0.68.0: tombol B / I / U = bungkus kata yang diblok dengan **...**, *...*, __...__ (sudah terbungkus = dilepas).
+   * Spasi di ujung blokan (klik ganda di Windows ikut memilih spasi) dikeluarkan supaya tandanya sah.
+   */
+  function gayakan(e: React.MouseEvent<HTMLElement>, tanda: string) {
+    const form = e.currentTarget.closest("article");
+    const aktif = document.activeElement;
+    const el = bisaRumus(aktif) && form?.contains(aktif) ? aktif : terakhir.current?.isConnected ? terakhir.current : null;
+    if (!el) return;
+    const v = el.value;
+    let a = el.selectionStart ?? v.length;
+    let b = el.selectionEnd ?? a;
+    while (a < b && /\s/.test(v[a])) a++;
+    while (b > a && /\s/.test(v[b - 1])) b--;
+    if (v.slice(a - tanda.length, a) === tanda && v.slice(b, b + tanda.length) === tanda && (tanda !== "*" || (v[a - 2] !== "*" && v[b + 1] !== "*")))
+      return isiKotak(el, v.slice(0, a - tanda.length) + v.slice(a, b) + v.slice(b + tanda.length), b - tanda.length);
+    isiKotak(el, v.slice(0, a) + tanda + v.slice(a, b) + tanda + v.slice(b), a === b ? a + tanda.length : b + 2 * tanda.length);
+  }
+
   async function simpan() {
     if (s.bentuk === "PGK" && !KUNCI_PGK.includes(kunciPgk.length)) return setError("Pilih 2 sampai 4 kunci jawaban.");
     if (kategoriBaru(s) && (s.pernyataan ?? []).some((_, i) => !s.label?.includes(kunciPgk[i]))) return setError("Pilih kunci untuk setiap pernyataan.");
@@ -829,6 +865,17 @@ function FormSoal({ no, awal, bab, onBatal, onSimpan, judul }: FormProps) {
   // Simpan/Batal juga di atas: form ini tinggi, di HP tombol bawah jauh dari pandangan (audit 2026-11-04).
   const tombolSimpan = (
     <div className="flex flex-wrap gap-2">
+      {(
+        [
+          ["**", "font-bold", "B", "Tebal: blok kata lalu tekan (ditulis **kata**)"],
+          ["*", "italic", "I", "Miring: blok kata lalu tekan (ditulis *kata*)"],
+          ["__", "underline", "U", "Garis bawah: blok kata lalu tekan (ditulis __kata__)"],
+        ] as const
+      ).map(([tanda, gaya, huruf, judul]) => (
+        <button key={huruf} type="button" className={`h-10 w-10 rounded-lg border font-serif ${gaya}`} title={judul} aria-label={judul.split(":")[0]} onMouseDown={(e) => e.preventDefault()} onClick={(e) => gayakan(e, tanda)}>
+          {huruf}
+        </button>
+      ))}
       <button
         type="button"
         className="rounded-lg border h-10 px-3"

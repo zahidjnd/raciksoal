@@ -1455,3 +1455,17 @@ test("PDF 0.33.2: pangkat dari lapisan teks jadi contekan AI, kepala halaman ber
   assert.match(buatBacaHalaman("Elektron 10^{-30}").pengguna, /TEKS LAPISAN PDF[\s\S]*Elektron 10\^\{-30\}/);
   assert.doesNotMatch(buatBacaHalaman("  ").pengguna, /TEKS LAPISAN/); // PDF scan: tanpa contekan
 });
+
+test("gaya huruf: **tebal**, *miring*, __garis__ (0.68.0)", async () => {
+  const { pecahGaya, adaGaya } = await import("./soal.ts");
+  assert.deepEqual(pecahGaya("Yang **BUKAN** syarat"), [{ teks: "Yang " }, { teks: "BUKAN", tebal: true }, { teks: " syarat" }]);
+  assert.deepEqual(pecahGaya("**a *b* c**"), [{ teks: "a ", tebal: true }, { teks: "b", tebal: true, miring: true }, { teks: " c", tebal: true }]);
+  assert.deepEqual(pecahGaya("__garis__ dan *Homo sapiens*"), [{ teks: "garis", garis: true }, { teks: " dan " }, { teks: "Homo sapiens", miring: true }]);
+  assert.deepEqual(pecahGaya("**$x^2$** dan $a*b*c$"), [{ teks: "$x^2$", tebal: true }, { teks: " dan $a*b*c$" }]);
+  for (const t of ["5 * 3 = 15", "Jawab: ____ dan ____", "biasa saja", "$a*b*c$"]) {
+    assert.equal(adaGaya(t), false, t);
+    assert.deepEqual(pecahGaya(t), [{ teks: t }]);
+  }
+  assert.deepEqual(pecahGaya("***kata***"), [{ teks: "kata", tebal: true, miring: true }]);
+  assert.deepEqual(pecahGaya(""), []);
+});

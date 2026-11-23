@@ -29,7 +29,7 @@ import { MAPEL_INGGRIS } from "./mapel";
 import { hariTanggal, mapelTka, NAMA_BENTUK, semesterDari, TKA, WAKTU_BAWAAN, type Pengaturan } from "./prompt";
 import { kunciSatu } from "./kunci";
 import { rumusWord } from "./rumus";
-import { dalilKunci, identitasBab, JOROK, JUMLAH_PREMIS, kategoriBaru, mjLama, paragrafArab, pecahBaris, pecahGaris, POLA_ARAB, pisahPengantar, POLA_RUMUS, tampilanDalil, type Bab, type Baris, type BarisKisi, type Bentuk, type Soal } from "./soal";
+import { dalilKunci, identitasBab, JOROK, JUMLAH_PREMIS, kategoriBaru, mjLama, paragrafArab, pecahBaris, pecahGaris, pecahGaya, POLA_ARAB, pisahPengantar, POLA_RUMUS, tampilanDalil, type Bab, type Baris, type BarisKisi, type Bentuk, type Soal } from "./soal";
 
 const PERINGATAN = "Soal dibuat AI, wajib diperiksa guru sebelum dipakai.";
 
@@ -88,16 +88,21 @@ export function teks(isi: string, gaya: Gaya = {}): ParagraphChild[] {
     .split(/\r?\n/)
     .flatMap((baris, n) => [
       ...(n ? [new TextRun({ break: 1 })] : []),
-      ...baris.split(PECAH_RUMUS).flatMap((potong, m) =>
-        m % 2
-          ? (rumusWord(potong.slice(1, -1)) ?? r(potong.slice(1, -1), gaya))
-          : potong
-              .split(PECAH_ARAB)
-              .flatMap((b, i) =>
-                !b ? [] : i % 2 ? new TextRun({ ...gaya, text: b, font: FONT_ARAB, size: UKURAN_ARAB, rightToLeft: true, language: { bidirectional: "ar-SA" } }) : r(b, gaya),
-              ),
-      ),
+      // 0.68.0: **tebal**, *miring*, __garis bawah__ (pecahGaya)
+      ...pecahGaya(baris).flatMap((p) => polos(p.teks, { ...gaya, ...(p.tebal && { bold: true }), ...(p.miring && { italics: true }), ...(p.garis && { underline: {} }) })),
     ]);
+}
+
+function polos(baris: string, gaya: Gaya): ParagraphChild[] {
+  return baris.split(PECAH_RUMUS).flatMap((potong, m) =>
+    m % 2
+      ? (rumusWord(potong.slice(1, -1)) ?? r(potong.slice(1, -1), gaya))
+      : potong
+          .split(PECAH_ARAB)
+          .flatMap((b, i) =>
+            !b ? [] : i % 2 ? new TextRun({ ...gaya, text: b, font: FONT_ARAB, size: UKURAN_ARAB, rightToLeft: true, language: { bidirectional: "ar-SA" } }) : r(b, gaya),
+          ),
+  );
 }
 
 const par = (anak: ParagraphChild[], opsi: Partial<ConstructorParameters<typeof Paragraph>[0] & object> = {}) =>
