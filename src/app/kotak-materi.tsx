@@ -282,22 +282,23 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
           (dulu satu baris penuh per materi: 10 materi = halaman sangat panjang); peringatan "sedikit" digabung satu. */}
       {pilihan.length > 0 && (
         <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
+          {/* Semua chip sama lebar (permintaan pemilik): kisi 2 kolom di HP, 3 kolom di laptop; judul panjang dipotong "…". */}
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
             {pilihan.map((id) => {
               const judul = daftar.find((x) => x.id === id)?.judul ?? id;
               return (
-                <span key={id} className="inline-flex h-8 max-w-full items-center gap-1 rounded-full border border-hijau/40 bg-hijau-muda/40 pl-3 text-sm max-md:min-h-11" title={judul}>
-                  <span dir="auto" className="min-w-0 max-w-56 truncate">✓ {judul}</span>
+                <span key={id} className="flex h-8 min-w-0 items-center gap-1 rounded-full border border-hijau/40 bg-hijau-muda/40 pl-3 text-sm max-md:min-h-11" title={judul}>
+                  <span dir="auto" className="min-w-0 flex-1 truncate">✓ {judul}</span>
                   <button className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-pudar hover:text-bahaya max-md:h-11 max-md:w-11" aria-label={`Lepas materi ${judul}`} onClick={() => setPilihan(pilihan.filter((x) => x !== id))}>
                     ✕
                   </button>
                 </span>
               );
             })}
-            {pilihan.length > 4 && (
-              <button className={`${TOMBOL_KECIL} text-pudar hover:text-bahaya`} onClick={() => setPilihan([])}>Lepas semua</button>
-            )}
           </div>
+          {pilihan.length > 4 && (
+            <button className={`${TOMBOL_KECIL} text-pudar hover:text-bahaya`} onClick={() => setPilihan([])}>Lepas semua</button>
+          )}
           {sedikit.length > 0 && (
             <p className="rounded-lg border border-peringatan-garis bg-peringatan-muda p-2 text-sm text-peringatan" role="alert">
               {sedikit.length === 1 ? "Isi materi" : `Isi ${sedikit.length} materi`} ini sedikit sekali: {sedikit.map((m) => `${m.judul} (${m.huruf!.toLocaleString("id-ID")} huruf)`).join("; ")}. AI akan menebak isi
