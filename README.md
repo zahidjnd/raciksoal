@@ -7,7 +7,7 @@ pembahasan, dan rubrik**, lalu mengekspornya ke **Word** dengan kop madrasah.
 | | |
 |---|---|
 | **Versi** | lihat `package.json` (juga tampil di sidebar aplikasi); riwayat di [CATATAN-VERSI.md](CATATAN-VERSI.md) |
-| **Status** | 0.x = tahap uji coba guru. 1.0.0 = dipakai resmi (daftar syaratnya di CATATAN-VERSI.md) |
+| **Status** | Dipakai resmi sejak 1.0.0 (24 November 2026). Sebelumnya 0.x = tahap uji coba guru |
 | **Alamat** | https://raciksoal.alfatahmas.com |
 | **Pengguna** | Guru-guru Al-Fatah (±15–20 akun). Penggunaan internal, bukan produk komersial |
 | **Admin** | Akun pemilik |

@@ -44,7 +44,7 @@ export async function masuk(_: Hasil, form: FormData): Promise<Hasil> {
     return { pesan: "Kata sandi salah.", kolom: "password" };
   }
   pembatas.berhasil(ip, username);
-  redirect("/");
+  redirect("/beranda");
 }
 
 /** Hanya bisa dipakai sekali: saat belum ada pengguna sama sekali, untuk nama pengguna ADMIN_USERNAME di .env. */
@@ -73,7 +73,7 @@ export async function buatAdminPertama(_: Hasil, form: FormData): Promise<Hasil>
   } catch (e) {
     return { pesan: `Gagal membuat admin: ${(e as Error).message}` };
   }
-  redirect("/");
+  redirect("/beranda");
 }
 
 export async function keluar() {

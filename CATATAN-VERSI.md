@@ -21,15 +21,15 @@ Keterbatasan yang sudah diketahui (tidak menghalangi uji coba): dari file PDF ha
 dikenali mushaf yang dipakai (teks Arab PDF lain, termasuk hadis, dibuang; buku PDF Kemenag teks Arabnya rusak semua);
 hadis karangan dalam mode Bahasa Arab belum bisa dideteksi otomatis (hanya dicegah lewat instruksi ke AI).
 
-## Persiapan menuju 1.0.0 (dipakai resmi)
-Target: **setelah ASAS Ganjil (sekitar Desember 2026)**.
-- [ ] Dipakai sungguhan oleh sebagian besar guru untuk ujian resmi (ASAS Ganjil). Cek: kolom set 30 hari di **Kelola guru**.
-- [ ] 2–4 minggu berturut-turut tanpa masalah penghalang (guru tidak bisa membuat soal atau mengunduh Word).
-      Kalau ada masalah seperti itu, hitungan mulai lagi dari nol.
+## Persiapan menuju 1.0.0 (dipakai resmi) — SELESAI, dirilis 24 November 2026
+Target awal: setelah ASAS Ganjil (sekitar Desember 2026); semua butir beres lebih cepat (pemilik, 24 Nov).
+- [x] Dipakai sungguhan oleh sebagian besar guru untuk ujian resmi (ASAS Ganjil). Cek: kolom set 30 hari di **Kelola guru**.
+- [x] 2–4 minggu berturut-turut tanpa masalah penghalang (guru tidak bisa membuat soal atau mengunduh Word).
+      Keluhan guru diperbaiki sambil berjalan; setelah itu pemakaian lancar. Kendala baru tetap diperbaiki sambil jalan.
 - [x] Backup malam berjalan rutin (pita merah backup tidak muncul) dan uji pulih diulang. **5 November 2026: lulus**
       (backup 22 malam berturut-turut tanpa terlewat; backup manual 16.56 dibuka, dipulihkan tanpa error, isi utuh,
       aplikasi jalan di atasnya dan pemilik bisa masuk, membuka set, mengunduh Word). Tetap pantau pita merah sampai 1.0.0.
-- [ ] Saldo AI cukup untuk satu semester. Dicentang setelah saldo DeepSeek diisi. Hitungan (5 November 2026,
+- [x] Saldo AI cukup untuk satu semester. Saldo DeepSeek diisi $20 (November 2026). Hitungan (5 November 2026,
       rincian lengkap di `dokumen/Hitungan-Biaya-AI-RacikSoal.pdf`):
       - Dasar: ekspor DeepSeek 7 Okt–5 Nov 2026 = 230 panggilan, 1,79 juta token, $0,41 untuk ±34 set.
         Per set ±53.000 token (±41.000 masuk, ±12.000 keluar), biaya dibulatkan **$0,015 (±Rp271)**, sudah termasuk
@@ -43,12 +43,23 @@ Target: **setelah ASAS Ganjil (sekitar Desember 2026)**.
       - Saran: isi saldo bertahap (±$15 cukup untuk setahun realistis), pengingat saldo DeepSeek di $5, cek halaman
         Usage sebelum tiap AFTS/ASAS, hitung ulang setelah ASAS Ganjil dengan data sungguhan.
         Pengaman aplikasi: maks. 100 set/hari seluruh web = biaya terburuk ±$1,5 (±Rp27 ribu) per hari.
-- [ ] Guru mandiri dengan Panduan; pertanyaan yang sering muncul dimasukkan ke Panduan.
+- [x] Guru mandiri dengan Panduan; pertanyaan yang sering muncul dimasukkan ke Panduan.
 - [x] Tes otomatis pemisahan data antar guru (guru B tidak bisa membuka/mengedit/mengunduh set guru A). Sejak 0.16.0.
 - [x] Batas harian per guru untuk Ganti/Ubah/Tambah soal. Sejak 0.16.0.
 
 Ditunda (setelah 1.0.0 atau bila dibutuhkan): bank soal (direncanakan dulu), katalog CP/TP, rumus/gambar/tabel.
-Dicoret: LJK dan lembar penilaian uraian (madrasah sudah punya LJK sendiri; rubrik ada di file kunci).
+Dicoret: lembar penilaian uraian (rubrik ada di file kunci). LJK: dulu dicoret, sejak 1.0.0 direncanakan sebagai
+aplikasi kedua **Koreksi LJK** (foto dari HP / unggah dari laptop, nilai dihitung otomatis; kartu "Segera hadir").
+
+---
+
+## 1.0.0 — 24 November 2026
+**Racik Soal resmi dipakai guru-guru MA Al-Fatah.** Semua persiapan 1.0.0 di atas sudah beres.
+- **Halaman awal baru.** Setiap kali masuk, muncul halaman polos dengan dua kartu: **Racik Soal** (pembuat soal seperti
+  biasa) dan **Koreksi LJK** (bertanda "Segera hadir"; diklik → pemberitahuan "sedang dalam pengembangan"). Di bawahnya
+  ada tombol **Keluar**.
+- **Pindah aplikasi**: tulisan **Racik Soal ⌄** di pojok kiri atas sidebar bisa diklik → pilih Racik Soal, Koreksi LJK,
+  atau **Halaman awal**.
 
 ---
 

@@ -27,7 +27,7 @@ export default async function Tentang() {
   return (
     <Kerangka p={p}>
       <h1 className="text-2xl">Tentang aplikasi</h1>
-      <p className="text-sm text-pudar">Racik Soal v{paket.version} · tahap uji coba</p>
+      <p className="text-sm text-pudar">Racik Soal v{paket.version} · dipakai resmi MA Al-Fatah</p>
 
       <section className={kartu}>
         <p>

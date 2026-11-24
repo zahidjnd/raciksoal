@@ -9,9 +9,8 @@ pembahasan, dan rubrik, tanpa guru menulis instruksi AI yang panjang. Standar pe
 
 ## 2. Pengguna dan tahapan
 1. **Tahap 1 (selesai, Oktober 2026):** pemilik sendiri, mapel Qurdis kelas 11.
-2. **Tahap 2 (sekarang, versi 0.x):** uji coba 15–20 guru Al-Fatah, semua mapel madrasah.
-3. **Versi 1.0.0:** dipakai resmi setelah daftar "Persiapan menuju 1.0.0" di `CATATAN-VERSI.md` beres (target setelah ASAS
-   Ganjil, ±Desember 2026).
+2. **Tahap 2 (selesai, versi 0.x):** uji coba 15–20 guru Al-Fatah, semua mapel madrasah.
+3. **Versi 1.0.0 (sekarang, sejak 24 November 2026):** dipakai resmi. Berikutnya: aplikasi kedua **Koreksi LJK**.
 
 ## 3. Ruang lingkup
 **Mapel:** 20 mapel MA Al-Fatah (daftar di `src/lib/mapel.ts`), kelas X–XII. Mapel lain tetap bisa diketik guru.

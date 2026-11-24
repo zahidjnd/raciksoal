@@ -5,8 +5,9 @@ Racik Soal: web pembuatan soal berbasis AI untuk guru MA Al-Fatah, mengikuti kur
 (tempel / Word / PowerPoint / PDF), memilih jenis ujian & jumlah soal; aplikasi menyusun kisi-kisi, soal, kunci, pembahasan,
 rubrik, lalu mengekspor ke Word dengan kop madrasah. Alamat: raciksoal.alfatahmas.com. Repo privat `zahidjnd/raciksoal`.
 
-Tahap sekarang: **0.x = uji coba guru** (semua mapel, 15–20 akun guru Al-Fatah). 1.0.0 = setelah daftar "Persiapan menuju
-1.0.0" di `CATATAN-VERSI.md` beres (target setelah ASAS Ganjil, ±Desember 2026). TIDAK untuk dijual (jangan diungkit).
+Tahap sekarang: **1.x = dipakai resmi** (sejak 1.0.0, 24 Nov 2026; semua mapel, 15–20 akun guru Al-Fatah). Kendala
+guru diperbaiki sambil jalan. Setelah masuk: halaman awal `/beranda` = kartu aplikasi dari `src/lib/aplikasi.ts`
+(Racik Soal; Koreksi LJK masih "Segera hadir"), pindah aplikasi lewat `PindahAplikasi` di sidebar. TIDAK untuk dijual (jangan diungkit).
 Admin hanya akun pemilik.
 
 ## Tentang pemilik proyek
