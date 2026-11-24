@@ -26,7 +26,7 @@ export default async function Riwayat({ searchParams }: { searchParams: Promise<
         {daftar.length === 0 && adaSaringan(f) && <p className="text-sm text-pudar">Tidak ada set yang cocok dengan saringan.</p>}
         {daftar.length === 0 && !adaSaringan(f) && (
           <p className="text-sm text-pudar">
-            Belum ada set soal. <Link href="/" className="text-hijau-teks underline">Buat soal pertama Anda</Link>.
+            Belum ada set soal. <Link href="/racik" className="text-hijau-teks underline">Buat soal pertama Anda</Link>.
           </p>
         )}
         {daftar.length > 0 && (
@@ -37,7 +37,7 @@ export default async function Riwayat({ searchParams }: { searchParams: Promise<
           return (
             <Link
               key={s.id}
-              href={`/?id=${s.id}`}
+              href={`/racik?id=${s.id}`}
               className="flex flex-wrap items-baseline justify-between gap-2 px-4 py-3 hover:bg-krem"
             >
               <span>

@@ -53,6 +53,14 @@ aplikasi kedua **Koreksi LJK** (foto dari HP / unggah dari laptop, nilai dihitun
 
 ---
 
+## 1.0.1 — 24 November 2026
+- **Halaman dua kartu selalu tampil pertama**, juga saat login masih tersimpan: membuka tautan dari WA, browser baru di
+  laptop, atau aplikasi di HP yang dibuka lagi setelah ditutup. Dulu hanya muncul tepat setelah mengetik kata sandi.
+- Racik Soal kini beralamat `/racik`. Tautan set lama (mis. dari chat WA atau bookmark) tetap bisa dibuka, otomatis
+  diteruskan. Aplikasi yang sudah terpasang di HP tidak perlu dipasang ulang.
+
+---
+
 ## 1.0.0 — 24 November 2026
 **Racik Soal resmi dipakai guru-guru MA Al-Fatah.** Semua persiapan 1.0.0 di atas sudah beres.
 - **Halaman awal baru.** Setiap kali masuk, muncul halaman polos dengan dua kartu: **Racik Soal** (pembuat soal seperti

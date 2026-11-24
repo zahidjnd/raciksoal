@@ -54,7 +54,7 @@ export default async function SemuaSet({ searchParams }: { searchParams: Promise
           return (
             <Link
               key={s.id}
-              href={`/?id=${s.id}`}
+              href={`/racik?id=${s.id}`}
               className="block space-y-1 px-4 py-3 hover:bg-krem"
             >
               <div className="flex flex-wrap items-baseline justify-between gap-2">

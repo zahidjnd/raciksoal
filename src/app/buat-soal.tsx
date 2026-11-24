@@ -304,7 +304,7 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan, guruId }: { sapaa
     // Buka halaman set baru dengan pemuatan penuh (sama seperti membuka dari riwayat): sidebar langsung memuat
     // set ini (⏳) dan pengecekan status dimulai dari ?id=. JANGAN router.replace / history.replaceState + router.refresh
     // di sini: navigasi router di tengah pengecekan memutusnya (macet "0 detik"), dan refresh mengembalikan alamat ke "/".
-    location.assign(`/?id=${r.id}`);
+    location.assign(`/racik?id=${r.id}`);
   }
 
   const bab = hasil?.bab; // salinan bab milik set (berisi ayat terverifikasi untuk tampilan & edit)
@@ -690,7 +690,7 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan, guruId }: { sapaa
             <p className="text-sm text-pudar print:hidden">File Word di bilah bawah selalu mengikuti isi terbaru, termasuk soal yang diedit atau diganti.</p>
             {/* Set dari materi (bukan set lama dari bab bawaan): buat set baru dengan materi yang sama. Muat penuh, lihat komentar di kepala.tsx. */}
             {hasil.babId.split(",").every((b) => /^materi-\d+$/.test(b)) && (
-              <a href={`/?materi=${hasil.babId}`} className="inline-block text-sm text-hijau-teks underline print:hidden">
+              <a href={`/racik?materi=${hasil.babId}`} className="inline-block text-sm text-hijau-teks underline print:hidden">
                 Pakai materi ini lagi untuk set baru
               </a>
             )}

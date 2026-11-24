@@ -6,8 +6,9 @@ Racik Soal: web pembuatan soal berbasis AI untuk guru MA Al-Fatah, mengikuti kur
 rubrik, lalu mengekspor ke Word dengan kop madrasah. Alamat: raciksoal.alfatahmas.com. Repo privat `zahidjnd/raciksoal`.
 
 Tahap sekarang: **1.x = dipakai resmi** (sejak 1.0.0, 24 Nov 2026; semua mapel, 15–20 akun guru Al-Fatah). Kendala
-guru diperbaiki sambil jalan. Setelah masuk: halaman awal `/beranda` = kartu aplikasi dari `src/lib/aplikasi.ts`
-(Racik Soal; Koreksi LJK masih "Segera hadir"), pindah aplikasi lewat `PindahAplikasi` di sidebar. TIDAK untuk dijual (jangan diungkit).
+guru diperbaiki sambil jalan. Alamat `/` = halaman awal polos (kartu dari `src/lib/aplikasi.ts`: Racik Soal; Koreksi LJK
+masih "Segera hadir"), SELALU yang pertama tampil (login tersimpan, WA, PWA). Racik Soal di `/racik` (1.0.1); tautan lama
+`/?id=`/`/?materi=` diteruskan ke `/racik`, `/beranda` → `/`. Pindah aplikasi: `PindahAplikasi` di sidebar. TIDAK untuk dijual (jangan diungkit).
 Admin hanya akun pemilik.
 
 ## Tentang pemilik proyek
@@ -321,7 +322,7 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
 ## Jebakan teknis (pernah memakan waktu)
 - Kolom waktu WAJIB `timestamp(..., { withTimezone: true })` (tanpa itu jam +7). Perubahan tabel lewat file SQL di `drizzle/`.
 - `history.replaceState` selalu dengan `history.state` (null membuat Next memuat ulang & memutus cek status). Setelah
-  `mulaiBuatSoal` pakai `location.assign`, bukan `router.replace`. Tautan ke "/" dan "/?id=" sengaja `<a>` biasa (+ eslint-disable).
+  `mulaiBuatSoal` pakai `location.assign`, bukan `router.replace`. Tautan ke "/racik" dan "/racik?id=" sengaja `<a>` biasa.
 - Tidak pakai middleware (proxy hosting mengubah Host). Halaman `force-dynamic` (hosting punya cache depan).
 - Better Auth: jangan `changePassword({ revokeOtherSessions: true })`; rute `/api/auth/[...all]` sengaja DIHAPUS (melewati
   pembatas login) — jangan dipasang lagi.

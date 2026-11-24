@@ -64,7 +64,7 @@ export default async function MasukanGuru() {
               </div>
               {m.isi && <p className="whitespace-pre-wrap break-words">{m.isi}</p>}
               {m.setId && (
-                <Link href={`/?id=${m.setId}`} className="inline-block text-sm text-hijau-teks hover:underline">
+                <Link href={`/racik?id=${m.setId}`} className="inline-block text-sm text-hijau-teks hover:underline">
                   Buka set: <bdi>{m.namaSet ?? judulPendek(m.judulBab, m.babId ?? "")}</bdi> (set {m.setId})
                 </Link>
               )}

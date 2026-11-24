@@ -7,7 +7,7 @@ import paket from "../../../package.json";
 import { FormAdminPertama, FormMasuk, Panggung } from "./form";
 
 export default async function HalamanMasuk() {
-  if (await penggunaSaatIni()) redirect("/beranda");
+  if (await penggunaSaatIni()) redirect("/");
   const [{ n }] = await db.select({ n: count() }).from(pengguna);
 
   return (

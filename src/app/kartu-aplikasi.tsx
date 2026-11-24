@@ -1,7 +1,7 @@
 "use client";
 
 import { pesanSegera, type Aplikasi } from "@/lib/aplikasi";
-import { beriTahu } from "../tanya";
+import { beriTahu } from "./tanya";
 
 /** Ikon aplikasi (jalur dari APLIKASI). Dipakai kartu halaman awal & tombol pindah aplikasi. */
 export function IkonAplikasi({ jalur, className = "h-5 w-5" }: { jalur: string; className?: string }) {

@@ -1,4 +1,4 @@
-// Daftar "aplikasi" di dalam Racik Soal (1.0.0). SATU sumber untuk kartu di halaman awal (/beranda) dan tombol
+// Daftar "aplikasi" di dalam Racik Soal (1.0.0). SATU sumber untuk kartu di halaman awal ("/") dan tombol
 // pindah aplikasi di pojok kiri atas sidebar. Aplikasi baru = tambah satu baris di sini + halamannya.
 // segera: true = belum jadi; diklik hanya memunculkan pemberitahuan (tidak pindah halaman).
 
@@ -17,7 +17,7 @@ export const APLIKASI: Aplikasi[] = [
   {
     id: "racik",
     nama: "Racik Soal",
-    href: "/",
+    href: "/racik",
     isi: "Susun kisi-kisi, soal, kunci, dan pembahasan dari materi Anda, lalu unduh sebagai Word berkop.",
     ikon: "M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5M9 13h6M9 17h6",
     segera: false,

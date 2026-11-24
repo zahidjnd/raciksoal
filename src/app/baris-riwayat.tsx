@@ -72,7 +72,7 @@ export function BarisRiwayat({ id, awalan = "", label: judul, nama, keterangan, 
     const r = await hapusSet(id).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
     setSibuk(false);
     if (!r.ok) return beriTahu(r.pesan);
-    if (sedangDibuka()) location.assign("/");
+    if (sedangDibuka()) location.assign("/racik");
     else router.refresh();
   }
 
@@ -101,7 +101,7 @@ export function BarisRiwayat({ id, awalan = "", label: judul, nama, keterangan, 
   return (
     <div ref={kotak} className={`group relative shrink-0 ${sibuk ? "opacity-50" : ""}`}>
       <a
-        href={`/?id=${id}`}
+        href={`/racik?id=${id}`}
         className={`${kelas} pr-11 ${aktif ? TANDA_AKTIF : menu ? "bg-krem-sorot" : ""}`} // baris tetap tersorot selama menunya terbuka
         aria-current={aktif ? "page" : undefined}
         title={`${label} (set ${id})`}

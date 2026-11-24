@@ -74,7 +74,7 @@ export function FormMateri({ id: idAwal, awal, bawaan, guruId }: { id: number | 
         </button>
         {id && (
           // <a> biasa (muat penuh): Buat Soal membaca ?materi= hanya saat dimuat
-          <a href={`/?materi=materi-${id}`} className="inline-flex h-10 items-center rounded-lg border px-4 text-sm max-md:min-h-11">Buat soal dari materi ini</a>
+          <a href={`/racik?materi=materi-${id}`} className="inline-flex h-10 items-center rounded-lg border px-4 text-sm max-md:min-h-11">Buat soal dari materi ini</a>
         )}
       </div>
       {alasan && (
@@ -246,7 +246,7 @@ function BarisMateriSaya({ m, sorot }: { m: BarisMateri; sorot: boolean }) {
         <p className="text-xs text-pudar">{m.info}</p>
       </div>
       {/* <a> biasa (muat penuh): Buat Soal membaca ?materi= hanya saat dimuat */}
-      <a href={`/?materi=materi-${m.id}`} className="inline-flex h-8 shrink-0 items-center rounded-lg border px-3 text-sm hover:bg-krem max-md:min-h-11">Buat soal</a>
+      <a href={`/racik?materi=materi-${m.id}`} className="inline-flex h-8 shrink-0 items-center rounded-lg border px-3 text-sm hover:bg-krem max-md:min-h-11">Buat soal</a>
       <div ref={kotak} className="relative shrink-0">
         <button
           aria-label={`Pilihan untuk ${m.judul}`}

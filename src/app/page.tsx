@@ -1,21 +1,31 @@
+import { redirect } from "next/navigation";
 import { wajibMasuk } from "@/lib/sesi";
-import { pilihSapaan } from "@/lib/sapaan";
-import { ambilPreferensi } from "@/lib/pemakaian";
-import { BuatSoal } from "./buat-soal";
-import { Kerangka } from "./kepala";
+import { APLIKASI } from "@/lib/aplikasi";
+import { keluar } from "./masuk/actions";
+import { JendelaTanya } from "./tanya";
+import { KartuAplikasi } from "./kartu-aplikasi";
 
-export default async function Home({ searchParams }: { searchParams: Promise<{ id?: string; materi?: string }> }) {
-  const p = await wajibMasuk();
+/**
+ * Halaman awal (alamat utama "/", pilihan pemilik): selalu yang pertama tampil, juga saat login masih tersimpan
+ * (tautan WA, browser baru, aplikasi HP). Sengaja POLOS, tanpa sidebar: kartu dari APLIKASI + tombol Keluar.
+ * Tautan lama Racik Soal ("/?id=12", "/?materi=...", sebelum 1.0.1) diteruskan ke /racik.
+ */
+export default async function HalamanAwal({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
+  await wajibMasuk();
   const q = await searchParams;
-  // Nomor set dari alamat (?id=) dikirim sejak awal, supaya form kosong tidak sempat tampil saat membuka set.
-  // Pemeriksaan pemilik tetap di server (`cekHasil` → `bolehAkses`).
-  const id = Number(q.id) || null;
-  // "Pakai materi ini lagi": ?materi=materi-3,materi-5 (kepemilikan dicek lagi di mulaiBuatSoal).
-  const materi = String(q.materi ?? "").split(",").filter((m) => /^materi-\d+$/.test(m)).slice(0, 5);
+  if (q.id || q.materi) redirect(`/racik?${new URLSearchParams(q)}`);
   return (
-    <Kerangka p={p} lebar setAktif={id}>
-      {/* Sapaan dipilih di server tiap halaman dibuka (berganti-ganti, sesuai jam WIB); tidak diacak di browser. */}
-      <BuatSoal sapaan={pilihSapaan(p.nama)} awalId={id} awalMateri={materi} bawaan={await ambilPreferensi(p.id)} guruId={p.id} />
-    </Kerangka>
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-10 p-4">
+      <h1 className="sr-only">Pilih aplikasi</h1>
+      <div className="grid w-full max-w-3xl gap-4 sm:grid-cols-2">
+        {APLIKASI.map((a) => (
+          <KartuAplikasi key={a.id} a={a} />
+        ))}
+      </div>
+      <form action={keluar}>
+        <button className="h-10 rounded-lg px-4 text-sm text-pudar hover:bg-krem-sorot hover:text-tinta max-md:min-h-11">Keluar</button>
+      </form>
+      <JendelaTanya />
+    </main>
   );
 }

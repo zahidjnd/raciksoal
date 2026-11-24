@@ -72,7 +72,7 @@ const B = await masuk(process.env.UJI_B, "UJI_B");
 // Buka halaman supaya aksinya dikompilasi (mode dev), sekalian cari set & materi milik A.
 const riwayatA = await (await halaman(A, "/riwayat")).text();
 const materiA = await (await halaman(A, "/materi")).text();
-await halaman(A, "/");
+await halaman(A, "/racik");
 await halaman(A, "/materi/baru");
 ID = idAksi();
 
@@ -86,7 +86,7 @@ for (const jalur of ["sign-in/username", "sign-in/email", "update-user", "is-use
 
 let setA = 0;
 let isiA = "";
-for (const id of new Set([...riwayatA.matchAll(/href="\/\?id=(\d+)"/g)].map((x) => Number(x[1])))) {
+for (const id of new Set([...riwayatA.matchAll(/href="\/racik\?id=(\d+)"/g)].map((x) => Number(x[1])))) {
   const r = await aksi(A, "cekHasil", id, true);
   if (r.nilai?.status === "selesai" && r.nilai.soal?.length) {
     setA = id;
@@ -95,8 +95,8 @@ for (const id of new Set([...riwayatA.matchAll(/href="\/\?id=(\d+)"/g)].map((x) 
   }
 }
 if (!setA) throw new Error("Guru A belum punya set soal yang selesai. Buat satu dulu.");
-// 0.51.0: tautan Ubah ada di menu ⋯ (baru dirender saat dibuka); id diambil dari tautan Buat soal (/?materi=materi-N).
-const idMateriA = [...materiA.matchAll(/href="\/\?materi=materi-(\d+)"/g)].map((x) => Number(x[1]))[0];
+// 0.51.0: tautan Ubah ada di menu ⋯ (baru dirender saat dibuka); id diambil dari tautan Buat soal (/racik?materi=materi-N).
+const idMateriA = [...materiA.matchAll(/href="\/racik\?materi=materi-(\d+)"/g)].map((x) => Number(x[1]))[0];
 if (!idMateriA) throw new Error("Guru A belum punya materi. Buat satu dulu.");
 console.log(`Set A = ${setA}, materi A = ${idMateriA}\n`);
 
@@ -128,9 +128,9 @@ for (const jenis of ["soal", "kunci", "ringkas", "kisi"])
     const s = (await halaman(B, `/api/word?id=${setA}&jenis=${jenis}${paket}`)).status;
     cek(s === 404, `B ditolak: unduh Word ${jenis}${paket}`, `HTTP ${s}`);
   }
-for (const jalur of ["/riwayat", "/", "/admin/set"]) {
+for (const jalur of ["/riwayat", "/racik", "/admin/set"]) {
   const html = await (await halaman(B, jalur)).text();
-  cek(!html.includes(`/?id=${setA}"`), `set A tidak tampil di ${jalur} milik B`);
+  cek(!html.includes(`?id=${setA}"`), `set A tidak tampil di ${jalur} milik B`);
 }
 
 // Materi milik A, dicoba oleh B.
@@ -159,7 +159,7 @@ cek((await fetch(`${BASE}/api/gambar/${gambarA?.id}`)).status === 401, "tanpa ma
 const bukan = (await aksi(B, "unggahGambar", Buffer.from("bukan gambar").toString("base64"))).nilai;
 cek(bukan?.ok === false, "unggah selain JPEG ditolak", JSON.stringify(bukan));
 const riwayatB = await (await halaman(B, "/riwayat")).text();
-const setB = [...riwayatB.matchAll(/href="\/\?id=(\d+)"/g)].map((x) => Number(x[1]))[0];
+const setB = [...riwayatB.matchAll(/href="\/racik\?id=(\d+)"/g)].map((x) => Number(x[1]))[0];
 const soalB = setB && (await aksi(B, "cekHasil", setB, true)).nilai;
 if (soalB?.status === "selesai") {
   const no = soalB.soal.findIndex((s: { bentuk: string; gambar_id?: number }) => s.bentuk !== "MJ" && !s.gambar_id);

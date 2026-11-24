@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { APLIKASI, pesanSegera, type IdAplikasi } from "@/lib/aplikasi";
-import { IkonAplikasi } from "./beranda/kartu-menu";
+import { IkonAplikasi } from "./kartu-aplikasi";
 import { beriTahu } from "./tanya";
 
 /**
@@ -73,7 +73,8 @@ export function PindahAplikasi({ aktif }: { aktif: IdAplikasi }) {
             );
           })}
           <div className="my-1 border-t border-garis" />
-          <a role="menuitem" href="/beranda" className={item}>
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- sengaja muat penuh, sama dengan tautan lain di menu ini */}
+          <a role="menuitem" href="/" className={item}>
             Halaman awal
           </a>
         </div>
