@@ -4,7 +4,8 @@ import { and, desc, eq, gte, isNull, or, sql, type SQL } from "drizzle-orm";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { db } from "@/db";
-import { hasilSoal } from "@/db/schema";
+import { hasilSoal, nilaiLjk, ujianLjk } from "@/db/schema";
+import type { IdAplikasi } from "@/lib/aplikasi";
 import type { Pengguna } from "@/lib/auth";
 import { judulPendek } from "@/lib/bab";
 import { namaTujuan, type Pengaturan } from "@/lib/prompt";
@@ -104,6 +105,21 @@ export function ambilRiwayat(guruId: string, batas: number, saring?: SQL) {
     .limit(batas);
 }
 
+/** Ujian Koreksi LJK milik satu guru, terbaru dulu (aturan 3). Dipakai sidebar Koreksi LJK dan halaman /koreksi. */
+export function ambilUjian(guruId: string, batas: number) {
+  return db
+    .select({
+      id: ujianLjk.id,
+      nama: ujianLjk.nama,
+      kelas: ujianLjk.kelas,
+      dipindai: sql<number>`(select count(*) from ${nilaiLjk} where ${nilaiLjk.ujianId} = ${ujianLjk.id} and ${nilaiLjk.jawab} is not null)::int`,
+    })
+    .from(ujianLjk)
+    .where(and(eq(ujianLjk.guruId, guruId), isNull(ujianLjk.dihapus)))
+    .orderBy(desc(ujianLjk.dibuat))
+    .limit(batas);
+}
+
 const BATAS_SIDEBAR = 15;
 const tautan = "block shrink-0 truncate rounded-lg px-3 py-3 text-tinta hover:bg-krem-sorot md:py-1.5"; // shrink-0: jangan diperas di daftar yang digulir
 
@@ -114,7 +130,10 @@ const tautan = "block shrink-0 truncate rounded-lg px-3 py-3 text-tinta hover:bg
 // lebar: halaman Buat Soal & hasil memakai 1024px (pilihan pemilik 2026-10-20, layar lebar terlihat kosong); halaman lain 768px.
 // "pengaturan" (halaman Akun, 0.32.4): 1536px rata kiri, menu tab rapat di samping sidebar (pilihan pemilik).
 // setAktif: nomor set yang sedang dibuka (?id=, dari page.tsx) → barisnya di riwayat ditandai "sedang dibuka".
-export async function Kerangka({ p, lebar = false, setAktif = null, children }: { p: Pengguna; lebar?: boolean | "pengaturan"; setAktif?: number | null; children: React.ReactNode }) {
+// aplikasi: Racik Soal dan Koreksi LJK tampil sebagai aplikasi terpisah (pilihan pemilik 25 Nov 2026): judul, tombol
+// atas, menu, dan riwayat sidebar milik aplikasinya; bagian bawah (akun, tema, Keluar) sama.
+export async function Kerangka({ p, aplikasi = "racik", lebar = false, setAktif = null, children }: { p: Pengguna; aplikasi?: IdAplikasi; lebar?: boolean | "pengaturan"; setAktif?: number | null; children: React.ReactNode }) {
+  if (aplikasi === "koreksi") return <KerangkaKoreksi p={p}>{children}</KerangkaKoreksi>;
   const admin = p.peran === "admin";
   const riwayat = await ambilRiwayat(p.id, BATAS_SIDEBAR);
   const tema = (await cookies()).get("tema")?.value === "gelap" ? "gelap" : "terang";
@@ -125,7 +144,6 @@ export async function Kerangka({ p, lebar = false, setAktif = null, children }: 
           { href: "/admin/set", label: "Semua set" },
           { href: "/admin/guru", label: "Kelola guru" },
           { href: "/admin/masukan", label: "Masukan guru" },
-          { href: "/admin/siswa", label: "Daftar siswa" },
           { href: "/admin/pengaturan", label: "Pengaturan" },
         ]
       : []),
@@ -142,7 +160,7 @@ export async function Kerangka({ p, lebar = false, setAktif = null, children }: 
   // Tautan ke Racik Soal (/racik) sengaja <a> biasa (bukan Link): halaman Buat Soal membaca ?id= hanya saat dimuat.
   return (
     <div className="kerangka md:pl-64 xl:pl-72">
-      <LaciSidebar>
+      <LaciSidebar aplikasi="racik">
         {/* Atas (diam): Set baru selalu terlihat. */}
         <div className="shrink-0 px-3 pb-2 text-sm">
           {/* Tombol biasa, bukan penanda halaman (pilihan pemilik 2026-11-04): latar polos, "+" di lingkaran hijau
@@ -187,23 +205,7 @@ export async function Kerangka({ p, lebar = false, setAktif = null, children }: 
           )}
         </nav>
 
-        {/* Bawah (diam): akun, tema, Keluar selalu terlihat. */}
-        <div className="flex shrink-0 items-center gap-2 border-t border-garis px-3 py-3 text-sm">
-          <Link href="/akun" className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-2 hover:bg-krem-sorot" title="Akun">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-hijau text-sm font-semibold text-white" aria-hidden>
-              {p.nama.trim().charAt(0).toUpperCase()}
-            </span>
-            <span className="min-w-0 leading-tight">
-              <span className="block truncate">{p.nama}</span>
-              {/* Nomor versi (package.json, lihat CATATAN-VERSI.md): kalau guru melapor masalah, versinya langsung terlihat. */}
-              <span className="block text-xs text-pudar">{admin ? "Admin" : "Guru"} · v{paket.version}</span>
-            </span>
-          </Link>
-          <TombolTema awal={tema} />
-          <form action={keluar}>
-            <button className="h-8 rounded-lg px-2 text-sm text-pudar hover:bg-krem-sorot hover:text-tinta">Keluar</button>
-          </form>
-        </div>
+        <BawahSidebar p={p} tema={tema} />
       </LaciSidebar>
       <main className={`w-full ${lebar === "pengaturan" ? "max-w-[96rem]" : lebar ? "mx-auto max-w-5xl" : "mx-auto max-w-3xl"} min-w-0 space-y-6 p-4 md:p-8`}>
         {admin && <PeringatanAdmin />}
@@ -211,6 +213,76 @@ export async function Kerangka({ p, lebar = false, setAktif = null, children }: 
         {children}
       </main>
       <JendelaMasukan set={setMasukan} />
+      <JendelaTanya />
+      <Pengumuman />
+    </div>
+  );
+}
+
+/** Bawah sidebar (diam), sama di semua aplikasi: akun, tema, Keluar selalu terlihat. */
+function BawahSidebar({ p, tema }: { p: Pengguna; tema: "gelap" | "terang" }) {
+  const admin = p.peran === "admin";
+  return (
+    <div className="flex shrink-0 items-center gap-2 border-t border-garis px-3 py-3 text-sm">
+      <Link href="/akun" className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-2 hover:bg-krem-sorot" title="Akun">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-hijau text-sm font-semibold text-white" aria-hidden>
+          {p.nama.trim().charAt(0).toUpperCase()}
+        </span>
+        <span className="min-w-0 leading-tight">
+          <span className="block truncate">{p.nama}</span>
+          {/* Nomor versi (package.json, lihat CATATAN-VERSI.md): kalau guru melapor masalah, versinya langsung terlihat. */}
+          <span className="block text-xs text-pudar">{admin ? "Admin" : "Guru"} · v{paket.version}</span>
+        </span>
+      </Link>
+      <TombolTema awal={tema} />
+      <form action={keluar}>
+        <button className="h-8 rounded-lg px-2 text-sm text-pudar hover:bg-krem-sorot hover:text-tinta">Keluar</button>
+      </form>
+    </div>
+  );
+}
+
+/** Kerangka Koreksi LJK: "+ Ujian baru", menu milik Koreksi LJK, riwayat = ujian guru. */
+async function KerangkaKoreksi({ p, children }: { p: Pengguna; children: React.ReactNode }) {
+  const admin = p.peran === "admin";
+  const [ujian, tema] = await Promise.all([ambilUjian(p.id, BATAS_SIDEBAR), cookies().then((c) => (c.get("tema")?.value === "gelap" ? "gelap" : "terang") as "gelap" | "terang")]);
+  const menu = [...(admin ? [{ href: "/admin/siswa", label: "Daftar siswa" }, { href: "/admin/guru", label: "Kelola guru" }] : []), { href: "/tentang", label: "Tentang aplikasi" }];
+  return (
+    <div className="kerangka md:pl-64 xl:pl-72">
+      <LaciSidebar aplikasi="koreksi">
+        <div className="shrink-0 px-3 pb-2 text-sm">
+          {/* <a> biasa: muat penuh supaya formulir Ujian baru selalu terbuka (sama dengan "Set baru"). */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+          <a href="/koreksi?baru=1" className={`${tautan.replace("block", "flex")} items-center gap-2 font-semibold`}>
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-hijau text-white" aria-hidden>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+            </span>
+            Ujian baru
+          </a>
+        </div>
+        <nav aria-label="Menu dan ujian" className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-3 text-sm">
+          {menu.map((m) => (
+            <TautanMenu key={m.href} href={m.href} kelas={tautan}>{m.label}</TautanMenu>
+          ))}
+          <TombolMasukan kelas={tautan} />
+          <p className="shrink-0 px-3 pt-5 pb-1 text-xs text-pudar">Ujian</p>
+          {ujian.length === 0 && <p className="px-3 text-sm text-pudar">Belum ada ujian.</p>}
+          {ujian.map((u) => (
+            <TautanMenu key={u.id} href={`/koreksi/${u.id}`} kelas={tautan}>
+              <span className="block truncate">{u.nama}</span>
+              <span className="block text-xs font-normal text-pudar">{u.kelas} · {u.dipindai} dipindai</span>
+            </TautanMenu>
+          ))}
+          {ujian.length > 0 && (
+            <Link href="/koreksi" className="flex min-h-11 shrink-0 items-center px-3 text-sm text-hijau-teks hover:underline md:min-h-0 md:py-1">Lihat semua ujian</Link>
+          )}
+        </nav>
+        <BawahSidebar p={p} tema={tema} />
+      </LaciSidebar>
+      <main className="mx-auto w-full max-w-3xl min-w-0 space-y-6 p-4 md:p-8">{children}</main>
+      <JendelaMasukan set={null} />
       <JendelaTanya />
       <Pengumuman />
     </div>

@@ -6,6 +6,8 @@ import { wajibMasuk } from "@/lib/sesi";
 import { Kerangka } from "../../kepala";
 import { FormSiswa } from "./form";
 
+export const metadata = { title: "Daftar siswa · Koreksi LJK" };
+
 /** Daftar siswa per kelas untuk Koreksi LJK (keputusan pemilik 26 Nov 2026: admin menempel sekali dari Excel TU). */
 export default async function DaftarSiswa() {
   const p = await wajibMasuk();
@@ -14,7 +16,7 @@ export default async function DaftarSiswa() {
     a.kelas.localeCompare(b.kelas, "id", { numeric: true }),
   );
   return (
-    <Kerangka p={p}>
+    <Kerangka p={p} aplikasi="koreksi">
       <h1 className="text-2xl">Daftar siswa</h1>
       <p className="text-sm text-pudar">Dipakai Koreksi LJK: guru memilih kelas, nama siswa muncul urut absen.</p>
       <FormSiswa />

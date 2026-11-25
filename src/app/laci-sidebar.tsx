@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { APLIKASI, type IdAplikasi } from "@/lib/aplikasi";
 import { PindahAplikasi } from "./pindah-aplikasi";
 
 /**
@@ -10,7 +11,7 @@ import { PindahAplikasi } from "./pindah-aplikasi";
  *   ketuk area gelap, tombol Esc, atau saat memilih salah satu tautan. Halaman di belakang tidak ikut tergulir.
  * Isi (`children`) disusun pemanggil: bagian atas & bawah diam, bagian tengah yang digulir.
  */
-export function LaciSidebar({ children }: { children: React.ReactNode }) {
+export function LaciSidebar({ aplikasi, children }: { aplikasi: IdAplikasi; children: React.ReactNode }) {
   const [buka, setBuka] = useState(false);
   // Laci disembunyikan (tak terjangkau Tab) 200 ms setelah ditutup, sesudah selesai meluncur keluar.
   // Pakai pengatur waktu, bukan transisi CSS, supaya tetap benar walau halaman sedang di latar belakang.
@@ -61,7 +62,7 @@ export function LaciSidebar({ children }: { children: React.ReactNode }) {
             <path d="M4 7h16M4 12h16M4 17h16" />
           </svg>
         </button>
-        <span className="font-serif text-xl">Racik Soal</span>
+        <span className="font-serif text-xl">{APLIKASI.find((a) => a.id === aplikasi)?.nama}</span>
       </div>
 
       {/* HP: latar gelap di luar laci; diketuk = tutup. */}
@@ -79,7 +80,7 @@ export function LaciSidebar({ children }: { children: React.ReactNode }) {
         className={`fixed inset-y-0 left-0 z-50 flex h-dvh w-[85%] max-w-xs flex-col border-r border-garis bg-krem-tua transition-transform duration-200 motion-reduce:transition-none md:z-auto md:h-dvh md:w-64 md:max-w-none xl:w-72 md:shrink-0 md:translate-x-0 md:visible ${buka ? "translate-x-0" : "-translate-x-full"} ${terlihat ? "visible" : "invisible"}`}
       >
         <div className="flex items-center justify-between px-6 pt-5 pb-2 max-md:px-4 max-md:pt-3">
-          <PindahAplikasi aktif="racik" />
+          <PindahAplikasi aktif={aplikasi} />
           <button ref={tombolTutup} onClick={() => setBuka(false)} aria-label="Tutup menu" className="flex h-11 w-11 items-center justify-center rounded-lg hover:bg-krem-sorot md:hidden">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
               <path d="M6 6l12 12M18 6L6 18" />

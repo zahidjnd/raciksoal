@@ -20,7 +20,7 @@ export default async function Ujian({ params }: { params: Promise<{ id: string }
     .where(eq(siswa.kelas, u.kelas))
     .orderBy(asc(siswa.nomor), asc(siswa.nama));
   return (
-    <Kerangka p={p}>
+    <Kerangka p={p} aplikasi="koreksi">
       <HalamanUjian
         ujian={{ id: u.id, nama: u.nama, kelas: u.kelas, kunci: u.kunci as ButirKunci[], esaiMaks: u.esaiMaks }}
         siswa={baris

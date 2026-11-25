@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { Amiri, Plus_Jakarta_Sans, Source_Serif_4 } from "next/font/google";
+import { KakiTanzil } from "./kaki-tanzil";
 import "./globals.css";
 
 // Font Arab (aturan 7). Diunduh saat build, lalu disajikan dari server sendiri.
@@ -33,10 +34,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html lang="id" data-tema={gelap ? "gelap" : undefined} className={`${amiri.variable} ${jakarta.variable} ${serif.variable}`}>
       <body className="antialiased">
         {children}
-        {/* Wajib menurut ketentuan pemakaian teks Tanzil (langkah 9). */}
-        <footer className="py-4 text-center text-xs text-pudar">
-          Teks Al-Qur&apos;an: <a className="underline" href="https://tanzil.net" target="_blank" rel="noreferrer">Tanzil Project (tanzil.net)</a> · Terjemah ayat: Kementerian Agama RI (via Tanzil)
-        </footer>
+        <KakiTanzil />
       </body>
     </html>
   );

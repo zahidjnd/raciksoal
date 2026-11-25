@@ -28,7 +28,7 @@ export const APLIKASI: Aplikasi[] = [
     href: "/koreksi",
     isi: "Cukup foto atau unggah LJK siswa, nilai dihitung otomatis.",
     ikon: "M9 11l3 3 8-8M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9",
-    segera: true,
+    segera: false,
   },
 ];
 
