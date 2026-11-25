@@ -88,33 +88,79 @@ export const angka = (x: number) => x.toLocaleString("id-ID", { maximumFractionD
 /** Nilai akhir = skor objektif + esai (esai belum diisi = 0). */
 export const nilaiAkhir = (objektif: number | null, esai: number | null) => (objektif === null && esai === null ? null : bulat((objektif ?? 0) + (esai ?? 0)));
 
-/** Tempelan admin dari Excel TU: tiap baris "Kelas<TAB>Nama" atau "Kelas<TAB>No<TAB>Nama" (kolom No boleh di depan).
- *  Baris judul/kosong dilewati. Nomor absen = kolom No, atau urutan baris di kelasnya. */
-export function bacaDaftarSiswa(teks: string): { kelas: string; nomor: number; nama: string }[] | { pesan: string } {
-  const hasil: { kelas: string; nomor: number; nama: string }[] = [];
+// ---------- daftar siswa (impor Excel admin) ----------
+export type DataSiswa = { kelas: string; nomor: number; nama: string; nisn: string | null };
+export const JUDUL_TEMPLATE = ["No", "Nama", "NISN", "Kelas"];
+const MAKS_SISWA = 3000;
+
+export const rapikanKelas = (k: unknown) => String(k ?? "").replace(/\s+/g, " ").trim().toUpperCase();
+const rapikanNama = (n: unknown) => String(n ?? "").replace(/\s+/g, " ").trim();
+/** NISN dari sel Excel: angka (0 di depan hilang) dikembalikan jadi 10 angka; kosong = null; selain 10 angka = false. */
+export function rapikanNisn(v: unknown): string | null | false {
+  if (v === null || v === undefined || v === "") return null;
+  const t = typeof v === "number" ? String(Math.round(v)).padStart(10, "0") : String(v).replace(/[\s.'-]/g, "");
+  return t === "" ? null : /^\d{10}$/.test(t) ? t : false;
+}
+
+/**
+ * Baris lembar Excel → siswa + daftar masalah (nomor baris Excel). Kolom dikenali dari judulnya (No, Nama, NISN,
+ * Kelas; urutan bebas); tanpa baris judul = urutan template. `kelasIni`: impor di halaman satu kelas (kolom Kelas
+ * boleh kosong; kelas lain = masalah). Nomor absen kosong = urutan baris di kelasnya.
+ */
+export function bacaBarisSiswa(lembar: (string | number | null | undefined)[][][], kelasIni?: string): { siswa: DataSiswa[]; masalah: string[] } {
+  const siswa: DataSiswa[] = [];
+  const masalah: string[] = [];
   const urut = new Map<string, number>();
-  const sudah = new Set<string>();
-  for (const [i, mentah] of teks.split(/\r?\n/).entries()) {
-    const kolom = mentah.split(/\t|;|\|/).map((k) => k.replace(/\s+/g, " ").trim()).filter(Boolean);
-    if (!kolom.length) continue;
-    const no = kolom.find((k) => /^\d{1,3}$/.test(k));
-    const sisa = kolom.filter((k) => k !== no);
-    if (sisa.length < 2) {
-      if (i === 0) continue; // baris judul
-      return { pesan: `Baris ${i + 1}: perlu kolom Kelas dan Nama ("${mentah.trim().slice(0, 40)}").` };
+  const sudah = new Map<string, string>();
+  const nisnAda = new Map<string, string>();
+  for (const [li, baris] of lembar.entries()) {
+    const teks = (v: unknown) => String(v ?? "").trim();
+    let kol = { no: 0, nama: 1, nisn: 2, kelas: 3 };
+    let mulai = 0;
+    const judul = baris.slice(0, 10).findIndex((b) => b.some((v) => /^nama/i.test(teks(v))));
+    if (judul >= 0) {
+      const j = baris[judul].map(teks);
+      const cari = (re: RegExp) => j.findIndex((v) => re.test(v));
+      kol = { no: cari(/^(no\b|no\.|nomor|absen)/i), nama: cari(/^nama/i), nisn: cari(/nisn/i), kelas: cari(/^(kelas|rombel)/i) };
+      mulai = judul + 1;
     }
-    const [kelas, nama] = [sisa[0].toUpperCase(), sisa.slice(1).join(" ")];
-    if (/^(kelas|rombel)$/i.test(kelas) || /^nama/i.test(nama)) continue; // baris judul
-    if (kelas.length > 20 || nama.length > 80) return { pesan: `Baris ${i + 1} terlalu panjang. Pastikan kolomnya Kelas lalu Nama.` };
-    const kunci = `${kelas}|${nama.toLowerCase()}`;
-    if (sudah.has(kunci)) continue;
-    sudah.add(kunci);
-    const n = (urut.get(kelas) ?? 0) + 1;
-    urut.set(kelas, n);
-    hasil.push({ kelas, nomor: no ? Number(no) : n, nama });
+    const tempat = (r: number) => (lembar.length > 1 ? `Lembar ${li + 1} baris ${r + 1}` : `Baris ${r + 1}`);
+    for (let r = mulai; r < baris.length; r++) {
+      const b = baris[r] ?? [];
+      if (!b.some((v) => teks(v))) continue;
+      const nama = rapikanNama(b[kol.nama]);
+      const kelasSel = kol.kelas >= 0 ? rapikanKelas(b[kol.kelas]) : "";
+      const kelas = kelasSel || rapikanKelas(kelasIni);
+      const nisn = kol.nisn >= 0 ? rapikanNisn(b[kol.nisn]) : null;
+      if (!nama) { masalah.push(`${tempat(r)}: nama kosong.`); continue; }
+      if (!kelas) { masalah.push(`${tempat(r)}: kelas ${nama} kosong.`); continue; }
+      if (kelasIni && kelas !== rapikanKelas(kelasIni)) { masalah.push(`${tempat(r)}: ${nama} tertulis kelas ${kelas}, bukan ${rapikanKelas(kelasIni)}.`); continue; }
+      if (nama.length > 80 || kelas.length > 20) { masalah.push(`${tempat(r)}: nama atau kelas terlalu panjang.`); continue; }
+      if (nisn === false) { masalah.push(`${tempat(r)}: NISN ${nama} harus 10 angka.`); continue; }
+      const kunci = `${kelas}|${nama.toLowerCase()}`;
+      if (sudah.has(kunci)) { masalah.push(`${tempat(r)}: ${nama} sudah ada di ${kelas} (${sudah.get(kunci)}).`); continue; }
+      if (nisn && nisnAda.has(nisn)) { masalah.push(`${tempat(r)}: NISN ${nisn} sama dengan ${nisnAda.get(nisn)}.`); continue; }
+      sudah.set(kunci, tempat(r).toLowerCase());
+      if (nisn) nisnAda.set(nisn, nama);
+      const no = Number(b[kol.no]);
+      const n = (urut.get(kelas) ?? 0) + 1;
+      urut.set(kelas, n);
+      siswa.push({ kelas, nomor: kol.no >= 0 && Number.isInteger(no) && no >= 1 && no <= 999 ? no : n, nama, nisn });
+    }
   }
-  if (!hasil.length) return { pesan: "Belum ada baris siswa. Salin kolom Kelas dan Nama dari Excel, lalu tempel." };
-  if (hasil.length > 3000) return { pesan: "Terlalu banyak baris (maksimal 3000 siswa)." };
+  if (siswa.length > MAKS_SISWA) return { siswa: [], masalah: [`Terlalu banyak siswa (maksimal ${MAKS_SISWA}).`] };
+  return { siswa, masalah };
+}
+
+/** Kiriman browser → daftar siswa yang sah (server tidak percaya isi kiriman). */
+export function rapikanSiswa(x: unknown): DataSiswa[] | null {
+  if (!Array.isArray(x) || !x.length || x.length > MAKS_SISWA) return null;
+  const hasil: DataSiswa[] = [];
+  for (const s of x) {
+    const kelas = rapikanKelas(s?.kelas), nama = rapikanNama(s?.nama), nisn = rapikanNisn(s?.nisn), nomor = Number(s?.nomor);
+    if (!kelas || kelas.length > 20 || !nama || nama.length > 80 || nisn === false || !Number.isInteger(nomor) || nomor < 1 || nomor > 999) return null;
+    hasil.push({ kelas, nomor, nama, nisn });
+  }
   return hasil;
 }
 

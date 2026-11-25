@@ -10,7 +10,7 @@ import { bacaFoto, type HasilFoto } from "../baca-foto";
 import { KameraLjk } from "./kamera-ljk";
 import { AnalisisButir, TombolExcel } from "./analisis";
 
-type Siswa = { id: number; nomor: number; nama: string; jawab: number[][] | null; objektif: number | null; esai: number | null; potong: string | null };
+type Siswa = { id: number; nomor: number; nama: string; nisn: string | null; jawab: number[][] | null; objektif: number | null; esai: number | null; potong: string | null };
 type Ujian = { id: number; nama: string; kelas: string; kunci: ButirKunci[]; esaiMaks: number };
 /** Lembar yang sedang diperiksa guru (hasil pindai baru, atau lembar tersimpan yang dibuka lagi). */
 type Lembar = { siswaId: number; jawab: number[][]; ragu: boolean[]; potong: string | null; baru: boolean };

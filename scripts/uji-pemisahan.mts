@@ -196,9 +196,19 @@ if (ujianA?.ok) {
   cek(dariSet?.ok === false && /tidak ditemukan/i.test(dariSet.pesan), "B ditolak: buatUjian dari set A (kunci A)", JSON.stringify(dariSet));
   const html = await (await halaman(B, "/koreksi")).text();
   cek(!html.includes(`/koreksi/${ujianA.id}"`), "ujian LJK A tidak tampil di /koreksi milik B");
-  const adm = (await aksi(B, "simpanSiswa", null, "XI A\tDIRETAS")).nilai; // ditolak sebelum isian dibaca
-  cek(adm?.ok === false && /admin/i.test(adm.pesan), "B ditolak: simpanSiswa (khusus admin)", JSON.stringify(adm));
-  cek(!(await (await halaman(A, `/koreksi/${ujianA.id}`)).text()).includes("DIRETAS"), "daftar siswa tidak berubah");
+  // Daftar siswa (1.1.1, impor Excel): semua aksinya khusus admin; B guru biasa.
+  for (const [nama, ...args] of [
+    ["simpanSiswa", [{ kelas: kelasA, nomor: 1, nama: "DIRETAS", nisn: null }]],
+    ["tambahSiswa", { kelas: kelasA, nama: "DIRETAS", nisn: null }],
+    ["ubahSiswa", siswaId, { nomor: 1, nama: "DIRETAS", nisn: null }],
+    ["keluarkanSiswa", siswaId],
+  ] as [string, ...unknown[]][]) {
+    const { nilai } = await aksi(B, nama, ...args);
+    cek(nilai?.ok === false && /admin/i.test(nilai.pesan), `B ditolak: ${nama} (khusus admin)`, JSON.stringify(nilai));
+  }
+  cek(!(await (await halaman(B, "/admin/siswa")).text()).includes(kelasA), "B tidak bisa membuka halaman Daftar siswa");
+  const isiKelas = await (await halaman(A, `/koreksi/${ujianA.id}`)).text();
+  cek(!isiKelas.includes("DIRETAS") && new RegExp(`\\\\?"id\\\\?":${siswaId}[,}]`).test(isiKelas), "daftar siswa tidak berubah (siswa tidak dikeluarkan)");
   await aksi(A, "hapusUjian", ujianA.id); // bersih-bersih
 } else console.log("(lewati Koreksi LJK: daftar siswa di laptop masih kosong; isi dulu lewat /admin/siswa)");
 

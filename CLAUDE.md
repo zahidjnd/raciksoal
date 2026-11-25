@@ -320,7 +320,8 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
 - **Koreksi LJK** (`/koreksi`, tahap 1–2): LJK = "LJK ASAS 26-1 FIX" (`dokumen/ljk/`, gitignore). Pembaca `lib/ljk.ts` di
   browser, tanpa AI/library: 4 kotak → homografi → arah dari garis kop → geseran per kolom/nomor (kertas melengkung) →
   kehitaman RELATIF per lembar (`AMBANG`; patokan kosong PER HURUF: B tercetak tebal → lembar banyak kosong dulu terbaca B); ragu/dua jawaban/coretan = kuning, tidak ditebak. Foto TIDAK disimpan, hanya
-  potongan nama (≤ 40 KB). Tabel `siswa` (admin tempel dari Excel TU, `/admin/siswa`; hilang = `aktif` false), `ujian_ljk`,
+  potongan nama (≤ 40 KB). Tabel `siswa` (+ `nisn` teks; admin IMPOR .xlsx dari template No|Nama|NISN|Kelas di `/admin/siswa`, `?kelas=` = satu kelas +
+  tambah/ubah/keluarkan; dibaca di browser `bacaXlsx` → `bacaBarisSiswa`, file bermasalah tidak bisa disimpan; hilang = `aktif` false), `ujian_ljk`,
   `nilai_ljk`. Kunci dari set (Paket A, nomor LJK = nomor soal; isian/uraian = esai) atau ketik dengan `FORMAT_ASAS`
   (non-eksak PG 1/PGK 4/BS 2/esai 5×8, eksak 2/4/2/5×6, bisa diubah). Semua dijawab huruf (B/S: A = Benar, B = Salah).
   PGK sebagian (`bagianBenar`, ATURAN-SOAL 3). Objektif dihitung ulang di server. Aplikasi terpisah (`Kerangka aplikasi="koreksi"`: sidebar ujian,

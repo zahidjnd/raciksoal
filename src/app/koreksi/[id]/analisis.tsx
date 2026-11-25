@@ -6,7 +6,7 @@ import { HURUF } from "@/lib/ljk";
 import { buatXlsx } from "@/lib/xlsx";
 import { beriTahu } from "../../tanya";
 
-type Siswa = { nomor: number; nama: string; jawab: number[][] | null; objektif: number | null; esai: number | null };
+type Siswa = { nomor: number; nama: string; nisn: string | null; jawab: number[][] | null; objektif: number | null; esai: number | null };
 type Ujian = { nama: string; kelas: string; kunci: ButirKunci[]; esaiMaks: number };
 
 const huruf = (j: number[]) => j.map((h) => HURUF[h]).join("");
@@ -18,11 +18,11 @@ async function unduhExcel(ujian: Ujian, siswa: Siswa[], butir: Butir[]) {
   const { kunci } = ujian;
   const akhir = siswa.map((s) => nilaiAkhir(s.objektif, s.esai)).filter((n): n is number => n !== null);
   const ringkas = akhir.length
-    ? [[], ["", "Rata-rata", "", "", "", Math.round((akhir.reduce((a, b) => a + b, 0) / akhir.length) * 10) / 10], ["", "Tertinggi", "", "", "", Math.max(...akhir)], ["", "Terendah", "", "", "", Math.min(...akhir)]]
+    ? [[], ["", "Rata-rata", "", "", "", "", Math.round((akhir.reduce((a, b) => a + b, 0) / akhir.length) * 10) / 10], ["", "Tertinggi", "", "", "", "", Math.max(...akhir)], ["", "Terendah", "", "", "", "", Math.min(...akhir)]]
     : [];
   const nilai = [
-    ["No", "Nama", "Benar", "Skor pilihan", "Esai", "Nilai akhir"],
-    ...siswa.map((s) => [s.nomor, s.nama, s.jawab ? kunci.filter((k, i) => bagianBenar(k, s.jawab![i] ?? []) === 1).length : null, s.objektif, s.esai, nilaiAkhir(s.objektif, s.esai)]),
+    ["No", "NISN", "Nama", "Benar", "Skor pilihan", "Esai", "Nilai akhir"],
+    ...siswa.map((s) => [s.nomor, s.nisn, s.nama, s.jawab ? kunci.filter((k, i) => bagianBenar(k, s.jawab![i] ?? []) === 1).length : null, s.objektif, s.esai, nilaiAkhir(s.objektif, s.esai)]),
     ...ringkas,
   ];
   const jawaban = [["No", "Nama", ...kunci.map((_, i) => i + 1)], ["", "KUNCI", ...kunci.map((k) => huruf(k.kunci))], ...siswa.filter((s) => s.jawab).map((s) => [s.nomor, s.nama, ...kunci.map((_, i) => huruf(s.jawab![i] ?? []) || "-")])];
@@ -31,7 +31,7 @@ async function unduhExcel(ujian: Ujian, siswa: Siswa[], butir: Butir[]) {
     ...butir.map((b, i) => [i + 1, NAMA_BENTUK[kunci[i].bentuk], huruf(kunci[i].kunci), persen(b.p), b.kategoriP, b.d, b.kategoriD ?? `perlu ≥ ${MIN_DAYA_BEDA} siswa`, ...b.sebaran, huruf(b.pengecohLemah)]),
   ];
   const blob = await buatXlsx([
-    { nama: "Nilai", lebar: [5, 32, 8, 12, 8, 11], baris: nilai },
+    { nama: "Nilai", lebar: [5, 13, 32, 8, 12, 8, 11], teks: [1], baris: nilai },
     { nama: "Jawaban", lebar: [5, 32, ...kunci.map(() => 5)], baris: jawaban },
     { nama: "Analisis butir", lebar: [5, 15, 7, 9, 11, 10, 17, 5, 5, 5, 5, 5, 8, 15], baris: analisis },
   ]);

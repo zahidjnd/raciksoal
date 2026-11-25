@@ -205,6 +205,7 @@ export const siswa = pgTable(
     kelas: text("kelas").notNull(),
     nomor: integer("nomor").notNull(), // nomor absen di kelas
     nama: text("nama").notNull(),
+    nisn: text("nisn"), // 10 angka (boleh kosong); teks supaya angka 0 di depan tidak hilang
     aktif: boolean("aktif").default(true).notNull(),
     diubah: timestamp("diubah", { withTimezone: true }).defaultNow().notNull(),
   },

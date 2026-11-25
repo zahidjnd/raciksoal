@@ -53,6 +53,17 @@ aplikasi kedua **Koreksi LJK** (foto dari HP / unggah dari laptop, nilai dihitun
 
 ---
 
+## 1.1.1 — 25 November 2026
+- **Daftar siswa lewat file Excel** (admin, Koreksi LJK → Daftar siswa). Unduh template berkolom **No, Nama, NISN,
+  Kelas**, isi, lalu Impor Excel: tampil pratinjau per kelas sebelum disimpan. Baris bermasalah (nama kosong, NISN bukan
+  10 angka, nama/NISN kembar, kelas lain) disebut nomor barisnya dan file belum bisa disimpan sampai diperbaiki.
+  Satu file boleh berisi banyak kelas. NISN yang angka 0 di depannya hilang di Excel dikembalikan otomatis.
+- Kelas tampil sebagai kartu (+ Tambah kelas). Di halaman kelas: impor khusus kelas itu, ubah nomor/nama/NISN,
+  tambah siswa pindahan, keluarkan siswa (nilai lamanya tetap tersimpan). Cara tempel teks lama dihapus.
+- Excel nilai Koreksi LJK kini memuat kolom NISN.
+
+---
+
 ## 1.1.0 — 25 November 2026
 - **Baru: Koreksi LJK.** Kartu Koreksi LJK di halaman awal sekarang bisa dibuka. Tampil sebagai aplikasi sendiri
   (judul, sidebar, dan riwayat ujian terpisah dari Racik Soal).

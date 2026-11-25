@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { analisisButir, bacaDaftarSiswa, bagianBenar, FORMAT_ASAS, kunciDariSet, nilaiAkhir, rapikanJawab, rapikanKunci, skorObjektif, totalObjektif } from "./koreksi.ts";
+import { analisisButir, bacaBarisSiswa, bagianBenar, rapikanSiswa, FORMAT_ASAS, kunciDariSet, nilaiAkhir, rapikanJawab, rapikanKunci, skorObjektif, totalObjektif } from "./koreksi.ts";
 import type { Soal } from "./soal.ts";
 
 const soal = (bentuk: Soal["bentuk"], kunci: Soal["kunci"], skor: number, lain: Partial<Soal> = {}) => ({ bentuk, kunci, skor, ...lain }) as Soal;
@@ -46,15 +46,34 @@ test("koreksi: nilai (PG kompleks sebagian, kosong/dua jawaban PG = salah)", () 
   assert.equal(rapikanJawab([[1]], 3), null);
 });
 
-test("koreksi: tempelan daftar siswa dari Excel", () => {
-  const r = bacaDaftarSiswa("Kelas\tNo\tNama\nXI A\t1\tAhmad Fauzi\nxi a\t2\t Bilal  Rahman \nXI B\tCitra Amalia\nXI B\tDina\n\nXI A\t1\tAhmad Fauzi");
-  assert.deepEqual(r, [
-    { kelas: "XI A", nomor: 1, nama: "Ahmad Fauzi" },
-    { kelas: "XI A", nomor: 2, nama: "Bilal Rahman" },
-    { kelas: "XI B", nomor: 1, nama: "Citra Amalia" },
-    { kelas: "XI B", nomor: 2, nama: "Dina" },
+test("koreksi: impor daftar siswa dari Excel (judul kolom, NISN, masalah per baris)", () => {
+  // urutan kolom bebas, judul tidak di baris pertama, NISN angka kehilangan 0 di depan
+  const lembar = [
+    [["DAFTAR SISWA MA AL-FATAH"], [], ["Nama Siswa", "Kelas", "NISN", "No"], [" Ahmad  Fauzi ", "xi a", 123456789, 1], ["Bilal Rahman", "XI A", "0098765432", null], ["Citra", "XI B", "12345", 1], [null, "XI B"], ["Ahmad Fauzi", "XI A", null, 3], ["Dina", "XI B", "0123456789", 2], [], ["Eka", "", "0123456789"]],
+  ];
+  const r = bacaBarisSiswa(lembar);
+  assert.deepEqual(r.siswa, [
+    { kelas: "XI A", nomor: 1, nama: "Ahmad Fauzi", nisn: "0123456789" },
+    { kelas: "XI A", nomor: 2, nama: "Bilal Rahman", nisn: "0098765432" },
+  ]); // Citra (NISN salah) & Dina (NISN sama dengan Ahmad) tidak masuk
+  assert.deepEqual(r.masalah, [
+    "Baris 6: NISN Citra harus 10 angka.",
+    "Baris 7: nama kosong.",
+    "Baris 8: Ahmad Fauzi sudah ada di XI A (baris 4).",
+    "Baris 9: NISN 0123456789 sama dengan Ahmad Fauzi.",
+    "Baris 11: kelas Eka kosong.",
   ]);
-  assert.ok("pesan" in (bacaDaftarSiswa("XI A\tAhmad\nhanya satu kolom") as object));
+  // tanpa baris judul = urutan template (No, Nama, NISN, Kelas); impor di halaman satu kelas
+  const t = bacaBarisSiswa([[[1, "Fajar", "", ""], [2, "Gita", null, "x b"], [3, "Hana", null, "X A"]]], "x a");
+  assert.deepEqual(t.siswa, [
+    { kelas: "X A", nomor: 1, nama: "Fajar", nisn: null },
+    { kelas: "X A", nomor: 3, nama: "Hana", nisn: null },
+  ]);
+  assert.deepEqual(t.masalah, ["Baris 2: Gita tertulis kelas X B, bukan X A."]);
+  // kiriman ke server
+  assert.deepEqual(rapikanSiswa([{ kelas: " x a ", nomor: 1, nama: "Fajar", nisn: null }]), [{ kelas: "X A", nomor: 1, nama: "Fajar", nisn: null }]);
+  assert.equal(rapikanSiswa([{ kelas: "X A", nomor: 1, nama: "Fajar", nisn: "123" }]), null);
+  assert.equal(rapikanSiswa([{ kelas: "X A", nomor: 0, nama: "Fajar" }]), null);
 });
 
 test("koreksi: analisis butir (kesukaran, daya beda, sebaran, pengecoh lemah)", () => {
