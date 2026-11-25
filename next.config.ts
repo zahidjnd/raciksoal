@@ -7,7 +7,9 @@ const headerKeamanan = [
   { key: "X-Frame-Options", value: "DENY" }, // browser lama yang belum paham frame-ancestors
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
+  // camera=(self): kamera langsung Koreksi LJK (1.1.2). Dulu camera=() = kamera diblokir untuk SEMUA halaman,
+  // getUserMedia langsung ditolak (NotAllowedError) tanpa bertanya ke guru, apa pun izin di Chrome/HP.
+  { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=(), payment=(), usb=()" },
 ];
 
 const nextConfig: NextConfig = {

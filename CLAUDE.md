@@ -336,6 +336,8 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
 - Kolom waktu WAJIB `timestamp(..., { withTimezone: true })` (tanpa itu jam +7). Perubahan tabel lewat file SQL di `drizzle/`.
 - `history.replaceState` selalu dengan `history.state` (null membuat Next memuat ulang & memutus cek status). Setelah
   `mulaiBuatSoal` pakai `location.assign`, bukan `router.replace`. Tautan ke "/racik" dan "/racik?id=" sengaja `<a>` biasa.
+- Header `Permissions-Policy` (next.config.ts) WAJIB `camera=(self)`: `camera=()` = getUserMedia ditolak diam-diam
+  (NotAllowedError, tanpa pertanyaan izin) di https; uji LAN http tidak memperlihatkannya (1.1.2).
 - Tidak pakai middleware (proxy hosting mengubah Host). Halaman `force-dynamic` (hosting punya cache depan).
 - Better Auth: jangan `changePassword({ revokeOtherSessions: true })`; rute `/api/auth/[...all]` sengaja DIHAPUS (melewati
   pembatas login) — jangan dipasang lagi.

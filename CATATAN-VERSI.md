@@ -53,6 +53,16 @@ aplikasi kedua **Koreksi LJK** (foto dari HP / unggah dari laptop, nilai dihitun
 
 ---
 
+## 1.1.2 — 25 November 2026
+- **Kamera langsung Koreksi LJK kini menyala di HP.** Sebelumnya aturan keamanan web melarang semua pemakaian kamera,
+  jadi Chrome langsung menolak ("Izin kamera ditolak") tanpa bertanya. Sekarang hanya Racik Soal sendiri yang boleh
+  memakai kamera; mikrofon dan lokasi tetap dilarang.
+- Ujian baru → Dari Racik Soal: pilihan set kini berupa daftar kartu (judul maks 2 baris + jenis · mapel · tanggal ·
+  jumlah soal), tidak lagi melebar keluar layar.
+- Ujian baru → Isi sendiri: kotak kunci urut ke bawah dulu (1–20 kiri, 21–40 kanan), bulatan PG kompleks tidak gepeng.
+
+---
+
 ## 1.1.1 — 25 November 2026
 - **Daftar siswa lewat file Excel** (admin, Koreksi LJK → Daftar siswa). Unduh template berkolom **No, Nama, NISN,
   Kelas**, isi, lalu Impor Excel: tampil pratinjau per kelas sebelum disimpan. Baris bermasalah (nama kosong, NISN bukan
