@@ -50,3 +50,6 @@ next-env.d.ts
 # dokumen pribadi pemilik (sengaja tidak di-commit): PDF peraturan rujukan & proposal
 dokumen/rujukan/
 dokumen/proposal/
+
+# LJK madrasah (file kerja, tidak di-commit)
+dokumen/ljk/
