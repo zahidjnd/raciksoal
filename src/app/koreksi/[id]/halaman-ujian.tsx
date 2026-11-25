@@ -6,7 +6,8 @@ import { angka, bulat, nilaiAkhir, skorObjektif, totalObjektif, type ButirKunci 
 import { HURUF } from "@/lib/ljk";
 import { beriTahu, tanya } from "../../tanya";
 import { hapusUjian, simpanEsai, simpanLembar } from "../actions";
-import { bacaFoto } from "../baca-foto";
+import { bacaFoto, type HasilFoto } from "../baca-foto";
+import { KameraLjk } from "./kamera-ljk";
 
 type Siswa = { id: number; nomor: number; nama: string; jawab: number[][] | null; objektif: number | null; esai: number | null; potong: string | null };
 type Ujian = { id: number; nama: string; kelas: string; kunci: ButirKunci[]; esaiMaks: number };
@@ -23,13 +24,21 @@ export function HalamanUjian({ ujian, siswa: awal }: { ujian: Ujian; siswa: Sisw
   const [pilihNo, setPilihNo] = useState<number | null>(null);
   const [membaca, setMembaca] = useState(false);
   const [cari, setCari] = useState("");
+  const [kamera, setKamera] = useState(false);
   const target = useRef<number | null>(null);
   const masukan = useRef<HTMLInputElement>(null);
   const { kunci, esaiMaks } = ujian;
   const maks = totalObjektif(kunci) + esaiMaks;
 
+  // Kamera langsung (tahap 3) bila browser mengizinkan (hanya di https); selain itu kamera bawaan HP.
   function pindai(siswaId: number) {
     target.current = siswaId;
+    if (typeof navigator.mediaDevices?.getUserMedia === "function") setKamera(true);
+    else pakaiFoto();
+  }
+
+  function pakaiFoto() {
+    setKamera(false);
     masukan.current?.click(); // harus langsung dari ketukan guru (aturan browser)
   }
 
@@ -40,6 +49,11 @@ export function HalamanUjian({ ujian, siswa: awal }: { ujian: Ujian; siswa: Sisw
     setMembaca(true);
     const r = await bacaFoto(f);
     setMembaca(false);
+    tampilkan(r);
+  }
+
+  function tampilkan(r: HasilFoto) {
+    setKamera(false);
     if (!r.ok) return beriTahu(r.pesan, "LJK belum terbaca");
     const jawab = kunci.map((_, i) => r.jawab[i].pilih);
     setPilihNo(null);
@@ -153,6 +167,9 @@ export function HalamanUjian({ ujian, siswa: awal }: { ujian: Ujian; siswa: Sisw
       <p className="text-xs text-pudar">Cari nama yang tertulis di LJK, ketuk namanya, kamera terbuka. Nama yang sudah dipindai: ketuk untuk melihat atau membetulkan. Nilai esai: ketik lalu Enter, otomatis tersimpan.</p>
       <button onClick={hapus} className="text-sm text-bahaya hover:underline">Hapus ujian</button>
 
+      {kamera && (
+        <KameraLjk nama={siswa.find((s) => s.id === target.current)?.nama ?? ""} hasil={tampilkan} batal={() => setKamera(false)} pakaiFoto={pakaiFoto} />
+      )}
       {membaca && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-tinta/40">
           <p className="rounded-xl bg-krem px-6 py-4 font-semibold">Membaca LJK…</p>

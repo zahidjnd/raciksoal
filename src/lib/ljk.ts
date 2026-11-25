@@ -191,7 +191,8 @@ function skorGaris(g: Gambar, H: Homografi): number {
   return ada / semua;
 }
 
-function cariKotak(g: Gambar): { H: Homografi; kotak: Titik[] } | null {
+/** Empat kotak penanda + homografi (null = belum terlihat). Juga dipakai kamera langsung untuk membidik. */
+export function cariKotak(g: Gambar): { H: Homografi; kotak: Titik[] } | null {
   const f = Math.max(1, Math.round(Math.max(g.w, g.h) / 1000));
   const kecil = kecilkan(g, f);
   const c = cariCalon(kecil);

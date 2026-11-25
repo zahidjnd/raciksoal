@@ -323,7 +323,10 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   potongan nama (≤ 40 KB). Tabel `siswa` (admin tempel dari Excel TU, `/admin/siswa`; hilang = `aktif` false), `ujian_ljk`,
   `nilai_ljk`. Kunci dari set (Paket A, nomor LJK = nomor soal; isian/uraian = esai) atau ketik dengan `FORMAT_ASAS`
   (non-eksak PG 1/PGK 4/BS 2/esai 5×8, eksak 2/4/2/5×6, bisa diubah). Semua dijawab huruf (B/S: A = Benar, B = Salah).
-  PGK sebagian (`bagianBenar`, ATURAN-SOAL 3). Objektif dihitung ulang di server. Kartu halaman awal masih `segera`. Tahap 3 kamera langsung, tahap 4 Excel + analisis butir.
+  PGK sebagian (`bagianBenar`, ATURAN-SOAL 3). Objektif dihitung ulang di server. Aplikasi terpisah (`Kerangka aplikasi="koreksi"`: sidebar ujian,
+  judul tab di `koreksi/layout.tsx`, kaki Tanzil disembunyikan `kaki-tanzil.tsx`). Tahap 3 (`kamera-ljk.tsx`): getUserMedia
+  (hanya https; HP uji LAN perlu chrome://flags "Insecure origins treated as secure"), bidik 640 px `cariKotak`, diam
+  `DIAM` bidikan (< `GESER`) = jepret 1600 px; gagal → kamera bawaan HP. Tahap 4 Excel + analisis butir.
 - **Backup**: malam 02.00 di hosting → terenkripsi → repo privat `zahidjnd/raciksoal-backup`; cara pulihkan `deploy/pulihkan-backup.md`.
 
 ## Jebakan teknis (pernah memakan waktu)

@@ -5,6 +5,18 @@ const SISI = 1600; // cukup tajam untuk bulatan, tetap cepat di HP
 
 export type HasilFoto = { ok: true; jawab: Jawab[]; potong: string } | { ok: false; pesan: string };
 
+/** Gambar apa pun (foto, bingkai video) → kanvas abu-abu berukuran maks `sisi`. */
+export function keKanvas(sumber: CanvasImageSource, lebar: number, tinggi: number, sisi = SISI) {
+  const f = Math.min(1, sisi / Math.max(lebar, tinggi));
+  const w = Math.round(lebar * f), h = Math.round(tinggi * f);
+  const kanvas = document.createElement("canvas");
+  kanvas.width = w;
+  kanvas.height = h;
+  const ctx = kanvas.getContext("2d", { willReadFrequently: true })!;
+  ctx.drawImage(sumber, 0, 0, w, h);
+  return keAbu(ctx.getImageData(0, 0, w, h).data, w, h);
+}
+
 export async function bacaFoto(file: Blob): Promise<HasilFoto> {
   let bmp: ImageBitmap;
   try {
@@ -12,14 +24,12 @@ export async function bacaFoto(file: Blob): Promise<HasilFoto> {
   } catch {
     return { ok: false, pesan: "Foto tidak bisa dibuka." };
   }
-  const f = Math.min(1, SISI / Math.max(bmp.width, bmp.height));
-  const w = Math.round(bmp.width * f), h = Math.round(bmp.height * f);
-  const kanvas = document.createElement("canvas");
-  kanvas.width = w;
-  kanvas.height = h;
-  const ctx = kanvas.getContext("2d")!;
-  ctx.drawImage(bmp, 0, 0, w, h);
-  const g = keAbu(ctx.getImageData(0, 0, w, h).data, w, h);
+  return bacaGambar(bmp, bmp.width, bmp.height);
+}
+
+/** Baca LJK dari foto atau bingkai kamera langsung. */
+export function bacaGambar(sumber: CanvasImageSource, lebar: number, tinggi: number): HasilFoto {
+  const g = keKanvas(sumber, lebar, tinggi);
   const r = bacaLjk(g);
   if (!r.ok) return r;
   const n = potong(g, r.H, LJK.nama, 480);
