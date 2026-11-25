@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { bacaDaftarSiswa, bagianBenar, FORMAT_ASAS, kunciDariSet, nilaiAkhir, rapikanJawab, rapikanKunci, skorObjektif, totalObjektif } from "./koreksi.ts";
+import { analisisButir, bacaDaftarSiswa, bagianBenar, FORMAT_ASAS, kunciDariSet, nilaiAkhir, rapikanJawab, rapikanKunci, skorObjektif, totalObjektif } from "./koreksi.ts";
 import type { Soal } from "./soal.ts";
 
 const soal = (bentuk: Soal["bentuk"], kunci: Soal["kunci"], skor: number, lain: Partial<Soal> = {}) => ({ bentuk, kunci, skor, ...lain }) as Soal;
@@ -55,4 +55,26 @@ test("koreksi: tempelan daftar siswa dari Excel", () => {
     { kelas: "XI B", nomor: 2, nama: "Dina" },
   ]);
   assert.ok("pesan" in (bacaDaftarSiswa("XI A\tAhmad\nhanya satu kolom") as object));
+});
+
+test("koreksi: analisis butir (kesukaran, daya beda, sebaran, pengecoh lemah)", () => {
+  const kunci = rapikanKunci([{ bentuk: "PG", kunci: [0], skor: 1 }, { bentuk: "PG", kunci: [2], skor: 1 }, { bentuk: "PGK", kunci: [1, 3], skor: 2 }])!;
+  // 10 siswa: 5 pandai menjawab semua benar; 5 lemah: no.1 benar, no.2 salah (B), no.3 setengah / kosong
+  const pandai = Array.from({ length: 5 }, () => [[0], [2], [1, 3]]);
+  const lemah = Array.from({ length: 5 }, (_, i) => [[0], [1], i % 2 ? [1] : []]);
+  const a = analisisButir(kunci, [...pandai, ...lemah]);
+  assert.equal(a[0].p, 1);
+  assert.equal(a[0].kategoriP, "Mudah");
+  assert.equal(a[0].d, 0); // semua benar = tidak membedakan
+  assert.equal(a[0].kategoriD, "Perlu diperbaiki");
+  assert.equal(a[1].p, 0.5);
+  assert.equal(a[1].kategoriP, "Sedang");
+  assert.equal(a[1].d, 1);
+  assert.equal(a[1].kategoriD, "Baik");
+  assert.deepEqual(a[1].sebaran, [0, 5, 5, 0, 0, 0]);
+  assert.deepEqual(a[1].pengecohLemah, [0, 3, 4]); // A, D, E tak dipilih siapa pun
+  assert.deepEqual(a[2].sebaran, [0, 7, 0, 5, 0, 3]); // PGK: tiap huruf dihitung, 3 kosong
+  assert.equal(a[2].p, 0.6); // (5×1 + 2×½) / 10
+  // siswa < 10: daya beda belum dihitung
+  assert.equal(analisisButir(kunci, pandai)[0].d, null);
 });

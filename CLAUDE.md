@@ -326,7 +326,9 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   PGK sebagian (`bagianBenar`, ATURAN-SOAL 3). Objektif dihitung ulang di server. Aplikasi terpisah (`Kerangka aplikasi="koreksi"`: sidebar ujian,
   judul tab di `koreksi/layout.tsx`, kaki Tanzil disembunyikan `kaki-tanzil.tsx`). Tahap 3 (`kamera-ljk.tsx`): getUserMedia
   (hanya https; HP uji LAN perlu chrome://flags "Insecure origins treated as secure"), bidik 640 px `cariKotak`, diam
-  `DIAM` bidikan (< `GESER`) = jepret 1600 px; gagal → kamera bawaan HP. Tahap 4 Excel + analisis butir.
+  `DIAM` bidikan (< `GESER`) = jepret 1600 px; gagal → kamera bawaan HP. Tahap 4 (`analisis.tsx`): Excel disusun DI
+  BROWSER (`lib/xlsx.ts`, jszip, tanpa library baru; lembar Nilai/Jawaban/Analisis butir) + `analisisButir` (p = rata
+  bagian benar, daya beda atas−bawah 27% bila ≥ 10 lembar, pengecoh lemah < 5%).
 - **Backup**: malam 02.00 di hosting → terenkripsi → repo privat `zahidjnd/raciksoal-backup`; cara pulihkan `deploy/pulihkan-backup.md`.
 
 ## Jebakan teknis (pernah memakan waktu)

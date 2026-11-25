@@ -117,3 +117,50 @@ export function bacaDaftarSiswa(teks: string): { kelas: string; nomor: number; n
   if (hasil.length > 3000) return { pesan: "Terlalu banyak baris (maksimal 3000 siswa)." };
   return hasil;
 }
+
+// ---------- analisis butir (tahap 4) ----------
+export type KategoriP = "Mudah" | "Sedang" | "Sukar";
+export type KategoriD = "Baik" | "Cukup" | "Perlu diperbaiki" | "Dibuang";
+export type Butir = {
+  p: number; // tingkat kesukaran: rata-rata bagian benar (0–1), PGK sebagian ikut dihitung
+  kategoriP: KategoriP;
+  d: number | null; // daya pembeda (kelompok atas − bawah 27%); null bila siswa < MIN_DAYA_BEDA
+  kategoriD: KategoriD | null;
+  sebaran: number[]; // banyak siswa memilih A–E (indeks 0–4) + kosong (indeks 5)
+  pengecohLemah: number[]; // huruf bukan kunci yang dipilih < 5% siswa
+};
+
+export const MIN_DAYA_BEDA = 10;
+
+const kategoriP = (p: number): KategoriP => (p >= 0.7 ? "Mudah" : p >= 0.3 ? "Sedang" : "Sukar");
+const kategoriD = (d: number): KategoriD => (d >= 0.4 ? "Baik" : d >= 0.2 ? "Cukup" : d >= 0 ? "Perlu diperbaiki" : "Dibuang");
+
+/** Analisis butir dari lembar yang sudah dipindai. Kelompok atas/bawah diurutkan menurut skor pilihan. */
+export function analisisButir(kunci: ButirKunci[], jawaban: number[][][]): Butir[] {
+  const n = jawaban.length;
+  const bagian = jawaban.map((j) => kunci.map((k, i) => bagianBenar(k, j[i] ?? [])));
+  const skor = bagian.map((b) => b.reduce((s, v, i) => s + v * kunci[i].skor, 0));
+  const urut = skor.map((s, i) => [s, i] as const).sort((a, b) => b[0] - a[0]).map(([, i]) => i);
+  const g = Math.max(1, Math.round(n * 0.27));
+  const [atas, bawah] = [urut.slice(0, g), urut.slice(-g)];
+  const rata = (siswa: readonly number[], i: number) => siswa.reduce((s, x) => s + bagian[x][i], 0) / siswa.length;
+  return kunci.map((k, i) => {
+    const p = n ? bagian.reduce((s, b) => s + b[i], 0) / n : 0;
+    const sebaran = [0, 0, 0, 0, 0, 0];
+    for (const j of jawaban) {
+      const pilih = j[i] ?? [];
+      if (!pilih.length) sebaran[5]++;
+      for (const h of pilih) sebaran[h]++;
+    }
+    const d = n >= MIN_DAYA_BEDA ? bulat2(rata(atas, i) - rata(bawah, i)) : null;
+    return {
+      p: bulat2(p),
+      kategoriP: kategoriP(p),
+      d,
+      kategoriD: d === null ? null : kategoriD(d),
+      sebaran,
+      pengecohLemah: n ? [0, 1, 2, 3, 4].filter((h) => !k.kunci.includes(h) && sebaran[h] / n < 0.05) : [],
+    };
+  });
+}
+const bulat2 = (x: number) => Math.round(x * 100) / 100;

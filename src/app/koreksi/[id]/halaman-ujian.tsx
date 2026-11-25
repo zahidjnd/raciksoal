@@ -8,6 +8,7 @@ import { beriTahu, tanya } from "../../tanya";
 import { hapusUjian, simpanEsai, simpanLembar } from "../actions";
 import { bacaFoto, type HasilFoto } from "../baca-foto";
 import { KameraLjk } from "./kamera-ljk";
+import { AnalisisButir, TombolExcel } from "./analisis";
 
 type Siswa = { id: number; nomor: number; nama: string; jawab: number[][] | null; objektif: number | null; esai: number | null; potong: string | null };
 type Ujian = { id: number; nama: string; kelas: string; kunci: ButirKunci[]; esaiMaks: number };
@@ -116,6 +117,11 @@ export function HalamanUjian({ ujian, siswa: awal }: { ujian: Ujian; siswa: Sisw
         <p className="text-sm text-pudar">
           {ujian.kelas} · {dipindai} dari {siswa.length} dipindai{rata !== null && ` · rata-rata ${angka(rata)}`} · nilai maks {angka(maks)}
         </p>
+        {dipindai > 0 && (
+          <div className="mt-3">
+            <TombolExcel ujian={ujian} siswa={siswa} />
+          </div>
+        )}
       </div>
 
       <div className="sticky top-0 z-10 -mx-1 bg-krem/95 px-1 py-2">
@@ -165,6 +171,7 @@ export function HalamanUjian({ ujian, siswa: awal }: { ujian: Ujian; siswa: Sisw
         })}
       </div>
       <p className="text-xs text-pudar">Cari nama yang tertulis di LJK, ketuk namanya, kamera terbuka. Nama yang sudah dipindai: ketuk untuk melihat atau membetulkan. Nilai esai: ketik lalu Enter, otomatis tersimpan.</p>
+      <AnalisisButir kunci={kunci} siswa={siswa} />
       <button onClick={hapus} className="text-sm text-bahaya hover:underline">Hapus ujian</button>
 
       {kamera && (
