@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { hasilSoal, siswa } from "@/db/schema";
+import { namaTujuan, type Pengaturan } from "@/lib/prompt";
 import { wajibMasuk } from "@/lib/sesi";
 import { Kerangka, ambilRiwayat, ambilUjian } from "../kepala";
 import { FormUjianBaru } from "./form-ujian";
@@ -18,7 +19,11 @@ export default async function Koreksi({ searchParams }: { searchParams: Promise<
   const formulir = (
     <FormUjianBaru
       kelas={kelas.map((k) => k.kelas).sort((a, b) => a.localeCompare(b, "id", { numeric: true }))}
-      set={set.map((s) => ({ id: s.id, nama: s.nama || s.judulBab || `Set ${s.id}`, mapel: s.mapel }))}
+      set={set.map((s) => ({
+        id: s.id,
+        nama: s.nama || s.judulBab || `Set ${s.id}`,
+        info: [namaTujuan((s.pengaturan as Pengaturan).tujuan, s.mapel), s.mapel, s.dibuat.toLocaleDateString("id-ID", { day: "numeric", month: "short", timeZone: "Asia/Jakarta" }), `${s.jumlahSoal} soal`].join(" · "),
+      }))}
       admin={p.peran === "admin"}
       terbuka={!ujian.length || baru}
     />

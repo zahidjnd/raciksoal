@@ -28,7 +28,7 @@ function KotakAngka({ nilai, ubah, label, className = "" }: { nilai: string; uba
 const NAMA: Record<BentukLjk, string> = { PG: "PG", PGK: "PG kompleks", BS: "B/S & jodohkan" };
 
 /** Ujian baru: nama, kelas, kunci (dari set Racik Soal atau diketuk sendiri), skor esai. */
-export function FormUjianBaru({ kelas, set, admin, terbuka }: { kelas: string[]; set: { id: number; nama: string; mapel: string }[]; admin: boolean; terbuka: boolean }) {
+export function FormUjianBaru({ kelas, set, admin, terbuka }: { kelas: string[]; set: { id: number; nama: string; info: string }[]; admin: boolean; terbuka: boolean }) {
   const [buka, setBuka] = useState(terbuka);
   const [nama, setNama] = useState("");
   const [kls, setKls] = useState("");
@@ -137,13 +137,24 @@ export function FormUjianBaru({ kelas, set, admin, terbuka }: { kelas: string[];
         </div>
         {sumber === "set" ? (
           <>
-            <select value={setId} onChange={(e) => setSetId(Number(e.target.value))} className={kotak}>
+            {/* Daftar kartu, bukan <select>: judul set panjang (gabungan bab, huruf Arab) melebar keluar layar. */}
+            <div role="radiogroup" aria-label="Pilih set soal" className="max-h-72 space-y-1 overflow-y-auto rounded-lg border bg-krem p-1">
               {set.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.nama} · {s.mapel}
-                </option>
+                <button
+                  key={s.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={setId === s.id}
+                  onClick={() => setSetId(s.id)}
+                  className={`block w-full rounded-md border px-3 py-2 text-left ${setId === s.id ? "border-hijau bg-hijau-muda" : "border-transparent hover:bg-krem-sorot"}`}
+                >
+                  <span dir="auto" title={s.nama} className={`line-clamp-2 text-sm ${setId === s.id ? "font-semibold text-hijau-teks" : ""}`}>
+                    {s.nama}
+                  </span>
+                  <span className="block text-xs text-pudar">{s.info}</span>
+                </button>
               ))}
-            </select>
+            </div>
             <p className="text-xs text-pudar">Kunci Paket A dan skor tiap nomor diambil dari set. Isian & uraian jadi nilai esai.</p>
           </>
         ) : (
