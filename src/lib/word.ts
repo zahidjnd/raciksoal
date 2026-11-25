@@ -581,8 +581,10 @@ export function buatWordKunci(soal: Soal[], bab: Bab, p: Pengaturan, tanggal: Da
     isi.push(par([new TextRun({ text: `${HURUF[k]}. KUNCI BAGIAN ${ROMAWI[k]}: ${nama.toUpperCase()} (${butir.length} soal, skor ${skor})`, bold: true })], { spacing: { before: 200, after: 80 } }));
     if (bentuk === "PGK") {
       const penuh = Number(butir[0].s.skor) || 0;
-      // ATURAN-SOAL.md bagian 3: penskoran resmi PG kompleks 1/0 per butir (seperti TKA).
-      isi.push(par([r(`Penskoran per soal: memilih SEMUA jawaban benar tanpa pilihan salah = ${penuh} poin; selain itu = 0 poin.`, { italics: true })]));
+      // ATURAN-SOAL.md bagian 3 (pemilik, 26 Nov 2026): nilai sebagian, sama dengan Koreksi LJK (`bagianBenar`).
+      const nKunci = new Set(butir.map((x) => [x.s.kunci].flat().length));
+      const per = nKunci.size === 1 ? `${String(Math.round((penuh / [...nKunci][0]) * 100) / 100).replace(".", ",")} poin` : "skor dibagi rata per kunci";
+      isi.push(par([r(`Penskoran per soal: tiap jawaban benar yang dipilih = ${per} (semua benar = ${penuh} poin). Memilih lebih banyak jawaban daripada jumlah kunci mengurangi poin. Tidak ada yang benar = 0 poin.`, { italics: true })]));
     }
     if (bentuk === "MJ" && mjLama(butir[0].s)) {
       const penuh = Number(butir[0].s.skor) || 0;

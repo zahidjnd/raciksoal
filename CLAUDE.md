@@ -317,6 +317,13 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
 - **PWA** (0.37.0): `src/app/manifest.ts` (standalone) + ikon `public/ikon/ikon-192/512.png` & `src/app/apple-icon.png`
   (bintang delapan putih di atas hijau, dibuat dari HTML lewat Edge headless). Tanpa manifest Chrome hanya membuat
   pintasan berbilah judul+alamat. `themeColor` dari cookie `tema` (`generateViewport`), TombolTema menggantinya langsung.
+- **Koreksi LJK** (`/koreksi`, tahap 1–2): LJK = "LJK ASAS 26-1 FIX" (`dokumen/ljk/`, gitignore). Pembaca `lib/ljk.ts` di
+  browser, tanpa AI/library: 4 kotak → homografi → arah dari garis kop → geseran per kolom/nomor (kertas melengkung) →
+  kehitaman RELATIF per lembar (`AMBANG`; patokan kosong PER HURUF: B tercetak tebal → lembar banyak kosong dulu terbaca B); ragu/dua jawaban/coretan = kuning, tidak ditebak. Foto TIDAK disimpan, hanya
+  potongan nama (≤ 40 KB). Tabel `siswa` (admin tempel dari Excel TU, `/admin/siswa`; hilang = `aktif` false), `ujian_ljk`,
+  `nilai_ljk`. Kunci dari set (Paket A, nomor LJK = nomor soal; isian/uraian = esai) atau ketik dengan `FORMAT_ASAS`
+  (non-eksak PG 1/PGK 4/BS 2/esai 5×8, eksak 2/4/2/5×6, bisa diubah). Semua dijawab huruf (B/S: A = Benar, B = Salah).
+  PGK sebagian (`bagianBenar`, ATURAN-SOAL 3). Objektif dihitung ulang di server. Kartu halaman awal masih `segera`. Tahap 3 kamera langsung, tahap 4 Excel + analisis butir.
 - **Backup**: malam 02.00 di hosting → terenkripsi → repo privat `zahidjnd/raciksoal-backup`; cara pulihkan `deploy/pulihkan-backup.md`.
 
 ## Jebakan teknis (pernah memakan waktu)

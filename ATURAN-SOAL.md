@@ -148,6 +148,10 @@ Penskoran resmi: PG, PGK, menjodohkan, isian = 1/0 per butir. ✅ Aplikasi memak
 (bawaan AFTS: PG 2, PGK 5, Kategori/B-S 3, Uraian 8; ditambah Menjodohkan 5 dan Isian 3), dan itu tetap dipertahankan
 karena sesuai format madrasah.
 
+✅ **PG kompleks = nilai sebagian** (keputusan pemilik 26 Nov 2026, R3; Word Kunci & Koreksi LJK): tiap kunci yang
+dipilih siswa dapat bagiannya (2 kunci, benar satu = setengah skor); 0 hanya bila tidak ada yang benar. Pilihan yang
+melebihi jumlah kunci mengurangi satu jawaban benar (memilih semua = 0).
+
 ---
 
 ### 3a. Format ASAS MA Al-Fatah (surat Kepala MA No. 433/P/MA/PP.006/SPb/11/2026, 7 November 2026)

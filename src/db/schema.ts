@@ -1,4 +1,4 @@
-import { boolean, customType, index, integer, jsonb, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, customType, index, integer, jsonb, pgTable, real, serial, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 
 const bytea = customType<{ data: Buffer }>({ dataType: () => "bytea" });
 
@@ -190,4 +190,62 @@ export const pemakaianAi = pgTable(
     waktu: timestamp("waktu", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [index("pemakaian_ai_guru_idx").on(t.guruId, t.waktu)],
+);
+
+// ---- Koreksi LJK (tahap 2) ----
+
+/**
+ * Daftar siswa per kelas, ditempel admin sekali dari Excel TU (/admin/siswa). Tempel ulang = nomor/kelas diperbarui,
+ * nama yang hilang ditandai `aktif = false` (tidak dihapus: nilai lama tetap menunjuk ke barisnya).
+ */
+export const siswa = pgTable(
+  "siswa",
+  {
+    id: serial("id").primaryKey(),
+    kelas: text("kelas").notNull(),
+    nomor: integer("nomor").notNull(), // nomor absen di kelas
+    nama: text("nama").notNull(),
+    aktif: boolean("aktif").default(true).notNull(),
+    diubah: timestamp("diubah", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [uniqueIndex("siswa_kelas_nama_idx").on(t.kelas, t.nama)],
+);
+
+/** Satu ujian yang dikoreksi = satu kelas. Aturan 3: hanya pemilik (dan admin). `kunci` = ButirKunci[] (lib/koreksi.ts). */
+export const ujianLjk = pgTable(
+  "ujian_ljk",
+  {
+    id: serial("id").primaryKey(),
+    guruId: text("guru_id")
+      .notNull()
+      .references(() => pengguna.id),
+    dibuat: timestamp("dibuat", { withTimezone: true }).defaultNow().notNull(),
+    nama: text("nama").notNull(),
+    kelas: text("kelas").notNull(),
+    setId: integer("set_id").references(() => hasilSoal.id), // kunci diambil dari set ini (boleh kosong = ketik sendiri)
+    kunci: jsonb("kunci").notNull(),
+    esaiMaks: real("esai_maks").notNull(), // skor esai maksimal (mis. 5 nomor × 8 = 40)
+    dihapus: timestamp("dihapus", { withTimezone: true }),
+  },
+  (t) => [index("ujian_ljk_guru_idx").on(t.guruId, t.dibuat)],
+);
+
+/** Hasil satu siswa di satu ujian. Foto LJK TIDAK disimpan, hanya potongan tulisan nama (JPEG kecil) sebagai bukti. */
+export const nilaiLjk = pgTable(
+  "nilai_ljk",
+  {
+    id: serial("id").primaryKey(),
+    ujianId: integer("ujian_id")
+      .notNull()
+      .references(() => ujianLjk.id),
+    siswaId: integer("siswa_id")
+      .notNull()
+      .references(() => siswa.id),
+    jawab: jsonb("jawab"), // number[][] pilihan per nomor (sudah dibetulkan guru); kosong = belum dipindai
+    objektif: real("objektif"), // skor PG/PGK/BS, dihitung server dari kunci
+    esai: real("esai"),
+    potongNama: bytea("potong_nama"),
+    diubah: timestamp("diubah", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [uniqueIndex("nilai_ljk_ujian_siswa_idx").on(t.ujianId, t.siswaId)],
 );

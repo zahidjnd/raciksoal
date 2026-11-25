@@ -32,6 +32,7 @@ function lembar(jawaban: (number | null)[], sudut: number, terbalik = false): Ga
             const r = Math.hypot((x - bx) / LJK.rx, (y - by) / LJK.ry);
             if (isi.has(`${n},${o}`) && r < 0.95) v = 60;
             else if (Math.abs(r - 1) < 0.08) v = 80;
+            else if (o === 1 && r < 0.45) v = 150; // huruf B tercetak lebih tebal dari A/C/D/E
           });
         }
       }
@@ -51,6 +52,14 @@ for (const [nama, sudut, terbalik] of [["lurus", 0, false], ["miring 8°", 0.14,
     assert.equal(hitungBenar(r.jawab, JAWAB), 39); // nomor 8 kosong tidak dihitung
   });
 }
+
+test("LJK: lembar hampir kosong tidak terbaca B (huruf B lebih tebal)", () => {
+  const jawab = Array.from({ length: 40 }, (_, n) => (n === 0 ? 0 : n === 18 ? 4 : n === 30 ? 2 : null));
+  const r = bacaLjk(lembar(jawab, 0.05));
+  assert.ok(r.ok, r.ok ? "" : r.pesan);
+  assert.deepEqual(r.jawab.map((j) => (j.pilih.length ? j.pilih[0] : null)), jawab);
+  assert.equal(r.jawab.filter((j) => j.ragu).length, 0);
+});
 
 test("LJK: tanpa kotak penanda = pesan, bukan nilai asal", () => {
   const g: Gambar = { w: 400, h: 500, d: new Uint8Array(400 * 500).fill(230) };

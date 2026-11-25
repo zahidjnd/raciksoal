@@ -125,6 +125,7 @@ export async function Kerangka({ p, lebar = false, setAktif = null, children }: 
           { href: "/admin/set", label: "Semua set" },
           { href: "/admin/guru", label: "Kelola guru" },
           { href: "/admin/masukan", label: "Masukan guru" },
+          { href: "/admin/siswa", label: "Daftar siswa" },
           { href: "/admin/pengaturan", label: "Pengaturan" },
         ]
       : []),

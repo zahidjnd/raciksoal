@@ -309,13 +309,17 @@ export function bacaLjk(g: Gambar): HasilLjk {
     });
   });
   // Pensil tiap anak & cahaya tiap foto berbeda: ukur relatif terhadap lembar itu sendiri.
-  // dasar = bulatan kosong (huruf tercetak di dalamnya), penuh = bulatan terisi yang umum di lembar ini.
+  // dasar = bulatan kosong PER HURUF (huruf B tercetak lebih tebal: tanpa ini lembar yang banyak kosongnya terbaca B),
+  // diambil dari kuartil bawah supaya siswa yang menjawab huruf sama di banyak nomor tidak menggeser patokannya.
+  // penuh = bulatan terisi yang umum di lembar ini, dihitung dari nomor yang jelas dihitamkan saja (lembar yang
+  // hampir kosong tidak boleh membuat bekas samar dianggap hitam).
   const urut = (a: number[]) => [...a].sort((p, q) => p - q);
-  const dasar = urut(mentah.flat())[Math.floor(LJK.soal * LJK.pilihan * 0.5)];
-  const penuh = Math.max(0.25, urut(mentah.map((b) => Math.max(...b) - dasar))[Math.floor(LJK.soal * 0.75)]);
+  const dasar = HURUF.map((_, i) => urut(mentah.map((b) => b[i]))[Math.floor(LJK.soal * 0.25)]);
+  const maks = urut(mentah.map((b) => Math.max(...b.map((v, i) => v - dasar[i])))).filter((v) => v >= 0.2);
+  const penuh = Math.max(0.4, maks[Math.floor(maks.length * 0.75)] ?? 0);
   const jawab: Jawab[] = [];
   for (const baris of mentah) {
-    const nilai = baris.map((v) => Math.max(0, Math.min(1, (v - dasar) / penuh)));
+    const nilai = baris.map((v, i) => Math.max(0, Math.min(1, (v - dasar[i]) / penuh)));
     const pilih = nilai.flatMap((v, i) => (v >= AMBANG.isi ? [i] : []));
     // ragu: ada bulatan setengah hitam, dua jawaban (atau coretan batal), atau kosong tapi ada coretan tipis
     const ragu = nilai.some((v) => v >= AMBANG.ragu && v < AMBANG.isi) || pilih.length > 1 || (!pilih.length && Math.max(...nilai) >= AMBANG.coret);

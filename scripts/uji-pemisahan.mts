@@ -74,6 +74,8 @@ const riwayatA = await (await halaman(A, "/riwayat")).text();
 const materiA = await (await halaman(A, "/materi")).text();
 await halaman(A, "/racik");
 await halaman(A, "/materi/baru");
+await halaman(A, "/koreksi"); // Koreksi LJK (1.1.0)
+await halaman(A, "/admin/siswa");
 ID = idAksi();
 
 cek((await aksi(B, "ambilDaftarModel")).nilai?.length === 0, "akun B adalah guru (bukan admin)");
@@ -168,6 +170,37 @@ if (soalB?.status === "selesai") {
     cek(r?.ok === true && !r.soal.gambar_id, "B tidak bisa memasang gambar A di soalnya sendiri", JSON.stringify(r)?.slice(0, 200));
   }
 } else console.log("(lewati: B belum punya set selesai untuk uji pasang gambar)");
+
+// Koreksi LJK (1.1.0): ujian & nilai milik A. Butuh daftar siswa (diisi admin di /admin/siswa) di database laptop.
+const kelasA = (await (await halaman(A, "/koreksi")).text()).match(/<option>([^<]+)<\/option>/)?.[1];
+const ujianA = kelasA
+  ? (await aksi(A, "buatUjian", { nama: "UJI PEMISAHAN", kelas: kelasA, kunci: [{ bentuk: "PG", kunci: [0], skor: 2 }], esaiMaks: 40 })).nilai
+  : null;
+if (ujianA?.ok) {
+  cek((await halaman(A, `/koreksi/${ujianA.id}`)).status === 200, "A bisa membuka ujian LJK-nya sendiri");
+  const siswaId = Number((await (await halaman(A, `/koreksi/${ujianA.id}`)).text()).match(/\\?"siswa\\?":\[\{\\?"id\\?":(\d+)/)?.[1]);
+  cek((await aksi(A, "simpanEsai", ujianA.id, siswaId, 10)).nilai?.ok === true, "A bisa mengisi nilai esai ujiannya", String(siswaId));
+  cek((await halaman(B, `/koreksi/${ujianA.id}`)).status === 404, "B ditolak: membuka ujian LJK A");
+  for (const [nama, ...args] of [
+    ["simpanLembar", ujianA.id, siswaId, [[1]], null],
+    ["simpanEsai", ujianA.id, siswaId, 0],
+    ["hapusUjian", ujianA.id],
+  ] as [string, ...unknown[]][]) {
+    const { nilai } = await aksi(B, nama, ...args);
+    cek(nilai?.ok === false && /tidak ditemukan/i.test(nilai.pesan), `B ditolak: ${nama} (ujian LJK A)`, JSON.stringify(nilai)?.slice(0, 200));
+  }
+  const setSendiri = (await aksi(A, "buatUjian", { nama: "UJI KUNCI SET", kelas: kelasA, setId: setA })).nilai;
+  cek(setSendiri?.ok === true || /LJK|pilihan/.test(setSendiri?.pesan), "A bisa membuat ujian dari setnya sendiri", JSON.stringify(setSendiri));
+  if (setSendiri?.ok) await aksi(A, "hapusUjian", setSendiri.id);
+  const dariSet = (await aksi(B, "buatUjian", { nama: "CURI KUNCI", kelas: kelasA, setId: setA })).nilai;
+  cek(dariSet?.ok === false && /tidak ditemukan/i.test(dariSet.pesan), "B ditolak: buatUjian dari set A (kunci A)", JSON.stringify(dariSet));
+  const html = await (await halaman(B, "/koreksi")).text();
+  cek(!html.includes(`/koreksi/${ujianA.id}"`), "ujian LJK A tidak tampil di /koreksi milik B");
+  const adm = (await aksi(B, "simpanSiswa", null, "XI A\tDIRETAS")).nilai; // ditolak sebelum isian dibaca
+  cek(adm?.ok === false && /admin/i.test(adm.pesan), "B ditolak: simpanSiswa (khusus admin)", JSON.stringify(adm));
+  cek(!(await (await halaman(A, `/koreksi/${ujianA.id}`)).text()).includes("DIRETAS"), "daftar siswa tidak berubah");
+  await aksi(A, "hapusUjian", ujianA.id); // bersih-bersih
+} else console.log("(lewati Koreksi LJK: daftar siswa di laptop masih kosong; isi dulu lewat /admin/siswa)");
 
 // Isi A tidak berubah sedikit pun.
 const isiAkhir = (await aksi(A, "cekHasil", setA, true)).teks;
