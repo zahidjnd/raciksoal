@@ -53,6 +53,24 @@ aplikasi kedua **Koreksi LJK** (foto dari HP / unggah dari laptop, nilai dihitun
 
 ---
 
+## 1.1.0 — 25 November 2026
+- **Baru: Koreksi LJK.** Kartu Koreksi LJK di halaman awal sekarang bisa dibuka. Tampil sebagai aplikasi sendiri
+  (judul, sidebar, dan riwayat ujian terpisah dari Racik Soal).
+  - **Ujian baru**: pilih kelas, kunci jawaban diambil dari set Racik Soal (Paket A) atau diisi sendiri dengan tombol
+    format ASAS **Eksak (35 soal)** / **Non-eksak (45 soal)**. Semua bentuk dijawab huruf A–E (PG → PG kompleks →
+    B/S & menjodohkan). Peringatan bila total skor bukan 100.
+  - **Pindai**: cari nama yang tertulis di LJK, ketuk namanya, arahkan HP ke bagian atas LJK; kamera memotret sendiri
+    begitu 4 kotak hitam di pojok terlihat dan HP diam. Hasil langsung tampil; nomor yang ragu (bulatan samar, dua
+    jawaban) berwarna kuning untuk dicek guru. Foto LJK tidak disimpan, hanya potongan tulisan nama.
+  - **Nilai**: PG kompleks dapat nilai sebagian (2 kunci, benar satu = setengah). Nilai esai diketik, nilai akhir
+    terisi otomatis.
+  - **Unduh Excel** (lembar Nilai, Jawaban, Analisis butir) dan **Analisis butir soal** di halaman ujian: tingkat
+    kesukaran, daya beda, sebaran jawaban A–E, pengecoh yang hampir tidak dipilih.
+- **Daftar siswa** (admin): tempel kolom Kelas dan Nama dari Excel TU sekali; dipakai semua guru.
+- **Word Kunci**: catatan penskoran PG kompleks kini menjelaskan nilai sebagian (sama dengan Koreksi LJK).
+
+---
+
 ## 1.0.1 — 24 November 2026
 - **Halaman dua kartu selalu tampil pertama**, juga saat login masih tersimpan: membuka tautan dari WA, browser baru di
   laptop, atau aplikasi di HP yang dibuka lagi setelah ditutup. Dulu hanya muncul tepat setelah mengetik kata sandi.
