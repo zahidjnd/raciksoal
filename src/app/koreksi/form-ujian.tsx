@@ -204,16 +204,17 @@ export function FormUjianBaru({ kelas, set, admin, terbuka }: { kelas: string[];
               </tbody>
             </table>
             {lebih && <p className="text-sm text-bahaya">LJK hanya memuat {LJK.soal} nomor.</p>}
-            <div className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
+            {/* Urut ke bawah dulu (seperti LJK), baru pindah kolom. */}
+            <div className="gap-x-6 sm:columns-2">
               {bentuk.map((b, n) => (
-                <div key={n} className="flex items-center gap-1.5">
+                <div key={n} className="mb-1 flex break-inside-avoid items-center gap-1.5">
                   <span className="w-7 text-right text-sm text-pudar">{n + 1}.</span>
                   {HURUF.map((h, i) => (
                     <button
                       key={h}
                       type="button"
                       onClick={() => ketuk(n, i)}
-                      className={`h-9 w-9 rounded-full border text-sm ${kunci[n]?.includes(i) ? "border-hijau bg-hijau text-white" : ""}`}
+                      className={`h-9 w-9 shrink-0 rounded-full border text-sm ${kunci[n]?.includes(i) ? "border-hijau bg-hijau text-white" : ""}`}
                     >
                       {h}
                     </button>
