@@ -107,7 +107,7 @@ export function FormUjianBaru({ kelas, set, admin, terbuka }: { kelas: string[];
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="text-sm">
           Nama ujian
-          <input value={nama} onChange={(e) => setNama(e.target.value)} maxLength={80} placeholder="ASAS Fiqih XI B" className={`mt-1 ${kotak}`} />
+          <input value={nama} onChange={(e) => setNama(e.target.value)} maxLength={80} placeholder="mis. ASAS Ganjil · Fiqih" className={`mt-1 ${kotak}`} />
         </label>
         <label className="text-sm">
           Kelas

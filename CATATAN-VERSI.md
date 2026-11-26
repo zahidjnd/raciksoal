@@ -53,6 +53,11 @@ aplikasi kedua **Koreksi LJK** (foto dari HP / unggah dari laptop, nilai dihitun
 
 ---
 
+## 1.4.1 — 26 November 2026
+- Contoh di kotak Nama ujian kini "mis. ASAS Ganjil · Fiqih" (kelas sudah dipilih di kotak sebelahnya).
+
+---
+
 ## 1.4.0 — 26 November 2026
 - **Panduan Koreksi LJK**: menu Panduan di sidebar Koreksi LJK berisi Mulai cepat 4 langkah (buat ujian, pindai,
   periksa & simpan, esai & Excel), topik (izin kamera, tips memotret, unggah banyak foto, membetulkan lembar, Ubah kunci,
