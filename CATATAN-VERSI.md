@@ -53,6 +53,10 @@ aplikasi kedua **Koreksi LJK** (foto dari HP / unggah dari laptop, nilai dihitun
 
 ---
 
+## 1.5.1 — 27 November 2026
+- Koreksi LJK: nomor PG kompleks yang dihitamkan dua huruf atau lebih tidak lagi ditandai kuning (memang jawabannya).
+  Bulatan samar atau bekas hapusan tetap kuning. Untuk PG biasa, dua huruf tetap kuning seperti dulu.
+
 ## 1.5.0 — 26 November 2026
 - Ajakan memasang Racik Soal ke layar utama HP/tablet: jendela kecil di halaman awal. Android: tombol Pasang (dialog
   bawaan Chrome). iPhone/iPad: petunjuk Bagikan → Tambah ke Layar Utama. Tidak muncul di laptop, tidak muncul bila sudah

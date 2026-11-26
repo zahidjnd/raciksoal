@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { bacaLjk, hitungBenar, homografi, LJK, peta, type Gambar } from "./ljk.ts";
+import { apaRagu, bacaLjk, hitungBenar, homografi, LJK, peta, type Gambar } from "./ljk.ts";
 
 // LJK tiruan: lembar digambar miring/terbalik di atas "meja" bercorak, jawaban tertentu dihitamkan.
 function lembar(jawaban: (number | null)[], sudut: number, terbalik = false): Gambar {
@@ -65,4 +65,12 @@ test("LJK: tanpa kotak penanda = pesan, bukan nilai asal", () => {
   const g: Gambar = { w: 400, h: 500, d: new Uint8Array(400 * 500).fill(230) };
   const r = bacaLjk(g);
   assert.equal(r.ok, false);
+});
+
+test("LJK: dua huruf kuning untuk PG, tidak untuk PG kompleks; bulatan samar tetap kuning", () => {
+  assert.equal(apaRagu([1, 0, 0, 0.9, 0]), true);
+  assert.equal(apaRagu([1, 0, 0, 0.9, 0], true), false);
+  assert.equal(apaRagu([1, 0, 0.3, 0.9, 0], true), true);
+  assert.equal(apaRagu([0, 0, 0.2, 0, 0], true), true);
+  assert.equal(apaRagu([0, 1, 0, 0, 0]), false);
 });

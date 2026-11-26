@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { angka, bulat, nilaiAkhir, skorObjektif, totalObjektif, type ButirKunci } from "@/lib/koreksi";
-import { HURUF } from "@/lib/ljk";
+import { apaRagu, HURUF, type Jawab } from "@/lib/ljk";
 import { beriTahu, tanya } from "../../tanya";
 import { hapusUjian, simpanEsai, simpanLembar } from "../actions";
 import { bacaFoto, type HasilFoto } from "../baca-foto";
@@ -38,6 +38,8 @@ export function HalamanUjian({ ujian: ujianAwal, siswa: awal }: { ujian: Ujian; 
   const banyak = useRef<HTMLInputElement>(null); // unggah banyak foto sekaligus
   const { kunci, esaiMaks } = ujian;
   const maks = totalObjektif(kunci) + esaiMaks;
+  // PG kompleks: dua huruf dihitamkan = jawaban biasa, tidak kuning.
+  const raguDari = (jawab: Jawab[]) => kunci.map((k, i) => apaRagu(jawab[i].hitam, k.bentuk === "PGK"));
 
   // HP: kamera langsung (tahap 3) bila browser mengizinkan (hanya https), selain itu kamera bawaan HP.
   // Laptop (layar tanpa sentuh): pilih file foto, webcam laptop tidak dipakai.
@@ -78,7 +80,7 @@ export function HalamanUjian({ ujian: ujianAwal, siswa: awal }: { ujian: Ujian; 
       setMembaca(false);
       setAntrian({ ...a, i, gagal });
       setPilihNo(null);
-      setLembar({ siswaId: 0, jawab: kunci.map((_, n) => r.jawab[n].pilih), ragu: kunci.map((_, n) => r.jawab[n].ragu), potong: r.potong, baru: true });
+      setLembar({ siswaId: 0, jawab: kunci.map((_, n) => r.jawab[n].pilih), ragu: raguDari(r.jawab), potong: r.potong, baru: true });
       return;
     }
     setMembaca(false);
@@ -116,7 +118,7 @@ export function HalamanUjian({ ujian: ujianAwal, siswa: awal }: { ujian: Ujian; 
     if (!r.ok) return beriTahu(r.pesan, "LJK belum terbaca");
     const jawab = kunci.map((_, i) => r.jawab[i].pilih);
     setPilihNo(null);
-    setLembar({ siswaId: target.current ?? siswa[0].id, jawab, ragu: kunci.map((_, i) => r.jawab[i].ragu), potong: r.potong, baru: true });
+    setLembar({ siswaId: target.current ?? siswa[0].id, jawab, ragu: raguDari(r.jawab), potong: r.potong, baru: true });
   }
 
   function buka(s: Siswa) {

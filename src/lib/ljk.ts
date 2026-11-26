@@ -32,6 +32,13 @@ export const HURUF = ["A", "B", "C", "D", "E"];
 export const AMBANG = { coret: 0.15, ragu: 0.25, isi: 0.45 };
 
 export type Jawab = { pilih: number[]; ragu: boolean; hitam: number[] };
+
+/** Ragu (kuning): ada bulatan setengah hitam, dua jawaban (atau coretan batal), atau kosong tapi ada coretan tipis.
+ *  `bolehBanyak` (PG kompleks): dua huruf atau lebih memang jawabannya, bukan tanda ragu. */
+export function apaRagu(hitam: number[], bolehBanyak = false): boolean {
+  const isi = hitam.filter((v) => v >= AMBANG.isi).length;
+  return hitam.some((v) => v >= AMBANG.ragu && v < AMBANG.isi) || (!bolehBanyak && isi > 1) || (!isi && Math.max(...hitam) >= AMBANG.coret);
+}
 export type HasilLjk = { ok: true; jawab: Jawab[]; H: Homografi; kotak: Titik[]; geser: Titik[] } | { ok: false; pesan: string };
 
 export function keAbu(rgba: Uint8ClampedArray, w: number, h: number): Gambar {
@@ -322,9 +329,7 @@ export function bacaLjk(g: Gambar): HasilLjk {
   for (const baris of mentah) {
     const nilai = baris.map((v, i) => Math.max(0, Math.min(1, (v - dasar[i]) / penuh)));
     const pilih = nilai.flatMap((v, i) => (v >= AMBANG.isi ? [i] : []));
-    // ragu: ada bulatan setengah hitam, dua jawaban (atau coretan batal), atau kosong tapi ada coretan tipis
-    const ragu = nilai.some((v) => v >= AMBANG.ragu && v < AMBANG.isi) || pilih.length > 1 || (!pilih.length && Math.max(...nilai) >= AMBANG.coret);
-    jawab.push({ pilih, ragu, hitam: nilai.map((v) => Math.round(v * 100) / 100) });
+    jawab.push({ pilih, ragu: apaRagu(nilai), hitam: nilai.map((v) => Math.round(v * 100) / 100) });
   }
   return { ok: true, jawab, H, kotak: k.kotak, geser };
 }
