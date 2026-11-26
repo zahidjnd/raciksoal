@@ -4,6 +4,7 @@ import { APLIKASI } from "@/lib/aplikasi";
 import { keluar } from "./masuk/actions";
 import { JendelaTanya } from "./tanya";
 import { KartuAplikasi } from "./kartu-aplikasi";
+import { Pengumuman } from "./pengumuman";
 
 /**
  * Halaman awal (alamat utama "/", pilihan pemilik): selalu yang pertama tampil, juga saat login masih tersimpan
@@ -26,6 +27,7 @@ export default async function HalamanAwal({ searchParams }: { searchParams: Prom
         <button className="h-10 rounded-lg px-4 text-sm text-pudar hover:bg-krem-sorot hover:text-tinta max-md:min-h-11">Keluar</button>
       </form>
       <JendelaTanya />
+      <Pengumuman />
     </main>
   );
 }

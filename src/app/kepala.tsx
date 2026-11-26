@@ -15,7 +15,6 @@ import { BarisRiwayat, TautanMenu } from "./baris-riwayat";
 import { TombolTema } from "./tombol-tema";
 import { JendelaMasukan, TombolMasukan } from "./masukan";
 import { JendelaTanya } from "./tanya";
-import { Pengumuman } from "./pengumuman";
 import { IngatAplikasi } from "./ingat-aplikasi";
 import { Fragment } from "react";
 import paket from "../../package.json";
@@ -233,7 +232,6 @@ export async function Kerangka({ p, aplikasi = "racik", lebar = false, setAktif 
       {ingat && <IngatAplikasi id="racik" />}
       <JendelaMasukan set={setMasukan} />
       <JendelaTanya />
-      <Pengumuman />
     </div>
   );
 }
@@ -300,7 +298,6 @@ async function KerangkaKoreksi({ p, lebar, ujianAktif, children }: { p: Pengguna
       <main className={`w-full ${lebar === "pengaturan" ? "max-w-[96rem]" : lebar ? "mx-auto max-w-5xl" : "mx-auto max-w-3xl"} min-w-0 space-y-6 p-4 md:p-8`}>{children}</main>
       <JendelaMasukan set={null} />
       <JendelaTanya />
-      <Pengumuman />
     </div>
   );
 }

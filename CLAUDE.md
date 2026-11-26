@@ -312,7 +312,7 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   peringatan). WAJIB pakai token: JANGAN `gray-*`, `red-*`, `amber-*`, `emerald-*`, `bg-white`. Tinggi kontrol 32/40 px (HP 44).
   Mode gelap lewat cookie `tema` + `[data-tema="gelap"]`. Sidebar laci 256/288 px.
 - **Jendela** (0.48.1): JANGAN `confirm()`/`alert()` bawaan browser; pakai `tanya()` / `beriTahu()` dari `tanya.tsx`
-  (dipasang di Kerangka). Pengumuman pembaruan = `pengumuman.tsx` (ganti `ID` + isi; muncul sekali per perangkat,
+  (dipasang di Kerangka). Pengumuman pembaruan = `pengumuman.tsx` (ganti `ID` + isi; HANYA di halaman awal `/` sejak 1.4.2; muncul sekali per perangkat,
   localStorage `raciksoal-pengumuman`). Masukan guru (0.48.0) = `masukan.tsx` + `/admin/masukan`.
 - **PWA** (0.37.0): `src/app/manifest.ts` (standalone) + ikon `public/ikon/ikon-192/512.png` & `src/app/apple-icon.png`
   (bintang delapan putih di atas hijau, dibuat dari HTML lewat Edge headless). Tanpa manifest Chrome hanya membuat

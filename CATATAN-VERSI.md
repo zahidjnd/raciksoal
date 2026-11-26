@@ -53,6 +53,12 @@ aplikasi kedua **Koreksi LJK** (foto dari HP / unggah dari laptop, nilai dihitun
 
 ---
 
+## 1.4.2 — 26 November 2026
+- Pengumuman pembaruan: "Baru: Koreksi LJK" (cara pakai 4 langkah + izin kamera). Kini hanya muncul di halaman awal
+  setelah login, sekali per HP/laptop; Racik Soal & Koreksi LJK tidak lagi memunculkannya.
+
+---
+
 ## 1.4.1 — 26 November 2026
 - Contoh di kotak Nama ujian kini "mis. ASAS Ganjil · Fiqih" (kelas sudah dipilih di kotak sebelahnya).
 
