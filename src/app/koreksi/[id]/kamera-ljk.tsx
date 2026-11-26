@@ -29,7 +29,7 @@ const luas = (k: Titik[]) => Math.abs(k.reduce((s, [x, y], i) => s + x * k[(i + 
  * Kamera langsung (Koreksi LJK tahap 3): bidik terus, 4 kotak pojok ditandai hijau, gambar diam ±½ detik = jepret
  * sendiri. Foto tidak disimpan. Kamera ditolak / tidak ada → `pakaiFoto` (kamera bawaan HP, cara lama).
  */
-export function KameraLjk({ nama, hasil, batal, pakaiFoto }: { nama: string; hasil: (h: Hasil) => void; batal: () => void; pakaiFoto: () => void }) {
+export function KameraLjk({ nama, hasil, batal, pakaiFoto, galeri }: { nama: string; hasil: (h: Hasil) => void; batal: () => void; pakaiFoto: () => void; galeri: () => void }) {
   const video = useRef<HTMLVideoElement>(null);
   const [ukuran, setUkuran] = useState<[number, number] | null>(null);
   const [kotak, setKotak] = useState<Titik[] | null>(null);
@@ -174,8 +174,8 @@ export function KameraLjk({ nama, hasil, batal, pakaiFoto }: { nama: string; has
           </div>
         )}
         {!gagal && (
-          <button onClick={pakaiFoto} className="text-xs text-white/70 underline">
-            Pakai kamera bawaan HP
+          <button onClick={galeri} className="text-xs text-white/70 underline">
+            Pilih foto dari galeri
           </button>
         )}
       </div>

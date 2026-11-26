@@ -53,6 +53,15 @@ aplikasi kedua **Koreksi LJK** (foto dari HP / unggah dari laptop, nilai dihitun
 
 ---
 
+## 1.2.0 — 26 November 2026
+- **Koreksi LJK di laptop**: mengetuk nama siswa membuka pilihan file foto LJK (webcam laptop tidak lagi menyala).
+- **Unggah banyak foto** (laptop & HP): pilih banyak foto LJK sekaligus (mis. hasil scan atau kiriman WA). Foto dibaca
+  satu per satu; tiap lembar menampilkan potongan tulisan nama, guru memilih nama siswanya, lalu Simpan & berikutnya
+  (atau Lewati / Berhenti). Foto yang tidak terbaca disebut namanya di akhir supaya bisa difoto ulang.
+- Layar kamera HP: tautan di bawah kini "Pilih foto dari galeri".
+
+---
+
 ## 1.1.4 — 26 November 2026
 - Kotak izin kamera Koreksi LJK memakai tulisan yang sama dengan tombol Chrome ("Izinkan saat mengunjungi situs").
   Bila kamera diblokir: langkah bernomor lewat **⋮ → Kontrol situs → Izin → Kamera → Izinkan** (ikon di samping

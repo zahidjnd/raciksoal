@@ -14,6 +14,8 @@ type Siswa = { id: number; nomor: number; nama: string; nisn: string | null; jaw
 type Ujian = { id: number; nama: string; kelas: string; kunci: ButirKunci[]; esaiMaks: number };
 /** Lembar yang sedang diperiksa guru (hasil pindai baru, atau lembar tersimpan yang dibuka lagi). */
 type Lembar = { siswaId: number; jawab: number[][]; ragu: boolean[]; potong: string | null; baru: boolean };
+/** Unggah banyak foto: dibaca satu per satu, guru memilih nama tiap lembar. siswaId 0 = belum dipilih. */
+type Antrian = { berkas: File[]; i: number; tersimpan: number; gagal: string[] };
 
 // Semua bentuk dijawab huruf A–E di LJK.
 const huruf = (j: number[]) => (j.length ? j.map((h) => HURUF[h]).join("") : "–");
@@ -23,31 +25,84 @@ export function HalamanUjian({ ujian, siswa: awal }: { ujian: Ujian; siswa: Sisw
   const [siswa, setSiswa] = useState(awal);
   const [lembar, setLembar] = useState<Lembar | null>(null);
   const [pilihNo, setPilihNo] = useState<number | null>(null);
-  const [membaca, setMembaca] = useState(false);
+  const [membaca, setMembaca] = useState<string | false>(false);
   const [cari, setCari] = useState("");
   const [kamera, setKamera] = useState(false);
+  const [antrian, setAntrian] = useState<Antrian | null>(null);
   const target = useRef<number | null>(null);
-  const masukan = useRef<HTMLInputElement>(null);
+  const kameraHp = useRef<HTMLInputElement>(null); // kamera bawaan HP (cadangan bila kamera langsung gagal)
+  const berkas = useRef<HTMLInputElement>(null); // pilih satu foto (laptop, galeri HP)
+  const banyak = useRef<HTMLInputElement>(null); // unggah banyak foto sekaligus
   const { kunci, esaiMaks } = ujian;
   const maks = totalObjektif(kunci) + esaiMaks;
 
-  // Kamera langsung (tahap 3) bila browser mengizinkan (hanya di https); selain itu kamera bawaan HP.
+  // HP: kamera langsung (tahap 3) bila browser mengizinkan (hanya https), selain itu kamera bawaan HP.
+  // Laptop (layar tanpa sentuh): pilih file foto, webcam laptop tidak dipakai.
   function pindai(siswaId: number) {
     target.current = siswaId;
-    if (typeof navigator.mediaDevices?.getUserMedia === "function") setKamera(true);
-    else pakaiFoto();
+    const hp = matchMedia("(pointer: coarse)").matches;
+    if (hp && typeof navigator.mediaDevices?.getUserMedia === "function") setKamera(true);
+    else (hp ? kameraHp : berkas).current?.click(); // harus langsung dari ketukan guru (aturan browser)
   }
 
   function pakaiFoto() {
     setKamera(false);
-    masukan.current?.click(); // harus langsung dari ketukan guru (aturan browser)
+    kameraHp.current?.click();
+  }
+
+  function pilihGaleri() {
+    setKamera(false);
+    berkas.current?.click();
+  }
+
+  function pilihBanyak(e: React.ChangeEvent<HTMLInputElement>) {
+    const daftar = [...(e.target.files ?? [])];
+    e.target.value = "";
+    if (daftar.length) bacaBerikut({ berkas: daftar, i: 0, tersimpan: 0, gagal: [] });
+  }
+
+  /** Baca foto antrian mulai a.i; foto yang tidak terbaca dicatat lalu dilewati. Habis = ringkasan. */
+  async function bacaBerikut(a: Antrian) {
+    let { i } = a;
+    const gagal = [...a.gagal];
+    for (; i < a.berkas.length; i++) {
+      setMembaca(`Membaca foto ${i + 1} dari ${a.berkas.length}…`);
+      const r = await bacaFoto(a.berkas[i]);
+      if (!r.ok) {
+        gagal.push(a.berkas[i].name);
+        continue;
+      }
+      setMembaca(false);
+      setAntrian({ ...a, i, gagal });
+      setPilihNo(null);
+      setLembar({ siswaId: 0, jawab: kunci.map((_, n) => r.jawab[n].pilih), ragu: kunci.map((_, n) => r.jawab[n].ragu), potong: r.potong, baru: true });
+      return;
+    }
+    setMembaca(false);
+    selesaiAntrian({ ...a, i, gagal });
+  }
+
+  function selesaiAntrian(a: Antrian) {
+    setAntrian(null);
+    setLembar(null);
+    const sisa = a.berkas.length - a.i;
+    beriTahu(
+      [
+        `${a.tersimpan} lembar tersimpan.`,
+        sisa > 0 && `${sisa} foto belum dibaca (dihentikan).`,
+        a.gagal.length > 0 && `${a.gagal.length} foto tidak terbaca (4 kotak hitam di pojok tidak terlihat), foto ulang: ${a.gagal.join(", ")}.`,
+      ]
+        .filter(Boolean)
+        .join(" "),
+      "Unggah foto selesai",
+    );
   }
 
   async function fotoDipilih(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     e.target.value = "";
     if (!f) return;
-    setMembaca(true);
+    setMembaca("Membaca LJK…");
     const r = await bacaFoto(f);
     setMembaca(false);
     tampilkan(r);
@@ -75,6 +130,7 @@ export function HalamanUjian({ ujian, siswa: awal }: { ujian: Ujian; siswa: Sisw
     setSiswa((d) => d.map((s) => (s.id === l.siswaId ? { ...s, jawab: l.jawab, objektif, potong: l.potong } : s)));
     setLembar(null);
     setCari("");
+    if (antrian) bacaBerikut({ ...antrian, i: antrian.i + 1, tersimpan: antrian.tersimpan + 1 });
     simpanLembar(ujian.id, l.siswaId, l.jawab, l.potong)
       .then((r) => !r.ok && beriTahu(`${nama}: ${r.pesan}`, "Belum tersimpan"))
       .catch(() => beriTahu(`Nilai ${nama} belum tersimpan (koneksi terputus). Buka lagi namanya lalu Simpan.`, "Belum tersimpan"));
@@ -105,7 +161,9 @@ export function HalamanUjian({ ujian, siswa: awal }: { ujian: Ujian; siswa: Sisw
 
   return (
     <div className="space-y-4">
-      <input ref={masukan} type="file" accept="image/*" capture="environment" className="hidden" onChange={fotoDipilih} />
+      <input ref={kameraHp} type="file" accept="image/*" capture="environment" className="hidden" onChange={fotoDipilih} />
+      <input ref={berkas} type="file" accept="image/*" className="hidden" onChange={fotoDipilih} />
+      <input ref={banyak} type="file" accept="image/*" multiple className="hidden" onChange={pilihBanyak} />
       <div>
         <Link href="/koreksi" className="-ml-2 mb-1 inline-flex h-10 items-center gap-1 rounded-lg pr-3 pl-1.5 text-pudar hover:bg-krem-sorot hover:text-tinta max-md:min-h-11">
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -117,11 +175,15 @@ export function HalamanUjian({ ujian, siswa: awal }: { ujian: Ujian; siswa: Sisw
         <p className="text-sm text-pudar">
           {ujian.kelas} · {dipindai} dari {siswa.length} dipindai{rata !== null && ` · rata-rata ${angka(rata)}`} · nilai maks {angka(maks)}
         </p>
-        {dipindai > 0 && (
-          <div className="mt-3">
-            <TombolExcel ujian={ujian} siswa={siswa} />
-          </div>
-        )}
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button onClick={() => banyak.current?.click()} className="inline-flex h-10 items-center gap-2 rounded-lg border bg-kartu px-4 text-sm hover:bg-krem max-md:min-h-11">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M12 21V9M7 14l5-5 5 5M5 3h14" />
+            </svg>
+            Unggah banyak foto
+          </button>
+          {dipindai > 0 && <TombolExcel ujian={ujian} siswa={siswa} />}
+        </div>
       </div>
 
       <div className="sticky top-0 z-10 -mx-1 bg-krem/95 px-1 py-2">
@@ -170,22 +232,27 @@ export function HalamanUjian({ ujian, siswa: awal }: { ujian: Ujian; siswa: Sisw
           );
         })}
       </div>
-      <p className="text-xs text-pudar">Cari nama yang tertulis di LJK, ketuk namanya, kamera terbuka. Nama yang sudah dipindai: ketuk untuk melihat atau membetulkan. Nilai esai: ketik lalu Enter, otomatis tersimpan.</p>
+      <p className="text-xs text-pudar">Cari nama yang tertulis di LJK, lalu ketuk namanya: di HP kamera terbuka, di laptop pilih file foto LJK-nya. Nama yang sudah dipindai: ketuk untuk melihat atau membetulkan. Nilai esai: ketik lalu Enter, otomatis tersimpan.</p>
       <AnalisisButir kunci={kunci} siswa={siswa} />
       <button onClick={hapus} className="text-sm text-bahaya hover:underline">Hapus ujian</button>
 
       {kamera && (
-        <KameraLjk nama={siswa.find((s) => s.id === target.current)?.nama ?? ""} hasil={tampilkan} batal={() => setKamera(false)} pakaiFoto={pakaiFoto} />
+        <KameraLjk nama={siswa.find((s) => s.id === target.current)?.nama ?? ""} hasil={tampilkan} batal={() => setKamera(false)} pakaiFoto={pakaiFoto} galeri={pilihGaleri} />
       )}
       {membaca && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-tinta/40">
-          <p className="rounded-xl bg-krem px-6 py-4 font-semibold">Membaca LJK…</p>
+          <p className="rounded-xl bg-krem px-6 py-4 font-semibold">{membaca}</p>
         </div>
       )}
 
       {lembar && (
-        <div className="fixed inset-0 z-30 flex items-end justify-center bg-tinta/40 sm:items-center" onClick={() => setLembar(null)}>
+        <div className="fixed inset-0 z-30 flex items-end justify-center bg-tinta/40 sm:items-center" onClick={() => !antrian && setLembar(null)}>
           <div className="max-h-[95dvh] w-full max-w-lg space-y-3 overflow-y-auto rounded-t-2xl bg-krem p-4 sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+            {antrian && (
+              <p className="truncate text-sm text-pudar">
+                Foto {antrian.i + 1} dari {antrian.berkas.length} · {antrian.berkas[antrian.i].name}
+              </p>
+            )}
             {lembar.potong && (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={`data:image/jpeg;base64,${lembar.potong}`} alt="Tulisan nama di LJK" className="w-full rounded-lg border bg-kartu" />
@@ -193,6 +260,11 @@ export function HalamanUjian({ ujian, siswa: awal }: { ujian: Ujian; siswa: Sisw
             <label className="block text-sm">
               <span className="text-pudar">LJK milik</span>
               <select value={lembar.siswaId} onChange={(e) => setLembar({ ...lembar, siswaId: Number(e.target.value) })} className="mt-1 h-11 w-full rounded-lg border bg-kartu px-3 text-base">
+                {lembar.siswaId === 0 && (
+                  <option value={0} disabled>
+                    Pilih nama sesuai tulisan di atas…
+                  </option>
+                )}
                 {siswa.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.nomor}. {s.nama}
@@ -260,6 +332,19 @@ export function HalamanUjian({ ujian, siswa: awal }: { ujian: Ujian; siswa: Sisw
                 </>
               );
             })()}
+            {antrian ? (
+              <div className="flex gap-2">
+                <button onClick={() => selesaiAntrian(antrian)} className="h-12 rounded-xl border bg-kartu px-4">
+                  Berhenti
+                </button>
+                <button onClick={() => bacaBerikut({ ...antrian, i: antrian.i + 1 })} className="h-12 rounded-xl border bg-kartu px-4">
+                  Lewati
+                </button>
+                <button onClick={simpan} disabled={!lembar.siswaId} className="h-12 flex-1 rounded-xl bg-hijau font-semibold text-white hover:bg-hijau-tua disabled:opacity-50">
+                  {antrian.i + 1 < antrian.berkas.length ? "Simpan & berikutnya" : "Simpan"}
+                </button>
+              </div>
+            ) : (
             <div className="flex gap-2">
               <button onClick={() => setLembar(null)} className="h-12 rounded-xl border bg-kartu px-4">Batal</button>
               {!lembar.baru && (
@@ -269,6 +354,7 @@ export function HalamanUjian({ ujian, siswa: awal }: { ujian: Ujian; siswa: Sisw
                 Simpan
               </button>
             </div>
+            )}
           </div>
         </div>
       )}
