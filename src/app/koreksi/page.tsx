@@ -5,6 +5,7 @@ import { namaTujuan, type Pengaturan } from "@/lib/prompt";
 import { wajibMasuk } from "@/lib/sesi";
 import { Kerangka, ambilRiwayat, ambilUjian } from "../kepala";
 import { FormUjianBaru } from "./form-ujian";
+import { IzinKamera } from "./izin-kamera";
 
 /** Koreksi LJK: daftar ujian milik guru (aturan 3) + Ujian baru (?baru=1 dari tombol sidebar = formulir langsung terbuka). */
 export default async function Koreksi({ searchParams }: { searchParams: Promise<{ baru?: string }> }) {
@@ -30,6 +31,7 @@ export default async function Koreksi({ searchParams }: { searchParams: Promise<
   );
   return (
     <Kerangka p={p} aplikasi="koreksi">
+      <IzinKamera />
       {/* Nama aplikasi sudah di sidebar / bilah atas HP: judul halaman = isi halamannya (seperti "Materi saya"). */}
       <div>
         <h1 className="text-2xl">Ujian saya</h1>
