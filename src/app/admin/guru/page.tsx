@@ -51,7 +51,7 @@ export default async function KelolaGuru() {
   const angka = (n: number) => n.toLocaleString("id-ID");
 
   return (
-    <Kerangka p={p}>
+    <Kerangka p={p} aplikasi="ikut">
       <h1 className="text-2xl">Kelola guru</h1>
       <p className="rounded-xl border bg-kartu p-3 text-sm">
         <span className="font-semibold">Pemakaian seluruh web:</span> hari ini {total.hariIni} dari {BATAS_TOTAL} set · token AI 30 hari{" "}

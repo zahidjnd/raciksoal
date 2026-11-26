@@ -9,6 +9,7 @@ import { hapusUjian, simpanEsai, simpanLembar } from "../actions";
 import { bacaFoto, type HasilFoto } from "../baca-foto";
 import { KameraLjk } from "./kamera-ljk";
 import { AnalisisButir, TombolExcel } from "./analisis";
+import { UbahKunci } from "./ubah-kunci";
 
 type Siswa = { id: number; nomor: number; nama: string; nisn: string | null; jawab: number[][] | null; objektif: number | null; esai: number | null; potong: string | null };
 type Ujian = { id: number; nama: string; kelas: string; kunci: ButirKunci[]; esaiMaks: number };
@@ -21,7 +22,9 @@ type Antrian = { berkas: File[]; i: number; tersimpan: number; gagal: string[] }
 const huruf = (j: number[]) => (j.length ? j.map((h) => HURUF[h]).join("") : "–");
 
 /** Satu ujian: daftar siswa urut absen. Pindai → hasil langsung tampil → Simpan & lanjut ke siswa berikutnya. */
-export function HalamanUjian({ ujian, siswa: awal }: { ujian: Ujian; siswa: Siswa[] }) {
+export function HalamanUjian({ ujian: ujianAwal, siswa: awal }: { ujian: Ujian; siswa: Siswa[] }) {
+  const [ujian, setUjian] = useState(ujianAwal); // kunci bisa diubah (Ubah kunci)
+  const [ubahKunci, setUbahKunci] = useState(false);
   const [siswa, setSiswa] = useState(awal);
   const [lembar, setLembar] = useState<Lembar | null>(null);
   const [pilihNo, setPilihNo] = useState<number | null>(null);
@@ -182,6 +185,12 @@ export function HalamanUjian({ ujian, siswa: awal }: { ujian: Ujian; siswa: Sisw
             </svg>
             Unggah banyak foto
           </button>
+          <button onClick={() => setUbahKunci(true)} className="inline-flex h-10 items-center gap-2 rounded-lg border bg-kartu px-4 text-sm hover:bg-krem max-md:min-h-11">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+            </svg>
+            Ubah kunci
+          </button>
           {dipindai > 0 && <TombolExcel ujian={ujian} siswa={siswa} />}
         </div>
       </div>
@@ -236,6 +245,20 @@ export function HalamanUjian({ ujian, siswa: awal }: { ujian: Ujian; siswa: Sisw
       <AnalisisButir kunci={kunci} siswa={siswa} />
       <button onClick={hapus} className="text-sm text-bahaya hover:underline">Hapus ujian</button>
 
+      {ubahKunci && (
+        <UbahKunci
+          ujianId={ujian.id}
+          kunci={kunci}
+          dipindai={dipindai}
+          tutup={() => setUbahKunci(false)}
+          tersimpan={(baru) => {
+            setUjian({ ...ujian, kunci: baru });
+            setSiswa((d) => d.map((s) => (s.jawab ? { ...s, objektif: skorObjektif(baru, s.jawab).skor } : s)));
+            setUbahKunci(false);
+            beriTahu(dipindai ? `Nilai ${dipindai} lembar sudah dihitung ulang dengan kunci baru.` : "Kunci baru sudah dipakai.", "Kunci tersimpan");
+          }}
+        />
+      )}
       {kamera && (
         <KameraLjk nama={siswa.find((s) => s.id === target.current)?.nama ?? ""} hasil={tampilkan} batal={() => setKamera(false)} pakaiFoto={pakaiFoto} galeri={pilihGaleri} />
       )}

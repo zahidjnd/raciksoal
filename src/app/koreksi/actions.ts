@@ -95,3 +95,23 @@ export async function simpanEsai(ujianId: number, siswaId: number, esai: number 
     .onConflictDoUpdate({ target: [nilaiLjk.ujianId, nilaiLjk.siswaId], set: { esai: e, diubah: sql`now()` } });
   return { ok: true as const };
 }
+
+/** Ubah huruf kunci (bentuk & skor tiap nomor tetap), lalu nilai pilihan semua lembar dihitung ulang dari jawaban
+ *  yang tersimpan: guru tidak perlu memindai ulang. `huruf` = kunci baru per nomor (indeks huruf). */
+export async function ubahKunci(ujianId: number, huruf: unknown) {
+  const r = await ujianSaya(ujianId);
+  if ("pesan" in r) return { ok: false as const, pesan: r.pesan };
+  const lama = r.u.kunci as ButirKunci[];
+  if (!Array.isArray(huruf) || huruf.length !== lama.length) return { ok: false as const, pesan: "Jumlah nomor kunci tidak sama." };
+  const kunci = rapikanKunci(lama.map((k, i) => ({ bentuk: k.bentuk, skor: k.skor, kunci: huruf[i] })));
+  if (!kunci) return { ok: false as const, pesan: "Kunci belum lengkap: PG dan B/S tepat satu huruf, PG kompleks minimal satu." };
+  const lembar = await db.select({ id: nilaiLjk.id, jawab: nilaiLjk.jawab }).from(nilaiLjk).where(eq(nilaiLjk.ujianId, r.u.id));
+  await db.transaction(async (tx) => {
+    await tx.update(ujianLjk).set({ kunci }).where(eq(ujianLjk.id, r.u.id));
+    for (const l of lembar) {
+      const j = rapikanJawab(l.jawab, kunci.length);
+      if (j) await tx.update(nilaiLjk).set({ objektif: skorObjektif(kunci, j).skor, diubah: sql`now()` }).where(eq(nilaiLjk.id, l.id));
+    }
+  });
+  return { ok: true as const, kunci };
+}

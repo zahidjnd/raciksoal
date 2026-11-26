@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { wajibMasuk } from "@/lib/sesi";
-import { Kerangka } from "../kepala";
+import { Kerangka, aplikasiTerakhir } from "../kepala";
 import paket from "../../../package.json";
 
 /**
@@ -24,8 +24,72 @@ const RUJUKAN: { judul: string; isi: string }[] = [
 export default async function Tentang() {
   const p = await wajibMasuk();
   const kartu = "space-y-2 rounded-xl border bg-kartu p-4 text-sm leading-relaxed";
+  // Halaman bersama: isi & sidebar ikut aplikasi yang terakhir dibuka (Racik Soal / Koreksi LJK).
+  if ((await aplikasiTerakhir()) === "koreksi")
+    return (
+      <Kerangka p={p} aplikasi="ikut">
+        <h1 className="text-2xl">Tentang aplikasi</h1>
+        <p className="text-sm text-pudar">Koreksi LJK · bagian dari Racik Soal v{paket.version} · MA Al-Fatah</p>
+
+        <section className={kartu}>
+          <p>
+            <b>Koreksi LJK</b> menilai Lembar Jawab ASAS MA Al-Fatah dari foto: guru memotret LJK dengan kamera HP (atau
+            mengunggah fotonya), aplikasi membaca bulatan yang dihitamkan, lalu nilai pilihan langsung terhitung. Nilai esai
+            diketik guru, nilai akhir terisi sendiri.
+          </p>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>LJK dibaca <b>di HP/laptop guru sendiri</b>, tanpa AI dan tanpa internet untuk membacanya.</li>
+            <li>
+              Aplikasi mencari 4 kotak hitam di pojok LJK, meluruskan foto yang miring atau terbalik, lalu membandingkan
+              kehitaman tiap bulatan dengan bulatan lain di lembar yang sama (tahan cahaya redup dan pensil tipis).
+            </li>
+            <li>
+              Bulatan yang <b>ragu</b> (samar, dua jawaban, bekas hapusan) ditandai <b>kuning</b> dan tidak ditebak:
+              guru yang memastikan.
+            </li>
+            <li>
+              <b>Foto LJK tidak disimpan.</b> Yang disimpan hanya jawaban per nomor dan potongan kecil tulisan nama untuk
+              dicocokkan guru.
+            </li>
+          </ul>
+          <p className="rounded-lg border border-peringatan-garis bg-peringatan-muda p-3 text-peringatan">
+            <b>Perhatian:</b> hasil baca wajib dicek sekilas oleh guru, terutama nomor yang berwarna kuning.
+          </p>
+        </section>
+
+        <section className={kartu}>
+          <h2 className="text-xl">Aturan nilai</h2>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>Skor tiap bentuk mengikuti format ASAS madrasah (surat Kepala MA No. 433/2026) atau skor dari set Racik Soal.</li>
+            <li>PG, Benar/Salah, dan menjodohkan: satu jawaban tepat = skor penuh; kosong atau dua jawaban = 0.</li>
+            <li>
+              PG kompleks (keputusan madrasah, 26 November 2026): tiap kunci yang dihitamkan mendapat bagiannya (2 kunci,
+              benar satu = setengah skor). Bulatan yang melebihi jumlah kunci mengurangi satu jawaban benar.
+            </li>
+            <li>Nilai pilihan selalu dihitung ulang di server dari kunci, bukan dari kiriman HP.</li>
+          </ul>
+        </section>
+
+        <section className={kartu}>
+          <h2 className="text-xl">Analisis butir</h2>
+          <ul className="list-disc space-y-1 pl-5">
+            <li><b>Tingkat kesukaran</b> = persentase siswa yang menjawab benar: Mudah ≥ 70%, Sedang 30–70%, Sukar &lt; 30%.</li>
+            <li>
+              <b>Daya beda</b> = selisih kelompok nilai tertinggi dan terendah (masing-masing 27% siswa), dihitung bila
+              minimal 10 lembar: Baik ≥ 0,40, Cukup 0,20–0,39, Perlu diperbaiki 0–0,19, Dibuang bila negatif.
+            </li>
+            <li><b>Pengecoh lemah</b> = pilihan salah yang dipilih kurang dari 5% siswa.</li>
+          </ul>
+        </section>
+
+        <section className={kartu}>
+          <h2 className="text-xl">Bantuan</h2>
+          <p>Ada masalah atau saran? Ketuk Kirim masukan di menu, atau hubungi admin dan sebutkan nomor versi (v{paket.version}).</p>
+        </section>
+      </Kerangka>
+    );
   return (
-    <Kerangka p={p}>
+    <Kerangka p={p} aplikasi="ikut">
       <h1 className="text-2xl">Tentang aplikasi</h1>
       <p className="text-sm text-pudar">Racik Soal v{paket.version} · dipakai resmi MA Al-Fatah</p>
 

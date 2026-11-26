@@ -214,7 +214,7 @@ export function FormUjianBaru({ kelas, set, admin, terbuka }: { kelas: string[];
                       key={h}
                       type="button"
                       onClick={() => ketuk(n, i)}
-                      className={`h-9 w-9 shrink-0 rounded-full border text-sm ${kunci[n]?.includes(i) ? "border-hijau bg-hijau text-white" : ""}`}
+                      className={`h-9 w-9 shrink-0 rounded-full border text-sm max-md:w-11 ${kunci[n]?.includes(i) ? "border-hijau bg-hijau text-white" : ""}`}
                     >
                       {h}
                     </button>

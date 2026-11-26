@@ -180,11 +180,13 @@ if (ujianA?.ok) {
   cek((await halaman(A, `/koreksi/${ujianA.id}`)).status === 200, "A bisa membuka ujian LJK-nya sendiri");
   const siswaId = Number((await (await halaman(A, `/koreksi/${ujianA.id}`)).text()).match(/\\?"siswa\\?":\[\{\\?"id\\?":(\d+)/)?.[1]);
   cek((await aksi(A, "simpanEsai", ujianA.id, siswaId, 10)).nilai?.ok === true, "A bisa mengisi nilai esai ujiannya", String(siswaId));
+  cek((await aksi(A, "ubahKunci", ujianA.id, [[2]])).nilai?.ok === true, "A bisa mengubah kunci ujiannya");
   cek((await halaman(B, `/koreksi/${ujianA.id}`)).status === 404, "B ditolak: membuka ujian LJK A");
   for (const [nama, ...args] of [
     ["simpanLembar", ujianA.id, siswaId, [[1]], null],
     ["simpanEsai", ujianA.id, siswaId, 0],
     ["hapusUjian", ujianA.id],
+    ["ubahKunci", ujianA.id, [[1]]],
   ] as [string, ...unknown[]][]) {
     const { nilai } = await aksi(B, nama, ...args);
     cek(nilai?.ok === false && /tidak ditemukan/i.test(nilai.pesan), `B ditolak: ${nama} (ujian LJK A)`, JSON.stringify(nilai)?.slice(0, 200));

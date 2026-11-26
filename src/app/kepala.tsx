@@ -16,6 +16,7 @@ import { TombolTema } from "./tombol-tema";
 import { JendelaMasukan, TombolMasukan } from "./masukan";
 import { JendelaTanya } from "./tanya";
 import { Pengumuman } from "./pengumuman";
+import { IngatAplikasi } from "./ingat-aplikasi";
 import { Fragment } from "react";
 import paket from "../../package.json";
 
@@ -132,8 +133,22 @@ const tautan = "block shrink-0 truncate rounded-lg px-3 py-3 text-tinta hover:bg
 // setAktif: nomor set yang sedang dibuka (?id=, dari page.tsx) → barisnya di riwayat ditandai "sedang dibuka".
 // aplikasi: Racik Soal dan Koreksi LJK tampil sebagai aplikasi terpisah (pilihan pemilik 25 Nov 2026): judul, tombol
 // atas, menu, dan riwayat sidebar milik aplikasinya; bagian bawah (akun, tema, Keluar) sama.
-export async function Kerangka({ p, aplikasi = "racik", lebar = false, setAktif = null, children }: { p: Pengguna; aplikasi?: IdAplikasi; lebar?: boolean | "pengaturan"; setAktif?: number | null; children: React.ReactNode }) {
-  if (aplikasi === "koreksi") return <KerangkaKoreksi p={p}>{children}</KerangkaKoreksi>;
+// aplikasi "ikut" = halaman bersama (Akun, Kelola guru, Tentang): memakai kerangka aplikasi yang terakhir dibuka
+// (cookie `aplikasi`, ditulis IngatAplikasi di halaman milik satu aplikasi).
+export async function aplikasiTerakhir(): Promise<IdAplikasi> {
+  return (await cookies()).get("aplikasi")?.value === "koreksi" ? "koreksi" : "racik";
+}
+
+export async function Kerangka({ p, aplikasi = "racik", lebar = false, setAktif = null, children }: { p: Pengguna; aplikasi?: IdAplikasi | "ikut"; lebar?: boolean | "pengaturan"; setAktif?: number | null; children: React.ReactNode }) {
+  const ingat = aplikasi !== "ikut";
+  if (!ingat) aplikasi = await aplikasiTerakhir();
+  if (aplikasi === "koreksi")
+    return (
+      <KerangkaKoreksi p={p} lebar={lebar}>
+        {ingat && <IngatAplikasi id="koreksi" />}
+        {children}
+      </KerangkaKoreksi>
+    );
   const admin = p.peran === "admin";
   const riwayat = await ambilRiwayat(p.id, BATAS_SIDEBAR);
   const tema = (await cookies()).get("tema")?.value === "gelap" ? "gelap" : "terang";
@@ -212,6 +227,7 @@ export async function Kerangka({ p, aplikasi = "racik", lebar = false, setAktif 
         {admin && <PeringatanBackup />}
         {children}
       </main>
+      {ingat && <IngatAplikasi id="racik" />}
       <JendelaMasukan set={setMasukan} />
       <JendelaTanya />
       <Pengumuman />
@@ -243,7 +259,7 @@ function BawahSidebar({ p, tema }: { p: Pengguna; tema: "gelap" | "terang" }) {
 }
 
 /** Kerangka Koreksi LJK: "+ Ujian baru", menu milik Koreksi LJK, riwayat = ujian guru. */
-async function KerangkaKoreksi({ p, children }: { p: Pengguna; children: React.ReactNode }) {
+async function KerangkaKoreksi({ p, lebar, children }: { p: Pengguna; lebar: boolean | "pengaturan"; children: React.ReactNode }) {
   const admin = p.peran === "admin";
   const [ujian, tema] = await Promise.all([ambilUjian(p.id, BATAS_SIDEBAR), cookies().then((c) => (c.get("tema")?.value === "gelap" ? "gelap" : "terang") as "gelap" | "terang")]);
   const menu = [...(admin ? [{ href: "/admin/siswa", label: "Daftar siswa" }, { href: "/admin/guru", label: "Kelola guru" }] : []), { href: "/tentang", label: "Tentang aplikasi" }];
@@ -281,7 +297,7 @@ async function KerangkaKoreksi({ p, children }: { p: Pengguna; children: React.R
         </nav>
         <BawahSidebar p={p} tema={tema} />
       </LaciSidebar>
-      <main className="mx-auto w-full max-w-3xl min-w-0 space-y-6 p-4 md:p-8">{children}</main>
+      <main className={`w-full ${lebar === "pengaturan" ? "max-w-[96rem]" : lebar ? "mx-auto max-w-5xl" : "mx-auto max-w-3xl"} min-w-0 space-y-6 p-4 md:p-8`}>{children}</main>
       <JendelaMasukan set={null} />
       <JendelaTanya />
       <Pengumuman />

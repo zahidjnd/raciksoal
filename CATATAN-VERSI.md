@@ -53,6 +53,15 @@ aplikasi kedua **Koreksi LJK** (foto dari HP / unggah dari laptop, nilai dihitun
 
 ---
 
+## 1.3.0 — 26 November 2026
+- **Ubah kunci** di halaman ujian Koreksi LJK: ganti huruf kunci yang salah ketuk; nilai semua lembar yang sudah
+  dipindai dihitung ulang otomatis, tanpa memindai ulang.
+- Akun, Kelola guru, dan Tentang aplikasi tampil dengan sidebar aplikasi yang terakhir dibuka (Racik Soal atau
+  Koreksi LJK). Tentang aplikasi punya isi khusus Koreksi LJK (cara kerja, aturan nilai, arti analisis butir).
+- Bulatan huruf kunci di HP tidak lagi lonjong.
+
+---
+
 ## 1.2.0 — 26 November 2026
 - **Koreksi LJK di laptop**: mengetuk nama siswa membuka pilihan file foto LJK (webcam laptop tidak lagi menyala).
 - **Unggah banyak foto** (laptop & HP): pilih banyak foto LJK sekaligus (mis. hasil scan atau kiriman WA). Foto dibaca

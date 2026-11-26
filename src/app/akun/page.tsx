@@ -20,7 +20,7 @@ export default async function HalamanAkun({ searchParams }: { searchParams: Prom
   const admin = p.peran === "admin";
   const kartu = "space-y-3 rounded-xl border bg-kartu p-4";
   return (
-    <Kerangka p={p} lebar="pengaturan">
+    <Kerangka p={p} aplikasi="ikut" lebar="pengaturan">
       <h1 className="text-2xl">Akun</h1>
       <div className="md:flex md:items-start md:gap-6">
         {/* HP: deret tombol di atas; laptop: daftar di kiri. */}

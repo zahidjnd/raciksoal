@@ -7,7 +7,7 @@ rubrik, lalu mengekspor ke Word dengan kop madrasah. Alamat: raciksoal.alfatahma
 
 Tahap sekarang: **1.x = dipakai resmi** (sejak 1.0.0, 24 Nov 2026; semua mapel, 15–20 akun guru Al-Fatah). Kendala
 guru diperbaiki sambil jalan. Alamat `/` = halaman awal polos (kartu dari `src/lib/aplikasi.ts`: Racik Soal; Koreksi LJK
-masih "Segera hadir"), SELALU yang pertama tampil (login tersimpan, WA, PWA). Racik Soal di `/racik` (1.0.1); tautan lama
+aktif sejak 1.1.0), SELALU yang pertama tampil (login tersimpan, WA, PWA). Racik Soal di `/racik` (1.0.1); tautan lama
 `/?id=`/`/?materi=` diteruskan ke `/racik`, `/beranda` → `/`. Pindah aplikasi: `PindahAplikasi` di sidebar. TIDAK untuk dijual (jangan diungkit).
 Admin hanya akun pemilik.
 
@@ -317,14 +317,15 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
 - **PWA** (0.37.0): `src/app/manifest.ts` (standalone) + ikon `public/ikon/ikon-192/512.png` & `src/app/apple-icon.png`
   (bintang delapan putih di atas hijau, dibuat dari HTML lewat Edge headless). Tanpa manifest Chrome hanya membuat
   pintasan berbilah judul+alamat. `themeColor` dari cookie `tema` (`generateViewport`), TombolTema menggantinya langsung.
-- **Koreksi LJK** (`/koreksi`, tahap 1–2): LJK = "LJK ASAS 26-1 FIX" (`dokumen/ljk/`, gitignore). Pembaca `lib/ljk.ts` di
+- **Koreksi LJK** (`/koreksi`, tahap 1–4, sejak 1.1.0): LJK = "LJK ASAS 26-1 FIX" (`dokumen/ljk/`, gitignore). Pembaca `lib/ljk.ts` di
   browser, tanpa AI/library: 4 kotak → homografi → arah dari garis kop → geseran per kolom/nomor (kertas melengkung) →
   kehitaman RELATIF per lembar (`AMBANG`; patokan kosong PER HURUF: B tercetak tebal → lembar banyak kosong dulu terbaca B); ragu/dua jawaban/coretan = kuning, tidak ditebak. Foto TIDAK disimpan, hanya
   potongan nama (≤ 40 KB). Tabel `siswa` (+ `nisn` teks; admin IMPOR .xlsx dari template No|Nama|NISN|Kelas di `/admin/siswa`, `?kelas=` = satu kelas +
   tambah/ubah/keluarkan; dibaca di browser `bacaXlsx` → `bacaBarisSiswa`, file bermasalah tidak bisa disimpan; hilang = `aktif` false), `ujian_ljk`,
   `nilai_ljk`. Kunci dari set (Paket A, nomor LJK = nomor soal; isian/uraian = esai) atau ketik dengan `FORMAT_ASAS`
   (non-eksak PG 1/PGK 4/BS 2/esai 5×8, eksak 2/4/2/5×6, bisa diubah). Semua dijawab huruf (B/S: A = Benar, B = Salah).
-  PGK sebagian (`bagianBenar`, ATURAN-SOAL 3). Objektif dihitung ulang di server. Aplikasi terpisah (`Kerangka aplikasi="koreksi"`: sidebar ujian,
+  PGK sebagian (`bagianBenar`, ATURAN-SOAL 3). Objektif dihitung ulang di server; Ubah kunci (`ubahKunci`, huruf saja, bentuk & skor tetap) = semua lembar dihitung ulang. Aplikasi terpisah (`Kerangka aplikasi="koreksi"`; halaman bersama Akun/Kelola guru/Tentang = `aplikasi="ikut"` →
+  cookie `aplikasi` dari `IngatAplikasi`, Tentang berisi Koreksi LJK bila terakhir di sana; sidebar ujian,
   judul tab di `koreksi/layout.tsx`, kaki Tanzil disembunyikan `kaki-tanzil.tsx`). Tahap 3 (`kamera-ljk.tsx`): getUserMedia
   (hanya https; HP uji LAN perlu chrome://flags "Insecure origins treated as secure"), bidik 640 px `cariKotak`, diam
   `DIAM` bidikan (< `GESER`) = jepret 1600 px; gagal → kamera bawaan HP. Tahap 4 (`analisis.tsx`): Excel disusun DI
