@@ -53,6 +53,13 @@ aplikasi kedua **Koreksi LJK** (foto dari HP / unggah dari laptop, nilai dihitun
 
 ---
 
+## 1.5.0 — 26 November 2026
+- Ajakan memasang Racik Soal ke layar utama HP/tablet: jendela kecil di halaman awal. Android: tombol Pasang (dialog
+  bawaan Chrome). iPhone/iPad: petunjuk Bagikan → Tambah ke Layar Utama. Tidak muncul di laptop, tidak muncul bila sudah
+  dipasang/dibuka dari ikon; ditutup = muncul lagi 14 hari kemudian. Menunggu pengumuman pembaruan ditutup dulu.
+
+---
+
 ## 1.4.2 — 26 November 2026
 - Pengumuman pembaruan: "Baru: Koreksi LJK" (cara pakai 4 langkah + izin kamera). Kini hanya muncul di halaman awal
   setelah login, sekali per HP/laptop; Racik Soal & Koreksi LJK tidak lagi memunculkannya.

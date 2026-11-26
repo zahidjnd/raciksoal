@@ -5,7 +5,7 @@ import { keluar } from "./masuk/actions";
 import { JendelaTanya } from "./tanya";
 import { KartuAplikasi } from "./kartu-aplikasi";
 import { Pengumuman } from "./pengumuman";
-
+import { PasangAplikasi } from "./pasang-aplikasi";
 /**
  * Halaman awal (alamat utama "/", pilihan pemilik): selalu yang pertama tampil, juga saat login masih tersimpan
  * (tautan WA, browser baru, aplikasi HP). Sengaja POLOS, tanpa sidebar: kartu dari APLIKASI + tombol Keluar.
@@ -28,6 +28,7 @@ export default async function HalamanAwal({ searchParams }: { searchParams: Prom
       </form>
       <JendelaTanya />
       <Pengumuman />
+      <PasangAplikasi />
     </main>
   );
 }
