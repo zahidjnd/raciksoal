@@ -55,8 +55,8 @@ export function IzinKamera() {
         <>
           <p className="font-semibold text-tinta">Izinkan kamera sekali saja</p>
           <p className="text-pudar">
-            Koreksi LJK memakai kamera HP untuk memindai. Ketuk tombol di bawah, lalu pilih <b>Izinkan saat situs dibuka</b> (bukan &ldquo;Hanya kali ini&rdquo;). Setelah itu
-            tidak ditanya lagi.
+            Koreksi LJK memakai kamera HP untuk memindai. Ketuk tombol di bawah, lalu pilih <b>Izinkan saat mengunjungi situs</b> (bukan &ldquo;Izinkan kali ini&rdquo;).
+            Setelah itu kamera tidak ditanya lagi.
           </p>
           <button onClick={minta} className="h-11 rounded-lg bg-hijau px-5 font-semibold text-white hover:bg-hijau-tua">
             Izinkan kamera
@@ -65,10 +65,20 @@ export function IzinKamera() {
       ) : (
         <>
           <p className="font-semibold text-tinta">Kamera masih diblokir untuk situs ini</p>
-          <p className="text-pudar">
-            Ketuk ikon di kiri alamat web → <b>Izin</b> (atau Setelan situs) → <b>Kamera</b> → <b>Izinkan</b>, lalu muat ulang halaman. Bila tetap diblokir, periksa izin
-            Kamera untuk Chrome di Setelan HP → Aplikasi. Sementara itu, memindai tetap bisa lewat kamera bawaan HP.
-          </p>
+          {/* Lewat menu ⋮ (pilihan pemilik): ikon di kiri alamat web kadang tidak tampil. Tulisan menu = Chrome Android. */}
+          <ol className="list-decimal space-y-0.5 pl-5 text-pudar">
+            <li>
+              Ketuk <b>⋮</b> (titik tiga) di pojok kanan atas Chrome.
+            </li>
+            <li>
+              Pilih <b>Kontrol situs</b>.
+            </li>
+            <li>
+              Pilih <b>Izin</b> → <b>Kamera</b> → <b>Izinkan</b>.
+            </li>
+            <li>Muat ulang halaman ini.</li>
+          </ol>
+          <p className="text-pudar">Sementara itu, memindai tetap bisa lewat kamera bawaan HP.</p>
         </>
       )}
     </section>

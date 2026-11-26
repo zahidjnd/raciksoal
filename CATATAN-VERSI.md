@@ -53,6 +53,13 @@ aplikasi kedua **Koreksi LJK** (foto dari HP / unggah dari laptop, nilai dihitun
 
 ---
 
+## 1.1.4 — 26 November 2026
+- Kotak izin kamera Koreksi LJK memakai tulisan yang sama dengan tombol Chrome ("Izinkan saat mengunjungi situs").
+  Bila kamera diblokir: langkah bernomor lewat **⋮ → Kontrol situs → Izin → Kamera → Izinkan** (ikon di samping
+  alamat web kadang tidak tampil).
+
+---
+
 ## 1.1.3 — 26 November 2026
 - **Izinkan kamera sejak awal.** Di HP, halaman Koreksi LJK menampilkan kotak "Izinkan kamera sekali saja" dengan
   tombol Izinkan kamera (pilih "Izinkan saat situs dibuka"); setelah diizinkan kotaknya hilang dan kamera tidak ditanya
