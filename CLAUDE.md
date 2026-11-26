@@ -325,7 +325,8 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   `nilai_ljk`. Kunci dari set (Paket A, nomor LJK = nomor soal; isian/uraian = esai) atau ketik dengan `FORMAT_ASAS`
   (non-eksak PG 1/PGK 4/BS 2/esai 5×8, eksak 2/4/2/5×6, bisa diubah). Semua dijawab huruf (B/S: A = Benar, B = Salah).
   PGK sebagian (`bagianBenar`, ATURAN-SOAL 3). Objektif dihitung ulang di server; Ubah kunci (`ubahKunci`, huruf saja, bentuk & skor tetap) = semua lembar dihitung ulang. Aplikasi terpisah (`Kerangka aplikasi="koreksi"`; halaman bersama Akun/Kelola guru/Tentang = `aplikasi="ikut"` →
-  cookie `aplikasi` dari `IngatAplikasi`, Tentang berisi Koreksi LJK bila terakhir di sana; sidebar ujian,
+  cookie `aplikasi` dari `IngatAplikasi`, Tentang & Panduan (`panduan/koreksi.tsx`) berisi Koreksi LJK bila terakhir di sana, judul tab `judulIkut`; sidebar
+  ujian = `BarisRiwayat jenis="ujian"` (⋯ Ganti nama `gantiNamaUjian` / Hapus),
   judul tab di `koreksi/layout.tsx`, kaki Tanzil disembunyikan `kaki-tanzil.tsx`). Tahap 3 (`kamera-ljk.tsx`): getUserMedia
   (hanya https; HP uji LAN perlu chrome://flags "Insecure origins treated as secure"), bidik 640 px `cariKotak`, diam
   `DIAM` bidikan (< `GESER`) = jepret 1600 px; gagal → kamera bawaan HP. Tahap 4 (`analisis.tsx`): Excel disusun DI

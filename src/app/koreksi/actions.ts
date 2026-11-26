@@ -115,3 +115,13 @@ export async function ubahKunci(ujianId: number, huruf: unknown) {
   });
   return { ok: true as const, kunci };
 }
+
+/** Ganti nama ujian (menu ⋯ sidebar). Nama wajib diisi, maks 80 huruf. */
+export async function gantiNamaUjian(id: number, nama: string) {
+  const r = await ujianSaya(id);
+  if ("pesan" in r) return { ok: false as const, pesan: r.pesan };
+  const baru = String(nama ?? "").replace(/\s+/g, " ").trim().slice(0, 80);
+  if (!baru) return { ok: false as const, pesan: "Nama ujian tidak boleh kosong." };
+  await db.update(ujianLjk).set({ nama: baru }).where(eq(ujianLjk.id, r.u.id));
+  return { ok: true as const };
+}

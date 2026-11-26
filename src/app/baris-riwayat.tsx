@@ -5,6 +5,7 @@ import { beriTahu, tanya } from "./tanya";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { hapusSet, ubahNamaSet } from "./actions";
+import { gantiNamaUjian, hapusUjian } from "./koreksi/actions";
 import { MAKS_NAMA_SET } from "@/lib/prompt";
 
 /** Tanda "sedang dibuka" di sidebar (riwayat & menu admin): satu baris saja yang memakainya. */
@@ -30,14 +31,17 @@ export function TautanMenu({ href, kelas, children }: { href: string; kelas: str
 // aktif: set ini yang sedang dibuka → latar sorot tetap + judul tebal (TANDA_AKTIF, dipakai juga menu admin).
 // awalan ("ASAS ·") dan label (judul materi / nama set) ditulis terpisah: judul berhuruf Arab ditampilkan kanan-ke-kiri
 // dengan potongan "…" di ujung kirinya, tanpa mengacak urutan awalan (audit tampilan 2026-11-08).
-export function BarisRiwayat({ id, awalan = "", label: judul, nama, keterangan, gagal, aktif, kelas }: { id: number; awalan?: string; label: string; nama: string | null; keterangan: string; gagal: boolean; aktif: boolean; kelas: string }) {
+// jenis "ujian" (Koreksi LJK, 1.4.0): baris yang sama untuk riwayat ujian; nama ujian wajib (tidak kembali ke judul materi).
+export function BarisRiwayat({ id, awalan = "", label: judul, nama, keterangan, gagal, aktif, kelas, jenis = "set" }: { id: number; awalan?: string; label: string; nama: string | null; keterangan: string; gagal: boolean; aktif: boolean; kelas: string; jenis?: "set" | "ujian" }) {
+  const ujian = jenis === "ujian";
+  const href = ujian ? `/koreksi/${id}` : `/racik?id=${id}`;
   const label = awalan ? `${awalan} ${judul}` : judul;
   const router = useRouter();
   const [menu, setMenu] = useState(false);
   const [ketik, setKetik] = useState<string | null>(null); // null = tidak sedang mengganti nama
   const [sibuk, setSibuk] = useState(false);
   const kotak = useRef<HTMLDivElement>(null);
-  const sedangDibuka = () => new URLSearchParams(location.search).get("id") === String(id);
+  const sedangDibuka = () => (ujian ? location.pathname === href : new URLSearchParams(location.search).get("id") === String(id));
 
   // Menu tertutup saat klik di luar atau Esc.
   useEffect(() => {
@@ -57,9 +61,10 @@ export function BarisRiwayat({ id, awalan = "", label: judul, nama, keterangan, 
     setKetik(null);
     if (baru === (nama ?? label)) return; // tidak berubah
     setSibuk(true);
-    const r = await ubahNamaSet(id, baru).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
+    if (ujian && !baru) return;
+    const r = await (ujian ? gantiNamaUjian(id, baru) : ubahNamaSet(id, baru)).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
     setSibuk(false);
-    if (!r.ok) return beriTahu(r.pesan);
+    if (!r.ok) return beriTahu(r.pesan ?? "");
     // Set ini sedang dibuka → muat ulang supaya judul halaman ikut berubah; selain itu cukup perbarui sidebar.
     if (sedangDibuka()) location.reload();
     else router.refresh();
@@ -67,12 +72,15 @@ export function BarisRiwayat({ id, awalan = "", label: judul, nama, keterangan, 
 
   async function hapus() {
     setMenu(false);
-    if (!(await tanya(`"${nama ?? label}" akan hilang dari riwayat dan tidak bisa dibuka lagi. Jatah hari ini tidak kembali.`, { judul: "Hapus set?", ya: "Hapus", bahaya: true }))) return;
+    const pesan = ujian
+      ? `Ujian "${nama ?? label}" beserta nilainya akan hilang dari daftar dan tidak bisa dibuka lagi.`
+      : `"${nama ?? label}" akan hilang dari riwayat dan tidak bisa dibuka lagi. Jatah hari ini tidak kembali.`;
+    if (!(await tanya(pesan, { judul: ujian ? "Hapus ujian?" : "Hapus set?", ya: "Hapus", bahaya: true }))) return;
     setSibuk(true);
-    const r = await hapusSet(id).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
+    const r = await (ujian ? hapusUjian(id) : hapusSet(id)).catch(() => ({ ok: false as const, pesan: "Koneksi terputus. Coba lagi." }));
     setSibuk(false);
-    if (!r.ok) return beriTahu(r.pesan);
-    if (sedangDibuka()) location.assign("/racik");
+    if (!r.ok) return beriTahu(r.pesan ?? "");
+    if (sedangDibuka()) location.assign(ujian ? "/koreksi" : "/racik");
     else router.refresh();
   }
 
@@ -81,8 +89,8 @@ export function BarisRiwayat({ id, awalan = "", label: judul, nama, keterangan, 
       <div className="shrink-0 px-1 py-1">
         <input
           autoFocus
-          aria-label="Nama set"
-          maxLength={MAKS_NAMA_SET}
+          aria-label={ujian ? "Nama ujian" : "Nama set"}
+          maxLength={ujian ? 80 : MAKS_NAMA_SET}
           className="h-10 w-full rounded-lg border border-hijau bg-kartu px-2 text-sm"
           value={ketik}
           onFocus={(e) => e.target.select()}
@@ -93,7 +101,7 @@ export function BarisRiwayat({ id, awalan = "", label: judul, nama, keterangan, 
             if (e.key === "Escape") setKetik(null);
           }}
         />
-        <p className="px-1 pt-1 text-sm text-pudar">Kosongkan untuk kembali ke judul materi.</p>
+        <p className="px-1 pt-1 text-sm text-pudar">{ujian ? "Enter untuk menyimpan, Esc untuk batal." : "Kosongkan untuk kembali ke judul materi."}</p>
       </div>
     );
 
@@ -101,10 +109,10 @@ export function BarisRiwayat({ id, awalan = "", label: judul, nama, keterangan, 
   return (
     <div ref={kotak} className={`group relative shrink-0 ${sibuk ? "opacity-50" : ""}`}>
       <a
-        href={`/racik?id=${id}`}
+        href={href}
         className={`${kelas} pr-11 ${aktif ? TANDA_AKTIF : menu ? "bg-krem-sorot" : ""}`} // baris tetap tersorot selama menunya terbuka
         aria-current={aktif ? "page" : undefined}
-        title={`${label} (set ${id})`}
+        title={ujian ? label : `${label} (set ${id})`}
         onContextMenu={(e) => {
           e.preventDefault();
           setMenu(true);

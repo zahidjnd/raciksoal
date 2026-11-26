@@ -2,7 +2,9 @@ import Link from "next/link";
 import { wajibMasuk } from "@/lib/sesi";
 import { ambilPreferensi, hitungHariIni, hitungPemakaian, hitungSebulan } from "@/lib/pemakaian";
 import { BATAS_HALAMAN_PDF, BATAS_PER_GURU, BATAS_UBAH_PER_GURU } from "@/lib/pembatas";
-import { Kerangka } from "../kepala";
+import { Kerangka, judulIkut } from "../kepala";
+
+export const generateMetadata = judulIkut("Akun");
 import { FormKataSandi, FormNama, FormPreferensi, TombolKeluarkanPerangkat } from "./form";
 
 /** Tab halaman Akun (gaya halaman pengaturan claude.ai): `?tab=` supaya bisa ditautkan (mis. dari Panduan) & tetap saat dimuat ulang. */

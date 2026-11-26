@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { wajibMasuk } from "@/lib/sesi";
-import { Kerangka, aplikasiTerakhir } from "../kepala";
+import { Kerangka, judulIkut, aplikasiTerakhir } from "../kepala";
+
+export const generateMetadata = judulIkut("Tentang aplikasi");
 import paket from "../../../package.json";
 
 /**

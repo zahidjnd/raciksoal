@@ -53,6 +53,15 @@ aplikasi kedua **Koreksi LJK** (foto dari HP / unggah dari laptop, nilai dihitun
 
 ---
 
+## 1.4.0 — 26 November 2026
+- **Panduan Koreksi LJK**: menu Panduan di sidebar Koreksi LJK berisi Mulai cepat 4 langkah (buat ujian, pindai,
+  periksa & simpan, esai & Excel), topik (izin kamera, tips memotret, unggah banyak foto, membetulkan lembar, Ubah kunci,
+  analisis butir, cara nilai dihitung, ganti nama/hapus ujian), dan tanya-jawab.
+- **Menu ⋯ di tiap ujian di sidebar**: Ganti nama dan Hapus, sama seperti riwayat set Racik Soal.
+- Judul tab Panduan, Tentang, Akun, dan Kelola guru mengikuti aplikasi yang sedang dipakai.
+
+---
+
 ## 1.3.0 — 26 November 2026
 - **Ubah kunci** di halaman ujian Koreksi LJK: ganti huruf kunci yang salah ketuk; nilai semua lembar yang sudah
   dipindai dihitung ulang otomatis, tanpa memindai ulang.

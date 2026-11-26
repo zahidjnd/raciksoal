@@ -139,12 +139,15 @@ export async function aplikasiTerakhir(): Promise<IdAplikasi> {
   return (await cookies()).get("aplikasi")?.value === "koreksi" ? "koreksi" : "racik";
 }
 
+/** Judul tab halaman bersama: "Panduan · Koreksi LJK" bila terakhir di Koreksi LJK, selain itu judul bawaan "Racik Soal". */
+export const judulIkut = (halaman: string) => async () => ((await aplikasiTerakhir()) === "koreksi" ? { title: `${halaman} · Koreksi LJK` } : {});
+
 export async function Kerangka({ p, aplikasi = "racik", lebar = false, setAktif = null, children }: { p: Pengguna; aplikasi?: IdAplikasi | "ikut"; lebar?: boolean | "pengaturan"; setAktif?: number | null; children: React.ReactNode }) {
   const ingat = aplikasi !== "ikut";
   if (!ingat) aplikasi = await aplikasiTerakhir();
   if (aplikasi === "koreksi")
     return (
-      <KerangkaKoreksi p={p} lebar={lebar}>
+      <KerangkaKoreksi p={p} lebar={lebar} ujianAktif={setAktif}>
         {ingat && <IngatAplikasi id="koreksi" />}
         {children}
       </KerangkaKoreksi>
@@ -259,10 +262,10 @@ function BawahSidebar({ p, tema }: { p: Pengguna; tema: "gelap" | "terang" }) {
 }
 
 /** Kerangka Koreksi LJK: "+ Ujian baru", menu milik Koreksi LJK, riwayat = ujian guru. */
-async function KerangkaKoreksi({ p, lebar, children }: { p: Pengguna; lebar: boolean | "pengaturan"; children: React.ReactNode }) {
+async function KerangkaKoreksi({ p, lebar, ujianAktif, children }: { p: Pengguna; lebar: boolean | "pengaturan"; ujianAktif: number | null; children: React.ReactNode }) {
   const admin = p.peran === "admin";
   const [ujian, tema] = await Promise.all([ambilUjian(p.id, BATAS_SIDEBAR), cookies().then((c) => (c.get("tema")?.value === "gelap" ? "gelap" : "terang") as "gelap" | "terang")]);
-  const menu = [...(admin ? [{ href: "/admin/siswa", label: "Daftar siswa" }, { href: "/admin/guru", label: "Kelola guru" }] : []), { href: "/tentang", label: "Tentang aplikasi" }];
+  const menu = [...(admin ? [{ href: "/admin/siswa", label: "Daftar siswa" }, { href: "/admin/guru", label: "Kelola guru" }] : []), { href: "/panduan", label: "Panduan" }, { href: "/tentang", label: "Tentang aplikasi" }];
   return (
     <div className="kerangka md:pl-64 xl:pl-72">
       <LaciSidebar aplikasi="koreksi">
@@ -286,10 +289,7 @@ async function KerangkaKoreksi({ p, lebar, children }: { p: Pengguna; lebar: boo
           <p className="shrink-0 px-3 pt-5 pb-1 text-xs text-pudar">Ujian</p>
           {ujian.length === 0 && <p className="px-3 text-sm text-pudar">Belum ada ujian.</p>}
           {ujian.map((u) => (
-            <TautanMenu key={u.id} href={`/koreksi/${u.id}`} kelas={tautan}>
-              <span className="block truncate">{u.nama}</span>
-              <span className="block text-xs font-normal text-pudar">{u.kelas} · {u.dipindai} dipindai</span>
-            </TautanMenu>
+            <BarisRiwayat key={u.id} jenis="ujian" id={u.id} label={u.nama} nama={u.nama} keterangan={`${u.kelas} · ${u.dipindai} dipindai`} gagal={false} aktif={u.id === ujianAktif} kelas={tautan} />
           ))}
           {ujian.length > 0 && (
             <Link href="/koreksi" className="flex min-h-11 shrink-0 items-center px-3 text-sm text-hijau-teks hover:underline md:min-h-0 md:py-1">Lihat semua ujian</Link>

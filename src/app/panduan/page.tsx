@@ -1,6 +1,9 @@
 import { wajibMasuk } from "@/lib/sesi";
 import { BATAS_ANALISA, BATAS_HALAMAN_PDF, BATAS_PER_GURU, BATAS_UBAH_PER_GURU, MAKS_HALAMAN_PDF } from "@/lib/pembatas";
-import { Kerangka } from "../kepala";
+import { Kerangka, judulIkut, aplikasiTerakhir } from "../kepala";
+
+export const generateMetadata = judulIkut("Panduan");
+import { LANGKAH_LJK, TANYA_LJK, TOPIK_LJK } from "./koreksi";
 import { BukaLipatan } from "./buka-lipatan";
 import { Panah } from "../panah";
 
@@ -246,12 +249,26 @@ const TANYA: { t: string; j: React.ReactNode }[] = [
 export default async function Panduan() {
   const p = await wajibMasuk();
   const kartu = "space-y-3 rounded-xl border bg-kartu p-4";
+  // Halaman bersama: isi ikut aplikasi yang terakhir dibuka (Racik Soal / Koreksi LJK, 1.4.0).
+  const ljk = (await aplikasiTerakhir()) === "koreksi";
+  const langkah = ljk ? LANGKAH_LJK.map((l) => ({ ...l, gambar: [] as React.ReactNode[] })) : LANGKAH;
+  const topik = ljk ? TOPIK_LJK : TOPIK;
+  const tanya = ljk ? TANYA_LJK : TANYA;
   return (
-    <Kerangka p={p}>
+    <Kerangka p={p} aplikasi="ikut">
       <BukaLipatan />
       <h1 className="text-2xl">Panduan</h1>
-      <p className="text-sm text-pudar">Cara memakai Racik Soal, dari memasukkan materi sampai mengunduh file Word.</p>
-      <Awas>soal dibuat AI dan <b>wajib diperiksa guru sebelum dipakai</b>.</Awas>
+      {ljk ? (
+        <>
+          <p className="text-sm text-pudar">Cara memakai Koreksi LJK, dari membuat ujian sampai mengunduh nilai.</p>
+          <Awas>hasil baca wajib dicek sekilas oleh guru, terutama nomor yang berwarna <b>kuning</b>.</Awas>
+        </>
+      ) : (
+        <>
+          <p className="text-sm text-pudar">Cara memakai Racik Soal, dari memasukkan materi sampai mengunduh file Word.</p>
+          <Awas>soal dibuat AI dan <b>wajib diperiksa guru sebelum dipakai</b>.</Awas>
+        </>
+      )}
 
       <nav aria-label="Isi panduan" className="text-sm">
         <span className="text-pudar">Langsung ke: </span>
@@ -260,14 +277,14 @@ export default async function Panduan() {
 
       <section id="mulai" className="scroll-mt-16 space-y-4">
         <h2 className="text-xl">Mulai cepat: 4 langkah</h2>
-        {LANGKAH.map((l, i) => (
+        {langkah.map((l, i) => (
           <article key={l.judul} className={kartu}>
             <h3 className="flex items-center gap-2 font-semibold">
               <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-hijau text-sm text-white">{i + 1}</span>
               {l.judul}
             </h3>
             <div className="space-y-1.5 text-sm leading-relaxed">{l.isi}</div>
-            <div className="flex flex-wrap gap-3">{l.gambar}</div>
+            {l.gambar.length > 0 && <div className="flex flex-wrap gap-3">{l.gambar}</div>}
           </article>
         ))}
       </section>
@@ -275,7 +292,7 @@ export default async function Panduan() {
       <section id="topik" className="scroll-mt-16 space-y-2">
         <h2 className="text-xl">Topik lain</h2>
         <p className="text-sm text-pudar">Ketuk judul untuk membuka.</p>
-        {TOPIK.map((t) => (
+        {topik.map((t) => (
           <details key={t.id} id={t.id} className="group scroll-mt-16 rounded-xl border bg-kartu">
             <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-4 py-2 font-semibold">
               {t.judul}
@@ -288,7 +305,7 @@ export default async function Panduan() {
 
       <section id="tanya" className="scroll-mt-16 space-y-2">
         <h2 className="text-xl">Tanya-jawab</h2>
-        {TANYA.map((q) => (
+        {tanya.map((q) => (
           <details key={q.t} className="group rounded-xl border bg-kartu">
             <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-4 py-2">
               {q.t}
@@ -303,10 +320,10 @@ export default async function Panduan() {
         <h2 className="text-xl">Kalau ada masalah</h2>
         <ol className="list-decimal space-y-1.5 pl-5 text-sm leading-relaxed">
           <li>Muat ulang halaman (tarik ke bawah di HP, atau tekan F5 di laptop), lalu coba lagi.</li>
-          <li>Set gagal dibuat? Coba lagi beberapa saat; set yang gagal tidak memakai jatah.</li>
-          <li>Masih bermasalah: klik <b>Kirim masukan</b> di sidebar (di bawah Panduan), ceritakan masalahnya, lalu Kirim. Bila sedang membuka set, biarkan centang <b>Tentang set</b> supaya admin bisa langsung membuka set itu.</li>
+          {!ljk && <li>Set gagal dibuat? Coba lagi beberapa saat; set yang gagal tidak memakai jatah.</li>}
+          <li>Masih bermasalah: klik <b>Kirim masukan</b> di sidebar (di bawah Panduan), ceritakan masalahnya, lalu Kirim. {!ljk && <>Bila sedang membuka set, biarkan centang <b>Tentang set</b> supaya admin bisa langsung membuka set itu.</>}</li>
         </ol>
-        <p className="mt-2 text-sm leading-relaxed text-pudar">Keluhan, saran, atau usul fitur juga bisa dikirim lewat Kirim masukan kapan saja. Sesekali, setelah set selesai dibuat, muncul kotak kecil di pojok bawah yang menanyakan pendapat Anda; boleh diisi atau ditutup.</p>
+        <p className="mt-2 text-sm leading-relaxed text-pudar">Keluhan, saran, atau usul fitur juga bisa dikirim lewat Kirim masukan kapan saja.{!ljk && " Sesekali, setelah set selesai dibuat, muncul kotak kecil di pojok bawah yang menanyakan pendapat Anda; boleh diisi atau ditutup."}</p>
       </section>
     </Kerangka>
   );

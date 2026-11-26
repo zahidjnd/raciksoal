@@ -187,6 +187,7 @@ if (ujianA?.ok) {
     ["simpanEsai", ujianA.id, siswaId, 0],
     ["hapusUjian", ujianA.id],
     ["ubahKunci", ujianA.id, [[1]]],
+    ["gantiNamaUjian", ujianA.id, "DIRETAS"],
   ] as [string, ...unknown[]][]) {
     const { nilai } = await aksi(B, nama, ...args);
     cek(nilai?.ok === false && /tidak ditemukan/i.test(nilai.pesan), `B ditolak: ${nama} (ujian LJK A)`, JSON.stringify(nilai)?.slice(0, 200));

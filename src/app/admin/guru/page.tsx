@@ -4,7 +4,9 @@ import { awalHariIni, db } from "@/db";
 import { hasilSoal, pemakaianAi, pengguna } from "@/db/schema";
 import { BATAS_PER_GURU, BATAS_TOTAL, BATAS_UBAH_PER_GURU } from "@/lib/pembatas";
 import { wajibMasuk } from "@/lib/sesi";
-import { Kerangka } from "../../kepala";
+import { Kerangka, judulIkut } from "../../kepala";
+
+export const generateMetadata = judulIkut("Kelola guru");
 import { AksiGuru, FormTambahGuru } from "./form";
 
 export default async function KelolaGuru() {
