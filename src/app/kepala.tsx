@@ -277,7 +277,7 @@ function BawahSidebar({ p, tema }: { p: Pengguna; tema: "gelap" | "terang" }) {
 async function KerangkaKoreksi({ p, lebar, ujianAktif, children }: { p: Pengguna; lebar: boolean | "pengaturan"; ujianAktif: number | null; children: React.ReactNode }) {
   const admin = p.peran === "admin";
   const [ujian, tema] = await Promise.all([ambilUjian(p.id, BATAS_SIDEBAR), cookies().then((c) => (c.get("tema")?.value === "gelap" ? "gelap" : "terang") as "gelap" | "terang")]);
-  const menu = [...(admin ? [{ href: "/admin/siswa", label: "Daftar siswa" }, { href: "/admin/guru", label: "Kelola guru" }] : []), { href: "/panduan", label: "Panduan" }, { href: "/tentang", label: "Tentang aplikasi" }];
+  const menu = [...(admin ? [{ href: "/admin/ujian", label: "Ujian semua guru" }, { href: "/admin/siswa", label: "Daftar siswa" },{ href: "/admin/guru", label: "Kelola guru" }] : []), { href: "/panduan", label: "Panduan" }, { href: "/tentang", label: "Tentang aplikasi" }];
   return (
     <div className="kerangka md:pl-64 xl:pl-72">
       <LaciSidebar aplikasi="koreksi">

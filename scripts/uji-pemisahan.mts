@@ -221,6 +221,10 @@ const batasB = await halaman(B, "/admin/batas");
 cek(batasB.status >= 300 && batasB.status < 400, "B tidak bisa membuka halaman Admin → Batas pemakaian", `status ${batasB.status}`);
 cek(!(await (await halaman(B, "/")).text()).includes("Rem darurat"), "B tidak melihat pita Rem darurat");
 
+// Ujian semua guru (Koreksi LJK): khusus admin.
+const ujianB = await halaman(B, "/admin/ujian");
+cek(ujianB.status >= 300 && ujianB.status < 400, "B tidak bisa membuka halaman Admin → Ujian semua guru", `status ${ujianB.status}`);
+
 // Isi A tidak berubah sedikit pun.
 const isiAkhir = (await aksi(A, "cekHasil", setA, true)).teks;
 const beda = [...isiA].findIndex((h, i) => h !== isiAkhir[i]);

@@ -53,6 +53,13 @@ aplikasi kedua **Koreksi LJK** (foto dari HP / unggah dari laptop, nilai dihitun
 
 ---
 
+## 1.6.3 — 27 November 2026
+Admin bisa melihat semua ujian Koreksi LJK dari semua guru.
+- Halaman baru **Ujian semua guru** (`/admin/ujian`, menu di Koreksi LJK, khusus admin): daftar ujian semua guru, terbaru dulu,
+  dengan nama guru, kelas, tanggal, jumlah LJK dipindai; saringan per guru & kelas. Hanya dilihat, tanpa tombol hapus.
+- Admin yang membuka ujian milik guru lain melihat **pita kuning "Ini ujian milik …"** di atas halaman, supaya tidak mengira
+  itu ujian sendiri.
+
 ## 1.6.2 — 27 November 2026
 Saat pemakaian AI dihentikan, fitur AI di sisi guru ikut mati.
 - Rem darurat, akun di-Stop, atau jatah set habis: seluruh form **Set baru dikunci** (kotak materi, lampirkan file, kamera,

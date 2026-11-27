@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { nilaiLjk, siswa, ujianLjk } from "@/db/schema";
+import { nilaiLjk, pengguna, siswa, ujianLjk } from "@/db/schema";
 import { bolehAkses } from "@/lib/akses";
 import type { ButirKunci } from "@/lib/koreksi";
 import { wajibMasuk } from "@/lib/sesi";
@@ -19,8 +19,16 @@ export default async function Ujian({ params }: { params: Promise<{ id: string }
     .leftJoin(nilaiLjk, and(eq(nilaiLjk.siswaId, siswa.id), eq(nilaiLjk.ujianId, u.id)))
     .where(eq(siswa.kelas, u.kelas))
     .orderBy(asc(siswa.nomor), asc(siswa.nama));
+  // Admin membuka ujian guru lain: beri tahu supaya tidak mengira ini ujian sendiri.
+  const [pemilik] = u.guruId === p.id ? [] : await db.select({ nama: pengguna.name }).from(pengguna).where(eq(pengguna.id, u.guruId));
   return (
     <Kerangka p={p} aplikasi="koreksi" setAktif={u.id}>
+      {pemilik && (
+        <div role="status" className="rounded-lg border border-peringatan-garis bg-peringatan-muda p-3 text-sm text-tinta">
+          <b>Ini ujian milik {pemilik.nama}.</b> Anda melihatnya sebagai admin; hati-hati bila mengubah kunci atau memindai LJK di sini.{" "}
+          <a href="/admin/ujian" className="text-hijau-teks underline">Kembali ke Ujian semua guru</a>
+        </div>
+      )}
       <HalamanUjian
         ujian={{ id: u.id, nama: u.nama, kelas: u.kelas, kunci: u.kunci as ButirKunci[], esaiMaks: u.esaiMaks }}
         siswa={baris
