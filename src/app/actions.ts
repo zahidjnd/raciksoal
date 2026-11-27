@@ -16,7 +16,7 @@ import { hitungBulanIni, hitungHariIni, hitungPemakaian } from "@/lib/pemakaian"
 import { lengkapiTerjemah, mushaf, potongAyat } from "@/lib/mushaf";
 import { cariDalil } from "@/lib/hadis";
 import { ambilBatas, ambilBawaan, tolakBila } from "@/lib/batas";
-import { dihentikan, rapikanCatatan } from "@/lib/batas-nilai";
+import { dihentikan, pesanRem, rapikanCatatan } from "@/lib/batas-nilai";
 
 const SESI_HABIS = "Sesi masuk sudah berakhir. Muat ulang halaman lalu masuk lagi.";
 // Materi mode "bahasa" (Bahasa Arab): teks Arab yang dikenali sebagai ayat tetap ditandai (aturan 5). Mushaf dimuat
@@ -43,17 +43,28 @@ export async function ambilJatah() {
   const saya = await penggunaSaatIni();
   if (!saya) return null;
   const terpakai = await hitungHariIni(saya.id);
-  if (saya.peran === "admin") return { admin: true, batas: null, terpakai, bulan: null, batasBulan: null, pesan: null };
-  const [b, bulan, pesan] = await Promise.all([ambilBatas(saya.id), hitungBulanIni(saya.id), tolakBila(saya, "set")]);
+  if (saya.peran === "admin") return { admin: true, batas: null, terpakai, bulan: null, batasBulan: null, pesan: null, peringatan: null, peringatanMateri: null };
+  const [b, bulan, pesan, pesanAnalisa] = await Promise.all([ambilBatas(saya.id), hitungBulanIni(saya.id), tolakBila(saya, "set"), tolakBila(saya, "analisa")]);
   const nol = (n: number) => (Number.isFinite(n) ? n : null);
-  // Kotak peringatan di atas form: judul singkat + isi. Rem darurat → isinya catatan admin + penghibur "edit manual tetap bisa".
+  // Kotak peringatan di halaman guru: judul singkat (diakhiri "!") + isi. Rem darurat → isinya catatan admin + penghibur.
   const stop = b.khusus && dihentikan(b.angka);
-  const peringatan = !pesan
-    ? null
-    : b.rem
-      ? { judul: "Pembuatan soal sedang dihentikan sementara", isi: `${b.remPesan ? `${rapikanCatatan(b.remPesan)}. ` : ""}Edit manual, tulis soal sendiri, dan riwayat set tetap bisa dipakai.` }
-      : { judul: stop ? "Pemakaian AI akun Anda dihentikan admin" : "Jatah pembuatan soal habis", isi: pesan };
-  return { admin: false, batas: nol(b.angka.set), terpakai, bulan, batasBulan: nol(b.angka.bulan), pesan, peringatan };
+  const alasan = (p: string | null, habis: string) =>
+    !p
+      ? null
+      : b.rem
+        ? { judul: "Pembuatan soal sedang dihentikan sementara!", isi: `${b.remPesan ? `${rapikanCatatan(b.remPesan)}. ` : ""}Edit manual, tulis soal sendiri, dan riwayat set tetap bisa dipakai.` }
+        : { judul: stop ? "Pemakaian AI akun Anda dihentikan admin!" : habis, isi: p };
+  return {
+    admin: false,
+    batas: nol(b.angka.set),
+    terpakai,
+    bulan,
+    batasBulan: nol(b.angka.bulan),
+    pesan,
+    // peringatan: set tidak bisa dibuat → seluruh form Set baru dikunci. peringatanMateri: hanya analisa materi yang tertutup.
+    peringatan: alasan(pesan, "Jatah pembuatan soal habis!"),
+    peringatanMateri: alasan(pesanAnalisa, "Analisa materi tidak tersedia sekarang!"),
+  };
 }
 
 // Alasan error yang bisa dibaca. Beberapa error (mis. database mati) tidak punya teks pesan, jadi ambil kodenya.
@@ -913,9 +924,12 @@ export async function cekHasil(id: number, denganBab = true) {
   void dihapus;
   // Sisa jatah Ganti/Ubah/Tambah (ditampilkan di menu Lainnya): per set (permanen) dan per hari (guru saja).
   const guru = saya.peran !== "admin";
-  const batasUbah = guru && h.status === "selesai" ? (await ambilBatas(saya.id)).angka.ubah : Infinity;
+  const batasGuru = guru && h.status === "selesai" ? await ambilBatas(saya.id) : null;
+  const batasUbah = batasGuru?.angka.ubah ?? Infinity;
+  // `tutup`: AI dihentikan admin (rem darurat / akun di-Stop) → tombol Ganti/Tambah/Ubah dimatikan dengan alasan.
+  const tutup = batasGuru?.rem ? pesanRem(batasGuru.remPesan) : batasGuru?.khusus && batasUbah === 0 ? "Pemakaian AI akun Anda dihentikan admin. Edit manual dan tulis soal sendiri tetap bisa." : null;
   const jatahUbah = h.status === "selesai"
-    ? { set: jumlahGanti, batasSet: BATAS_GANTI_PER_SET, hari: guru ? await hitungPemakaian(saya.id, "ubah") : null, batasHari: guru && Number.isFinite(batasUbah) ? batasUbah : null }
+    ? { set: jumlahGanti, batasSet: BATAS_GANTI_PER_SET, hari: guru ? await hitungPemakaian(saya.id, "ubah") : null, batasHari: guru && Number.isFinite(batasUbah) ? batasUbah : null, tutup }
     : null;
   const soal = h.soal as Soal[] | null;
   const kisi = h.kisi as BarisKisi[] | null;

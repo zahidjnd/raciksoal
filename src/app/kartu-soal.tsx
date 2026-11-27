@@ -258,7 +258,7 @@ function kunciTampil(s: Soal) {
 // juga menolak edit/ganti sebelum selesai).
 // onSetBerubah: soal ditambah/dihapus → nomor bergeser, halaman memuat ulang seluruh set.
 /** Jatah Ganti/Ubah/Tambah pakai AI: dipakai di set ini (maks batasSet, permanen) dan hari ini (guru; admin = null). */
-export type JatahUbah = { set: number; batasSet: number; hari: number | null; batasHari: number | null };
+export type JatahUbah = { set: number; batasSet: number; hari: number | null; batasHari: number | null; tutup?: string | null };
 
 type Props = { hasilId: number; no: number; s: Soal; bab: Bab; semuaKunci: boolean; nomorGrup?: string | null; onUbah: (s: Soal) => void; onSetBerubah?: (lompatKe?: number, pesan?: string) => void; draf?: boolean;
   // Pesan untuk soal ini yang dibawa dari kartu lain (Ubah soal mengganti bentuk → soal pindah nomor).
@@ -279,7 +279,7 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
   // Jatah AI habis → tombol Ganti/Tambah/Ubah dimatikan dengan alasan tertulis (server tetap memeriksa sendiri).
   const sisaSet = jatahUbah ? jatahUbah.batasSet - jatahUbah.set : null;
   const sisaHari = jatahUbah?.batasHari != null ? jatahUbah.batasHari - (jatahUbah.hari ?? 0) : null;
-  const habisAI = sisaSet !== null && sisaSet <= 0 ? "set" : sisaHari !== null && sisaHari <= 0 ? "hari" : "";
+  const habisAI = jatahUbah?.tutup ? "tutup" : sisaSet !== null && sisaSet <= 0 ? "set" : sisaHari !== null && sisaHari <= 0 ? "hari" : "";
   const [error, setError] = useState("");
   // Pesan berhasil sesaat ("Tersimpan ✓"), supaya guru yakin editannya masuk (audit 2026-11-04).
   const [berhasil, setBerhasil] = useState("");
@@ -531,7 +531,9 @@ export function KartuSoal({ hasilId, no, s, bab, semuaKunci, nomorGrup, onUbah, 
       </form>
       {jatahUbah && (
         <p className={`text-sm ${habisAI ? "font-semibold text-bahaya" : "text-pudar"}`}>
-          {habisAI === "set"
+          {habisAI === "tutup"
+            ? jatahUbah.tutup
+            : habisAI === "set"
             ? `Jatah ${jatahUbah.batasSet} kali ganti/ubah/tambah untuk set ini sudah habis dan tidak kembali. Perbaiki lewat Edit atau Tulis soal sendiri, atau buat set baru dengan "Pakai materi ini lagi".`
             : habisAI === "hari"
               ? `Jatah ${jatahUbah.batasHari} kali ganti/ubah/tambah hari ini sudah habis. Edit dan Tulis soal sendiri tetap bisa; besok jatahnya kembali.`

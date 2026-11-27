@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ambilDaftarBab, ambilDaftarModel, ambilJatah, cekHasil, mulaiBuatSoal, ubahIdentitas } from "./actions";
+import { ambilDaftarBab, ambilDaftarModel, cekHasil, mulaiBuatSoal, ubahIdentitas } from "./actions";
 import { tanyaBilaWaktunya } from "./masukan";
 import { simpanMateri } from "./materi/actions";
 import { KartuSoal, Teks, TeksPeringatan, TulisSoalSendiri } from "./kartu-soal";
+import { KotakPeringatan, useJatah } from "./peringatan-ai";
 import { DRAF_TEKS, KotakMateri, lihatDalil, lihatTp, PilihMapel, type MateriLama } from "./kotak-materi";
 import { FormIdentitas, ringkasIdentitas } from "./form-identitas";
 import { StepAngka } from "./step-angka";
@@ -184,9 +185,9 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan, guruId }: { sapaa
       }
       return x;
     });
-  const [jatah, setJatah] = useState<Awaited<ReturnType<typeof ambilJatah>>>(null);
-  const muatJatah = () => ambilJatah().then(setJatah).catch(() => {});
-  const jatahHabis = !!jatah?.pesan; // habis, akun dihentikan admin, atau rem darurat
+  const [jatah, muatJatah] = useJatah(); // diperbarui tiap 1 menit: kunci muncul sendiri saat admin menyalakan rem
+  const jatahHabis = !!jatah?.pesan; // habis, akun dihentikan admin, atau rem darurat → seluruh form dikunci
+  const kunciMateri = jatahHabis || !!jatah?.peringatanMateri; // kotak materi baru (analisa AI) tertutup
 
   const tka = p.tujuan === TKA;
   const total = BENTUK.reduce((s, b) => s + p.jumlah[b], 0);
@@ -216,7 +217,6 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan, guruId }: { sapaa
         setTawaran(ambilDraf(guruId));
       })
       .catch(() => {});
-    muatJatah();
   }, [awalMateri, bawaan, guruId]);
 
   /** Ganti mapel/kelas: materi yang sudah dipilih (mapel lain) dilepas, pilihan diingat di perangkat ini. */
@@ -280,7 +280,7 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan, guruId }: { sapaa
     return () => {
       berhenti = true;
     };
-  }, [id, router]);
+  }, [id, router, muatJatah]);
 
   async function buat() {
     setError("");
@@ -356,14 +356,10 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan, guruId }: { sapaa
             <h1 className="text-3xl md:text-4xl">{sapaan}</h1>
             <p className="mt-1 text-sm text-pudar">Pilih mapel dan kelas, masukkan materi, lalu pilih jenis soal.</p>
           </div>
-          {/* Pengumuman dari admin (rem darurat / akun dihentikan / jatah habis): kotak kuning beraksen merah, di atas form. */}
-          {jatah?.peringatan && (
-            <div role="alert" className="rounded-lg border border-peringatan-garis border-l-4 border-l-bahaya bg-peringatan-muda p-3 text-sm text-tinta">
-              <p className="font-semibold text-bahaya">⏸ {jatah.peringatan.judul}</p>
-              <p className="mt-1">{jatah.peringatan.isi}</p>
-            </div>
-          )}
-
+          {/* Pengumuman dari admin (rem darurat / akun dihentikan / jatah habis), di atas form. Selama set tidak bisa
+              dibuat, seluruh form di bawahnya dikunci (fieldset disabled); teks yang sudah diketik tetap tersimpan di browser. */}
+          {(jatah?.peringatan ?? jatah?.peringatanMateri) && <KotakPeringatan {...(jatah!.peringatan ?? jatah!.peringatanMateri)!} />}
+          <fieldset disabled={jatahHabis} className={`m-0 min-w-0 space-y-3 border-0 p-0 ${jatahHabis ? "opacity-60" : ""}`}>
           <PilihMapel mapel={mapel} kelas={kelas} ubah={pilihMapel} utama={bawaan.mapel} />
           {/* Identitas ujian (kop Word) di bawah mapel & kelas (pilihan pemilik), terisi otomatis. Dilipat supaya
               di HP guru cepat sampai ke Materi (audit 2026-11-04); ringkasannya tetap terlihat. */}
@@ -403,7 +399,7 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan, guruId }: { sapaa
               <button className="h-8 rounded-lg border bg-kartu px-3 hover:bg-krem max-md:min-h-11" onClick={() => ubahDraf(null)}>Buang</button>
             </div>
           )}
-          <KotakMateri mapel={mapel} kelas={kelas} daftar={daftarBab} pilihan={pilihan} setPilihan={setPilihan} draf={draf} setDraf={ubahDraf} pemilik={guruId} />
+          <KotakMateri mapel={mapel} kelas={kelas} daftar={daftarBab} pilihan={pilihan} setPilihan={setPilihan} draf={draf} setDraf={ubahDraf} pemilik={guruId} kunci={kunciMateri} />
 
           {/* Kartu jenis soal: pilihan setara, jadi sengaja berbentuk sama. Memilih kartu ikut mengatur komposisi level. */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5" role="radiogroup" aria-label="Jenis soal">
@@ -603,6 +599,8 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan, guruId }: { sapaa
               </div>
             )}
           </div>
+
+          </fieldset>
 
           <p className="text-center text-sm text-pudar">
             {jatah && !jatah.pesan &&

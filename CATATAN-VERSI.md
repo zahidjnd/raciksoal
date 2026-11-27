@@ -53,6 +53,15 @@ aplikasi kedua **Koreksi LJK** (foto dari HP / unggah dari laptop, nilai dihitun
 
 ---
 
+## 1.6.2 — 27 November 2026
+Saat pemakaian AI dihentikan, fitur AI di sisi guru ikut mati.
+- Rem darurat, akun di-Stop, atau jatah set habis: seluruh form **Set baru dikunci** (kotak materi, lampirkan file, kamera,
+  analisa, pilihan jenis, tombol Buat soal). Teks yang sudah diketik tetap tersimpan di browser.
+- Hanya jatah analisa yang habis: kotak materi baru & lampirkan file dikunci; materi tersimpan masih bisa dipakai.
+- Halaman **Materi saya** (tambah materi) ikut dikunci; tombol **Ganti/Tambah/Ubah soal** dimatikan dengan alasan (Edit manual tetap hidup).
+- Halaman mengecek ulang otomatis tiap 1 menit dan saat guru kembali ke tab, jadi kunci muncul tanpa muat ulang.
+- Kotak peringatan: bingkai biasa, judul merah tebal berakhiran tanda seru (tanpa ikon & garis samping).
+
 ## 1.6.1 — 27 November 2026
 Pesan "jatah habis / dihentikan / rem darurat" di halaman Set baru dibuat lebih jelas.
 - Pesan pindah ke **atas formulir** sebagai kotak kuning beraksen merah (judul merah, isi biasa), bukan teks merah di bawah tombol.

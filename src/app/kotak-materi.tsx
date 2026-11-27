@@ -42,6 +42,7 @@ type Props = {
   setDraf: (d: IsianMateri | null) => void;
   gabung?: boolean; // false di halaman Materi saya: tanpa hitungan gabung & "Pakai materi sebelumnya"
   pemilik: string; // id guru: tanda simpanan hasil AI di browser (simpanan.ts, aturan 3)
+  kunci?: boolean; // AI sedang dihentikan admin / jatah analisa habis: kotak tempel, lampirkan, dan Analisa mati
 };
 
 const kotak = "w-full rounded-lg border p-2 text-sm";
@@ -64,7 +65,7 @@ export const DRAF_TEKS = "raciksoal-draf-materi";
  * (judul, usulan TP, pokok materi, sumber/terjemah dalil yang tertulis) → kartu materi yang bisa diedit guru.
  * Bisa digabung dengan materi sebelumnya (PTS/PAS). Ayat diambil dari mushaf; hadis wajib dicentang (aturan 5).
  */
-export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, setDraf, gabung = true, pemilik }: Props) {
+export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, setDraf, gabung = true, pemilik, kunci = false }: Props) {
   const [teks, setTeksMentah] = useState("");
   // Draf teks hanya di halaman Set baru (gabung): tab tertutup sebelum Analisa materi → teks kembali saat dibuka lagi.
   useEffect(() => {
@@ -105,7 +106,7 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
   const calon = useMemo(() => file.flatMap((f) => f.gambar).filter((g) => !terpakai.has(g)), [file, terpakai]);
   const sesuai = daftar.filter((m) => m.mapel.toLowerCase() === mapel.toLowerCase() && m.kelas === kelas);
   const sedikit = pilihan.flatMap((id) => daftar.find((x) => x.id === id) ?? []).filter((m) => m.huruf !== undefined && m.huruf < MATERI_SEDIKIT);
-  const siap = !!mapel && !!kelas;
+  const siap = !!mapel && !!kelas && !kunci;
   const penuh = pilihan.length + (draf ? 1 : 0) >= MAKS_GABUNG;
 
   // PDF lebih dari MAKS_HALAMAN_PDF halaman: guru memilih rentang halaman yang dibaca AI (0.31.0).
@@ -343,7 +344,8 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
               if (!e.dataTransfer.files.length) return;
               e.preventDefault();
               setSeret(false);
-              if (!siap) setPesan({ ok: false, teks: "Pilih mata pelajaran dan kelas dulu." });
+              if (kunci) setPesan({ ok: false, teks: "Fitur AI sedang tidak tersedia. Lihat pengumuman di atas." });
+              else if (!siap) setPesan({ ok: false, teks: "Pilih mata pelajaran dan kelas dulu." });
               else if (!proses) lampirkan([...e.dataTransfer.files]);
             }}
           >
@@ -353,6 +355,7 @@ export function KotakMateri({ mapel, kelas, daftar, pilihan, setPilihan, draf, s
               className={`${kotak} ${seret ? "border-hijau bg-hijau-muda/50 ring-2 ring-hijau" : ""}`}
               aria-label="Tempel materi"
               placeholder={
+                kunci ? "Fitur AI sedang tidak tersedia. Lihat pengumuman di atas." :
                 seret ? "Lepaskan file di sini..." :
                 siap ? "Tempel materi di sini, atau lampirkan Word/PowerPoint/PDF/foto buku lewat tombol klip." :
                 "Pilih mata pelajaran dan kelas dulu."

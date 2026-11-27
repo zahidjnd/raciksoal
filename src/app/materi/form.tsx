@@ -8,6 +8,7 @@ import { KELAS } from "@/lib/soal";
 import { KartuMateri, KotakMateri, lihatDalil, lihatTp, PilihMapel } from "../kotak-materi";
 import { alasanDalil, alasanTp, BATAS_MATERI, modeArab, type IsianMateri } from "@/lib/materi";
 import { gantiNamaMateri, hapusMateri, simpanMateri } from "./actions";
+import { KotakPeringatan, useJatah } from "../peringatan-ai";
 
 const TERSIMPAN = "Materi tersimpan. Bisa dipilih lewat “Pakai materi sebelumnya” saat membuat soal.";
 
@@ -17,6 +18,8 @@ const TERSIMPAN = "Materi tersimpan. Bisa dipilih lewat “Pakai materi sebelumn
  */
 export function FormMateri({ id: idAwal, awal, bawaan, guruId }: { id: number | null; awal: IsianMateri | null; bawaan: { mapel: string[]; kelas: string }; guruId: string }) {
   const router = useRouter();
+  const [jatah] = useJatah();
+  const peringatan = jatah?.peringatanMateri ?? null; // analisa materi tertutup (rem darurat, akun dihentikan, atau jatah habis)
   const [id, setId] = useState(idAwal);
   const [draf, setDraf] = useState<IsianMateri | null>(awal);
   // Materi baru: mapel & kelas bawaan guru (halaman Akun, 0.32.0).
@@ -61,11 +64,12 @@ export function FormMateri({ id: idAwal, awal, bawaan, guruId }: { id: number | 
     <section className="space-y-4">
       <Link href="/materi" className="text-sm text-pudar underline">← Materi saya</Link>
       <h1 className="text-2xl">{id ? "Ubah materi" : "Tambah materi"}</h1>
+      {peringatan && <KotakPeringatan {...peringatan} />}
       <PilihMapel mapel={mapel} kelas={kelas} ubah={pilihMapel} utama={bawaan.mapel} />
       {id && draf ? (
         <KartuMateri draf={draf} setDraf={setDraf} judul="Isi materi (semua bisa diubah)" />
       ) : (
-        <KotakMateri mapel={mapel} kelas={kelas} daftar={[]} pilihan={[]} setPilihan={() => {}} draf={draf} setDraf={setDraf} gabung={false} pemilik={guruId} />
+        <KotakMateri mapel={mapel} kelas={kelas} daftar={[]} pilihan={[]} setPilihan={() => {}} draf={draf} setDraf={setDraf} gabung={false} pemilik={guruId} kunci={!!peringatan} />
       )}
 
       <div className="flex flex-wrap items-center gap-2">

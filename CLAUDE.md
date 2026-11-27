@@ -169,7 +169,9 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   60 ubah, 30 analisa, 200 halaman PDF, 100 total/hari; paket Hemat/Longgar juga di sana). SATU pintu pemeriksaan:
   `tolakBila(saya, jenis, tx?)` di `lib/batas.ts` (BUKAN file "use server") → pesan penolakan atau null; admin bebas.
   **Rem darurat** (`rem` di pengaturan bawaan): semua guru ditolak untuk set/ubah/analisa/halaman PDF, admin tidak
-  ikut; pita merah `PitaRem` di kepala.tsx. Jenis AI baru WAJIB lewat `tolakBila` (jangan hitung batas sendiri).
+  ikut; pita merah `PitaRem` di kepala.tsx. Sisi guru (1.6.2): `ambilJatah` → `peringatan` (set tertutup → seluruh form Set baru
+  `fieldset disabled`) & `peringatanMateri` (analisa tertutup → `KotakMateri kunci`, Materi saya); hook `useJatah` (peringatan-ai.tsx)
+  menyegarkan tiap 1 menit; `jatahUbah.tutup` mematikan Ganti/Tambah/Ubah. Fitur AI baru di UI WAJIB ikut terkunci lewat ini. Jenis AI baru WAJIB lewat `tolakBila` (jangan hitung batas sendiri).
   Set per bulan = bulan kalender WIB (`awalBulanIni`). Per set: Ganti/Ubah/Tambah 100x (`BATAS_GANTI_PER_SET`, tetap
   di kode). Materi tersimpan 1000/guru, gambar 600/guru; login dikunci 5x salah/15 menit. Pengaman teknis (serentak,
   tenggat, 50 soal, 150 ribu huruf, 75 halaman) sengaja TIDAK bisa diatur dari web.
