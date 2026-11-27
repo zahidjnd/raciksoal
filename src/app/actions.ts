@@ -16,6 +16,7 @@ import { hitungBulanIni, hitungHariIni, hitungPemakaian } from "@/lib/pemakaian"
 import { lengkapiTerjemah, mushaf, potongAyat } from "@/lib/mushaf";
 import { cariDalil } from "@/lib/hadis";
 import { ambilBatas, ambilBawaan, tolakBila } from "@/lib/batas";
+import { dihentikan, rapikanCatatan } from "@/lib/batas-nilai";
 
 const SESI_HABIS = "Sesi masuk sudah berakhir. Muat ulang halaman lalu masuk lagi.";
 // Materi mode "bahasa" (Bahasa Arab): teks Arab yang dikenali sebagai ayat tetap ditandai (aturan 5). Mushaf dimuat
@@ -45,7 +46,14 @@ export async function ambilJatah() {
   if (saya.peran === "admin") return { admin: true, batas: null, terpakai, bulan: null, batasBulan: null, pesan: null };
   const [b, bulan, pesan] = await Promise.all([ambilBatas(saya.id), hitungBulanIni(saya.id), tolakBila(saya, "set")]);
   const nol = (n: number) => (Number.isFinite(n) ? n : null);
-  return { admin: false, batas: nol(b.angka.set), terpakai, bulan, batasBulan: nol(b.angka.bulan), pesan };
+  // Kotak peringatan di atas form: judul singkat + isi. Rem darurat → isinya catatan admin + penghibur "edit manual tetap bisa".
+  const stop = b.khusus && dihentikan(b.angka);
+  const peringatan = !pesan
+    ? null
+    : b.rem
+      ? { judul: "Pembuatan soal sedang dihentikan sementara", isi: `${b.remPesan ? `${rapikanCatatan(b.remPesan)}. ` : ""}Edit manual, tulis soal sendiri, dan riwayat set tetap bisa dipakai.` }
+      : { judul: stop ? "Pemakaian AI akun Anda dihentikan admin" : "Jatah pembuatan soal habis", isi: pesan };
+  return { admin: false, batas: nol(b.angka.set), terpakai, bulan, batasBulan: nol(b.angka.bulan), pesan, peringatan };
 }
 
 // Alasan error yang bisa dibaca. Beberapa error (mis. database mati) tidak punya teks pesan, jadi ambil kodenya.

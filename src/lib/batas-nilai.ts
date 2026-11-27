@@ -89,5 +89,7 @@ export function pesanBatas(jenis: JenisBatas, batas: number, terpakai: number, k
   }
 }
 
+/** Catatan admin tanpa tanda baca di ujung, supaya kalimat penutup tidak menempel/dobel titik. */
+export const rapikanCatatan = (c: string) => c.replace(/[\s.!?]+$/, "");
 export const pesanRem = (catatan: string) =>
-  `Pembuatan soal dengan AI sedang dihentikan sementara oleh admin${catatan ? `: ${catatan}` : "."} Edit manual dan tulis soal sendiri tetap bisa; coba lagi nanti.`;
+  `Pembuatan soal dengan AI sedang dihentikan sementara oleh admin${catatan ? `: ${rapikanCatatan(catatan)}` : ""}. Edit manual dan tulis soal sendiri tetap bisa; coba lagi nanti.`;

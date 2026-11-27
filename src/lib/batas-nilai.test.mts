@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { BEBAS, dihentikan, gabungBatas, NORMAL, pesanBatas, rapikanBawaan, rapikanKhusus, sampaiDari } from "./batas-nilai.ts";
+import { BEBAS, dihentikan, gabungBatas, NORMAL, pesanBatas, pesanRem, rapikanBawaan, rapikanKhusus, sampaiDari } from "./batas-nilai.ts";
 
 test("bawaan rusak/kosong → NORMAL; angka sah dipakai; rem terbaca", () => {
   assert.deepEqual({ ...rapikanBawaan(null), rem: undefined, remPesan: undefined }, { ...NORMAL, rem: undefined, remPesan: undefined });
@@ -42,4 +42,10 @@ test("sampaiDari: 'hari' = 00.00 WIB berikutnya (17.00 UTC), 7 = akhir hari ke-7
   assert.equal(sampaiDari("selamanya", s), null);
   const malam = new Date("2026-11-27T17:30:00Z"); // 00.30 WIB tanggal 28
   assert.equal(sampaiDari("hari", malam)!.toISOString(), "2026-11-28T17:00:00.000Z");
+});
+
+test("pesanRem: catatan admin tanpa/dengan titik tetap menghasilkan kalimat rapi", () => {
+  assert.match(pesanRem("sedang pemeliharaan jam 18.00"), /jam 18\.00\. Edit manual/);
+  assert.match(pesanRem("sedang pemeliharaan."), /pemeliharaan\. Edit manual/);
+  assert.match(pesanRem(""), /oleh admin\. Edit manual/);
 });

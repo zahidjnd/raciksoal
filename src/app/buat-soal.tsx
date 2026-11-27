@@ -356,6 +356,13 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan, guruId }: { sapaa
             <h1 className="text-3xl md:text-4xl">{sapaan}</h1>
             <p className="mt-1 text-sm text-pudar">Pilih mapel dan kelas, masukkan materi, lalu pilih jenis soal.</p>
           </div>
+          {/* Pengumuman dari admin (rem darurat / akun dihentikan / jatah habis): kotak kuning beraksen merah, di atas form. */}
+          {jatah?.peringatan && (
+            <div role="alert" className="rounded-lg border border-peringatan-garis border-l-4 border-l-bahaya bg-peringatan-muda p-3 text-sm text-tinta">
+              <p className="font-semibold text-bahaya">⏸ {jatah.peringatan.judul}</p>
+              <p className="mt-1">{jatah.peringatan.isi}</p>
+            </div>
+          )}
 
           <PilihMapel mapel={mapel} kelas={kelas} ubah={pilihMapel} utama={bawaan.mapel} />
           {/* Identitas ujian (kop Word) di bawah mapel & kelas (pilihan pemilik), terisi otomatis. Dilipat supaya
@@ -598,13 +605,12 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan, guruId }: { sapaa
           </div>
 
           <p className="text-center text-sm text-pudar">
-            {jatah &&
+            {jatah && !jatah.pesan &&
               (jatah.batas !== null
                 ? `Sisa jatah hari ini: ${Math.max(0, jatah.batas - jatah.terpakai)} dari ${jatah.batas} set${jatah.batasBulan !== null ? ` (bulan ini ${jatah.bulan}/${jatah.batasBulan})` : ""}. `
                 : `Hari ini Anda membuat ${jatah.terpakai} set (${jatah.admin ? "admin, " : ""}tanpa batas). `)}
             AI tetap wajib mengikuti aturan, termasuk larangan mengarang ayat dan hadis.
           </p>
-          {jatah?.pesan && <p className="text-center font-semibold text-bahaya">{jatah.pesan}</p>}
           {error && <p className="text-center text-bahaya">{error}</p>}
           {banding.length > 0 && (
             <div className="space-y-1 rounded-lg border border-batas bg-hijau-muda p-3 text-sm">

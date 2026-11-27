@@ -53,6 +53,12 @@ aplikasi kedua **Koreksi LJK** (foto dari HP / unggah dari laptop, nilai dihitun
 
 ---
 
+## 1.6.1 — 27 November 2026
+Pesan "jatah habis / dihentikan / rem darurat" di halaman Set baru dibuat lebih jelas.
+- Pesan pindah ke **atas formulir** sebagai kotak kuning beraksen merah (judul merah, isi biasa), bukan teks merah di bawah tombol.
+- Kalimat "Sisa jatah hari ini..." disembunyikan saat guru sedang tidak bisa membuat soal.
+- Perbaikan: catatan admin pada rem darurat kini disambung dengan titik yang rapi.
+
 ## 1.6.0 — 27 November 2026
 Batas pemakaian AI sekarang diatur admin lewat web, tanpa menunggu pembaruan aplikasi.
 - Menu admin baru **Batas pemakaian** (`/admin/batas`): angka batas bawaan semua guru (set per hari, set per bulan,
