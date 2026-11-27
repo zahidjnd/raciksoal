@@ -1,7 +1,7 @@
 // Hitungan pemakaian & preferensi guru dari database. SENGAJA bukan file "use server": fungsi yang diekspor dari file
 // server action bisa dipanggil browser dengan guruId siapa pun (aturan 3). Dipakai actions.ts dan halaman Akun/Set baru.
 import { and, eq, gte, inArray, ne, sql } from "drizzle-orm";
-import { awalHariIni, db } from "@/db";
+import { awalBulanIni, awalHariIni, db } from "@/db";
 import { hasilSoal, pemakaianAi, preferensiGuru } from "@/db/schema";
 import { PREFERENSI_AWAL, rapikanPreferensi, type Preferensi } from "./preferensi";
 
@@ -23,6 +23,15 @@ export async function hitungPemakaian(guruId: string, jenis: "ubah" | "analisa" 
     .select({ n: sql<number>`count(*)::int` })
     .from(pemakaianAi)
     .where(and(eq(pemakaianAi.guruId, guruId), gte(pemakaianAi.waktu, awalHariIni), jenis === "ubah" ? inArray(pemakaianAi.jenis, ["ganti", "ubah", "tambah"]) : eq(pemakaianAi.jenis, jenis)));
+  return n;
+}
+
+/** Set bulan ini (sejak tanggal 1, WIB) yang tidak gagal; dasar batas set per bulan. */
+export async function hitungBulanIni(guruId?: string, q: Pick<typeof db, "select"> = db) {
+  const [{ n }] = await q
+    .select({ n: sql<number>`count(*)::int` })
+    .from(hasilSoal)
+    .where(and(gte(hasilSoal.dibuat, awalBulanIni), ne(hasilSoal.status, "gagal"), guruId ? eq(hasilSoal.guruId, guruId) : undefined));
   return n;
 }
 

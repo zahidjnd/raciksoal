@@ -53,6 +53,18 @@ aplikasi kedua **Koreksi LJK** (foto dari HP / unggah dari laptop, nilai dihitun
 
 ---
 
+## 1.6.0 — 27 November 2026
+Batas pemakaian AI sekarang diatur admin lewat web, tanpa menunggu pembaruan aplikasi.
+- Menu admin baru **Batas pemakaian** (`/admin/batas`): angka batas bawaan semua guru (set per hari, set per bulan,
+  ganti/ubah/tambah, analisa materi, halaman PDF, total semua guru) dengan tombol cepat **Hemat / Normal / Longgar**.
+- **Batas khusus per guru**: angka sendiri, tanpa batas, atau **Stop**; bisa berlaku "sampai saya ubah", hari ini saja,
+  7 hari, atau 30 hari (setelah itu otomatis kembali ke bawaan). Tombol cepat "Stop hari ini" dan "Stop sampai saya buka".
+- **Rem darurat**: satu tombol menghentikan pemakaian AI semua guru (admin tetap bisa); pita merah tampil di semua
+  halaman admin selama menyala supaya tidak lupa.
+- Batas baru **set per bulan** per guru (pagar biaya yang tidak terlewati oleh pemakaian pelan tapi rutin).
+- Angka bawaan awal kembali ke **Normal** (10 set/hari, 150/bulan, 60 ubah, 30 analisa, 200 halaman PDF, 100 total/hari);
+  ubah sekali klik ke Longgar bila perlu. Halaman Akun & Panduan menampilkan angka milik guru itu.
+
 ## 1.5.1 — 27 November 2026
 - Koreksi LJK: nomor PG kompleks yang dihitamkan dua huruf atau lebih tidak lagi ditandai kuning (memang jawabannya).
   Bulatan samar atau bekas hapusan tetap kuning. Untuk PG biasa, dua huruf tetap kuning seperti dulu.

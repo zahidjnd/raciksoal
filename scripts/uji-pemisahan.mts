@@ -215,6 +215,12 @@ if (ujianA?.ok) {
   await aksi(A, "hapusUjian", ujianA.id); // bersih-bersih
 } else console.log("(lewati Koreksi LJK: daftar siswa di laptop masih kosong; isi dulu lewat /admin/siswa)");
 
+// Batas pemakaian (aturan 4): halaman & semua aksinya khusus admin. Aksinya memakai FormData (tidak bisa dipanggil dari
+// skrip ini); penjaganya sama dengan Kelola guru (cek peran di baris pertama), jadi yang diuji di sini halamannya.
+const batasB = await halaman(B, "/admin/batas");
+cek(batasB.status >= 300 && batasB.status < 400, "B tidak bisa membuka halaman Admin → Batas pemakaian", `status ${batasB.status}`);
+cek(!(await (await halaman(B, "/")).text()).includes("Rem darurat"), "B tidak melihat pita Rem darurat");
+
 // Isi A tidak berubah sedikit pun.
 const isiAkhir = (await aksi(A, "cekHasil", setA, true)).teks;
 const beda = [...isiA].findIndex((h, i) => h !== isiAkhir[i]);

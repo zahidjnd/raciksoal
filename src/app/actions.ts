@@ -12,10 +12,10 @@ import { bersihkanTanggapan, MAKS_WACANA, gabungBab, identitasBab, isiSama, jawa
 import { babDariSet, babMilik, daftarBabMilik, dataGambar, gambarMilik } from "@/lib/bab";
 import { bolehAkses } from "@/lib/akses";
 import { penggunaSaatIni } from "@/lib/sesi";
-import { hitungHariIni, hitungPemakaian } from "@/lib/pemakaian";
+import { hitungBulanIni, hitungHariIni, hitungPemakaian } from "@/lib/pemakaian";
 import { lengkapiTerjemah, mushaf, potongAyat } from "@/lib/mushaf";
 import { cariDalil } from "@/lib/hadis";
-import { BATAS_ANALISA, BATAS_HALAMAN_PDF, BATAS_PER_GURU, BATAS_TOTAL, BATAS_UBAH_PER_GURU } from "@/lib/pembatas";
+import { ambilBatas, ambilBawaan, tolakBila } from "@/lib/batas";
 
 const SESI_HABIS = "Sesi masuk sudah berakhir. Muat ulang halaman lalu masuk lagi.";
 // Materi mode "bahasa" (Bahasa Arab): teks Arab yang dikenali sebagai ayat tetap ditandai (aturan 5). Mushaf dimuat
@@ -33,14 +33,19 @@ const TENGGAT_SET = 10 * 60_000;
 const TENGGAT_SATU_SOAL = 4 * 60_000;
 
 const PESAN_BATAS_SET = `Jatah ${BATAS_GANTI_PER_SET} kali ganti/ubah/tambah soal untuk set ini sudah habis dan tidak kembali. Perbaiki soal lewat Edit atau Tulis soal sendiri, atau buat set baru dengan "Pakai materi ini lagi".`;
-const PESAN_BATAS_UBAH = `Batas ${BATAS_UBAH_PER_GURU} kali ganti/ubah/tambah soal hari ini sudah habis. Edit manual dan tulis soal sendiri tetap bisa; coba lagi besok.`;
 
-/** Sisa jatah hari ini untuk ditampilkan di form. batas = null berarti admin (tanpa batas per guru). */
+/**
+ * Sisa jatah set untuk ditampilkan di form. batas/batasBulan = null berarti tanpa batas (admin, atau guru yang diberi
+ * "tanpa batas"); `pesan` terisi bila guru sedang tidak boleh membuat set (habis, dihentikan, atau rem darurat).
+ */
 export async function ambilJatah() {
   const saya = await penggunaSaatIni();
   if (!saya) return null;
-  if (saya.peran === "admin") return { batas: null, terpakai: await hitungHariIni(saya.id) };
-  return { batas: BATAS_PER_GURU, terpakai: await hitungHariIni(saya.id) };
+  const terpakai = await hitungHariIni(saya.id);
+  if (saya.peran === "admin") return { admin: true, batas: null, terpakai, bulan: null, batasBulan: null, pesan: null };
+  const [b, bulan, pesan] = await Promise.all([ambilBatas(saya.id), hitungBulanIni(saya.id), tolakBila(saya, "set")]);
+  const nol = (n: number) => (Number.isFinite(n) ? n : null);
+  return { admin: false, batas: nol(b.angka.set), terpakai, bulan, batasBulan: nol(b.angka.bulan), pesan };
 }
 
 // Alasan error yang bisa dibaca. Beberapa error (mis. database mati) tidak punya teks pesan, jadi ambil kodenya.
@@ -159,9 +164,9 @@ export async function mulaiBuatSoal(input: Pengaturan) {
           .from(hasilSoal)
           .where(and(eq(hasilSoal.status, "proses"), guruId ? eq(hasilSoal.guruId, guruId) : undefined))
           .then(([r]) => r.n);
-      if (saya.peran !== "admin" && (await hitungHariIni(saya.id, tx)) >= BATAS_PER_GURU)
-        return `Jatah ${BATAS_PER_GURU} set soal Anda hari ini sudah habis. Silakan lanjutkan besok.`;
-      if ((await hitungHariIni(undefined, tx)) >= BATAS_TOTAL)
+      const tolak = await tolakBila(saya, "set", tx);
+      if (tolak) return tolak;
+      if ((await hitungHariIni(undefined, tx)) >= (await ambilBawaan()).web)
         return "Batas pembuatan soal seluruh web hari ini sudah tercapai. Silakan coba lagi besok atau hubungi admin.";
       if (saya.peran !== "admin" && (await proses(saya.id)) >= BATAS_PROSES_GURU)
         return `Masih ada ${BATAS_PROSES_GURU} set Anda yang sedang dibuat. Tunggu salah satunya selesai dulu.`;
@@ -537,8 +542,8 @@ async function soalBaruDariAI(id: number, no: number, mode: "ganti" | "ubah" | "
     const set = await ambilSet(id, no);
     if (typeof set === "string") return gagal(set);
     const { h, bab, saya } = set;
-    const dibatasi = saya.peran !== "admin"; // aturan 4: batas harian per guru, admin bebas
-    if (dibatasi && (await hitungPemakaian(saya.id, "ubah")) >= BATAS_UBAH_PER_GURU) return gagal(PESAN_BATAS_UBAH);
+    const tolakUbah = await tolakBila(saya, "ubah"); // aturan 4: batas harian per guru + rem darurat, admin bebas
+    if (tolakUbah) return gagal(tolakUbah);
     if (h.jumlahGanti >= BATAS_GANTI_PER_SET) return gagal(PESAN_BATAS_SET);
     if (mode === "tambah" && set.soal.length >= MAKS_SOAL) return gagal(`Satu set maksimal ${MAKS_SOAL} soal.`);
 
@@ -649,7 +654,8 @@ async function soalBaruDariAI(id: number, no: number, mode: "ganti" | "ubah" | "
       if (kini.h.jumlahGanti >= BATAS_GANTI_PER_SET) return PESAN_BATAS_SET;
       // ponytail: dicek ulang di sini, tapi dua permintaan serentak pada set BERBEDA bisa lewat 1–2 di atas batas
       // (kunci di sini per set). Cukup untuk pengaman biaya; kunci per guru bila perlu tepat.
-      if (dibatasi && (await hitungPemakaian(saya.id, "ubah", tx)) >= BATAS_UBAH_PER_GURU) return PESAN_BATAS_UBAH;
+      const tolakLagi = await tolakBila(saya, "ubah", tx);
+      if (tolakLagi) return tolakLagi;
       await tx.insert(pemakaianAi).values({ guruId: saya.id, jenis: mode });
       const kisiKini = kini.h.kisi as BarisKisi[] | null;
       if (mode === "tambah") {
@@ -730,7 +736,8 @@ export async function analisaMateri(input: { mapel: string; kelas: string; parag
 
   // Batas analisa per guru per hari (biaya AI); dihitung saat mencoba, walau AI-nya gagal. Admin bebas.
   if (saya.peran !== "admin") {
-    if ((await hitungPemakaian(saya.id, "analisa")) >= BATAS_ANALISA) return { ok: false as const, pesan: `Batas ${BATAS_ANALISA} analisa materi hari ini sudah habis. Pakai materi yang sudah ada, atau lanjutkan besok.` };
+    const tolak = await tolakBila(saya, "analisa");
+    if (tolak) return { ok: false as const, pesan: tolak };
     await db.insert(pemakaianAi).values({ guruId: saya.id, jenis: "analisa" });
   }
 
@@ -778,7 +785,7 @@ export async function unggahGambar(base64: string) {
 /**
  * 0.31.0: AI membaca SATU halaman PDF dari fotonya (JPEG dari browser, satu halaman per panggilan supaya kiriman tetap
  * di bawah 1 MB). Hasil: paragraf materi (tabel, rumus, penanda gambar) + kotak gambar yang dipotong browser.
- * Aturan 4: dibatasi BATAS_HALAMAN_PDF halaman per guru per hari (admin bebas), dihitung saat mencoba.
+ * Aturan 4: dibatasi per guru per hari lewat tolakBila (lib/batas.ts; admin bebas), dihitung saat mencoba.
  * Gagal (jatah habis, AI gagal, model tanpa penglihatan) → browser memakai teks PDF biasa untuk halaman itu.
  */
 const BATAS_CONTEKAN = 8000; // huruf teks lapisan PDF per halaman (halaman buku padat ±5 ribu)
@@ -789,8 +796,8 @@ export async function bacaHalamanPdf(gambarHalaman: string, mapel: string, conte
   const ukuran = data.length <= BATAS_GAMBAR.bita ? ukuranJpeg(data) : null;
   if (!ukuran || Math.max(ukuran.lebar, ukuran.tinggi) > 2000) return { ok: false as const, pesan: "Gambar halaman tidak sah." };
   if (saya.peran !== "admin") {
-    if ((await hitungPemakaian(saya.id, "halaman")) >= BATAS_HALAMAN_PDF)
-      return { ok: false as const, pesan: `Batas ${BATAS_HALAMAN_PDF} halaman PDF dibaca AI hari ini sudah habis; halaman berikutnya memakai teks PDF biasa (tabel, rumus, dan gambar tidak terbaca).` };
+    const tolak = await tolakBila(saya, "halaman");
+    if (tolak) return { ok: false as const, pesan: tolak };
     await db.insert(pemakaianAi).values({ guruId: saya.id, jenis: "halaman" });
   }
   // Contekan dari browser: dibatasi panjangnya dan huruf Arabnya dibuang lagi di sini (aturan 5; kiriman bisa diubah).
@@ -898,8 +905,9 @@ export async function cekHasil(id: number, denganBab = true) {
   void dihapus;
   // Sisa jatah Ganti/Ubah/Tambah (ditampilkan di menu Lainnya): per set (permanen) dan per hari (guru saja).
   const guru = saya.peran !== "admin";
+  const batasUbah = guru && h.status === "selesai" ? (await ambilBatas(saya.id)).angka.ubah : Infinity;
   const jatahUbah = h.status === "selesai"
-    ? { set: jumlahGanti, batasSet: BATAS_GANTI_PER_SET, hari: guru ? await hitungPemakaian(saya.id, "ubah") : null, batasHari: guru ? BATAS_UBAH_PER_GURU : null }
+    ? { set: jumlahGanti, batasSet: BATAS_GANTI_PER_SET, hari: guru ? await hitungPemakaian(saya.id, "ubah") : null, batasHari: guru && Number.isFinite(batasUbah) ? batasUbah : null }
     : null;
   const soal = h.soal as Soal[] | null;
   const kisi = h.kisi as BarisKisi[] | null;

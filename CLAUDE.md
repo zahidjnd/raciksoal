@@ -163,11 +163,16 @@ Hosting: DomaiNesia paket Nimbus Go (shared hosting, cPanel).
   1x perbaikan (`buatPermintaanUbah` opsi `masalah`, dipakai bila peringatan berkurang). Soal tempelan guru dipakai apa
   adanya; AI tidak bisa mengubah gambar (jelaskan di catatan). Tombol "Sudah saya periksa" = `simpanSoal` dengan
   `diperiksa` (teks peringatan); `periksaSoal` menyembunyikannya kecuali peringatan "Teks Arab" (`bisaDiperiksa`, aturan 5).
-- **Batas** (0.48.1, dilonggarkan untuk ASAS; angka tetap ada sebagai pagar): 50 set/guru/hari (admin bebas) + 500/web;
-  2 set proses serentak/guru; Ganti/Ubah/Tambah 100x per set & 500/guru/hari; analisa materi 300/guru/hari; halaman PDF
-  dibaca AI 1000/guru/hari; materi tersimpan 1000/guru, gambar 600/guru; login dikunci 5x salah/15 menit per perangkat+nama.
-  Batas ada di `pembatas.ts`. Pengaman teknis (serentak, tenggat, 50 soal, 150 ribu huruf, 75 halaman) sengaja TIDAK
-  dilonggarkan. Formulir batas di Pengaturan admin / pengecualian per guru: ditunda sampai ada data pemakaian ASAS.
+- **Batas** (1.6.0, diatur admin di `/admin/batas`): tiga lapis, yang paling spesifik menang: batas khusus guru (tabel
+  `batas_guru`: angka per jenis, -1 = tanpa batas, 0 = ditutup/"Stop", `sampai` opsional → lewat = kembali ke bawaan) →
+  bawaan semua guru (`pengaturan_web` kunci `batas`) → `NORMAL` di kode (`lib/batas-nilai.ts`: 10 set/hari, 150/bulan,
+  60 ubah, 30 analisa, 200 halaman PDF, 100 total/hari; paket Hemat/Longgar juga di sana). SATU pintu pemeriksaan:
+  `tolakBila(saya, jenis, tx?)` di `lib/batas.ts` (BUKAN file "use server") → pesan penolakan atau null; admin bebas.
+  **Rem darurat** (`rem` di pengaturan bawaan): semua guru ditolak untuk set/ubah/analisa/halaman PDF, admin tidak
+  ikut; pita merah `PitaRem` di kepala.tsx. Jenis AI baru WAJIB lewat `tolakBila` (jangan hitung batas sendiri).
+  Set per bulan = bulan kalender WIB (`awalBulanIni`). Per set: Ganti/Ubah/Tambah 100x (`BATAS_GANTI_PER_SET`, tetap
+  di kode). Materi tersimpan 1000/guru, gambar 600/guru; login dikunci 5x salah/15 menit. Pengaman teknis (serentak,
+  tenggat, 50 soal, 150 ribu huruf, 75 halaman) sengaja TIDAK bisa diatur dari web.
 - **Pesan masuk** (0.32.5, pilihan pemilik): "nama tidak terdaftar" / "kata sandi salah" terpisah (kolom yang salah saja
   dikosongkan). Lebih dari 10 nama tak terdaftar per IP/15 menit → pesan umum saja (`samar`), TIDAK mengunci (satu IP madrasah).
 - **Peran**: guru hanya model utama, tanpa info teknis; admin = semua set, pilihan model, Bandingkan, pita peringatan.

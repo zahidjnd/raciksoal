@@ -113,6 +113,13 @@
       "when": 1795619314230,
       "tag": "0015_siswa_nisn",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1795779411851,
+      "tag": "0016_batas_guru",
+      "breakpoints": true
     }
   ]
 }

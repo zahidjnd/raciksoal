@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { wajibMasuk } from "@/lib/sesi";
 import { ambilPreferensi, hitungHariIni, hitungPemakaian, hitungSebulan } from "@/lib/pemakaian";
-import { BATAS_HALAMAN_PDF, BATAS_PER_GURU, BATAS_UBAH_PER_GURU } from "@/lib/pembatas";
+import { ambilBatas } from "@/lib/batas";
+import { hitungBulanIni } from "@/lib/pemakaian";
 import { Kerangka, judulIkut } from "../kepala";
 
 export const generateMetadata = judulIkut("Akun");
@@ -72,16 +73,20 @@ export default async function HalamanAkun({ searchParams }: { searchParams: Prom
 }
 
 async function Profil({ p, admin, kartu }: { p: Awaited<ReturnType<typeof wajibMasuk>>; admin: boolean; kartu: string }) {
-  const [set, ubah, halaman, sebulan] = await Promise.all([
+  const [set, ubah, halaman, sebulan, bulanIni, b] = await Promise.all([
     hitungHariIni(p.id),
     hitungPemakaian(p.id, "ubah"),
     hitungPemakaian(p.id, "halaman"),
     hitungSebulan(p.id),
+    hitungBulanIni(p.id),
+    ambilBatas(p.id),
   ]);
+  // Batas milik akun ini (bisa diatur admin per guru). Infinity = tanpa batas.
   const jatah = [
-    { nama: "Set soal dibuat", n: set, batas: BATAS_PER_GURU },
-    { nama: "Ganti / Ubah / Tambah soal", n: ubah, batas: BATAS_UBAH_PER_GURU },
-    { nama: "Halaman PDF dibaca AI", n: halaman, batas: BATAS_HALAMAN_PDF },
+    { nama: "Set soal dibuat", n: set, batas: b.angka.set },
+    { nama: "Set soal bulan ini", n: bulanIni, batas: b.angka.bulan },
+    { nama: "Ganti / Ubah / Tambah soal", n: ubah, batas: b.angka.ubah },
+    { nama: "Halaman PDF dibaca AI", n: halaman, batas: b.angka.halaman },
   ];
   return (
     <div className="grid gap-4 @3xl:grid-cols-2">
@@ -104,17 +109,18 @@ async function Profil({ p, admin, kartu }: { p: Awaited<ReturnType<typeof wajibM
             <li key={j.nama}>
               <div className="flex justify-between gap-2">
                 <span>{j.nama}</span>
-                <span className="tabular-nums">{admin ? `${j.n} (admin, tanpa batas)` : `${j.n} dari ${j.batas}`}</span>
+                <span className="tabular-nums">{admin ? `${j.n} (admin, tanpa batas)` : Number.isFinite(j.batas) ? `${j.n} dari ${j.batas}` : `${j.n} (tanpa batas)`}</span>
               </div>
-              {!admin && (
+              {!admin && Number.isFinite(j.batas) && (
                 <div className="mt-1 h-2 rounded-full bg-krem-sorot" aria-hidden>
-                  <div className={`h-2 rounded-full ${j.n >= j.batas ? "bg-bahaya" : "bg-hijau"}`} style={{ width: `${Math.min(100, (j.n / j.batas) * 100)}%` }} />
+                  <div className={`h-2 rounded-full ${j.n >= j.batas ? "bg-bahaya" : "bg-hijau"}`} style={{ width: `${j.batas ? Math.min(100, (j.n / j.batas) * 100) : 100}%` }} />
                 </div>
               )}
             </li>
           ))}
         </ul>
-        <p className="text-sm text-pudar">Jatah kembali penuh setiap pukul 00.00 WIB. Set yang gagal tidak dihitung. 30 hari terakhir: {sebulan} set.</p>
+        {!admin && (b.rem || (b.khusus && Object.values(b.angka).every((x) => x === 0))) && <p className="text-sm font-semibold text-bahaya">Pemakaian AI Anda sedang dihentikan admin.</p>}
+        <p className="text-sm text-pudar">Jatah harian kembali penuh setiap pukul 00.00 WIB, jatah bulanan tanggal 1. Set yang gagal tidak dihitung. 30 hari terakhir: {sebulan} set.</p>
       </section>
     </div>
   );

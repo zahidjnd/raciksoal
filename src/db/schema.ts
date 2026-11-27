@@ -121,6 +121,21 @@ export const pengaturanWeb = pgTable("pengaturan_web", {
   diubah: timestamp("diubah", { withTimezone: true }).defaultNow().notNull(),
 });
 
+/**
+ * Batas khusus satu guru (/admin/batas): `nilai` = {set, bulan, ubah, analisa, halaman} (hanya yang diisi; -1 = tanpa batas,
+ * 0 = ditutup). `sampai` kosong = berlaku terus; lewat = guru kembali ke batas bawaan. Bawaan semua guru ada di
+ * pengaturan_web kunci "batas". Aturan 4.
+ */
+export const batasGuru = pgTable("batas_guru", {
+  guruId: text("guru_id")
+    .primaryKey()
+    .references(() => pengguna.id),
+  nilai: jsonb("nilai").notNull(),
+  sampai: timestamp("sampai", { withTimezone: true }),
+  catatan: text("catatan"),
+  diubah: timestamp("diubah", { withTimezone: true }).defaultNow().notNull(),
+});
+
 /** Materi sendiri milik guru (langkah 8). `bab` = data bab (judul, tp, dalil terverifikasi guru, materi). Aturan 3: per guru. */
 export const materi = pgTable(
   "materi",

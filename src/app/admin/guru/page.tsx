@@ -2,7 +2,8 @@ import { and, asc, count, eq, gte, inArray, max, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { awalHariIni, db } from "@/db";
 import { hasilSoal, pemakaianAi, pengguna } from "@/db/schema";
-import { BATAS_PER_GURU, BATAS_TOTAL, BATAS_UBAH_PER_GURU } from "@/lib/pembatas";
+import Link from "next/link";
+import { ambilBawaan } from "@/lib/batas";
 import { wajibMasuk } from "@/lib/sesi";
 import { Kerangka, judulIkut } from "../../kepala";
 
@@ -50,14 +51,15 @@ export default async function KelolaGuru() {
     .groupBy(pemakaianAi.guruId);
   const ubahDari = (id: string) => ubah.find((x) => x.guruId === id)?.n ?? 0;
   const total = { hariIni: pakai.reduce((s, x) => s + x.hariIni, 0), token: pakai.reduce((s, x) => s + x.token, 0) };
+  const web = (await ambilBawaan()).web;
   const angka = (n: number) => n.toLocaleString("id-ID");
 
   return (
     <Kerangka p={p} aplikasi="ikut">
       <h1 className="text-2xl">Kelola guru</h1>
       <p className="rounded-xl border bg-kartu p-3 text-sm">
-        <span className="font-semibold">Pemakaian seluruh web:</span> hari ini {total.hariIni} dari {BATAS_TOTAL} set · token AI 30 hari{" "}
-        {angka(total.token)}
+        <span className="font-semibold">Pemakaian seluruh web:</span> hari ini {total.hariIni} dari {web} set · token AI 30 hari{" "}
+        {angka(total.token)} · <Link href="/admin/batas" className="underline">Atur batas pemakaian</Link>
       </p>
       <FormTambahGuru />
       <section className="space-y-3">
@@ -76,8 +78,7 @@ export default async function KelolaGuru() {
             </div>
             <p className="text-sm text-pudar">
               Hari ini <span className="font-semibold text-tinta">{pakaiDari(g.id)?.hariIni ?? 0}</span>
-              {g.peran === "admin" ? " set (tanpa batas)" : ` dari ${BATAS_PER_GURU} set`}, ganti/ubah {ubahDari(g.id)}
-              {g.peran === "admin" ? "" : ` dari ${BATAS_UBAH_PER_GURU}`} · 30 hari: {pakaiDari(g.id)?.bulan ?? 0} set,{" "}
+              {g.peran === "admin" ? " set (tanpa batas)" : " set"}, ganti/ubah {ubahDari(g.id)} · 30 hari: {pakaiDari(g.id)?.bulan ?? 0} set,{" "}
               {angka(pakaiDari(g.id)?.token ?? 0)} token · set terakhir{" "}
               {/* Bukan "terakhir masuk": sesi login terhapus saat guru Keluar, jadi tanggal set terakhir lebih bisa dipercaya. */}
               {pakaiDari(g.id)?.terakhir?.toLocaleString("id-ID", { timeZone: "Asia/Jakarta", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) ?? "belum ada"}

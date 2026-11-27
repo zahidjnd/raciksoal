@@ -1,5 +1,5 @@
 import { wajibMasuk } from "@/lib/sesi";
-import { BATAS_ANALISA, BATAS_HALAMAN_PDF, BATAS_PER_GURU, BATAS_UBAH_PER_GURU, MAKS_HALAMAN_PDF } from "@/lib/pembatas";
+import { MAKS_HALAMAN_PDF } from "@/lib/pembatas";
 import { Kerangka, judulIkut, aplikasiTerakhir } from "../kepala";
 
 export const generateMetadata = judulIkut("Panduan");
@@ -155,7 +155,7 @@ const TOPIK: { id: string; judul: string; isi: React.ReactNode }[] = [
         <ul>
           <li><b>Edit</b>: ubah teks soal, pilihan, kunci, pembahasan, level, TP, atau skor, lalu <b>Simpan</b> (muncul “Tersimpan ✓”).</li>
           <li><b>Lainnya</b>: <b>Ganti soal ini</b>&nbsp;<N n={1} /> (soal baru dari AI), <b>Tambah soal serupa di bawahnya</b>&nbsp;<N n={2} />, atau tulis permintaan lalu <b>Ubah soal</b>&nbsp;<N n={3} /> (mis. “jadikan lebih sulit”, “ganti kasusnya jadi tentang pasar”, atau “jadikan uraian”).</li>
-          <li>Ganti/Ubah/Tambah: {30} kali per set dan {BATAS_UBAH_PER_GURU} kali per hari. Edit tidak dibatasi.</li>
+          <li>Ganti/Ubah/Tambah: {30} kali per set dan sejumlah kali per hari (angkanya terlihat di halaman <b>Akun</b>). Edit tidak dibatasi.</li>
           <li><b>+ Tulis soal … sendiri</b> di akhir tiap bagian: tanpa AI, tidak memakai jatah, tetap diperiksa pemeriksa ayat.</li>
           <li>Tombol <b>↑</b> / <b>↓</b> memindah urutan soal di dalam bagiannya.</li>
           <li>Menjodohkan memakai satu daftar jawaban bersama, jadi hanya bisa diperbaiki lewat <b>Edit</b>.</li>
@@ -226,9 +226,9 @@ const TOPIK: { id: string; judul: string; isi: React.ReactNode }[] = [
     judul: "Jatah harian",
     isi: (
       <ul>
-        <li>{BATAS_PER_GURU} set soal per hari. Set yang gagal tidak dihitung; set yang dihapus tetap dihitung.</li>
-        <li>Ganti/Ubah/Tambah soal {BATAS_UBAH_PER_GURU} kali, Analisa materi {BATAS_ANALISA} kali, halaman PDF dibaca AI {BATAS_HALAMAN_PDF} halaman.</li>
-        <li>Semua jatah kembali penuh setiap pukul 00.00 WIB. Sisanya terlihat di halaman <b>Akun</b>.</li>
+        <li>Jumlah set soal per hari dan per bulan dibatasi untuk menjaga biaya AI. Set yang gagal tidak dihitung; set yang dihapus tetap dihitung.</li>
+        <li>Ganti/Ubah/Tambah soal, Analisa materi, dan halaman PDF dibaca AI juga punya jatah harian.</li>
+        <li>Jatah harian kembali penuh setiap pukul 00.00 WIB, jatah bulanan tanggal 1. Angka jatah Anda terlihat di halaman <b>Akun</b>; butuh tambahan? Hubungi admin.</li>
       </ul>
     ),
   },

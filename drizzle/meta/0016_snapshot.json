@@ -1,0 +1,1355 @@
+{
+  "id": "808066fd-39c6-4a35-b595-91711c39d114",
+  "prevId": "e881dbb8-5f3e-4634-aa36-29be1f1481dc",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.akun_login": {
+      "name": "akun_login",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "akun_id": {
+          "name": "akun_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "penyedia": {
+          "name": "penyedia",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pengguna_id": {
+          "name": "pengguna_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "access_token": {
+          "name": "access_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refresh_token": {
+          "name": "refresh_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id_token": {
+          "name": "id_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "access_token_berakhir": {
+          "name": "access_token_berakhir",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refresh_token_berakhir": {
+          "name": "refresh_token_berakhir",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "kata_sandi": {
+          "name": "kata_sandi",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dibuat": {
+          "name": "dibuat",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "diubah": {
+          "name": "diubah",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "akun_login_pengguna_idx": {
+          "name": "akun_login_pengguna_idx",
+          "columns": [
+            {
+              "expression": "pengguna_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "akun_login_pengguna_id_pengguna_id_fk": {
+          "name": "akun_login_pengguna_id_pengguna_id_fk",
+          "tableFrom": "akun_login",
+          "tableTo": "pengguna",
+          "columnsFrom": [
+            "pengguna_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.batas_guru": {
+      "name": "batas_guru",
+      "schema": "",
+      "columns": {
+        "guru_id": {
+          "name": "guru_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "nilai": {
+          "name": "nilai",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sampai": {
+          "name": "sampai",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "catatan": {
+          "name": "catatan",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "diubah": {
+          "name": "diubah",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "batas_guru_guru_id_pengguna_id_fk": {
+          "name": "batas_guru_guru_id_pengguna_id_fk",
+          "tableFrom": "batas_guru",
+          "tableTo": "pengguna",
+          "columnsFrom": [
+            "guru_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.gambar": {
+      "name": "gambar",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "guru_id": {
+          "name": "guru_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dibuat": {
+          "name": "dibuat",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "lebar": {
+          "name": "lebar",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tinggi": {
+          "name": "tinggi",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "data": {
+          "name": "data",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "gambar_guru_idx": {
+          "name": "gambar_guru_idx",
+          "columns": [
+            {
+              "expression": "guru_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "gambar_guru_id_pengguna_id_fk": {
+          "name": "gambar_guru_id_pengguna_id_fk",
+          "tableFrom": "gambar",
+          "tableTo": "pengguna",
+          "columnsFrom": [
+            "guru_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.hasil_soal": {
+      "name": "hasil_soal",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "dibuat": {
+          "name": "dibuat",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "guru_id": {
+          "name": "guru_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bab_id": {
+          "name": "bab_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pengaturan": {
+          "name": "pengaturan",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "model": {
+          "name": "model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "prompt": {
+          "name": "prompt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "jawaban_ai": {
+          "name": "jawaban_ai",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "soal": {
+          "name": "soal",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pesan": {
+          "name": "pesan",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "jumlah_ganti": {
+          "name": "jumlah_ganti",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "info": {
+          "name": "info",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "kisi": {
+          "name": "kisi",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bab": {
+          "name": "bab",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "nama": {
+          "name": "nama",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dihapus": {
+          "name": "dihapus",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "hasil_soal_guru_idx": {
+          "name": "hasil_soal_guru_idx",
+          "columns": [
+            {
+              "expression": "guru_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "dibuat",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "hasil_soal_guru_id_pengguna_id_fk": {
+          "name": "hasil_soal_guru_id_pengguna_id_fk",
+          "tableFrom": "hasil_soal",
+          "tableTo": "pengguna",
+          "columnsFrom": [
+            "guru_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.masukan": {
+      "name": "masukan",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "guru_id": {
+          "name": "guru_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dibuat": {
+          "name": "dibuat",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "nilai": {
+          "name": "nilai",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "isi": {
+          "name": "isi",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "set_id": {
+          "name": "set_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "otomatis": {
+          "name": "otomatis",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "versi": {
+          "name": "versi",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "masukan_dibuat_idx": {
+          "name": "masukan_dibuat_idx",
+          "columns": [
+            {
+              "expression": "dibuat",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "masukan_guru_id_pengguna_id_fk": {
+          "name": "masukan_guru_id_pengguna_id_fk",
+          "tableFrom": "masukan",
+          "tableTo": "pengguna",
+          "columnsFrom": [
+            "guru_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "masukan_set_id_hasil_soal_id_fk": {
+          "name": "masukan_set_id_hasil_soal_id_fk",
+          "tableFrom": "masukan",
+          "tableTo": "hasil_soal",
+          "columnsFrom": [
+            "set_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.materi": {
+      "name": "materi",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "guru_id": {
+          "name": "guru_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dibuat": {
+          "name": "dibuat",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "diubah": {
+          "name": "diubah",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "bab": {
+          "name": "bab",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "materi_guru_idx": {
+          "name": "materi_guru_idx",
+          "columns": [
+            {
+              "expression": "guru_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "materi_guru_id_pengguna_id_fk": {
+          "name": "materi_guru_id_pengguna_id_fk",
+          "tableFrom": "materi",
+          "tableTo": "pengguna",
+          "columnsFrom": [
+            "guru_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.nilai_ljk": {
+      "name": "nilai_ljk",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "ujian_id": {
+          "name": "ujian_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "siswa_id": {
+          "name": "siswa_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "jawab": {
+          "name": "jawab",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "objektif": {
+          "name": "objektif",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "esai": {
+          "name": "esai",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "potong_nama": {
+          "name": "potong_nama",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "diubah": {
+          "name": "diubah",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "nilai_ljk_ujian_siswa_idx": {
+          "name": "nilai_ljk_ujian_siswa_idx",
+          "columns": [
+            {
+              "expression": "ujian_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "siswa_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "nilai_ljk_ujian_id_ujian_ljk_id_fk": {
+          "name": "nilai_ljk_ujian_id_ujian_ljk_id_fk",
+          "tableFrom": "nilai_ljk",
+          "tableTo": "ujian_ljk",
+          "columnsFrom": [
+            "ujian_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "nilai_ljk_siswa_id_siswa_id_fk": {
+          "name": "nilai_ljk_siswa_id_siswa_id_fk",
+          "tableFrom": "nilai_ljk",
+          "tableTo": "siswa",
+          "columnsFrom": [
+            "siswa_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.pemakaian_ai": {
+      "name": "pemakaian_ai",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "guru_id": {
+          "name": "guru_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "jenis": {
+          "name": "jenis",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "waktu": {
+          "name": "waktu",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "pemakaian_ai_guru_idx": {
+          "name": "pemakaian_ai_guru_idx",
+          "columns": [
+            {
+              "expression": "guru_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "waktu",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "pemakaian_ai_guru_id_pengguna_id_fk": {
+          "name": "pemakaian_ai_guru_id_pengguna_id_fk",
+          "tableFrom": "pemakaian_ai",
+          "tableTo": "pengguna",
+          "columnsFrom": [
+            "guru_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.pengaturan_web": {
+      "name": "pengaturan_web",
+      "schema": "",
+      "columns": {
+        "kunci": {
+          "name": "kunci",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "nilai": {
+          "name": "nilai",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "diubah": {
+          "name": "diubah",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.pengguna": {
+      "name": "pengguna",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "nama": {
+          "name": "nama",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email_terverifikasi": {
+          "name": "email_terverifikasi",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "gambar": {
+          "name": "gambar",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dibuat": {
+          "name": "dibuat",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "diubah": {
+          "name": "diubah",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "username": {
+          "name": "username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "username_tampil": {
+          "name": "username_tampil",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "peran": {
+          "name": "peran",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "nonaktif": {
+          "name": "nonaktif",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "alasan_nonaktif": {
+          "name": "alasan_nonaktif",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "nonaktif_sampai": {
+          "name": "nonaktif_sampai",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "pengguna_email_unique": {
+          "name": "pengguna_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        },
+        "pengguna_username_unique": {
+          "name": "pengguna_username_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "username"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.preferensi_guru": {
+      "name": "preferensi_guru",
+      "schema": "",
+      "columns": {
+        "guru_id": {
+          "name": "guru_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "nilai": {
+          "name": "nilai",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "diubah": {
+          "name": "diubah",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "preferensi_guru_guru_id_pengguna_id_fk": {
+          "name": "preferensi_guru_guru_id_pengguna_id_fk",
+          "tableFrom": "preferensi_guru",
+          "tableTo": "pengguna",
+          "columnsFrom": [
+            "guru_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.sesi": {
+      "name": "sesi",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "berakhir": {
+          "name": "berakhir",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token": {
+          "name": "token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dibuat": {
+          "name": "dibuat",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "diubah": {
+          "name": "diubah",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ip": {
+          "name": "ip",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "perangkat": {
+          "name": "perangkat",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pengguna_id": {
+          "name": "pengguna_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "diwakili_oleh": {
+          "name": "diwakili_oleh",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "sesi_pengguna_idx": {
+          "name": "sesi_pengguna_idx",
+          "columns": [
+            {
+              "expression": "pengguna_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "sesi_pengguna_id_pengguna_id_fk": {
+          "name": "sesi_pengguna_id_pengguna_id_fk",
+          "tableFrom": "sesi",
+          "tableTo": "pengguna",
+          "columnsFrom": [
+            "pengguna_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "sesi_token_unique": {
+          "name": "sesi_token_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "token"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.siswa": {
+      "name": "siswa",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "kelas": {
+          "name": "kelas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nomor": {
+          "name": "nomor",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nama": {
+          "name": "nama",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nisn": {
+          "name": "nisn",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "aktif": {
+          "name": "aktif",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "diubah": {
+          "name": "diubah",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "siswa_kelas_nama_idx": {
+          "name": "siswa_kelas_nama_idx",
+          "columns": [
+            {
+              "expression": "kelas",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "nama",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.ujian_ljk": {
+      "name": "ujian_ljk",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "guru_id": {
+          "name": "guru_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dibuat": {
+          "name": "dibuat",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "nama": {
+          "name": "nama",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kelas": {
+          "name": "kelas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "set_id": {
+          "name": "set_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "kunci": {
+          "name": "kunci",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "esai_maks": {
+          "name": "esai_maks",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dihapus": {
+          "name": "dihapus",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "ujian_ljk_guru_idx": {
+          "name": "ujian_ljk_guru_idx",
+          "columns": [
+            {
+              "expression": "guru_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "dibuat",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "ujian_ljk_guru_id_pengguna_id_fk": {
+          "name": "ujian_ljk_guru_id_pengguna_id_fk",
+          "tableFrom": "ujian_ljk",
+          "tableTo": "pengguna",
+          "columnsFrom": [
+            "guru_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "ujian_ljk_set_id_hasil_soal_id_fk": {
+          "name": "ujian_ljk_set_id_hasil_soal_id_fk",
+          "tableFrom": "ujian_ljk",
+          "tableTo": "hasil_soal",
+          "columnsFrom": [
+            "set_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.verifikasi": {
+      "name": "verifikasi",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "identitas": {
+          "name": "identitas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nilai": {
+          "name": "nilai",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "berakhir": {
+          "name": "berakhir",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dibuat": {
+          "name": "dibuat",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "diubah": {
+          "name": "diubah",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "verifikasi_identitas_idx": {
+          "name": "verifikasi_identitas_idx",
+          "columns": [
+            {
+              "expression": "identitas",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

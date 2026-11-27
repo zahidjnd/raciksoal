@@ -1,11 +1,4 @@
-// Batas pemakaian (aturan 4), dipakai actions.ts dan halaman Kelola guru supaya angkanya selalu sama.
-// 0.48.1 (masa ASAS, pilihan pemilik): jatah dilonggarkan jauh (dulu 10 set / 60 ubah / 30 analisa / 200 halaman per guru,
-// 100 set se-web). Tetap ada angka sebagai pagar bila akun disalahgunakan atau browser mengulang permintaan terus.
-export const BATAS_PER_GURU = 50; // set per guru per hari (WIB); admin tidak dibatasi per guru
-export const BATAS_TOTAL = 500; // set per hari seluruh web, pengaman saldo AI
-export const BATAS_UBAH_PER_GURU = 500; // Ganti/Ubah/Tambah soal (yang berhasil) per guru per hari; admin bebas
-export const BATAS_ANALISA = 300; // analisa materi per guru per hari; admin bebas
-export const BATAS_HALAMAN_PDF = 1000; // halaman PDF yang dibaca AI per guru per hari (0.31.0: 100; 0.34.1: 200); admin bebas
+// Batas pemakaian AI (set, ubah, analisa, halaman PDF) kini diatur admin di /admin/batas: lib/batas-nilai.ts & lib/batas.ts.
 // Halaman per PDF yang dibaca AI sekali lampir (dipilih guru bila PDF lebih panjang). 0.33.0: 30 (satu bab Fisika X = 28
 // halaman); 0.34.1: 50; 0.47.2: 75. Jangan jauh lebih tinggi: 75 halaman buku padat ±150 ribu huruf = batas materi (BATAS_MATERI.isi).
 export const MAKS_HALAMAN_PDF = 75;

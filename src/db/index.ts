@@ -9,3 +9,5 @@ export const db = drizzle(pool);
 
 /** Pukul 00.00 WIB hari ini (dasar semua hitungan "hari ini": jatah harian, Kelola guru). */
 export const awalHariIni = sql`date_trunc('day', now() at time zone 'Asia/Jakarta') at time zone 'Asia/Jakarta'`;
+/** Pukul 00.00 WIB tanggal 1 bulan ini (batas set per bulan). */
+export const awalBulanIni = sql`date_trunc('month', now() at time zone 'Asia/Jakarta') at time zone 'Asia/Jakarta'`;

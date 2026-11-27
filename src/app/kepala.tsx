@@ -8,6 +8,7 @@ import { hasilSoal, nilaiLjk, ujianLjk } from "@/db/schema";
 import type { IdAplikasi } from "@/lib/aplikasi";
 import type { Pengguna } from "@/lib/auth";
 import { judulPendek } from "@/lib/bab";
+import { ambilBawaan } from "@/lib/batas";
 import { namaTujuan, type Pengaturan } from "@/lib/prompt";
 import { keluar } from "./masuk/actions";
 import { LaciSidebar } from "./laci-sidebar";
@@ -25,6 +26,17 @@ const ringkas = (t: string) =>
     .replace(/^Tahap \d+:\s*/, "")
     .replace(/(\(kode \d+\)\.?)[\s\S]*$/, "$1")
     .slice(0, 140);
+
+/** Khusus admin: pita merah di semua halaman selama rem darurat menyala (supaya tidak lupa dimatikan). */
+async function PitaRem() {
+  if (!(await ambilBawaan()).rem) return null;
+  return (
+    <div className="rounded-lg border border-bahaya-garis bg-bahaya-muda p-3 text-sm text-bahaya">
+      <p className="font-semibold">⛔ Rem darurat menyala: semua guru tidak bisa memakai AI (admin tetap bisa).</p>
+      <Link href="/admin/batas" className="underline">Buka Batas pemakaian untuk mematikannya</Link>
+    </div>
+  );
+}
 
 /** Khusus admin: kegagalan model dalam 24 jam terakhir (cadangan dipakai atau set gagal). */
 async function PeringatanAdmin() {
@@ -160,6 +172,7 @@ export async function Kerangka({ p, aplikasi = "racik", lebar = false, setAktif 
       ? [
           { href: "/admin/set", label: "Semua set" },
           { href: "/admin/guru", label: "Kelola guru" },
+          { href: "/admin/batas", label: "Batas pemakaian" },
           { href: "/admin/masukan", label: "Masukan guru" },
           { href: "/admin/pengaturan", label: "Pengaturan" },
         ]
@@ -225,6 +238,7 @@ export async function Kerangka({ p, aplikasi = "racik", lebar = false, setAktif 
         <BawahSidebar p={p} tema={tema} />
       </LaciSidebar>
       <main className={`w-full ${lebar === "pengaturan" ? "max-w-[96rem]" : lebar ? "mx-auto max-w-5xl" : "mx-auto max-w-3xl"} min-w-0 space-y-6 p-4 md:p-8`}>
+        {admin && <PitaRem />}
         {admin && <PeringatanAdmin />}
         {admin && <PeringatanBackup />}
         {children}

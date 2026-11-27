@@ -242,12 +242,15 @@ menyalakan ulang** (bagian 10).
 
 | Batas | Nilai | Letak |
 |---|---|---|
-| Set per guru per hari (WIB, set gagal tidak dihitung) | 10 (admin bebas) | `BATAS_PER_GURU`, `src/lib/pembatas.ts` |
-| Set per hari seluruh web | 100 | `BATAS_TOTAL` |
+| Set per guru per hari (WIB, set gagal tidak dihitung) | 10 bawaan (admin bebas), diatur di `/admin/batas` | `src/lib/batas-nilai.ts`, `src/lib/batas.ts` |
+| Set per guru per bulan (kalender WIB) | 150 bawaan | idem |
+| Set per hari seluruh web | 100 bawaan | idem |
+| Rem darurat (semua guru berhenti memakai AI) | tombol di `/admin/batas` | `pengaturan_web` kunci `batas` |
 | Set diproses bersamaan | 2 per guru, 10 seluruh web | `BATAS_PROSES_*`, `actions.ts` |
 | Ganti/Ubah/Tambah per set (permanen) | 30 | `BATAS_GANTI_PER_SET`, `actions.ts` |
-| Ganti/Ubah/Tambah per guru per hari | 60 (admin bebas) | `BATAS_UBAH_PER_GURU` |
-| Analisa materi per guru per hari | 30 (admin bebas) | `BATAS_ANALISA` |
+| Ganti/Ubah/Tambah per guru per hari | 60 bawaan (admin bebas) | `/admin/batas` |
+| Analisa materi per guru per hari | 30 bawaan (admin bebas) | `/admin/batas` |
+| Halaman PDF dibaca AI per guru per hari | 200 bawaan (admin bebas) | `/admin/batas` |
 | Soal per set / per panggilan AI | 50 / 10 | `MAKS_SOAL`, `MAKS_PER_TAHAP`, `src/lib/prompt.ts` |
 | Batas waktu satu panggilan AI | `AI_TIMEOUT_MS` (bawaan 180 dtk), dicoba ulang 2× untuk 429/5xx | `src/lib/ai.ts` |
 | Batas waktu total satu set / satu soal | 10 menit / 4 menit | `TENGGAT_SET`, `TENGGAT_SATU_SOAL` |
@@ -328,6 +331,7 @@ saat server menyala (`src/instrumentation-node.ts`, catatan migrasi di tabel `pu
 | `hasil_soal` | Satu baris = satu set: pemilik, status (`proses`/`selesai`/`gagal`), pengaturan, **salinan bab**, soal, kisi, prompt, jawaban mentah AI, model, info (detik, token, catatan cadangan), jumlah ganti, nama, waktu dihapus (hapus lunak) |
 | `materi` | Materi milik guru (`bab` jsonb: mapel, kelas, judul, TP, isi, dalil terverifikasi) |
 | `pemakaian_ai` | Catatan Ganti/Ubah/Tambah dan analisa materi (untuk batas harian) |
+| `batas_guru` | Batas khusus per guru (angka, tanggal berakhir, catatan); bawaan semua guru di `pengaturan_web` |
 | `gambar` | Gambar materi/soal (JPEG ≤ 1280 px, kolom `bytea`), per guru; dibuka lewat `/api/gambar/[id]` (pemilik/admin saja). Tidak pernah dihapus; maks. 300 per guru |
 | `pengaturan_web` | Pengaturan admin (nama madrasah) |
 | `preferensi_guru` | Bawaan Set baru milik tiap guru (mapel diajar, kelas, lama ujian, kesulitan, catatan tetap untuk AI); diatur di halaman Akun |

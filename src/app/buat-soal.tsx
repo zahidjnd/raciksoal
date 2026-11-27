@@ -186,7 +186,7 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan, guruId }: { sapaa
     });
   const [jatah, setJatah] = useState<Awaited<ReturnType<typeof ambilJatah>>>(null);
   const muatJatah = () => ambilJatah().then(setJatah).catch(() => {});
-  const jatahHabis = !!jatah?.batas && jatah.terpakai >= jatah.batas;
+  const jatahHabis = !!jatah?.pesan; // habis, akun dihentikan admin, atau rem darurat
 
   const tka = p.tujuan === TKA;
   const total = BENTUK.reduce((s, b) => s + p.jumlah[b], 0);
@@ -599,12 +599,12 @@ export function BuatSoal({ sapaan, awalId, awalMateri, bawaan, guruId }: { sapaa
 
           <p className="text-center text-sm text-pudar">
             {jatah &&
-              (jatah.batas
-                ? `Sisa jatah hari ini: ${Math.max(0, jatah.batas - jatah.terpakai)} dari ${jatah.batas} set. `
-                : `Hari ini Anda membuat ${jatah.terpakai} set (admin, tanpa batas). `)}
+              (jatah.batas !== null
+                ? `Sisa jatah hari ini: ${Math.max(0, jatah.batas - jatah.terpakai)} dari ${jatah.batas} set${jatah.batasBulan !== null ? ` (bulan ini ${jatah.bulan}/${jatah.batasBulan})` : ""}. `
+                : `Hari ini Anda membuat ${jatah.terpakai} set (${jatah.admin ? "admin, " : ""}tanpa batas). `)}
             AI tetap wajib mengikuti aturan, termasuk larangan mengarang ayat dan hadis.
           </p>
-          {jatahHabis && <p className="text-center font-semibold text-bahaya">Jatah hari ini habis. Silakan lanjutkan besok.</p>}
+          {jatah?.pesan && <p className="text-center font-semibold text-bahaya">{jatah.pesan}</p>}
           {error && <p className="text-center text-bahaya">{error}</p>}
           {banding.length > 0 && (
             <div className="space-y-1 rounded-lg border border-batas bg-hijau-muda p-3 text-sm">
