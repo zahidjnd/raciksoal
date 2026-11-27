@@ -1,0 +1,1 @@
+self.__NEXT_FONT_MANIFEST='{"pages":{},"app":{"/home/runner/work/raciksoal/raciksoal/src/app/layout":["static/media/636a5ac981f94f8b-s.p.woff2","static/media/5aae3a1c1074c5e1-s.p.woff2","static/media/da6e5417d357d163-s.p.woff2","static/media/597b6a5d799c44de-s.p.woff2"]},"appUsingSizeAdjust":true,"pagesUsingSizeAdjust":false}';

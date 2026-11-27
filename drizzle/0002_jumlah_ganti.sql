@@ -1,0 +1,1 @@
+ALTER TABLE "hasil_soal" ADD COLUMN "jumlah_ganti" integer DEFAULT 0 NOT NULL;

@@ -1,0 +1,1 @@
+ALTER TABLE "hasil_soal" ADD COLUMN "kisi" jsonb;

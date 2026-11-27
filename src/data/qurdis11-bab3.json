@@ -1,0 +1,84 @@
+{
+  "id": "qurdis11-bab3",
+  "mapel": "Al-Qur'an Hadis",
+  "kelas": "XI",
+  "judul": "Bab III: Menghindari Pergaulan Bebas dan Perbuatan Keji",
+  "sumber": "PPT 'BAB 3 Menghindari Pergaulan Bebas - Qurdis Kelas 11' dan TP-ATP Kelas 11 Qurdis (Zahid Jundullah, S.E.)",
+  "tp": [
+    { "kode": "TP 3.1", "teks": "Peserta didik mampu mendemonstrasikan hafalan serta terjemahan Q.S. al-Isrā' (17): 32, Q.S. an-Nūr (24): 2, dan Hadis riwayat Bukhari tentang bahaya pergaulan bebas dan perbuatan keji." },
+    { "kode": "TP 3.2", "teks": "Peserta didik mampu menganalisis hukum larangan mendekati zina, sanksi bagi pelaku zina, serta pentingnya menjaga keimanan guna mencegah perbuatan keji." },
+    { "kode": "TP 3.3", "teks": "Peserta didik mampu menerapkan sikap mawas diri, menjaga pergaulan, dan mengomunikasikan solusi atas fenomena pergaulan bebas di kalangan remaja." }
+  ],
+  "dalil": [
+    {
+      "id": "isra-32",
+      "sumber": "QS. Al-Isrā' [17]: 32",
+      "arab": "وَلَا تَقْرَبُوا الزِّنَىٰٓ ۖ إِنَّهُ كَانَ فَاحِشَةً وَسَاءَ سَبِيلًا",
+      "terjemah": "Dan janganlah kamu mendekati zina; (zina) itu sungguh suatu perbuatan keji, dan suatu jalan yang buruk.",
+      "mufradat": [
+        { "arab": "وَلَا تَقْرَبُوا", "arti": "dan janganlah kamu mendekati" },
+        { "arab": "الزِّنَىٰٓ", "arti": "zina" },
+        { "arab": "فَاحِشَةً", "arti": "perbuatan keji" },
+        { "arab": "وَسَاءَ", "arti": "(dan) buruk" }
+      ]
+    },
+    {
+      "id": "nur-2",
+      "sumber": "QS. An-Nūr [24]: 2",
+      "arab": "الزَّانِيَةُ وَالزَّانِي فَاجْلِدُوا كُلَّ وَاحِدٍ مِّنْهُمَا مِائَةَ جَلْدَةٍ ۖ وَلَا تَأْخُذْكُم بِهِمَا رَأْفَةٌ فِي دِينِ اللَّهِ إِن كُنتُمْ تُؤْمِنُونَ بِاللَّهِ وَالْيَوْمِ الْآخِرِ ۖ وَلْيَشْهَدْ عَذَابَهُمَا طَائِفَةٌ مِّنَ الْمُؤْمِنِينَ",
+      "terjemah": "Pezina perempuan dan pezina laki-laki, deralah masing-masing dari keduanya seratus kali, dan janganlah rasa belas kasihan kepada keduanya mencegah kamu untuk (menjalankan) agama (hukum) Allah, jika kamu beriman kepada Allah dan hari kemudian; dan hendaklah (pelaksanaan) hukuman mereka disaksikan oleh sebagian orang-orang yang beriman.",
+      "mufradat": [
+        { "arab": "الزَّانِيَةُ", "arti": "pezina perempuan" },
+        { "arab": "وَالزَّانِي", "arti": "dan pezina laki-laki" },
+        { "arab": "فَاجْلِدُوا", "arti": "deralah" },
+        { "arab": "وَلَا تَأْخُذْكُم", "arti": "dan janganlah mencegah kamu" },
+        { "arab": "رَأْفَةٌ", "arti": "rasa belas kasihan" },
+        { "arab": "وَلْيَشْهَدْ", "arti": "dan hendaklah menyaksikan" },
+        { "arab": "عَذَابَهُمَا", "arti": "hukuman mereka" },
+        { "arab": "طَائِفَةٌ", "arti": "sebagian / sekelompok" }
+      ]
+    },
+    {
+      "id": "hadis-iman",
+      "sumber": "HR. Bukhari dan Muslim dari Abu Hurairah ra.",
+      "arab": "لَا يَزْنِي الزَّانِي حِينَ يَزْنِي وَهُوَ مُؤْمِنٌ، وَلَا يَشْرَبُ الْخَمْرَ حِينَ يَشْرَبُ وَهُوَ مُؤْمِنٌ، وَلَا يَسْرِقُ حِينَ يَسْرِقُ وَهُوَ مُؤْمِنٌ، وَلَا يَنْتَهِبُ نُهْبَةً يَرْفَعُ النَّاسُ إِلَيْهِ فِيهَا أَبْصَارَهُمْ حِينَ يَنْتَهِبُهَا وَهُوَ مُؤْمِنٌ",
+      "terjemah": "Tidak akan berzina seorang pezina di waktu berzina jika ia sedang beriman, tidak akan minum khamr di waktu minum jika ia sedang beriman, dan tidak akan mencuri di waktu mencuri jika ia sedang beriman. Dan tidak akan merampas rampasan berharga sehingga orang-orang membelalakkan mata kepadanya, ketika merampas ia sedang beriman.",
+      "mufradat": [
+        { "arab": "يَزْنِي", "arti": "berzina" },
+        { "arab": "حِينَ", "arti": "ketika" },
+        { "arab": "يَشْرَبُ الْخَمْرَ", "arti": "meminum khamr" },
+        { "arab": "يَسْرِقُ", "arti": "mencuri" },
+        { "arab": "يَنْتَهِبُ", "arti": "merampas" },
+        { "arab": "أَبْصَارَهُمْ", "arti": "pandangan mereka" }
+      ]
+    },
+    {
+      "id": "nur-30",
+      "sumber": "QS. An-Nūr [24]: 30 (potongan)",
+      "arab": "قُل لِّلْمُؤْمِنِينَ يَغُضُّوا مِنْ أَبْصَارِهِمْ وَيَحْفَظُوا فُرُوجَهُمْ",
+      "terjemah": "Katakanlah kepada orang-orang beriman laki-laki, hendaklah mereka menahan pandangannya dan menjaga kemaluannya... (Perintah yang sama berlaku bagi perempuan beriman, QS. An-Nūr: 31.)",
+      "mufradat": []
+    },
+    {
+      "id": "hadis-khalwat",
+      "sumber": "HR. Bukhari dan Muslim",
+      "arab": "لَا يَخْلُوَنَّ رَجُلٌ بِامْرَأَةٍ إِلَّا مَعَ ذِي مَحْرَمٍ",
+      "terjemah": "Janganlah sekali-kali seorang (di antara kalian) berduaan dengan lawan jenis, kecuali dengan mahramnya.",
+      "mufradat": []
+    }
+  ],
+  "materi": [
+    "MASA REMAJA, MASA YANG RAWAN. Masa remaja adalah usia yang rawan, terutama dalam hal pergaulan. Kemajuan teknologi membuat pergaulan makin luas. Kini, pergaulan bebas menjadi bahaya utama bagi remaja. Usia yang masih labil membuat remaja mudah terjebak dampak negatifnya. Solusinya: peran utama orang tua dan guru memberikan edukasi dan pengawasan yang cukup kepada anak. Dampak pergaulan bebas: rusaknya moral (hilang sopan santun, hanya ikut-ikutan tren zaman); narkoba dan obat terlarang (terjerumus pada zat yang merusak diri); hamil di luar nikah (dampak besar bagi diri sendiri dan keluarga).",
+    "MENGAPA \"JANGAN MENDEKATI\"? Seandainya ayat berbunyi لَا تَزْنُوا (Lā taznū, \"Janganlah kalian berzina\"), yang diharamkan hanya perbuatan zinanya saja. Lafaz Al-Qur'an berbunyi لَا تَقْرَبُوا الزِّنَىٰٓ (Lā taqrabū az-zinā, \"Janganlah kalian mendekati zina\"): segala perbuatan yang mendekatkan kepada zina juga haram, apalagi zinanya sendiri. Imam al-Qurṭubī: lafaz \"lā taqrabū az-zinā\" lebih mendalam maknanya (balīgh) daripada \"lā taznū\". Mendekatinya saja haram, apalagi melakukannya.",
+    "PINTU-PINTU MENUJU ZINA. Imam Asy-Syaukānī: segala hal yang mengarahkan manusia pada kemungkinan berzina tidak diperkenankan (diharamkan) oleh Allah Swt. Di antaranya: khalwat (berduaan laki-laki dan perempuan bukan mahram di tempat sepi atau tersembunyi); mengumbar aurat (tidak menutup aurat sesuai tuntunan syariat); pandangan liar (mata yang dibiarkan memandang hal-hal yang haram); pikiran dan hati kotor (membiarkan angan-angan dan khayalan yang buruk). Mendekati hal-hal ini saja sudah diharamkan, terlebih melakukan zina itu sendiri.",
+    "ZINA: PERBUATAN KEJI DAN JALAN YANG BURUK. فَاحِشَةً (Fāḥisyah) = perbuatan yang keji. وَسَاءَ سَبِيلًا (Sā'a sabīlā) = suatu jalan yang buruk. Penjelasan al-Qurṭubī: zina menjerumuskan pelakunya ke dalam neraka Jahanam; zina termasuk dosa besar; para ulama sepakat (ijmā') bahwa zina haram. Siapa yang mengingkari ijmā' yang pasti ini, ia telah keluar dari ketentuan syariat.",
+    "DUA GOLONGAN PELAKU ZINA (QS. An-Nūr: 2). Gairu muḥṣan (belum pernah menikah): dicambuk (dera) seratus kali, ditambah diasingkan dari negerinya selama setahun menurut jumhur ulama; menurut Abū Ḥanīfah pengasingan diserahkan kepada pendapat imam (penguasa). Muḥṣan (sudah menikah secara sah, balig, dan berakal): rajam (dilempari batu), yaitu hukuman bagi pezina yang sudah menikah dengan pernikahan yang benar menurut syariat. Catatan: hukuman had seperti ini dilaksanakan oleh penegak hukum (pemerintah) yang sah, bukan oleh perorangan.",
+    "PESAN PENTING QS. AN-NŪR: 2. (1) Jangan biarkan belas kasihan menghalangi hukum Allah: konsekuensi iman kepada Allah dan hari akhir adalah mendahulukan ketentuan Allah Swt. daripada perasaan manusia. (2) Hukuman disaksikan sekelompok orang beriman, agar menjadi pelajaran bagi orang lain dan menimbulkan efek jera.",
+    "ISLAM MENJAGA LIMA HAL POKOK: memelihara agama, jiwa, akal pikiran, harta kekayaan, dan kehormatan. Zina adalah perlawanan terhadap kehormatan. Jika sanksinya tidak tegas, prostitusi dan kejahatan merajalela, kehormatan terinjak-injak, berbagai penyakit timbul, dan keturunan menjadi tidak jelas.",
+    "IMAN SEBAGAI BAROMETER PERBUATAN (hadis Abu Hurairah). Iman kuat: tidak mudah tergoda rayuan perbuatan dosa. Iman lemah: mudah tergoda untuk melakukan perbuatan dosa. Empat perbuatan yang menandakan iman tidak sempurna: berzina, meminum khamr, mencuri, merampas hak orang lain.",
+    "WASPADAI PEMICU ZINA. Pemicu 1, melihat aurat (\"zina mata\"): melihat aurat, baik secara langsung maupun lewat video atau gambar, hukumnya haram; pandangan bisa membangkitkan syahwat dan menjadi pemicu awal niat berbuat zina (lihat perintah menahan pandangan, QS. An-Nūr: 30-31). Pemicu 2, mendengarkan hal yang mengundang hawa nafsu: obrolan tidak senonoh dan lirik lagu tentang rayuan, pacaran, atau perselingkuhan; jika terus didengar, keburukan terasa biasa dan memicu khayalan buruk. Solusi: dengarkan hal-hal bermanfaat yang mengingatkan kepada Allah dan Rasul-Nya. Pemicu 3, pergaulan bebas laki-laki dan perempuan: pergaulan yang tidak peduli norma sosial, budaya, dan agama; mengumbar hawa nafsu tanpa batas; ujungnya dugem, narkoba, bahkan zina. Solusi: berhati-hati dalam bergaul dan memilih teman, jaga aturan dan etika. Pemicu 4, khalwat dan pacaran: khalwat artinya berduaan di suatu tempat tanpa orang lain, atau ada orang lain tetapi pembicaraan mereka tidak terdengar. Sering dianggap biasa dengan alasan bisnis, rapat, atau belajar kelompok. Padahal berbahaya karena menimbulkan fitnah (orang lain berprasangka buruk dan menyebarkannya) dan mengundang setan (membuka jalan menuju perbuatan asusila).",
+    "CARA MEMBENTENGI DIRI: tingkatkan iman dan takwa (benteng utama dari segala jalan menuju zina); perkuat pendidikan agama (belajar Al-Qur'an, hadis, dan ilmu agama dengan sungguh-sungguh); dengarkan orang tua dan guru (mereka bertanggung jawab membekali dan mengawasi kita); berpuasa (salah satu ibadah yang menundukkan hawa nafsu); pilih teman yang baik (bergaul dengan tetap menjaga aturan dan etika); jaga mata dan telinga (hindari tontonan dan obrolan yang mengundang syahwat).",
+    "CONTOH PERBUATAN MENDEKATI ZINA: khalwat/berduaan dengan lawan jenis; pacaran; chat yang mengarah kepada seksual; saling mengirim foto/video yang tidak pantas; menonton pornografi; membiarkan hubungan semakin intim tanpa batas. Zina adalah hubungan seksual antara laki-laki dan perempuan yang tidak terikat dalam pernikahan yang sah.",
+    "RANGKUMAN. QS. Al-Isrā' [17]: 32: larangan mendekati zina, termasuk semua hal yang mengantarkan kepadanya (melihat aurat, mendengar hal yang mengundang nafsu, pergaulan bebas, khalwat); mendekati saja haram, apalagi melakukannya. QS. An-Nūr [24]: 2: hukuman pezina gairu muḥṣan dicambuk 100 kali, pezina muḥṣan dirajam; penegak hukum dilarang berbelas kasihan hingga tidak menjalankan hukum Allah. Hadis Bukhari-Muslim: ada perbuatan yang membuat iman seorang mukmin tidak sempurna, yaitu berzina, meminum khamr, mencuri, dan merampas hak orang lain."
+  ]
+}

@@ -1,0 +1,219 @@
+{
+  "version": 3,
+  "pages404": true,
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/:path*",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(self), microphone=(), geolocation=(), payment=(), usb=()"
+        }
+      ],
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))?(?:/)?$"
+    }
+  ],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [
+    {
+      "page": "/api/gambar/[id]",
+      "regex": "^/api/gambar/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/gambar/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/koreksi/[id]",
+      "regex": "^/koreksi/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/koreksi/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/materi/[id]",
+      "regex": "^/materi/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/materi/(?<nxtPid>[^/]+?)(?:/)?$"
+    }
+  ],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/admin/batas",
+      "regex": "^/admin/batas(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/batas(?:/)?$"
+    },
+    {
+      "page": "/admin/guru",
+      "regex": "^/admin/guru(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/guru(?:/)?$"
+    },
+    {
+      "page": "/admin/masukan",
+      "regex": "^/admin/masukan(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/masukan(?:/)?$"
+    },
+    {
+      "page": "/admin/pengaturan",
+      "regex": "^/admin/pengaturan(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/pengaturan(?:/)?$"
+    },
+    {
+      "page": "/admin/set",
+      "regex": "^/admin/set(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/set(?:/)?$"
+    },
+    {
+      "page": "/admin/siswa",
+      "regex": "^/admin/siswa(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/siswa(?:/)?$"
+    },
+    {
+      "page": "/admin/ujian",
+      "regex": "^/admin/ujian(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/ujian(?:/)?$"
+    },
+    {
+      "page": "/akun",
+      "regex": "^/akun(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/akun(?:/)?$"
+    },
+    {
+      "page": "/apple-icon.png",
+      "regex": "^/apple\\-icon\\.png(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/apple\\-icon\\.png(?:/)?$"
+    },
+    {
+      "page": "/beranda",
+      "regex": "^/beranda(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/beranda(?:/)?$"
+    },
+    {
+      "page": "/favicon.ico",
+      "regex": "^/favicon\\.ico(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/favicon\\.ico(?:/)?$"
+    },
+    {
+      "page": "/koreksi",
+      "regex": "^/koreksi(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/koreksi(?:/)?$"
+    },
+    {
+      "page": "/manifest.webmanifest",
+      "regex": "^/manifest\\.webmanifest(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/manifest\\.webmanifest(?:/)?$"
+    },
+    {
+      "page": "/masuk",
+      "regex": "^/masuk(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/masuk(?:/)?$"
+    },
+    {
+      "page": "/materi",
+      "regex": "^/materi(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/materi(?:/)?$"
+    },
+    {
+      "page": "/panduan",
+      "regex": "^/panduan(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/panduan(?:/)?$"
+    },
+    {
+      "page": "/racik",
+      "regex": "^/racik(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/racik(?:/)?$"
+    },
+    {
+      "page": "/riwayat",
+      "regex": "^/riwayat(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/riwayat(?:/)?$"
+    },
+    {
+      "page": "/tentang",
+      "regex": "^/tentang(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/tentang(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSuffix": ".prefetch.rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments"
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}
